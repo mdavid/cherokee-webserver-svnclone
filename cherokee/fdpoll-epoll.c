@@ -91,9 +91,7 @@ static ret_t
 _add (cherokee_fdpoll_epoll_t *fdp, int fd, int rw)
 {
 	struct epoll_event ev = {
-		.data.ptr = NULL,
-		.data.u32 = 0,
-		.data.u64 = 0
+		.data = 0
 	};
         
         /* Check the fd limit
@@ -135,9 +133,7 @@ _del (cherokee_fdpoll_epoll_t *fdp, int fd)
 {
 	struct epoll_event ev = {
 		.events   = 0,
-		.data.ptr = NULL,
-		.data.u32 = 0,
-		.data.u64 = 0
+		.data     = 0
 	};
 
 	ev.data.fd  = fd;
@@ -226,9 +222,7 @@ static void
 _set_mode (cherokee_fdpoll_epoll_t *fdp, int fd, int rw)
 {
 	struct epoll_event ev = {
-		.data.ptr = NULL,
-		.data.u32 = 0,
-		.data.u64 = 0
+		.data = 0
 	};
 	
 	ev.data.fd = fd;
