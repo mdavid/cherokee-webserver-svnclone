@@ -27,6 +27,7 @@
 
 #include "connection.h"
 #include "connection-protected.h"
+#include "module_loader.h"
 
 cherokee_module_info_t cherokee_plain_info = {
 	cherokee_validator,             /* type     */
@@ -132,3 +133,19 @@ cherokee_validator_plain_check (cherokee_validator_plain_t *plain, cherokee_conn
 	return ret;
 }
 
+
+/*   Library init function
+ */
+static cherokee_boolean_t _plain_is_init = false;
+
+void
+plain_init (cherokee_module_loader_t *loader)
+{
+	/* Init flag
+	 */
+	if (_plain_is_init == true) return;
+	_plain_is_init = true;
+
+	/* Other stuff
+	 */
+}

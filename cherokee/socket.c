@@ -76,7 +76,7 @@
 # include <sys/uio.h>
 
 #elif defined(LINUX_BROKEN_SENDFILE_API)
- extern int32 sendfile (int out_fd, int in_fd, int32 *offset, uint32 count);
+ extern int32_t sendfile (int out_fd, int in_fd, int32_t *offset, uint32_t count);
 #endif
 
 

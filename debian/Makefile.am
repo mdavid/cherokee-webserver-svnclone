@@ -1,5 +1,6 @@
 EXTRA_DIST = \
 changelog \
+changelog.in \
 cherokee.conffiles \
 cherokee.init \
 cherokee.logrotate \
