@@ -29,13 +29,7 @@
 #ifndef CHEROKEE_LOGGER_NCSA_H
 #define CHEROKEE_LOGGER_NCSA_H
 
-#include "common.h"
-
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <fcntl.h>
-
+#include "common-internal.h"
 #include "connection.h"
 #include "logger.h"
 
@@ -54,7 +48,7 @@ typedef struct {
 } cherokee_logger_ncsa_t;
 
 
-ret_t cherokee_logger_ncsa_new       (cherokee_logger_t **logger, cherokee_table_t *properties);
+ret_t cherokee_logger_ncsa_new       (cherokee_logger_t     **logger, cherokee_table_t *properties);
 ret_t cherokee_logger_ncsa_init_base (cherokee_logger_ncsa_t *logger, cherokee_table_t *properties);
 
 /* virtual methods implementation

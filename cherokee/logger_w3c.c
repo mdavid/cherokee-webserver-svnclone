@@ -172,12 +172,14 @@ cherokee_logger_w3c_flush (cherokee_logger_w3c_t *logger)
 ret_t 
 cherokee_logger_w3c_write_error  (cherokee_logger_w3c_t *logger, cherokee_connection_t *cnt)
 {
-	long int z;
-	int  len;
-	struct tm conn_time;
+	long int   z;
+	int        len;
+	struct tm *conn_time;
 	CHEROKEE_TEMP (tmp, 200);
 
-	localtime_r (&CONN_THREAD(cnt)->bogo_now, &conn_time);
+	/* Read the bogonow value from the server
+	 */
+	conn_time = &CONN_THREAD(cnt)->bogo_now_tm;
 
 #ifdef HAVE_INT_TIMEZONE
 	z = - (timezone / 60);
@@ -188,9 +190,9 @@ cherokee_logger_w3c_write_error  (cherokee_logger_w3c_t *logger, cherokee_connec
 
 	len = snprintf (tmp, tmp_size-1,
 			"%02d:%02d:%02d [error] %s %s\n",
-			conn_time.tm_hour, 
-			conn_time.tm_min, 
-			conn_time.tm_sec,
+			conn_time->tm_hour, 
+			conn_time->tm_min, 
+			conn_time->tm_sec,
 			method[cnt->header->method],
 			cnt->request->buf);
 
@@ -219,24 +221,26 @@ cherokee_logger_w3c_write_string (cherokee_logger_w3c_t *logger, const char *str
 ret_t
 cherokee_logger_w3c_write_access (cherokee_logger_w3c_t *logger, cherokee_connection_t *cnt)
 {
-	long int  z;
-	int       len;
-	struct tm conn_time;
+	long int   z;
+	int        len;
+	struct tm *conn_time;
 	CHEROKEE_TEMP (tmp, 200);
 
-	localtime_r (&CONN_THREAD(cnt)->bogo_now, &conn_time);
+	/* Read the bogonow value from the server
+	 */
+	conn_time = &CONN_THREAD(cnt)->bogo_now_tm;
 
 	if ((logger->header_added == 0) && (logger->file)) {
 		len = snprintf (tmp, tmp_size-1, 
 				"#Version 1.0\n"
 				"#Date: %d02-%s-%4d %02d:%02d:%02d\n"
 				"#Fields: time cs-method cs-uri\n",
-				conn_time.tm_mday, 
-				month[conn_time.tm_mon], 
-				1900 + conn_time.tm_year,
-				conn_time.tm_hour, 
-				conn_time.tm_min, 
-				conn_time.tm_sec);
+				conn_time->tm_mday, 
+				month[conn_time->tm_mon], 
+				1900 + conn_time->tm_year,
+				conn_time->tm_hour, 
+				conn_time->tm_min, 
+				conn_time->tm_sec);
 		
 		CHEROKEE_MUTEX_LOCK(&buffer_lock);
 		cherokee_buffer_add (LOGGER_BUFFER(logger), tmp, len);
@@ -254,9 +258,9 @@ cherokee_logger_w3c_write_access (cherokee_logger_w3c_t *logger, cherokee_connec
 
 	   len = snprintf (tmp, tmp_size-1,
 			   "%02d:%02d:%02d %s %s\n",
-			   conn_time.tm_hour, 
-			   conn_time.tm_min, 
-			   conn_time.tm_sec,
+			   conn_time->tm_hour, 
+			   conn_time->tm_min, 
+			   conn_time->tm_sec,
 			   method[cnt->header->method],
 			   cnt->request->buf);
 

@@ -40,7 +40,7 @@ Log combined {
 ## ErrorHandler:
 ## In the event of a problem or error.
 ##
-# ErrorHandler error_redit {
+# ErrorHandler error_redir {
 #    404 http://www.alobbs.com/error.php?op=404
 # }
 

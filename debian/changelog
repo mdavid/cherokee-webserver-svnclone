@@ -1,4 +1,4 @@
-cherokee (0.4.18b61-1) unstable; urgency=low
+cherokee (0.4.18b64-1) unstable; urgency=low
 
   * This Debian package have been generated with the Cherokee source
 tarball.  Probably it isn't the package provided officially by the
