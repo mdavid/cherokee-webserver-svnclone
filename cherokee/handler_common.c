@@ -40,6 +40,8 @@
 # include <strings.h>
 #endif
 
+#include "connection.h"
+#include "connection-protected.h"
 #include "server.h"
 #include "server-protected.h"
 #include "module.h"

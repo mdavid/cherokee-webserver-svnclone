@@ -57,6 +57,11 @@
 # include <sys/wait.h>
 #endif
 
+#ifdef HAVE_GNUTLS
+# include <gnutls/gnutls.h>	
+# include <gcrypt.h>
+#endif
+
 #include <signal.h>
 #include <dirent.h>
 #include <unistd.h>
@@ -74,6 +79,12 @@
 
 static ret_t init_tls_library          (void);
 static ret_t read_default_config_files (cherokee_server_t *srv, char *filename);
+
+#ifdef HAVE_GNUTLS
+# ifdef GCRY_THREAD_OPTION_PTHREAD_IMPL
+GCRY_THREAD_OPTION_PTHREAD_IMPL;
+# endif
+#endif
 
 
 ret_t
@@ -439,6 +450,16 @@ init_tls_library (void)
 	int rc;
 	
 #ifdef HAVE_GNUTLS
+# ifdef GCRY_THREAD_OPTION_PTHREAD_IMPL
+	/* Although the GnuTLS library is thread safe by design, some
+	 * parts of the crypto backend, such as the random generator,
+	 * are not; hence, it needs to initialize some semaphores.
+	 */
+	gcry_control (GCRYCTL_SET_THREAD_CBS, &gcry_threads_pthread); 
+# endif
+
+	/* Gnutls library-width initialization
+	 */
 	rc = gnutls_global_init();
 	if (rc < 0) {
 		PRINT_ERROR_S ("Global GNUTLS state initialisation failed.\n");

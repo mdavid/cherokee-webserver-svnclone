@@ -41,7 +41,10 @@
 #include <time.h>
 #endif
 
+#include "connection.h"
+#include "connection-protected.h"
 #include "header.h"
+#include "header-protected.h"
 #include "server.h"
 #include "server-protected.h"
 #include "connection.h"

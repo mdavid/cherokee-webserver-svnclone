@@ -50,6 +50,7 @@
 #include "module_loader.h"
 #include "handler_cgi.h"
 #include "connection.h"
+#include "connection-protected.h"
 
 #define DEFAULT_PHP_EXECUTABLE "/usr/lib/cgi-bin/php4"
 

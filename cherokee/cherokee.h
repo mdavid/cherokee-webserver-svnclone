@@ -41,6 +41,7 @@
 #include <cherokee/list.h>
 #include <cherokee/list_merge_sort.h>
 #include <cherokee/url.h>
+#include <cherokee/header.h>
 
 /* Server library
  */
@@ -49,6 +50,7 @@
 #include <cherokee/logger.h>
 #include <cherokee/handler.h>
 #include <cherokee/encoder.h>
+#include <cherokee/connection.h>
 #include <cherokee/module_loader.h>
 
 /* Client library

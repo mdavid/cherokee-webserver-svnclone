@@ -30,6 +30,8 @@
 #endif
 
 #include "util.h"
+#include "connection.h"
+#include "connection-protected.h"
 #include "server.h"
 #include "server-protected.h"
 #include "module_loader-protected.h"

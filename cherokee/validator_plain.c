@@ -22,8 +22,11 @@
  * USA
  */
 
-#include "common.h"
+#include "common-internal.h"
 #include "validator_plain.h"
+
+#include "connection.h"
+#include "connection-protected.h"
 
 cherokee_module_info_t cherokee_plain_info = {
 	cherokee_validator,             /* type     */

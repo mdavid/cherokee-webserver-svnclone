@@ -43,9 +43,12 @@
 
 #include "module.h"
 #include "connection.h"
+#include "connection-protected.h"
 #include "socket.h"
 #include "server.h"
 #include "server-protected.h"
+#include "header.h"
+#include "header-protected.h"
 
 
 cherokee_module_info_t cherokee_cgi_info = {
