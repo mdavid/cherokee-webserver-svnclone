@@ -23,9 +23,9 @@
  * USA
  */
 
-#include <config.h>
-
+#include "common-internal.h"
 #include "handler_redir.h"
+
 #include "connection.h"
 #include "connection-protected.h"
 

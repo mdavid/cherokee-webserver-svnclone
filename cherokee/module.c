@@ -22,6 +22,7 @@
  * USA
  */
 
+#include "common-internal.h"
 #include "module.h"
 
 ret_t 

@@ -23,6 +23,7 @@
  * USA
  */
 
+#include "common-internal.h"
 #include "handler_cgi.h"
 
 #ifdef HAVE_STDARG_H

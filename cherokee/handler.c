@@ -22,6 +22,7 @@
  * USA
  */
 
+#include "common-internal.h"
 #include "handler.h"
 
 #include <stdlib.h>

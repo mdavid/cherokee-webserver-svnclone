@@ -22,6 +22,7 @@
  * USA
  */
 
+#include "common-internal.h"
 #include "handler_dirlist.h"
 
 #include <sys/types.h>
@@ -288,12 +289,13 @@ cherokee_handler_dirlist_step (cherokee_handler_dirlist_t *dhdl, cherokee_buffer
 			cherokee_buffer_add (buffer, dhdl->header->buf, dhdl->header->len);
 		}
 
+#ifndef CHEROKEE_EMBEDDED
 		if (icons && (icons->parentdir_icon != NULL)) {
 			cherokee_buffer_add_va (buffer, "<a href=\"..\"><img border=\"0\" src=\"%s\" alt=\"[DIR]\"> Parent Directory</a>\n", 
 						icons->parentdir_icon);
-		} else {
+		} else
+#endif
 			cherokee_buffer_add (buffer, "<a href=\"..\">Parent Directory</a>\n", 34);
-		}
 
 		dhdl->page_begining = 1;
 	}
@@ -331,17 +333,17 @@ cherokee_handler_dirlist_step (cherokee_handler_dirlist_t *dhdl, cherokee_buffer
 		icon   = "";
 		is_dir = S_ISDIR(info.st_mode);
 
-		if (icons == NULL) {
-			cherokee_buffer_add (buffer, (is_dir) ? "[DIR] " : "[   ] ", 6);
-		} else {
+#ifndef CHEROKEE_EMBEDDED
+		if (icons != NULL) {
 			if (is_dir && (icons->directory_icon != NULL)) {
 				cherokee_buffer_add_va (buffer, "<img border=\"0\" src=\"%s\" alt=\"[DIR]\"> ", icons->directory_icon);
 			} else {
 				cherokee_icons_get_icon (icons, entry->d_name, &icon);
 				cherokee_buffer_add_va (buffer, "<img border=\"0\" src=\"%s\" alt=\"[   ]\"> ", icon);
 			}
-		}
-
+		} else
+#endif
+			cherokee_buffer_add (buffer, (is_dir) ? "[DIR] " : "[   ] ", 6);
 
 		/* Add the filename
 		 */

@@ -34,12 +34,75 @@
 #include <string.h>
 #include <dlfcn.h>
 
+
+#ifdef CHEROKEE_EMBEDDED
+
+ret_t
+cherokee_module_loader_new  (cherokee_module_loader_t **loader)
+{
+	*loader = NULL;
+	return ret_ok;
+}
+
+ret_t 
+cherokee_module_loader_free (cherokee_module_loader_t *loader)
+{  
+	return ret_ok; 
+}
+
+ret_t 
+cherokee_module_loader_load (cherokee_module_loader_t *loader, char *modname)
+{
+	if      (strcmp(modname, "common")  == 0) common_init (NULL);
+	else if (strcmp(modname, "file")    == 0) file_init (NULL);
+	else if (strcmp(modname, "dirlist") == 0) dirlist_init (NULL);
+	else if (strcmp(modname, "cgi")     == 0) cgi_init (NULL);
+	else if (strcmp(modname, "phpcgi")  == 0) phpcgi_init (NULL);
+	else return ret_error;
+
+	return ret_ok;
+}
+
+ret_t 
+cherokee_module_loader_get (cherokee_module_loader_t *loader, char *modname, cherokee_module_info_t **info)
+{
+	extern cherokee_module_info_t cherokee_common_info;
+	extern cherokee_module_info_t cherokee_file_info;
+	extern cherokee_module_info_t cherokee_dirlist_info;
+	extern cherokee_module_info_t cherokee_cgi_info;
+	extern cherokee_module_info_t cherokee_phpcgi_info;
+
+	if      (strcmp(modname, "common")  == 0) *info = &cherokee_common_info;
+	else if (strcmp(modname, "file")    == 0) *info = &cherokee_file_info;
+	else if (strcmp(modname, "dirlist") == 0) *info = &cherokee_dirlist_info;
+	else if (strcmp(modname, "cgi")     == 0) *info = &cherokee_cgi_info;
+	else if (strcmp(modname, "phpcgi")  == 0) *info = &cherokee_phpcgi_info;
+	else return ret_error;
+
+	return ret_ok;
+}
+
+#else 
+
+/* This is the non-embedded implementation
+ */
+
 #include "loader.autoconf.h"
 
-#define MODULE_LOADER_DEBUG
+#ifdef HAVE_RTLDNOW	
+# define RTLD_BASE RTLD_NOW
+#else
+# define RTLD_BASE RTLD_LAZY
+#endif
 
+#ifdef HAVE_RTLDGLOBAL
+# define RTLD_OPTIONS 	| RTLD_GLOBAL;
+#else 
+# define RTLD_OPTIONS
+#endif
 
 typedef void *func_new_t;
+
 
 static ret_t
 load_static_linked_modules (cherokee_module_loader_t *loader)
@@ -98,15 +161,12 @@ get_sym_from_dlopen_handler (void *dl_handle, const char *sym)
 	 */
 	re = (void *) dlsym(dl_handle, sym);
 	if (re == NULL) {
-#ifdef MODULE_LOADER_DEBUG
 		PRINT_ERROR ("ERROR: %s\n", dlerror());
-#endif		
 		return NULL;
 	}
 	
 	return re;
 }
-
 
 static ret_t
 dylib_open (const char *libname, void **handler_out) 
@@ -116,15 +176,7 @@ dylib_open (const char *libname, void **handler_out)
 	int    flags;
 	CHEROKEE_NEW(tmp, buffer);
 	
-#ifdef HAVE_RTLDNOW	
-	flags = RTLD_NOW;
-#else
-	flags = RTLD_LAZY;
-#endif
-
-#ifdef HAVE_RTLDGLOBAL
-	flags |= RTLD_GLOBAL;
-#endif
+	flags = RTLD_BASE RTLD_OPTIONS;
 
 	/* Build the path string
 	 */
@@ -166,11 +218,11 @@ execute_init_func (cherokee_module_loader_t *loader, const char *module, void *d
 
 	/* Get the function
 	 */
-	if (dl_handler == NULL) {
+	if (dl_handler == NULL) 
 		init_func = get_sym_from_dlopen_handler (dl_handler, init_name->buf);
-	} else {
+	else 
 		init_func = get_sym_from_enviroment (init_name->buf);
-	}
+	
 
 	/* Free the init function name string
 	 */
@@ -202,7 +254,8 @@ get_info (const char *module, cherokee_module_info_t **info, void **dl_handler)
 	/* Maybe it's statically linked
 	 */
 	*info = get_sym_from_enviroment (info_name->buf);
-	
+	printf ("%s -> %p\n", info_name->buf, *info);
+
 	/* Or maybe we have to load a dinamic library
 	 */	
 	if (*info == NULL) {
@@ -316,3 +369,5 @@ cherokee_module_loader_get (cherokee_module_loader_t *loader, char *modname, che
 {
 	return cherokee_table_get (loader->table, modname, (void **)info);
 }
+
+#endif

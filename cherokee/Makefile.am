@@ -752,11 +752,15 @@ unix4win32_errno.h \
 unix4win32.h \
 unix4win32.c
 
+EMBEDDED_VERSION_FILES = \
+Makefile.embedded
+
 EXTRA_DIST = \
 $(bin_SCRIPTS) \
 $(cherokeedeps_DATA) \
 $(cherokeedata_DATA) \
 $(WINDOWS_PORT_FILES) \
+$(EMBEDDED_VERSION_FILES) \
 read_config_grammar.h \
 loader.autoconf.h \
 loader.autoconf.inc \
