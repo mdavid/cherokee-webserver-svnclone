@@ -289,7 +289,7 @@ cherokee_virtual_server_init_tls (cherokee_virtual_server_t *vsrv)
 #ifdef HAVE_GNUTLS
         rc = gnutls_certificate_allocate_credentials (&vsrv->credentials);
 	if (rc < 0) {
-		PRINT_ERROR ("ERROR: Couldn't allocate credentials.\n");
+		PRINT_ERROR_S ("ERROR: Couldn't allocate credentials.\n");
 		return ret_error;
 	}
 	

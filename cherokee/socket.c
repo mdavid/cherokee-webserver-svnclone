@@ -26,6 +26,7 @@
  * USA
  */
 
+#include "common-internal.h"
 #include "socket.h"
 
 #ifdef HAVE_SYS_TYPES_H
