@@ -22,11 +22,16 @@
  * USA
  */
 
+#include "common-internal.h"
 #include "validator_htpasswd.h"
 
 #ifdef HAVE_CRYPT_H
 # include <crypt.h>
 #endif
+
+#include "connection.h"
+#include "connection-protected.h"
+
 
 #if !defined(HAVE_CRYPT_R) && defined(HAVE_PTHREAD)
 # define USE_CRYPT_R_EMU

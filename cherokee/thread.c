@@ -27,13 +27,16 @@
 #include <signal.h>
 #include <errno.h>
 
+#include "socket.h"
 #include "server.h"
 #include "server-protected.h"
 #include "fdpoll.h"
 #include "fdpoll-protected.h"
-#include "socket.h"
 #include "connection.h"
+#include "connection-protected.h"
 #include "handler_error.h"
+#include "header.h"
+#include "header-protected.h"
 
 
 #define DEBUG_BUFFER(b)  fprintf(stderr, "%s:%d len=%d crc=%d\n", __FILE__, __LINE__, b->len, cherokee_buffer_crc32(b))

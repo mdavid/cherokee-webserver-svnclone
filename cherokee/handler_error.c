@@ -25,6 +25,7 @@
 #include "handler_error.h"
 #include "server.h"
 #include "server-protected.h"
+#include "connection-protected.h"
 
 
 ret_t 

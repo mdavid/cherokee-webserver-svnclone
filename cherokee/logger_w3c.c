@@ -38,10 +38,13 @@
 #include <time.h>
 #endif
 
-#include "module.h"
 #include "connection.h"
+#include "connection-protected.h"
+#include "module.h"
 #include "server.h"
 #include "server-protected.h"
+#include "header.h"
+#include "header-protected.h"
 
 #ifdef HAVE_PTHREAD
 pthread_mutex_t buffer_lock = PTHREAD_MUTEX_INITIALIZER;

@@ -525,6 +525,7 @@ match.c \
 tdate_parse.h \
 tdate_parse.c \
 header.h \
+header-protected.h \
 header.c \
 session_cache.h \
 session_cache.c \
@@ -573,6 +574,7 @@ $(static_validator_plain_src) \
 $(static_validator_htpasswd_src) \
 \
 connection.h \
+connection-protected.h \
 connection.c \
 handler.h \
 handler.c \
@@ -628,12 +630,14 @@ mime.h \
 list.h \
 list_merge_sort.h \
 url.h \
+header.h \
 \
 server.h \
 module.h \
 logger.h \
 handler.h \
 encoder.h \
+connection.h \
 module_loader.h \
 \
 downloader.h

@@ -23,6 +23,8 @@
  */
 
 #include "handler_error_redir.h"
+#include "connection.h"
+#include "connection-protected.h"
 #include "handler_redir.h"
 #include "module_loader.h"
 

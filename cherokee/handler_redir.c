@@ -27,6 +27,7 @@
 
 #include "handler_redir.h"
 #include "connection.h"
+#include "connection-protected.h"
 
 #ifdef HAVE_PCRE
 # include <pcre.h>

@@ -24,6 +24,8 @@
 
 #include "handler_remote_control.h"
 
+#include "connection.h"
+#include "connection-protected.h"
 #include "util.h"
 #include "server.h"
 

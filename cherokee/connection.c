@@ -23,6 +23,7 @@
  */
 
 #include "connection.h"
+#include "connection-protected.h"
 
 #include <errno.h>
 #include <string.h>
@@ -59,14 +60,23 @@
 # include <strings.h>
 #endif
 
+#include "list.h"
+#include "http.h"
 #include "handler.h"
 #include "thread.h"
+#include "handler_table.h"
 #include "handler_error.h"
 #include "buffer.h"
+#include "buffer_escape.h"
 #include "handler_table_entry.h"
 #include "encoder_table.h"
 #include "server-protected.h"
 #include "access.h"
+#include "virtual_server.h"
+#include "socket.h"
+#include "header.h"
+#include "header-protected.h"
+#include "mmap2.h"
 
 
 ret_t

@@ -29,6 +29,8 @@
 #include <unistd.h>
 #include <dirent.h>
 
+#include "connection.h"
+#include "connection-protected.h"
 #include "module.h"
 #include "module_loader.h"
 #include "connection.h"

@@ -24,7 +24,10 @@
  */
 
 
+#include "common-internal.h"
 #include "header.h"
+#include "header-protected.h"
+
 #include "util.h"
 
 #ifdef HAVE_STRING_H
