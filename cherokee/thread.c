@@ -276,7 +276,6 @@ maybe_purge_closed_connection (cherokee_thread_t *thread, cherokee_connection_t 
 	/* Manage keepalive
 	 */
 	if (conn->keepalive <= 0) {
-//		purge_closed_connection (thread, conn);
 		conn->phase = phase_lingering;
 		return;
 	} 	
@@ -411,7 +410,7 @@ process_active_connections (cherokee_thread_t *thd)
 				break;
 			case ret_eagain:
 				continue;
-
+				
 			case ret_eof:
 			case ret_error:
 				conn->phase = phase_lingering;
@@ -421,7 +420,7 @@ process_active_connections (cherokee_thread_t *thd)
 				RET_UNKNOWN(ret);
 			}
 			conn->phase = phase_tls_handshake;;
-
+			
 		case phase_tls_handshake:
 			ret = cherokee_socket_init_tls (CONN_SOCK(conn), CONN_VSRV(conn));
 			switch (ret) {
@@ -703,26 +702,25 @@ process_active_connections (cherokee_thread_t *thd)
 			/* If it is an error, and the connection has not a handler to manage
 			 * this error, the handler has to be changed
 			 */
-			if ((http_type_400(conn->error_code)) &&
-			    (conn->handler && (!HANDLER_SUPPORT_ERROR(conn->handler))))
+ 			if (http_type_400(conn->error_code) &&
+			    conn->handler && (!HANDLER_SUPPORT_ERROR(conn->handler)))
 			{
-
 				/* Try to setup an error handler
 				 */
 				ret = cherokee_connection_setup_error_handler (conn);
 				if (ret != ret_ok) {
-
+					
 					/* It could not change the handler to an error managing handler,
 					 * so it is a critical error
-					 */					
+					 */
 					conn->phase = phase_lingering;
 					goto phase_lingering_close;
-
+					
 				}
 				conn->phase = phase_init;
 				break;
 			}
-
+			
 			conn->phase = phase_add_headers;
 
 		case phase_add_headers:
@@ -773,7 +771,6 @@ process_active_connections (cherokee_thread_t *thd)
 				{
 					maybe_purge_closed_connection (thd, conn);
 					continue;
-
 				}
 				break;
 

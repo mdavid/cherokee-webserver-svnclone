@@ -10,7 +10,7 @@
 #ifndef _DICT_PRIVATE_H_
 #define _DICT_PRIVATE_H_
 
-#include "dict.h"
+#include "dict/dict_generic.h"
 
 typedef int			 (*insert_func)		__P((void *, void *k, void *d, int o));
 typedef int			 (*probe_func)		__P((void *, void *k, void **d));
@@ -67,8 +67,14 @@ extern dict_free_func _dict_free;
 extern int _dict_key_cmp(const void *, const void *);
 
 #define ABS(a)		((a) < 0 ? -(a) : +(a))
-#define MIN(a,b)	((a) < (b) ? (a) : (b))
-#define MAX(a,b)	((a) > (b) ? (a) : (b))
+
+#ifndef MIN
+# define MIN(a,b)	((a) < (b) ? (a) : (b))
+#endif
+#ifndef MAX
+# define MAX(a,b)	((a) > (b) ? (a) : (b))
+#endif
+
 #define SWAP(a,b,v)	v = (a), (a) = (b), (b) = v
 #define UNUSED(p)	(void)&p
 
