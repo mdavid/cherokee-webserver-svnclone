@@ -25,6 +25,11 @@ make CFLAGS="-march=pentium4 -O3 -pipe -fomit-frame-pointer -fforce-addr -falign
 ---------------------------------------------------
 openssl req -days 1000 -new -x509 -nodes -out /etc/cherokee/ssl/cherokee.pem -keyout /etc/cherokee/ssl/cherokee.pem
 
+7.- How to compile the embedded version
+--------------------------------------
+./configure --prefix=/usr --sysconfdir=/etc --disable-pthread --disable-tls --disable-largefile
+cd cherokee && make -f Makefile.embedded 
+
 
 For developers
 ==============

@@ -22,6 +22,7 @@
  * USA
  */
 
+#include "common-internal.h"
 #include "dict.h"
 
 #include "dict/dict_generic.h"

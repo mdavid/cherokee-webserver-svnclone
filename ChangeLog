@@ -1,3 +1,8 @@
+2005-03-28  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/header-protected, cherokee/connection-protected: New
+	header files.
+
 2005-03-25  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cherokee/logger_ncsa.c (cherokee_logger_ncsa_free): Silly bug

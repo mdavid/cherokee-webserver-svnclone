@@ -22,8 +22,11 @@
  * USA
  */
 
+#include "common-internal.h"
 #include "validator_pam.h"
+
 #include <security/pam_appl.h>
+
 
 cherokee_module_info_t cherokee_pam_info = {
 	cherokee_validator,           /* type     */

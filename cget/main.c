@@ -53,6 +53,7 @@
 #include "request.h"
 #include "downloader.h"
 #include "downloader-protected.h"
+#include "header-protected.h"      /* FIXME! */
 
 #define EXIT_OK    0
 #define EXIT_ERROR 1

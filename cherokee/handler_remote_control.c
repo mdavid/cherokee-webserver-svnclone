@@ -22,6 +22,7 @@
  * USA
  */
 
+#include "common-internal.h"
 #include "handler_remote_control.h"
 
 #include "connection.h"

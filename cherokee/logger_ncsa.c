@@ -26,6 +26,7 @@
  * USA
  */
 
+#include "common-internal.h"
 #include "logger_ncsa.h"
 
 #include <stdarg.h>

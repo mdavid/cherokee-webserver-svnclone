@@ -198,6 +198,7 @@ cherokee_handler_file_init (cherokee_handler_file_t *n)
 
 	/* Is this file cached in the mmap table?
 	 */
+#ifndef CHEROKEE_EMBEDDED
 	if ((conn->encoder == NULL) &&
 	    (conn->socket->is_tls == non_TLS) &&
 	    (n->info.st_size <= MMAP_MAX_FILE_SIZE) &&
@@ -210,6 +211,7 @@ cherokee_handler_file_init (cherokee_handler_file_t *n)
 			conn->mmap_entry_ref = mmap_entry;
 		}
 	}
+#endif
 
 	/* Undo the local file path                          2.- UNDO
 	 * "return" is allowed again
@@ -263,6 +265,7 @@ cherokee_handler_file_init (cherokee_handler_file_t *n)
 
 	/* Look for the mime type
 	 */
+#ifndef CHEROKEE_EMBEDDED
 	ext = strrchr (conn->request->buf, '.');
 	if (ext != NULL) {
 		cherokee_mime_t *m;
@@ -272,6 +275,7 @@ cherokee_handler_file_init (cherokee_handler_file_t *n)
 			ret = cherokee_mime_get (m, ext+1, &n->mime);
 		}
 	}
+#endif
 
 	/* Maybe use sendfile
 	 */
@@ -442,9 +446,11 @@ file_init (cherokee_module_loader_t *loader)
 
 	/* Library dependences: mime
 	 */
+#ifndef CHEROKEE_EMBEDDED
 	ret = cherokee_mime_init (&mime);
 	if (ret < ret_ok) {
 		PRINT_ERROR_S ("Can not init MIME module\n");
 		return;
 	}
+#endif
 }

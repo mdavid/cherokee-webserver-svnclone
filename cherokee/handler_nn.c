@@ -22,6 +22,7 @@
  * USA
  */
 
+#include "common-internal.h"
 #include "handler_nn.h"
 
 #include <sys/types.h>

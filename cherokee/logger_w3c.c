@@ -22,6 +22,7 @@
  * USA
  */
 
+#include "common-internal.h"
 #include "logger_w3c.h"
 
 #include <stdio.h>

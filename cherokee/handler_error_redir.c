@@ -22,7 +22,9 @@
  * USA
  */
 
+#include "common-internal.h"
 #include "handler_error_redir.h"
+
 #include "connection.h"
 #include "connection-protected.h"
 #include "handler_redir.h"

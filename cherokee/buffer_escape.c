@@ -22,7 +22,9 @@
  * USA
  */
 
+#include "common-internal.h"
 #include "buffer_escape.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 

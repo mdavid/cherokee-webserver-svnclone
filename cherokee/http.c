@@ -22,7 +22,9 @@
  * USA
  */
 
+#include "common-internal.h"
 #include "http.h"
+
 #include <stdio.h>
 
 #define set_ptr(ptr,val) if(ptr) { *ptr=val; }

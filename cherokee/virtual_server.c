@@ -22,7 +22,9 @@
  * USA
  */
 
+#include "common-internal.h"
 #include "virtual_server.h"
+
 #include "handler_error.h"
 
 #include <errno.h>

@@ -22,6 +22,7 @@
  * USA
  */
 
+#include "common-internal.h"
 #include "session_cache.h"
 
 #include <stdio.h>

@@ -22,7 +22,9 @@
  * USA
  */
 
+#include "common-internal.h"
 #include "handler_table_entry.h"
+
 #include "access.h"
 
 

@@ -22,6 +22,7 @@
  * USA
  */
 
+#include "common-internal.h"
 #include "handler_common.h"
 
 #ifdef HAVE_SYS_TYPES_H

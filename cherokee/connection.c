@@ -22,6 +22,7 @@
  * USA
  */
 
+#include "common-internal.h"
 #include "connection.h"
 #include "connection-protected.h"
 
@@ -340,9 +341,11 @@ out:
 	/* Nothing should be mmaped any longer
 	 */
 	if (cnt->mmaped != NULL) {
+#ifndef CHEROKEE_EMBEDDED
 		ret = cherokee_mmap2_unref_entry (srv->mmap_cache, cnt->mmap_entry_ref);
 		cnt->mmaped         = NULL;
 		cnt->mmap_entry_ref = NULL;
+#endif
 	}
 
 	return ret;

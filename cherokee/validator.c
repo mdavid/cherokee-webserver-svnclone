@@ -22,7 +22,9 @@
  * USA
  */
 
+#include "common-internal.h"
 #include "validator.h"
+
 #include "connection.h"
 
 ret_t 

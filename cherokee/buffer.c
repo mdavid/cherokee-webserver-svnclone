@@ -22,6 +22,7 @@
  * USA
  */
 
+#include "common-internal.h"
 #include "buffer.h"
 
 #include <string.h>

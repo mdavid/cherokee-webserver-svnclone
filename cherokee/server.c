@@ -22,6 +22,7 @@
  * USA
  */
 
+#include "common-internal.h"
 #include "server-protected.h"
 #include "server.h"
 
@@ -182,26 +183,7 @@ cherokee_server_new  (cherokee_server_t **srv)
 #endif
 	CHEROKEE_MUTEX_INIT (&n->accept_mutex, NULL);
 
-	/* Virtual servers table
-	 */
-	INIT_LIST_HEAD (&n->vservers);
-
-	cherokee_table_new (&n->vservers_ref);
-	return_if_fail (n->vservers_ref!=NULL, ret_nomem);
-
-	cherokee_virtual_server_new (&n->vserver_default);
-	return_if_fail (n->vserver_default!=NULL, ret_nomem);
-
-	/* Module loader
-	 */
-	cherokee_module_loader_new (&n->loader);
-	return_if_fail (n->loader != NULL, ret_nomem);	
-		
-	/* Encoders 
-	 */
-	cherokee_encoder_table_new (&n->encoders);
-	return_if_fail (n->encoders != NULL, ret_nomem);
-
+#ifndef CHEROKEE_EMBEDDED
 	/* Icons 
 	 */
 	cherokee_icons_new (&n->icons);
@@ -212,6 +194,29 @@ cherokee_server_new  (cherokee_server_t **srv)
 	cherokee_mmap2_new (&n->mmap_cache);
 	return_if_fail (n->mmap_cache != NULL, ret_nomem);	
 	n->mmap_cache_clean_next = 0;
+#endif
+
+	/* Module loader
+	 */
+	cherokee_module_loader_new (&n->loader);
+#ifndef CHEROKEE_EMBEDDED
+	return_if_fail (n->loader != NULL, ret_nomem);	
+#endif
+
+	/* Virtual servers table
+	 */
+	INIT_LIST_HEAD (&n->vservers);
+
+	cherokee_table_new (&n->vservers_ref);
+	return_if_fail (n->vservers_ref!=NULL, ret_nomem);
+
+	cherokee_virtual_server_new (&n->vserver_default);
+	return_if_fail (n->vserver_default!=NULL, ret_nomem);
+		
+	/* Encoders 
+	 */
+	cherokee_encoder_table_new (&n->encoders);
+	return_if_fail (n->encoders != NULL, ret_nomem);
 
 	/* Server string
 	 */
@@ -288,11 +293,6 @@ cherokee_server_clean (cherokee_server_t *srv)
 	/* Clean config files entries
 	 */
 	cherokee_list_free (&srv->include_list, free);
-
-	if (srv->mime_file != NULL) {
-		free (srv->mime_file);
-		srv->mime_file = NULL;
-	}
 	
 	/* Exit related
 	 */
@@ -307,6 +307,28 @@ cherokee_server_clean (cherokee_server_t *srv)
 	 */
 	cherokee_module_loader_free (srv->loader);
 	srv->loader = NULL;
+
+#ifndef CHEROKEE_EMBEDDED
+	/* Icons 
+	 */
+	cherokee_icons_clean (srv->icons);
+
+	if (srv->icons_file != NULL) {
+		free (srv->icons_file);
+		srv->icons_file = NULL;
+	}
+
+	/* Mmap cache
+	 */
+	cherokee_mmap2_clean (srv->mmap_cache);
+
+	/* Mime
+	 */
+	if (srv->mime_file != NULL) {
+		free (srv->mime_file);
+		srv->mime_file = NULL;
+	}
+#endif
 
 	/* Clean the encoders table
 	 */
@@ -324,19 +346,6 @@ cherokee_server_clean (cherokee_server_t *srv)
 	 */	
 	free_virtual_servers (srv);
 	cherokee_table_clean (srv->vservers_ref);
-
-	/* Icons 
-	 */
-	cherokee_icons_clean (srv->icons);
-
-	if (srv->icons_file != NULL) {
-		free (srv->icons_file);
-		srv->icons_file = NULL;
-	}
-
-	/* Mmap cache
-	 */
-	cherokee_mmap2_clean (srv->mmap_cache);
 
 	/* Time-out pre-builded header
 	 */
@@ -385,6 +394,29 @@ cherokee_server_free (cherokee_server_t *srv)
 #endif
 	CHEROKEE_MUTEX_DESTROY (&srv->accept_mutex);
 
+#ifndef CHEROKEE_EMBEDDED
+	/* Icons 
+	 */
+	cherokee_icons_free (srv->icons);
+	if (srv->icons_file != NULL) {
+		free (srv->icons_file);
+		srv->icons_file = NULL;
+	}
+
+	/* Mime
+	 */
+	if (srv->mime_file != NULL) {
+		free (srv->mime_file);
+		srv->mime_file = NULL;
+	}
+
+	cherokee_mmap2_free (srv->mmap_cache);
+#endif
+	
+	/* Module loader
+	 */
+	cherokee_module_loader_free (srv->loader);
+
 	/* Virtual servers
 	 */
 	cherokee_virtual_server_free (srv->vserver_default);
@@ -392,10 +424,6 @@ cherokee_server_free (cherokee_server_t *srv)
 
 	free_virtual_servers (srv);
 	cherokee_table_free (srv->vservers_ref);
-
-	cherokee_module_loader_free (srv->loader);
-
-	cherokee_mmap2_free (srv->mmap_cache);
 
 	cherokee_buffer_free (srv->bogo_now_string);
 	cherokee_buffer_free (srv->server_string);
@@ -419,19 +447,6 @@ cherokee_server_free (cherokee_server_t *srv)
 	if (srv->config_file != NULL) {
 		free (srv->config_file);
 		srv->config_file = NULL;
-	}
-
-	/* Icons 
-	 */
-	cherokee_icons_free (srv->icons);
-	if (srv->icons_file != NULL) {
-		free (srv->icons_file);
-		srv->icons_file = NULL;
-	}
-
-	if (srv->mime_file != NULL) {
-		free (srv->mime_file);
-		srv->mime_file = NULL;
 	}
 
 	if (srv->panic_action != NULL) {
@@ -1013,7 +1028,11 @@ cherokee_server_init (cherokee_server_t *srv)
 
         /* Get the CPU number
 	 */
+#ifndef CHEROKEE_EMBEDDED
 	dcc_ncpus (&srv->ncpus);
+#else
+	srv->ncpus = 1;
+#endif
 	if (srv->ncpus == -1) {
 		PRINT_ERROR_S ("Can not deternime the number of processors\n");
 		srv->ncpus = 1;
@@ -1187,12 +1206,14 @@ cherokee_server_step (cherokee_server_t *srv)
 		srv->log_flush_next = srv->bogo_now + srv->log_flush_elapse;
 	}
 
+#ifndef CHEROKEE_EMBEDDED
 	/* Clean mmap
 	 */
 	if (srv->mmap_cache_clean_next < srv->bogo_now) {
 		cherokee_mmap2_clean_up (srv->mmap_cache);	
 		srv->mmap_cache_clean_next = srv->bogo_now + MMAP_DEFAULT_CLEAN_ELAPSE;
 	}
+#endif
 
 	/* Wanna exit?
 	 */
@@ -1341,6 +1362,8 @@ read_default_config_files (cherokee_server_t *srv, char *filename)
 		if (unlikely(ret < ret_ok)) return ret;
 	}
 
+
+#ifndef CHEROKEE_EMBEDDED
 	/* Maybe read the Icons file
 	 */
 	if (srv->icons_file != NULL) {
@@ -1373,6 +1396,7 @@ read_default_config_files (cherokee_server_t *srv, char *filename)
 			}
 		} while (0);
 	}
+#endif
 
 	return ret;
 }
@@ -1416,6 +1440,7 @@ cherokee_server_read_config_string (cherokee_server_t *srv, char *config_string)
 		return ret;
 	}
 	
+#ifndef CHEROKEE_EMBEDDED
 	/* Maybe read the Icons file
 	 */
 	if (srv->icons_file != NULL) {
@@ -1448,6 +1473,7 @@ cherokee_server_read_config_string (cherokee_server_t *srv, char *config_string)
 			}
 		} while (0);
 	}
+#endif
 	
 	return ret;
 }

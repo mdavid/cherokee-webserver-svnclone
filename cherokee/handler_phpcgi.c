@@ -28,6 +28,7 @@
  * $ sudo cp sapi/cgi/php /usr/lib/cgi-bin/php5
  */
 
+#include "common-internal.h"
 #include "handler_phpcgi.h"
 
 #ifdef HAVE_SYS_TYPES_H
