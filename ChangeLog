@@ -1,3 +1,8 @@
+2005-03-06  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/Makefile.am (gnu_getopt): getopt files moved inside
+	cherokee/getopt directory.	
+
 2005-03-03  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cherokee/buffer.c (cherokee_buffer_read_from_fd): Added EIO
