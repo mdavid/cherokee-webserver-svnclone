@@ -25,3 +25,14 @@ echo
 stamp-h1
 cherokee.pc
 .deps
+mods-ssl.sample
+depcomp
+sites-default.sample
+sites-example.sample
+autogen.olg
+compile
+INSTALL
+advanced.conf.sample
+missing
+ylwrap
+install-sh
