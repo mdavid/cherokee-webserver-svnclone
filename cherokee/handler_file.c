@@ -292,13 +292,14 @@ ret_t
 cherokee_handler_file_step (cherokee_handler_file_t *fhdl, 
 			    cherokee_buffer_t       *buffer)
 {
-	off_t total;
+	off_t                  total;
+	int                    size;
+	cherokee_connection_t *conn = HANDLER_CONN(fhdl);
 
 #if HAVE_SENDFILE
 	if (fhdl->using_sendfile) {
 		ret_t   ret;
 		ssize_t sent;
-		cherokee_connection_t *conn = HANDLER_CONN(fhdl);
 		
 		ret = cherokee_socket_sendfile (conn->socket,                      /* cherokee_socket_t *socket */
 						fhdl->fd,                          /* int                fd     */
@@ -324,7 +325,17 @@ cherokee_handler_file_step (cherokee_handler_file_t *fhdl,
 	}
 #endif
 
-	total = read (fhdl->fd, buffer->buf, buffer->size);	
+	/* Check the amount to read
+	 */
+	if ((fhdl->offset + buffer->size) > conn->range_end) {
+		size = conn->range_end - fhdl->offset;
+	} else {
+		size = buffer->size;
+	}
+
+	/* Read
+	 */
+	total = read (fhdl->fd, buffer->buf, size);	
 	switch (total) {
 	case 0:
 		return ret_eof;

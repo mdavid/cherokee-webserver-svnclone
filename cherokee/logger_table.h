@@ -22,8 +22,8 @@
  * USA
  */
 
-#ifndef __CHEROKEE_LOGGER_TABLE_H__
-#define __CHEROKEE_LOGGER_TABLE_H__
+#ifndef CHEROKEE_LOGGER_TABLE_H
+#define CHEROKEE_LOGGER_TABLE_H
 
 #include "common.h"
 #include "table.h"
@@ -47,4 +47,4 @@ ret_t cherokee_logger_table_get        (cherokee_logger_table_t  *et, char *logg
 ret_t cherokee_logger_table_new_logger (cherokee_logger_table_t  *et, char *logger, cherokee_module_info_t  *info, cherokee_table_t *props, cherokee_logger_t **new_logger);
 
 
-#endif /* __CHEROKEE_LOGGER_TABLE_H__ */
+#endif /* CHEROKEE_LOGGER_TABLE_H */

@@ -7,7 +7,7 @@ Standards-Version: 3.5.10.0
 
 Package: cherokee
 Architecture: any
-Depends: ${cherokee:Depends}, logrotate, libcherokee0 (= ${Source-Version})
+Depends: ${cherokee:Depends}, logrotate, libcherokee-base0 (= ${Source-Version}), libcherokee-server0 (= ${Source-Version})
 Provides: httpd
 Description: Extremely fast and tiny web server
  Cherokee is an extremely fast and tiny web server. It's

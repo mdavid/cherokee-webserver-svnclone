@@ -15,6 +15,7 @@ from conf import *
 # Configuration parameters
 num      = 1
 thds     = 1
+ssl      = False
 pause    = False
 clean    = True
 kill     = True
@@ -42,11 +43,12 @@ if len(files) == 0:
 
 # Process the parameters
 for p in param:
-    if   p == '-s': pause    = True
+    if   p == '-d': pause    = True
     elif p == '-c': clean    = False
     elif p == '-k': kill     = False
     elif p == '-q': quiet    = True
     elif p == '-v': valgrind = True
+    elif p == '-s': ssl      = True
     elif p[:2] == '-n': num   = int(p[2:])
     elif p[:2] == '-t': thds  = int(p[2:])
     elif p[:2] == '-p': port  = int(p[2:])
@@ -60,6 +62,12 @@ CONF_BASE = """# Cherokee QA tests
                PanicAction /usr/bin/cherokee-panic
                Directory / { Handler common }
             """ % (PORT, www)
+
+if ssl:
+    CONF_BASE += """SSLCertificateFile    %s
+                   SSLCertificateKeyFile %s
+                   SSLCAListFile         %s
+                 """ % (SSL_CERT_FILE, SSL_CERT_KEY_FILE, SSL_CA_FILE)
 
 # Import modules 
 mods = []
@@ -101,7 +109,7 @@ if port is None:
             os.execl (CHEROKEE_PATH, "cherokee", "-C", cfg_file)
     else:
         print "PID: %d - %s" % (pid, CHEROKEE_PATH)
-        time.sleep(3)
+        time.sleep(10)
 
 its_clean = False
 def clean_up():
@@ -141,6 +149,7 @@ def mainloop_iterator(objs):
                 sys.stdin.readline()
 
             if not quiet:
+                if ssl: print "SSL:",
                 print "%s: " % (obj.name) + " "*(40 - len(obj.name)),
                 sys.stdout.flush()
 
@@ -152,7 +161,7 @@ def mainloop_iterator(objs):
                 port = PORT
 
             try:
-                ret = obj.Run(port)
+                ret = obj.Run(port, ssl)
             except Exception, e:
                 if not its_clean:
                     print e
@@ -170,6 +179,8 @@ def mainloop_iterator(objs):
                 obj.Clean()
 
 
+if ssl:
+    port = 443
 
 # Maybe launch some threads
 for n in range(thds-1):

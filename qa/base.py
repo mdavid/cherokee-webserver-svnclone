@@ -14,7 +14,7 @@ def importfile(path):
     file = open(path, 'r')
     module = imp.load_module(name, file, path, (ext, 'r', imp.PY_SOURCE))
     file.close()
-
+    
     return module
 
 class TestBase:
@@ -30,18 +30,18 @@ class TestBase:
         self._initialize()
         
     def _initialize (self):
+        self.ssl               = None
         self.reply             = ""      # "200 OK"..
         self.version           = None    # HTTP/x.y: 9, 0 or 1
         self.reply_err         = None    # 200
 
-    def _do_request (self, port):
+    def _do_request (self, port, ssl):
         for res in socket.getaddrinfo(HOST, port, socket.AF_UNSPEC, socket.SOCK_STREAM):
             af, socktype, proto, canonname, sa = res
 
             try:
                 s = socket.socket(af, socktype, proto)
             except socket.error, msg:
-                s = None
                 continue
 
             try:
@@ -55,14 +55,30 @@ class TestBase:
         if s is None:
             raise Exception("Couldn't connect to the server")
 
+        if ssl:
+            try:
+                self.ssl = socket.ssl (s)
+            except:
+                raise Exception("Couldn't handshake SSL")
+
         request = self.request + "\r\n"
         if self.post is not None:
             request += self.post
-        
-        s.send (request)
+
+        if self.ssl:
+            self.ssl.write (request)
+        else:
+            s.send (request)
         
         while 1:
-            d = s.recv(8192)
+            if self.ssl:
+                try:
+                    d = self.ssl.read(8192)
+                except:
+                    d = ''
+            else:
+                d = s.recv(8192)
+
             if len(d) == 0: break
             self.reply += d
 
@@ -130,8 +146,8 @@ class TestBase:
     def Prepare (self, www):
         None
 
-    def Run (self, port):
-        self._do_request(port)
+    def Run (self, port, ssl):
+        self._do_request(port, ssl)
         self._parse_output()
         return self._check_result()
 
@@ -174,7 +190,9 @@ class TestBase:
         src += "\tReply    = %s\n" % (headers[0])
         for header in headers[1:]:
             src += "\t\t%s\n" %(header)
-            
+
+        src += "\tBody     = %s\n" % (self.reply[len(header_full)+4:])
+
         return src
 
     def Mkdir (self, www, dir):
