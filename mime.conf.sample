@@ -1,0 +1,115 @@
+#
+# Cherokee MIME
+#
+
+# Sample:
+#
+# image/jpeg {
+#   max-age 1800
+#   suffixes jpg, jpeg, jpe, jfif
+# }
+
+text/html {
+  suffixes htm, html
+}
+
+text/richtext {
+  suffixes rtx
+}
+
+text/css {
+  suffixes css
+}
+
+text/xml {
+  suffixes xml, dtd
+}
+
+application/xhtml+xml {
+  suffixes xhtml, xht
+}
+
+
+#
+# Images:
+#
+image/jpeg { suffixes jpg, jpeg, jpe, jfif }
+image/tiff { suffixes tif, tiff }
+image/png  { suffixes png }
+image/gif  { suffixes gif }
+
+image/x-xpixmap          { suffixes xpm }
+image/x-portable-bitmap  { suffixes pbm }
+image/x-portable-graymap { suffixes pgm }
+image/x-portable-pixmap  { suffixes ppm }
+image/x-portable-anymap  { suffixes pnm }
+
+#
+# Audio:
+#
+audio/wav            { suffixes wav }
+audio/basic          { suffixes au, snd }
+audio/x-pn-realaudio { suffixes ra, ram, rm }
+audio/mpeg           { suffixes mp2, mp3, mpga }
+audio/midi           { suffixes mid, midi, kar }
+audio/x-aiff         { suffixes aif, aiff, aifc }
+
+#
+# Video:
+#
+video/mpeg      { suffixes mpeg, mpg, mpe }
+video/quicktime { suffixes qt, mov }
+video/x-msvideo { suffixes avi }
+
+#
+# Packers:
+#
+application/x-cpio            { suffixes cpio }
+application/x-tar             { suffixes tar }
+application/x-zip-compressed  { suffixes zip }
+
+#
+# Wap:
+#
+text/vnd.wap.wml               { suffixes wml }
+application/vnd.wap.wmlc       { suffixes wmlc }
+text/vnd.wap.wmlscript         { suffixes wmls }
+application/vnd.wap.wmlscriptc { suffixes wmlsc }
+image/vnd.wap.wbmp             { suffixes wbmp }
+
+#
+# OpenOffice.org mimes:
+#
+application/vnd.sun.xml.writer           { suffixes sxw }
+application/vnd.sun.xml.writer.template  { suffixes stw }
+application/vnd.sun.xml.writer.global    { suffixes sxg }
+application/vnd.sun.xml.calc             { suffixes sxc }
+application/vnd.sun.xml.calc.template    { suffixes stc }
+application/vnd.sun.xml.impress          { suffixes sxi }
+application/vnd.sun.xml.impress.template { suffixes sti }
+application/vnd.sun.xml.draw             { suffixes sxd }
+application/vnd.sun.xml.draw.template    { suffixes std }
+application/vnd.sun.xml.math             { suffixes sxm }
+
+#
+# Misc:
+#
+application/octet-stream          { suffixes a, bin, exe, dump, o }
+application/java                  { suffixes class }
+application/x-javascript          { suffixes js }
+application/postscript            { suffixes ps, eps, ai }
+application/pdf                   { suffixes pdf } 
+application/x-director            { suffixes dir, dcr, dxr, fgd }
+application/x-dvi                 { suffixes dvi }
+application/x-shockwave-flash     { suffixes swf }
+application/mac-binhex40          { suffixes hqx }
+application/x-latex               { suffixes latex }
+application/x-tex                 { suffixes tex }
+application/rtf                   { suffixes rtf }
+application/x-texinfo             { suffixes texi, texinfo }
+application/x-troff               { suffixes tr, roff }
+application/msword                { suffixes doc }
+application/powerpoint            { suffixes ppt }
+application/x-ns-proxy-autoconfig { suffixes pac }
+
+
