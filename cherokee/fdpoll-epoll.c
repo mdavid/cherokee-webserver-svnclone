@@ -90,9 +90,9 @@ _free (cherokee_fdpoll_epoll_t *fdp)
 static ret_t
 _add (cherokee_fdpoll_epoll_t *fdp, int fd, int rw)
 {
-	struct epoll_event ev = {
-		.data = 0
-	};
+	struct epoll_event ev;
+
+	ev.data.u64 = 0;
         
         /* Check the fd limit
          */
@@ -131,12 +131,12 @@ _add (cherokee_fdpoll_epoll_t *fdp, int fd, int rw)
 static ret_t
 _del (cherokee_fdpoll_epoll_t *fdp, int fd)
 {
-	struct epoll_event ev = {
-		.events   = 0,
-		.data     = 0
-	};
+	struct epoll_event ev;
 
-	ev.data.fd  = fd;
+	ev.events   = 0;
+	ev.data.u64 = 0;  /* <- I just wanna be sure there aren't */
+	ev.data.fd  = fd; /* <- 4 bytes unitialized */
+
 	if (epoll_ctl(fdp->ep_fd, EPOLL_CTL_DEL, fd, &ev) < 0)
 	{
 		PRINT_ERROR ("ERROR: epoll_ctl(%d, EPOLL_CTL_DEL, %d): %s\n", 
@@ -221,11 +221,11 @@ _reset (cherokee_fdpoll_epoll_t *fdp, int fd)
 static void
 _set_mode (cherokee_fdpoll_epoll_t *fdp, int fd, int rw)
 {
-	struct epoll_event ev = {
-		.data = 0
-	};
-	
-	ev.data.fd = fd;
+	struct epoll_event ev;
+
+	ev.data.u64 = 0;
+	ev.data.fd  = fd;
+
 	switch (rw) {
 	case 0: 
 		ev.events = EPOLLIN; 

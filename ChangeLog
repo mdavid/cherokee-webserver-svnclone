@@ -1,3 +1,9 @@
+2005-03-25  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/header.c (cherokee_header_parse),
+	cherokee/handler_file.c (cherokee_handler_file_init): Partial
+	content fixes.
+
 2005-03-23  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cherokee/http.h (http_mehod_with_body): Added new macro

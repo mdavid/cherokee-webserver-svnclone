@@ -23,15 +23,19 @@ class TestBase:
         self.conf              = None    # Directory /test { .. }
         self.request           = ""      # GET / HTTP/1.0
         self.post              = None
-        self.reply             = ""      # "200 OK"..
-        self.version           = None    # HTTP/x.y: 9, 0 or 1
-        self.reply_err         = None    # 200
         self.expected_error    = None
         self.expected_content  = None
         self.forbidden_content = None
 
-    def _do_request (self):
-        for res in socket.getaddrinfo(HOST, PORT, socket.AF_UNSPEC, socket.SOCK_STREAM):
+        self._initialize()
+        
+    def _initialize (self):
+        self.reply             = ""      # "200 OK"..
+        self.version           = None    # HTTP/x.y: 9, 0 or 1
+        self.reply_err         = None    # 200
+
+    def _do_request (self, port):
+        for res in socket.getaddrinfo(HOST, port, socket.AF_UNSPEC, socket.SOCK_STREAM):
             af, socktype, proto, canonname, sa = res
 
             try:
@@ -49,7 +53,7 @@ class TestBase:
             break    
 
         if s is None:
-            raise "Couldn't connect to the server"
+            raise Exception("Couldn't connect to the server")
 
         request = self.request + "\r\n"
         if self.post is not None:
@@ -65,6 +69,9 @@ class TestBase:
         s.close()
 
     def _parse_output (self):
+        if (len(self.reply) == 0):
+            raise Exception("Empty header")
+            
         lines = string.split(self.reply, "\n")
         reply = lines[0]        
 
@@ -75,14 +82,14 @@ class TestBase:
         elif reply[:8] == "HTTP/1.1":
             self.version = 1
         else:
-            raise "Invalid header: %s" % (reply)
+            raise Exception("Invalid header, len=%d: '%s'" % (len(reply), reply))
 
         reply = reply[9:]
 
         try:
             self.reply_err = int (reply[:3])
         except:
-            raise "Invalid header: %s" % (reply)
+            raise Exception("Invalid header, version=%d len=%d: '%s'" % (self.version, len(reply), reply))
 
         return 0
 
@@ -99,25 +106,23 @@ class TestBase:
                     if not entry in self.reply:
                         return -1
             else:
-                raise "Syntaxis error"
+                raise Exception("Syntax error")
 
         if self.forbidden_content != None:
             if type(self.forbidden_content) == types.StringType:
                 if self.forbidden_content in self.reply:
-                    print "esta el el reply!!"
-                    print "->"+self.forbidden_content
-                    print "<>===="
-                    print self.reply
-                    print "<>===="                    
                     return -1
             elif type(self.forbidden_content) == types.ListType:
                 for entry in self.forbidden_content:
                     if entry in self.reply:
                         return -1
             else:
-                raise "Syntaxis error"
+                raise Exception("Syntax error")
                 
         return 0
+
+    def Clean (self):
+        self._initialize()
 
     def Precondition (self):
         return True
@@ -125,8 +130,8 @@ class TestBase:
     def Prepare (self, www):
         None
 
-    def Run (self):
-        self._do_request()
+    def Run (self, port):
+        self._do_request(port)
         self._parse_output()
         return self._check_result()
 

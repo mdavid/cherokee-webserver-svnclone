@@ -50,7 +50,17 @@ run-tests.py \
 46-Redir.py \
 47-Redir2.py \
 48-NN.py \
-49-NN-broken.py
+49-NN-broken.py \
+50-HeadBody.py \
+51-10kRandom.py \
+52-50kRandom.py \
+53-100kRandom.py \
+54-ContentRange.py \
+55-ContentRange2.py \
+56-ContentRange3.py \
+57-ContentRange4.py \
+58-ContentRange-Double.py \
+59-ContentRange-Double2.py
 
 
 test:
