@@ -22,8 +22,8 @@
  * USA
  */
 
-#ifndef __CHEROKEE_HEADER_H__
-#define __CHEROKEE_HEADER_H__
+#ifndef CHEROKEE_HEADER_H
+#define CHEROKEE_HEADER_H
 
 #include "common-internal.h"
 #include "buffer.h"
@@ -134,4 +134,4 @@ ret_t cherokee_header_copy_unknown  (cherokee_header_t *hdr, char *name, int nam
 ret_t cherokee_header_get_number    (cherokee_header_t *hdr, int *num);
 ret_t cherokee_header_foreach       (cherokee_header_t *hdr, cherokee_header_foreach_func_t, cherokee_buffer_t *name, cherokee_buffer_t *cont, void *param);
 
-#endif /* __CHEROKEE_HEADER_H__  */
+#endif /* CHEROKEE_HEADER_H  */

@@ -10,20 +10,19 @@ x - Finished task
 [x] GNOME-VFS handler
 [x] Hide version
 [x] Timeout for keepalive connections
-[x] CGI Daemon
 [x] IPv6 support
 [x] PHP handler
 [x] Information handler
 [x] "Include" in configuration file
 [x] SSL support (TLS)
 [x] Add command line parameters
+[x] IP Ranges restrictions
+[x] Improve setenv() calls in cgi handler
 [ ] handler_dirlist to manage content-length
 [ ] handler_dirlist to implement shorting
 [ ] Stat cache
-[ ] Improve setenv() calls in cgi handler
-[ ] IP Ranges restrictions
 [ ] Cache for the encoder modules
-[ ] Something like the <DirectoryMatch> Directive (Apache)
+[ ] Something like the <DirectoryMatch> Apache's directive
 [ ] CAST-256 rfc2616, Blowfish
-
+[ ] Add X509 authorization support into Auth methods
 

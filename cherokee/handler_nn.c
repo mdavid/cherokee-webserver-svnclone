@@ -133,7 +133,6 @@ cherokee_handler_nn_new (cherokee_handler_t **hdl, void *cnt, cherokee_table_t *
 
 	conn = CONN(cnt);
 
-
 	cherokee_buffer_add (conn->local_directory, conn->request->buf, conn->request->len);
 	stat_ret = stat (conn->local_directory->buf, &info);
 	cherokee_buffer_drop_endding (conn->local_directory, conn->request->len);
@@ -147,6 +146,8 @@ cherokee_handler_nn_new (cherokee_handler_t **hdl, void *cnt, cherokee_table_t *
 	/* Create the redir handler
 	 */
 	ret = cherokee_handler_redir_new (hdl, cnt, properties);
+	if (unlikely(ret < ret_ok)) return ret;
+
 	MODULE(*hdl)->init = (handler_func_init_t) cherokee_handler_nn_init;
 	
 	return ret;
@@ -163,11 +164,15 @@ cherokee_handler_nn_init (cherokee_handler_t *hdl)
 	/* Look for the `nearest neighbor'
 	 */
 	new_request = get_nearest (conn->local_directory, conn->request);
-	
+	if (new_request == NULL) {
+		CONN(hdl->connection)->error_code = http_not_found;
+		return ret_error;
+	}
+
 	cherokee_buffer_add (conn->redirect, new_request, strlen(new_request));
 	CONN(hdl->connection)->error_code = http_moved_permanently;
 	
-	return ret_error;
+	return ret_ok;
 }
 
 

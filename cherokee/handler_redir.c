@@ -76,10 +76,7 @@ cherokee_handler_redir_new (cherokee_handler_t **hdl, void *cnt, cherokee_table_
 	
 	/* It needs at least the "URL" configuration parameter..
 	 */
-	if (cherokee_buffer_is_empty (CONN(cnt)->redirect)) {
-		if (properties == NULL) {
-			return ret_error;
-		}
+	if (cherokee_buffer_is_empty (CONN(cnt)->redirect) && properties) {
 
 		/* Get the URL property, if needed
 		 */
@@ -175,7 +172,7 @@ cherokee_handler_redir_init (cherokee_handler_redir_t *n)
 			if (rc == 0) {
 				/* TODO: write to error.log 
 				 */
-				PRINT_ERROR("Too many groups in the regex\n");
+				PRINT_ERROR_S("Too many groups in the regex\n");
 				
 			} else if (rc > 0) {
 				/* Eureka!
@@ -202,13 +199,9 @@ cherokee_handler_redir_init (cherokee_handler_redir_t *n)
 
 		cherokee_buffer_add (conn->redirect, n->target_url, n->target_url_len);
 		cherokee_buffer_add (conn->redirect, request_endding, request_end);
-	} else {
-	    /* Oops, I can't redirect the client :-( 
-	     */
-	    conn->error_code = http_not_found;
-	}
+	} 
 
-	return ret_error;
+	return ret_ok;
 }
 
 

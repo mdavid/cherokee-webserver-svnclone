@@ -197,7 +197,8 @@ cherokee_handler_file_init (cherokee_handler_file_t *n)
 	 */
 	if ((conn->encoder == NULL) &&
 	    (conn->socket->is_tls == non_TLS) &&
-	    (n->info.st_size <= MMAP_MAX_FILE_SIZE)) 
+	    (n->info.st_size <= MMAP_MAX_FILE_SIZE) &&
+	    (http_mehod_with_body (conn->header->method))) 
 	{
 		ret = cherokee_mmap2_get (srv->mmap_cache,
 					  conn->local_directory->buf,
@@ -304,6 +305,7 @@ cherokee_handler_file_step (cherokee_handler_file_t *fhdl,
 						conn->range_end - fhdl->offset,    /* size_t             size   */
 						&fhdl->offset,                     /* off_t             *offset */
 						&sent);                            /* ssize_t           *sent   */
+		if (ret < ret_ok) return ret;
 
 		/* cherokee_handler_file_init() activated the TCP_CORK flags.
 		 * After it, the header was sent.  And now, the first

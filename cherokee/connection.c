@@ -320,12 +320,6 @@ cherokee_connection_setup_error_handler (cherokee_connection_t *cnt)
 	if ((entry != NULL) && (entry->handler_new_func != NULL)) {
 		ret = entry->handler_new_func ((void **) &cnt->handler, cnt, entry->properties);
 		if (ret == ret_ok) goto out;
-
-		/* Sanity check
-		 */
-		if (!HANDLER_SUPPORT_ERROR(cnt->handler)) {
-			SHOULDNT_HAPPEN;
-		}
 	} 
 
 	/* If something was wrong, try with the default error handler
@@ -1046,7 +1040,8 @@ error:
 int
 cherokee_connection_is_userdir (cherokee_connection_t *cnt)
 {
-	return ((cnt->request->len > 4) && (cnt->request->buf[1] == '~'));
+	return ((cnt->request->len > 3) && 
+		(cnt->request->buf[1] == '~'));
 }
 
 
@@ -1355,7 +1350,6 @@ cherokee_connection_get_request (cherokee_connection_t *cnt)
 		ret = parse_userdir (cnt);
 		if (ret != ret_ok) goto error;
 	}
-
 
 	/* RFC 2817: Client Requested Upgrade to HTTP over TLS
 	 *
@@ -1686,6 +1680,7 @@ cherokee_connection_log_delayed (cherokee_connection_t *conn)
 
 	if ((conn->log_at_end) && (conn->logger_ref)) {
 		ret = cherokee_logger_write_access (conn->logger_ref, conn);
+		conn->log_at_end = false;
 	}
 
 	return ret;

@@ -28,12 +28,12 @@
 
 #include "logger_ncsa.h"
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <stdarg.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <syslog.h>
+
 
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
@@ -41,6 +41,7 @@
 #include <time.h>
 #endif
 
+#include "header.h"
 #include "server.h"
 #include "server-protected.h"
 #include "connection.h"
@@ -199,13 +200,13 @@ build_log_string (cherokee_logger_ncsa_t *logger, cherokee_connection_t *cnt, ch
 	char              *username;
 	const char        *method;
         const char        *version;
-	struct tm          conn_time;
+	struct tm         *conn_time;
 	char               ipaddr[CHE_INET_ADDRSTRLEN];
 	cherokee_buffer_t *combined_info = NULL;
     
-	/* thread-safe version of localtime 
+	/* Read the bogonow value from the server
 	 */
-	localtime_r(&CONN_THREAD(cnt)->bogo_now, &conn_time);
+	conn_time = &CONN_THREAD(cnt)->bogo_now_tm;
 	
 #ifdef HAVE_INT_TIMEZONE
 	z = - (timezone / 60);
@@ -259,12 +260,12 @@ build_log_string (cherokee_logger_ncsa_t *logger, cherokee_connection_t *cnt, ch
 			 "%s - %s [%02d/%s/%d:%02d:%02d:%02d %c%02d%02d] \"%s %s %s\" %d " FMT_OFFSET "%s\n",
 			 ipaddr,
 			 username, 
-			 conn_time.tm_mday, 
-			 month[conn_time.tm_mon], 
-			 1900 + conn_time.tm_year,
-			 conn_time.tm_hour, 
-			 conn_time.tm_min, 
-			 conn_time.tm_sec,
+			 conn_time->tm_mday, 
+			 month[conn_time->tm_mon], 
+			 1900 + conn_time->tm_year,
+			 conn_time->tm_hour, 
+			 conn_time->tm_min, 
+			 conn_time->tm_sec,
 			 (z < 0) ? '-' : '+', 
 			 (int) z/60, 
 			 (int) z%60, 

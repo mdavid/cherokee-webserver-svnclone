@@ -603,8 +603,8 @@ process_active_connections (cherokee_thread_t *thd)
 
 			/* Build local request string
 			 */
-			if ((!cherokee_buffer_is_empty (CONN_VSRV(conn)->userdir)) &&
-			    (cherokee_connection_is_userdir (conn)))
+			if (!cherokee_buffer_is_empty (CONN_VSRV(conn)->userdir) &&
+			    !cherokee_buffer_is_empty (conn->userdir))
 			{
 				ret = cherokee_connection_get_plugin_entry (conn, CONN_VSRV(conn)->userdir_plugins, &plugin_entry);
 				if (unlikely (ret != ret_ok)) {
@@ -715,8 +715,13 @@ process_active_connections (cherokee_thread_t *thd)
 					 */
 					conn->phase = phase_lingering;
 					goto phase_lingering_close;
-					
 				}
+
+				/* At this point, two different things could happend:
+				 * - It has a common handler like handler_redir
+				 * - It has a error handler like handler_error
+				 */
+
 				conn->phase = phase_init;
 				break;
 			}
@@ -761,14 +766,11 @@ process_active_connections (cherokee_thread_t *thd)
 				continue;
 
 			case ret_ok:
-				if ((conn->header->method == http_head) ||
-				    (conn->header->method == http_options)) 
-				{
+				if (!http_mehod_with_body (conn->header->method)) {
 					maybe_purge_closed_connection (thd, conn);
 					continue;
-
-				} else if (http_type_300(conn->error_code)) 
-				{
+				}
+				else if (http_type_300(conn->error_code)) {
 					maybe_purge_closed_connection (thd, conn);
 					continue;
 				}
@@ -830,6 +832,9 @@ process_active_connections (cherokee_thread_t *thd)
 				case ret_error:
 					conn->phase = phase_lingering;
 					goto phase_lingering_close;
+					
+				case ret_eagain:
+					break;
 
 				default:	
 					maybe_purge_closed_connection (thd, conn);
@@ -1334,6 +1339,10 @@ cherokee_thread_step_MULTI_THREAD (cherokee_thread_t *thd, cherokee_boolean_t do
 	}
 	
 out:
+	/* Try to update bogo_now
+	 */
+	try_to_update_bogo_now (thd);
+
 	/* Process polling connections
 	 */
 	process_polling_connections (thd);
