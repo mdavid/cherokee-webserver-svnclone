@@ -1,5 +1,7 @@
 2005-03-06  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* cherokee/fdpoll-epoll.c: Some little bug fixes
+
 	* cherokee/Makefile.am (gnu_getopt): getopt files moved inside
 	cherokee/getopt directory.	
 

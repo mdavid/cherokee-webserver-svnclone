@@ -75,7 +75,8 @@ typedef struct {
 static ret_t 
 _free (cherokee_fdpoll_epoll_t *fdp)
 {
-        close (fdp->ep_fd);
+	if (fdp->ep_fd > 0)
+		close (fdp->ep_fd);
 
         free (fdp->ep_events);
         free (fdp->epoll_rs2idx);
@@ -160,12 +161,9 @@ _watch (cherokee_fdpoll_epoll_t *fdp, int timeout_msecs)
 	fdp->ep_readyfds = epoll_wait (fdp->ep_fd, fdp->ep_events, FDPOLL(fdp)->nfiles, timeout_msecs);
 
 	for (i = 0, ridx = 0; i < fdp->ep_readyfds; ++i) {
-		if (fdp->ep_events[i].events & (EPOLLIN | EPOLLOUT | EPOLLERR | EPOLLHUP))
-		{
-			fdp->epoll_idx2rs[fdp->ep_events[i].data.fd] = i;
-			fdp->epoll_rs2idx[ridx] = i;
-			ridx++;
-		}
+		fdp->epoll_idx2rs[fdp->ep_events[i].data.fd] = i;
+		fdp->epoll_rs2idx[ridx] = i;
+		ridx++;
 	}
 
 	return ridx;
@@ -178,47 +176,38 @@ _check (cherokee_fdpoll_epoll_t *fdp, int fd, int rw)
 	int      fdidx;
 	uint32_t events;
 
-	/* First sanity check
+	/* Sanity check: is it a wrong fd?
 	 */
-	if (fd < 0) {
-		return -1;
-	}
+	if (fd < 0) return -1;
 
+	/* If fdidx is -1 is because the _reset() function
+	 */
 	fdidx = fdp->epoll_idx2rs[fd];
+	if (fdidx == -1) return 0;
 
-	/* First sanity check: out of range?
-	 */
-	if (fdidx == -1) {
-		return 0;
-	}
-
-	if (fdidx >= (FDPOLL(fdp)->nfiles - 1)) {
-		PRINT_ERROR ("ERROR: fdpoll: out of range, %d of %d, fd=%d\n", fdidx, FDPOLL(fdp)->nfiles, fd);
-		return 0;
-	}
-
-	/* Sanity check: Index structs..
+	/* Sanity check
 	 */
 	if (fdp->ep_events[fdidx].data.fd != fd) {
 		return 0;
+	}
+
+	/* Sanity check
+	 */
+	if (fdidx >= (FDPOLL(fdp)->nfiles - 1)) {
+		PRINT_ERROR ("ERROR: fdpoll: out of range, %d of %d, fd=%d\n",
+			     fdidx, FDPOLL(fdp)->nfiles, fd);
+		return -1;
 	}
 
 	/* Check for errors
 	 */
 	events = fdp->ep_events[fdidx].events;
 
-	if (events & EPOLLHUP) {
-		return -1;
-	}
-	if (events & EPOLLERR) {
-		return -1;
-	}
-
 	switch (rw) {
 	case 0: 
-		return events & EPOLLIN;
+		return events & (EPOLLIN | EPOLLERR | EPOLLHUP);
 	case 1: 
-		return events & EPOLLOUT;
+		return events & (EPOLLOUT | EPOLLERR | EPOLLHUP);
 	}
 
 	return 0;
@@ -314,6 +303,8 @@ fdpoll_epoll_new (cherokee_fdpoll_t **fdp, int sys_limit, int limit)
 	if (re < 0) {
 		PRINT_ERROR ("ERROR: Couldn't set CloseExec to the epoll descriptor: fcntl: %s\n", 
 			     strerror(errno));
+		close (n->ep_fd);
+		n->ep_fd = -1;
 		return ret_error;		
 	}
 
