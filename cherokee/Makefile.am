@@ -37,10 +37,10 @@ cherokeedata_DATA = mime_types.txt
 #
 if !HAVE_GETOPT_LONG
 gnu_getopt =  \
-    getopt.h  \
-    getopt.c  \
-    getopt1.c \
-    gettext.h
+    getopt/getopt.h  \
+    getopt/getopt.c  \
+    getopt/getopt1.c \
+    getopt/gettext.h
 endif
 
 #
