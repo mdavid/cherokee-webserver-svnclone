@@ -1,0 +1,95 @@
+cherokee (0.4.18-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Alvaro Lopez <alvaro@alobbs.com>  Wed, 22 dic 2004 00:00:00 +0200
+
+cherokee (0.4.16-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Gunnar Wolf <gwolf@gwolf.cx>  Wed, 14 Apr 2004 17:57:04 +0200
+
+cherokee (0.4.15-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Gunnar Wolf <gwolf@gwolf.cx>  Fri,  9 Apr 2004 11:16:30 -0500
+
+cherokee (0.4.14-2) unstable; urgency=low
+
+  * Minor packaging details
+    * In the init script, merged reload (which had no effect) into restart
+    * Removed unused debconf cleanup from postrm
+    * Now provides httpd
+    * Fixed a bug in rules - installlogrotate had a parameter that
+      caused it to become useless
+
+ -- Gunnar Wolf <gwolf@debian.org>  Mon, 29 Mar 2004 16:34:06 -0600
+
+cherokee (0.4.14-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Gunnar Wolf <gwolf@debian.org>  Wed, 24 Mar 2004 12:41:34 -0600
+
+cherokee (0.4.13-1) unstable; urgency=low
+
+  * No longer a debian-native package
+
+ -- Gunnar Wolf <gwolf@debian.org>  Mon, 15 Mar 2004 17:33:24 -0600
+
+cherokee (0.4.13) unstable; urgency=low
+
+  * New upstream version. Updated to 0.4.13
+
+ -- Alvaro Lopez Ortega (alo) <alvaro@alobbs.com>  Mon, 08 Mar 2004 20:12:18 +0100
+
+cherokee (0.4.12) unstable; urgency=low
+
+  * New upstream version. Updated to 0.4.12
+
+ -- Alvaro Lopez Ortega (alo) <alvaro@alobbs.com>  Thu, 04 Mar 2004 16:24:27 +0100
+
+cherokee (0.4.11) unstable; urgency=low
+
+  * New upstream version. Updated to 0.4.11
+
+ -- Alvaro Lopez Ortega (alo) <alvaro@alobbs.com>  Thu, 26 Feb 2004 17:53:22 +0100
+
+cherokee (0.4.10) unstable; urgency=low
+
+  * New upstream version. First official Debian release.
+
+ -- Alvaro Lopez Ortega (alo) <alvaro@alobbs.com>  Sat, 31 Jan 2004 01:05:56 +0100
+
+cherokee (0.4.5.99+20031214-2) unstable; urgency=low
+
+  * New upstream version. First official Debian release.
+
+ -- Alvaro Lopez Ortega (alo) <alvaro@alobbs.com>  Sun, 14 Dec 2003 10:28:16 +0100
+
+cherokee (0.4.5.99+20031214-1) unstable; urgency=low
+
+  * New upstream version
+
+ -- Alvaro Lopez Ortega (alo) <alvaro@alobbs.com>  Sat, 14 Dec 2003 00:00:00 +0100
+
+cherokee (0.4.5.99+20031213-1) unstable; urgency=low
+
+  * New upstream version
+
+ -- Alvaro Lopez Ortega (alo) <alvaro@alobbs.com>  Sat, 13 Dec 2003 13:26:29 +0100
+
+cherokee (0.4.5+20031021) unstable; urgency=low
+
+    * new package: Based in 0.4.5+20031021
+  
+ -- Alvaro Lopez Ortega (alo) <alvaro@alobbs.com>  Tue, 21 Oct 2003 14:19:05 +0200
+
+cherokee (0.4.5) unstable; urgency=low
+  
+    * new package: Based in 0.4.5
+  
+ -- Alvaro Lopez Ortega (alo) <alvaro@alobbs.com>  Wed, 15 Oct 2003 14:14:10 +0200
+ 

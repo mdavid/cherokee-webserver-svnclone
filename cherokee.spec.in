@@ -1,0 +1,136 @@
+# Workaround for a change in RPM 4.1.x; needs proper fixing soon!
+%define _unpackaged_files_terminate_build 0
+%define version 0.4.4
+
+Summary: Cherokee 
+Name: cherokee
+Version: %{version}
+Release: 1
+Copyright: GPL
+URL: ftp://alobbs.com/cherokee
+Group: Utilities
+Packager: Pablo Neira <pneira@optimat.com>
+Source: ftp://alobbs.com/cherokee/cherokee-%{version}.tar.gz
+#Requires: blau
+
+%description
+* FAST and tiny
+* Embedable
+* Extensible with plug-ins
+* Handler-to-path support
+* Virtual servers support
+* Encoders support:
+    o GZip
+* Loggers support:
+    o NCSA
+* Dynamic / Static plug-in compilation
+* Streaming support
+* Common tasks:
+    o Work as a daemon
+    o Mime types
+    o Log via syslog
+    o Keep-alive connections
+    o Runs under a chroot enviroment
+* Clean code ;-)
+* It's free software
+
+%changelog
+* Tue Jul 1 2003  Pablo Neira <pneira@optimat.com>
++ Version 0.4.4:
+  + This release adds two important new features, encoder support, and aliases support, where
+it supports mapping a public Web directory to a special local one. This release also fixes som
+e little bugs.
+
+* Wed Apr 6 2003  Pablo Neira <pneira@optimat.com>
++ Version 0.4.1:
+  + I just generated a cherokee RPM file. 
+
+###########################################################
+%prep
+###########################################################
+%setup
+
+###########################################################
+%build
+###########################################################
+./configure
+make
+make install
+
+###########################################################
+%install
+###########################################################
+
+###########################################################
+%files
+###########################################################
+%defattr(-,root,root)
+/usr/local/bin/cherokee
+/usr/local/bin/cherokee_static
+/usr/local/etc/cherokee
+/usr/local/etc/cherokee/cherokee.conf
+%dir /usr/local/include/cherokee
+/usr/local/include/cherokee/*.h
+%dir /usr/local/lib/cherokee
+/usr/local/lib/cherokee/libcherokee_*
+/usr/local/lib/libcherokee.*
+%dir /usr/local/share/cherokee
+/usr/local/share/cherokee/mime_types.txt
+
+
+###########################################################
+%clean
+###########################################################
+if
+  [ -z "${RPM_BUILD_ROOT}"  -a "${RPM_BUILD_ROOT}" != "/" ]
+then
+  rm -rf $RPM_BUILD_ROOT
+fi
+rm -rf $RPM_BUILD_DIR/cherokee-0.4.1
+
+###########################################################
+%pre
+###########################################################
+
+###########################################################
+%post
+###########################################################
+
+# There's already a group with gid 65534 so
+# I decided to choose the gid 65533 which is free.
+# It seems Cherokee works also fine by using this gid.
+#
+found=0
+for line in `cat /etc/group`
+do
+        GR=`echo $line | cut -f1 -d':'`
+        if [ "$GR" == "nogroup" ]
+        then
+                found=1
+        fi
+done
+
+if [ $found -eq 0 ]
+then
+	echo "Creating group nogroup(65533)"
+	groupadd -g 65533 nogroup
+fi
+
+###########################################################
+%preun
+###########################################################
+found=0
+for line in `cat /etc/group`
+do
+        GR=`echo $line | cut -f1 -d':'`
+        if [ "$GR" == "nogroup" ]
+        then
+                found=1
+        fi
+done
+
+if [ $found -eq 1 ]
+then
+	echo "Deleting group nogroup(65533)"
+	groupdel nogroup
+fi

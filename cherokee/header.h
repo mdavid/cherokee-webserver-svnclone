@@ -1,0 +1,137 @@
+/* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
+
+/* Cherokee
+ *
+ * Authors:
+ *      Alvaro Lopez Ortega <alvaro@alobbs.com>
+ *
+ * Copyright (C) 2001, 2002, 2003, 2004, 2005 Alvaro Lopez Ortega
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of version 2 of the GNU General Public
+ * License as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+ * USA
+ */
+
+#ifndef __CHEROKEE_HEADER_H__
+#define __CHEROKEE_HEADER_H__
+
+#include "common-internal.h"
+#include "buffer.h"
+#include "table.h"
+#include "http.h"
+
+
+typedef struct {
+	off_t info_off;  
+	off_t info_len;
+} cherokee_header_entry_t;
+
+typedef struct {
+	off_t header_off;
+	off_t header_info_off;
+	int   header_info_len;
+} cherokee_header_unknown_entry_t;
+
+
+/* NOTE:
+ * Keep it sync with known_headers_names of header.c
+ */
+typedef enum {
+	header_connection,
+	header_range,
+	header_keepalive,
+	header_accept,
+	header_host,
+	header_accept_encoding,
+	header_user_agent,
+	header_referer,
+	header_location,
+	header_content_length,
+	header_upgrade,
+	HEADER_LENGTH
+} cherokee_common_header_t;
+
+
+typedef enum {
+	header_type_request,
+	header_type_response, 
+	header_type_basic
+} cherokee_type_header_t;
+
+
+typedef struct {
+	/* Known headers
+	 */
+	cherokee_header_entry_t header[HEADER_LENGTH];
+	
+	/* Unknown headers
+	 */
+	cherokee_header_unknown_entry_t *unknowns;
+	int                              unknowns_len;
+
+	/* Properties
+	 */
+	cherokee_http_version_t version;
+	cherokee_http_method_t  method;
+	cherokee_http_t         response;
+
+	/* Request
+	 */
+	off_t request_off;
+	int   request_len;
+	int   request_args_len;
+
+	/* Query string
+	 */
+	off_t query_string_off;
+	int   query_string_len;
+
+	/* Debug & sanity checks
+	 */
+	cherokee_buffer_t *input_buffer;
+	crc_t              input_buffer_crc;
+	uint32_t           input_header_len;
+
+} cherokee_header_t;
+
+
+#define HDR(h)          ((cherokee_header_t *)(h))
+#define HDR_METHOD(h)   (HDR(h)->method)
+#define HDR_RESPONSE(h) (HDR(h)->response)
+
+typedef ret_t (* cherokee_header_foreach_func_t) (cherokee_buffer_t *header, cherokee_buffer_t *content, void *data);
+
+
+ret_t cherokee_header_new           (cherokee_header_t **hdr);
+ret_t cherokee_header_free          (cherokee_header_t  *hdr);
+ret_t cherokee_header_clean         (cherokee_header_t  *hdr);
+
+ret_t cherokee_header_parse         (cherokee_header_t *hdr, cherokee_buffer_t *buffer, cherokee_type_header_t type);
+ret_t cherokee_header_has_header    (cherokee_header_t *hdr, cherokee_buffer_t *buffer, int tail_len);
+ret_t cherokee_header_get_length    (cherokee_header_t *hdr, uint32_t *len);
+
+ret_t cherokee_header_copy_request        (cherokee_header_t *hdr, cherokee_buffer_t *request);
+ret_t cherokee_header_copy_request_w_args (cherokee_header_t *hdr, cherokee_buffer_t *request);
+ret_t cherokee_header_get_arguments       (cherokee_header_t *hdr, cherokee_buffer_t *qstring, cherokee_table_t *arguments);
+
+ret_t cherokee_header_has_known     (cherokee_header_t *hdr, cherokee_common_header_t header);
+ret_t cherokee_header_get_known     (cherokee_header_t *hdr, cherokee_common_header_t header, char **info, int *info_len);
+ret_t cherokee_header_get_unknown   (cherokee_header_t *hdr, char *name, int name_len, char **header, int *header_len);
+
+ret_t cherokee_header_copy_known    (cherokee_header_t *hdr, cherokee_common_header_t header, cherokee_buffer_t *buf);
+ret_t cherokee_header_copy_unknown  (cherokee_header_t *hdr, char *name, int name_len, cherokee_buffer_t *buf);
+
+ret_t cherokee_header_get_number    (cherokee_header_t *hdr, int *num);
+ret_t cherokee_header_foreach       (cherokee_header_t *hdr, cherokee_header_foreach_func_t, cherokee_buffer_t *name, cherokee_buffer_t *cont, void *param);
+
+#endif /* __CHEROKEE_HEADER_H__  */

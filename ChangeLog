@@ -1,0 +1,3785 @@
+2005-03-03  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/buffer.c (cherokee_buffer_read_from_fd): Added EIO
+	management.
+
+2005-03-02  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/socket.c (initialize_tls_session): Fixed compilation
+	problem. Reported by Cesar Fernandez Gago.
+
+2005-02-27  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee_replace.c: Fixed some compilation warnings.
+
+2005-02-25  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/macros.h (CST_OFFSET): Added new macro
+
+2005-02-24  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/table.c (cherokee_table_del): Last argmente removed.
+	It was used to return the value of the deleted element.
+
+	* configure.in, cherokee/zlib/Makefile.am: Improved zlib
+	compilation.
+
+2005-02-21  Rodrigo Fernandez-Vizarra  <rodrigo.fernandez-vizarra@sun.com>
+
+	* cherokee/mmap2.c (table_is_full): Fixed the condition to check if
+	the table is full.
+
+2005-02-20  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/socket.c (cherokee_socket_gethostbyname): Changed
+	__SUN_PROC by SOLARIS.  There was an error here compiling Cherokee
+	in Solaris with GCC.
+
+	* cherokee/header.c (parse_request_first_line): Improved
+	parsing. Now it is a bit more secure.
+
+	* cherokee/connection.c (cherokee_connection_setup_error_handler):
+	On error, it will close the socket: keepalive = 0.
+
+	* cherokee/server.c (print_banner): Added new substring about IPv6
+
+2005-02-19  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/handler_cgi.c: Fixed silly bug.  Now POST requests are
+	working again.  This problem was introducced in the execl() to
+	execve() code conversion.
+
+2005-02-18  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/server.c (set_fdmax_limit): Fixed logic.
+
+	* configure.in: Added check for getrlimit() and getdtablesize()
+
+	* cherokee/util.c (cherokee_sys_fdlimit_get): Added WIN32
+
+	* cherokee/thread.c (cherokee_thread_step_MULTI_THREAD): Fixed
+	code logic problem.  This was the CGI execution problems source.
+
+	* configure.in: Added AC_DEFINE for Solaris
+
+2005-02-15  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/socket.c (cherokee_socket_accept_fd,
+	cherokee_socket_set_sockaddr): Added new helper function to
+	improve performance in thread.c
+
+	* cherokee/connection.c (cherokee_connection_mrproper): It
+	shouldn't keep information in incoming_header if it is not a
+	keep-alive connection. Fixed.
+
+	* cherokee/mmap2.c (cherokee_mmap2_get): Added a new mutex:
+	cherokee_mmap2_get_mutex. From this moment _get() is atomic.
+
+2005-02-14  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/cherokee-panic (action): Added "full" to the bt action.
+
+	* cherokee/mmap2.c (entry_free): Fixed tiny memory corruption
+	problem.
+
+	* cherokee/handler_file.c (cherokee_handler_file_new): Fixed: move
+	depends on uninitialised value.
+
+	* cherokee/socket.c (cherokee_socket_ntop): Fixed: move depends on
+	uninitialised value.
+
+	* cherokee/buffer.c (cherokee_buffer_ensure_size): If ->buf is
+	NULL just use malloc and return.
+
+2005-02-13  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/fdpoll-epoll.c (_check): Added sanity check
+
+2005-02-12  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/handler_cgi.h: changed type of the pid property. Now it
+	is pid_t.
+
+	* cherokee/buffer.c (cherokee_buffer_read_from_fd): It didn't
+	support EINTR error handling.
+
+	* cherokee/handler_cgi.c (cherokee_handler_cgi_init): Now it uses
+	execve() instead execl().  All cherokee_setenv() calls have been
+	dropped out.
+
+2005-02-09  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/handler_file.c (cherokee_handler_file_add_headers): Now
+	it uses cherokee_gmtime() instead of gmtime().
+
+	* cherokee/http.h (http_moved_temporarily_string), cherokee/http.c
+	(cherokee_http_code_copy): Fixed 302 string.
+
+	* cherokee/common-internal.h (CHEROKEE_RWLOCK_TRYWRITER,
+	CHEROKEE_RWLOCK_TRYREADER, CHEROKEE_MUTEX_TRY_LOCK): If Cherokee
+	is compiled without pthread support, it is 0 <- that means that it
+	has locked.
+
+	* cherokee/logger_ncsa.c (build_log_string), cherokee/logger_w3c.c
+	(cherokee_logger_w3c_write_access,
+	cherokee_logger_w3c_write_error): Now it uses bogo_now from the
+	thread.
+
+	* cherokee/server-protected.h: Added new rwlock: bogo_now_mutex.
+
+	* cherokee/common-internal.h (CHEROKEE_RWLOCK_TRYREADER,
+	CHEROKEE_RWLOCK_TRYWRITER): Added two new macros to wrap
+	pthread_rwlock_tryrdlock() and pthread_rwlock_trywrlock()
+
+	* cherokee/thread.c (set_sigpipe): Removed.
+
+	* cherokee/thread.h: Added new properties: time_t bogo_now, struct
+	tm bogo_now_tm, cherokee_buffer_t *bogo_now_string.
+
+	* cherokee/mmap2.c (cherokee_mmap2_get), cherokee/handler_file.c
+	(cherokee_handler_file_init): Added new bogo_now parameter.
+
+2005-02-08  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/connection.c, cherokee/macros.h: Now, it look at the
+	traffic_next property to update the virtual server traffic
+	counters each DEFAULT_TRAFFIC_UPDATE seconds. It uses to the new
+	cherokee_connection_update_vhost_traffic() function.  It should
+	improve the performance.
+
+	* cherokee/connection.c
+	(cherokee_connection_update_vhost_traffic): Added new method to
+	update the virtual server traffic information.  It just call the
+	new cherokee_virtual_server_add_{tx,rx} to update it safely.
+
+	* cherokee/connection.h: Added rx and tx properties.
+
+	* cherokee/virtual_server.h, cherokee/virtual_server.c
+	(cherokee_virtual_server_add_rx, cherokee_virtual_server_add_tx):
+	Added these new function to make rx/tx increment thread
+	safe. There are connection in the threads that could want to
+	increment this values at the same time.
+
+	* cherokee/server-protected.h: Added new property: type struct tm.
+
+	* cherokee/util.h, cherokee/util.c (cherokee_gmtime): Added new
+	function.
+
+	* cherokee/server.c (cherokee_server_unlock_threads): Added new
+	function.
+
+	* cherokee/thread.h, cherokee/thread.c (cherokee_thread_unlock):
+	Added new function to launch the thread. It just unlocks the
+	starting mutex.
+
+	* cherokee/thread.h, cherokee/thread.c: Added starting_lock.
+
+	* cherokee/mmap2.c (cherokee_mmap2_clean_up): Fixed some
+	concurency problems.
+
+2005-02-06  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/thread.c: Integrated lingering close stuff.
+
+2005-02-06  Rodrigo Fernandez-Vizarra  <Rodrigo.Fernandez-Vizarra@sun.com>
+
+	* ChangeLog: Fixed a typo in my name ;-)
+      
+	* cherokee/Makefile.am: Changed a GNU specific rule to a GNU/BSD
+	compatible rule
+
+	* cherokee/handler_cgi.c: Added signal.h so that it compiles in
+	NetBSD 2.0
+
+2005-02-05  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/socket.c (cherokee_read): Now it supports read to a
+	NULL.  It is useful to implement lingering close.
+
+	* cherokee/connection.h, cherokee/connection.c
+	(cherokee_connection_pre_lingering_close): Added new function.
+
+	* cherokee/connection.h: Added lingering state
+
+2005-02-03  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/server.c (read_config_path): Added closedir()
+	call. There was a memory leak due to this.
+
+	* cherokee/icons.c (cherokee_icons_set_suffixes): Tiny memory leak
+	fixed.
+
+	* cherokee/mmap2.c, cherokee/mmap2.h: Now it does not use
+	CHEROKEE_NEW_STRUCT_WITH_PRIV.
+
+	* cherokee/macros.h (CHEROKEE_NEW_STRUCT_WITH_PRIV): Removed!! It
+	was the source of lot of problems.
+
+2005-02-03  Rodrigo Fernandez-Vizarra  <Rodrigo.Fernandez-Vizarra@sun.com>
+
+	* cherokee/fdpoll-kqueue.c: Fixed compilation problem in Freebsd
+	and Netbsd.
+
+2005-02-01  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/server.c (cherokee_server_init): Fixed wrong thread
+	number in single-thread executable.
+
+	* cherokee/handler_cgi.c (cherokee_handler_cgi_free): Now calls to
+	close() safely.
+
+	* cherokee/thread.c (cherokee_thread_step_SINGLE_THREAD):
+	tls_enabled fixed.
+
+2005-01-30  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/handler_cgi.c (cherokee_handler_cgi_new): Better error
+	handling.
+
+	* cherokee/header.c (cherokee_header_get_arguments): Now it
+	returns ret_ok instead ret_error parsing requests without
+	parameters.
+
+	* cherokee/connection.c (cherokee_connection_parse_args): Added
+	sanity check.
+
+2005-01-24  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/connection.c (cherokee_connection_free): Memory leak
+	fixed. It was not freeing query_string buffer.
+
+2005-01-21  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/connection.c (get_host): Added security check. Hostname
+	can't start by dot.
+
+2005-01-20  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/socket.c (cherokee_read, cherokee_writev,
+	cherokee_write): Added EINTR and EWOULDBLOCK
+
+2005-01-19  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/handler_cgi.h: Removed HANDLERCGI_PARAM and
+	HANDLERCGI_FILE macros.	
+
+2005-01-15  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/Makefile.am: Fixed libpcre support
+
+2005-01-12  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/buffer.h, cherokee/buffer.c
+	(cherokee_buffer_replace_string): Added new method.
+
+
+2005-01-09  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/macros.h, cherokee/fdpoll-epoll.c: Errors around epoll
+	are not more fatal errors.
+
+2005-01-06  Emil Beinroth <emilbeinroth@gmx.net>
+
+	* cherokee/server.c (change_execution_user): Now it uses
+	initgroups() to reset the user groups on change.
+
+2005-01-01  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/*c, *h, *l, *y: Copyright notice updated
+
+	* configure.in: Added PCRE library detection
+
+	* cherokee/handler_redir.c, cherokee/handler_redir.h: Ayose's
+	patch integration and some little fixes.
+
+
+2005-12-31  Ayose Cazorla León   <setepo@gulic.org>
+
+	* cherokee/handler_redirc, cherokee/handler_redir.c:
+	Added PCRE library support
+
+
+2004-12-29  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/connection.c (cherokee_connection_get_request): It will
+	only try to process the Connection: Upgrade information if TLS is
+	enabled in the server.
+
+
+2004-12-27  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* configure.in: Clean up to use AC_HELP_STRING
+
+
+2004-12-26  Ayose Cazorla León   <setepo@gulic.org>
+
+	* cherokee/handler_cgi.c, cherokee/handler_error.c,
+	cherokee/handler_file.c: Bug fixes.
+
+
+2004-12-24  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/server.c (cherokee_server_read_config_file): It
+	configuration file is NULL, it will read the default one:
+	CHEROKEE_CONFDIR"/cherokee.conf"
+
+	* cherokee/macros.h: Added <stdint.h> inclusion to avoid problems
+	due to use int32_t in the cherokee structs.
+
+
+2004-12-23  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/fdpoll.c, cherokee/fdpoll.h: Added "port" support.
+
+	* configure.in, cherokee/Makefile.am: Added check for the new
+	Solaris 10 "Event Ports".
+
+	* cherokee/fdpoll-kqueue.c: Fixed kqueue support
+
+
+2004-12-22  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* debian/rules (config.status): It does not use --disable-epoll
+	anymore.  Now the polling method is choosen on-the-fly.
+	
+	* debian/rules: Removed cherokee-bench package.
+	
+	* configure.in: Removed --disable-epoll parameter.
+
+	* cherokee/cherokee-panic: Added Solaris 10 support - with dbx
+
+
+2004-12-20  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/list_mergesort.c, cherokee/list_mergesort.h: Added
+	Mergesort algorithm.
+	http://www.chiark.greenend.org.uk/~sgtatham/algorithms/listsort.html
+
+	* cherokee/table.c (cherokee_table_len): Added new method.
+
+	* cherokee/table.c (cherokee_table_clean_up): Added new method.
+
+
+2004-12-18  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/Makefile.am, src/*.deps, src/module_loader.c: Modules
+	are not longer linked against other modules.  Added .deps for
+	this.
+
+2004-12-07  Rodrigo Fernandez-Vizarra  <Rodrigo.Fernandez-Vizarra@Sun.COM>
+
+	* cherokee.m4: Regexps fixed.
+
+2004-11-27  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* configure.in, src/Makefile.am, src/handler_mono.c,
+	src/handler_mono.h: Removed Mono support.
+
+	* src/common.c: No longer needed. Removed.
+
+	* src/common.c (PRINT_ERROR, PRINT_DEBUG): Now these are macros
+	instead functions - defined in the header file.
+
+	* src/util.h, src/util.c: Added new files for common.h clean up.
+
+
+2004-11-24  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/handler_cgi.c (_LOG): Removed. A new macro "dbg" has been
+	added, it is cleaner than _LOG.
+	
+
+2004-11-21  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/server.c (print_banner): Some little improvements.
+
+
+2004-11-20  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/buffer_escape.c (cherokee_buffer_escape_free):
+	Bugfix. s/esc->internal/esc->internal[i]/
+	
+	* src/read_config_scanner.l, src/read_config_grammar.y: Added new
+	configuration entry "MaxConnReuse" to set the max number of
+	connection to reuse in each thread.
+
+	* src/thread.c (connection_reuse_or_free): Added new function.
+
+	* src/Makefile.am (libcherokee_server_la_SOURCES): Removed log.c
+	and log.h. These files are not longer used.
+
+	* src/handler_cgi.c (cherokee_handler_cgi_init): Droped O_ASYNC
+	from O_ASYNC|O_NDELAY|O_NONBLOCK.
+
+
+2004-11-16  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/*.c: Added LOT of "unlikely"s in the "ret" error checkings.
+
+	* src/thread.c: Added some unlike()s
+
+	* src/common.h (CHEROKEE_PRETTY_FUNCTION): It uses __func__
+	instead "???" if __PRETTY_FUNCTION__ is not supported.
+
+	* src/common.h: Added likely and unlikely macros.
+
+	* src/socket.c (cherokee_socket_init_tls): Call to gnutls_bye
+	before deinit the TLS connection. It tries to fix a segmentation
+	fault detected at the production server.
+	
+
+2004-11-04  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/socket.c (cherokee_socket_write): ssize_t -> size_t
+	(cherokee_socket_read): ssize_t -> size_t
+	(cherokee_socket_gethostbyname): Added implementation for
+	Solaris10.
+
+	* src/list.h, src/common.h: Some fixes around __inline__ to make
+	Cherokee compile in Solaris w/ the Forte compiler.
+
+	* configure.in: Added better check for __inline__
+
+
+2004-11-02  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/connection.c (cherokee_connection_get_request): It returns
+	411 «Length required» error on POST without length.
+
+
+2004-10-30  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/logger_ncsa.c (cherokee_logger_ncsa_write_string): Security
+	bug fixed.  Reported by Dan Margolis <krispykringle@gentoo.org>.
+
+
+2004-10-21  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* configure.in: Removed Debian apt-get examples..
+
+
+2004-10-17  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/connection.c (cherokee_connection_clean): There was a bug
+	clearing the request buffer_escape object.
+
+	* src/buffer_escape.c (cherokee_buffer_escape_get_html): Bug
+	fixed. There was a SEGFAULT here because it was trying to read
+	from NULL.
+
+
+2004-10-16  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* icons/back.png: Updated.
+
+	* icons/sound.png: Updated.
+
+	* icons/movie.png: Updated.
+
+	* icons/image.png: Updated.
+
+	* icons/readme.png: Updated.
+
+	* icons/java.png, icons/Makefile.am, icons.conf.sample: Added new
+	icon.
+	
+	* src/http.h, src/connection.h, src/connection.c, src/thread.h,
+	src/thread.c: Implemented RFC2817: «Upgrading to TLS Within
+	HTTP/1.1» :-)
+
+
+2004-10-13  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/server.c (build_server_string): New server string feature.
+	
+	* cherokee.conf.sample.pre: Added new block describing
+	ServerTokens
+
+	* src/handler_dirlist.c (cherokee_handler_dirlist_step),
+	src/handler_error.c (build_hardcoded_response_page): Updated to
+	use the new srv->server_token
+
+	* debian/rules (config.status): It uses the new enable-os-string
+	parameter.
+
+	* configure.in (OS_TYPE): Added new --enable-os-string=STR
+
+	* cherokee.m4: Little update
+
+	* src/connection.h, src/connection.c, src/handler_error.c
+	(build_hardcoded_response_page): Changed to use the new
+	cherokee_buffer_escape_t class.
+
+	* src/buffer_escape.h, src/buffer_escape.c, src/Makefile.am
+	(libcherokee_base_la_SOURCES): Added new class.
+
+
+2004-10-12  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/buffer.c (cherokee_buffer_escape_html): Added new method.
+
+	* src/connection.c (cherokee_connection_reading_check): On huge
+	requests, it uses "Request-URI too long" instead of the generic
+	"Bad Request".
+
+	* src/http.h, src/http.c (http_request_uri_too_long_string): Added
+	"Request URI too long" response.
+
+	* doc: Added rfc1952.txt rfc2616.txt rfc2817.txt
+
+	* src/header.c (cherokee_header_parse): Added "Upgrade" header to
+	common ones.
+
+	* src/connection.h: Added "upgrade" property to connection class.
+
+	* src/http.h: Added cherokee_http_upgrade_t type
+	
+
+2004-10-11  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/thread.c (process_active_connections): Bugfix.
+
+	* src/common.h (RET_UNKNOWN, SHOULDNT_HAPPEN): Reformatted.
+
+	* configure.in, src/Makefile.am, src/handler_gotls.h,
+	src/handler_gotls.c: Removed GoTLS handler.
+
+	* src/handler_error.c (cherokee_handler_error_add_headers):
+	Bugfix.  It was generating a bad Content-length header.
+
+	* src/connection.c (build_response_header): Added "Connection:
+	Upgrade" support.
+
+	* src/handler_table_entry.h, src/handler_table_entry.c: New class
+	property: only_secure.
+
+	* src/read_config_grammar.y: Added 'directory_option' to implement
+	the «Only secure access» feature.
+
+	* src/read_config_scanner.l: Added T_ONLY_SECURE token
+
+
+2004-10-10  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/handler_phpcgi.c (cherokee_handler_phpcgi_{new,init}): Now,
+	it look for a "Interpreter" handler parameter and use it as
+	interpreter.
+
+	* src/read_config_scanner.l, src/read_config_grammar.y
+	(T_FULLDIR): Added "Interpreter" property.
+
+
+2004-10-01  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cget/main.c (print_help): Write as wget
+
+	* debian/control (Build-Depends): Removed zlib1g-dev dependency.
+
+	* src/zlib, configure.in: Added zlib deflate code
+
+	* configure.in: Removed check for zlib library
+
+	* src/Makefile.am: Now uses src/zlib/ instead libz.so
+
+	
+2004-09-27  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/handler_dirlist.c (cherokee_handler_dirlist_new): Wrong
+	initialization fixed.
+
+
+2004-09-26  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* icons/iso.png, icons.conf.sample, icons/Makefile.am: Added «ISO
+	Image» icon.
+
+	* src/handler_cgi.c (_set_envs_cgi): index() -> strchr()
+
+	* src/icons.c: Misc clean up
+
+	* src/fdpoll.h: Added cherokee_fdpoll_reset() prototype
+
+	* src/connection.h: Added prototype
+	cherokee_connection_setup_error_handler()
+
+	* src/connection.c: Some clean ups
+
+	* src/url.c: Added inclusion of <strings.h>
+
+	* src/header.c: Added inclusion of strings.h.
+
+	* src/header.c (cherokee_header_parse): Typo fixed.
+
+	* src/socket.c: Added inclusion of sys/socket.h header
+
+
+2004-09-23  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/access.c (cherokee_access_ip_match): Removed two unused
+	variables.
+
+	* src/mime.c (cherokee_mime_entry_free): Return value fixed
+
+	* src/header.c: Added string.h inclusion: strncasecmp(), strsep()
+
+	* src/header.c (cherokee_header_copy_method,
+	cherokee_header_copy_version): These two functions have been
+	rewrited to use the http.h API.
+
+	* src/mmap.c (cherokee_mmap_get_default): Clean up: Removed unused
+	variable
+
+	* src/socket.c (initialize_tls_session): Fixed precompilator
+	directives: HAVE_GNUTLS / HAVE_OPENSSL
+
+	* src/socket.c (cherokee_socket_gethostbyname): Little clean up
+
+	* src/socket.c: Added inclusion of netdb.h: gethostbyname_r()
+	
+	* src/buffer.c (cherokee_buffer_decode): Return fixed.
+
+	* src/buffer.c (cherokee_buffer_replace): Fixed return value
+
+	* src/common.c: Added inclusion of unistd.h and sys/time.h
+
+	* src/http.c (cherokee_http_code_copy): Added http_continue and
+	http_switching_protocolos cases.
+
+	* src/connection.c (process_handler_complex_headers): Better
+	complex header handling.
+
+	* src/handler_cgi.c (cherokee_handler_cgi_init): Improved error
+	report.  It will return 404 or 500 in each case; until now, it was
+	just closing the connection.
+
+
+2004-09-22  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/header.c (cherokee_header_parse): Fixed a bug processing
+	'header_type_basic' headers.
+	
+	* src/read_config_grammar.y (yyerror): Better error reporting.
+
+
+2004-09-19  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/cherokee-panic (action): Added new argument 'action'.
+
+
+2004-09-15  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/common.h (RET_UNKNOWN): Added new macro.
+
+	* src/handler_cgi.c: It is working again!! :-)
+	
+
+2004-09-14  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/handler_cgi.c: Lot of changes
+
+	* src/fdpoll.c (fdpoll_epoll_del): It fill not exit() on error.
+
+	
+2004-09-11  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/buffer.c (cherokee_buffer_read_from_fd): Addned new function.
+
+
+2004-09-07  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/handler.h (HANDLER_THREAD): Added new macro.
+
+
+2004-09-05  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/thread.c (cherokee_thread_conn_wants_poll_for_fd): Added new
+	function.
+
+	* src/downloader.c, src/downloader.h: Added struct entries to
+	count the information send/received.
+	
+	* src/downloader.c, src/downloader.h:
+	(cherokee_downloader_connect): Added new function.
+
+
+2004-09-04  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/downloader.c (downloader_header_read): Added content-length
+	header check.
+
+
+2004-09-02  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/handler_cgi.c (_send_post_data): Clean up
+
+	* src/handler_cgi.c: Some changes to make POST request >4Kb
+	working.
+
+	* src/connection.c (cherokee_connection_get_request): Now it uses
+	the header class instead of look inside the request string "by
+	hand".
+
+	* src/thread.c (process_active_connections): Bugfix. userdir
+	detection was wrong.
+
+	* src/thread.c (process_active_connections): Incoming headers
+	parsing improved.
+
+	* src/thread.c (process_active_connections): Bugfix. Incoming
+	headers was not managed properly.
+
+
+2004-09-01  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/read_config_scanner.l, src/read_config_grammar.y: Added
+	"https" urls recognition. Reported by Rodolfo Pilas.
+
+
+2004-08-30  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/socket.c (cherokee_socket_gethostbyname): Fixed concurrent
+	version of the function.  It was not copy the query in the socket
+	struct.  (Santa Cruz ~ Bolivia to Sao Paulo ~ Brazil)
+
+
+2004-08-29  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/socket.c (cherokee_socket_connect): Added new method (Hotel,
+	Sucre ~ Bolivia).
+
+
+2004-08-23  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/url.c (cherokee_url_parse_ptr): Fixed. It was including the
+	port number in the hostname string after parsing.
+
+	* src/socket.c (cherokee_socket_gethostbyname): Added new
+	function. (Waiting in the Santa Cruz ~ Bolivia airport)
+
+
+2004-08-22  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* configure.in: Added check for gethostbyname, gethostbyname_r
+	functions. (Arequipa ~ Perú)
+
+
+2004-08-19  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/socket.c (cherokee_socket_set_client): Added new method.
+	(XII CONEIS, Lima ~ Perú)
+
+
+2004-08-10  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/socket.c (cherokee_socket_pton): Added new method.
+	(National Free Software Congress, Sucre ~ Bolivia)
+
+
+2004-08-09  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* bench/main.c (main): Print_usage() fixed.
+
+	* src/thread.c (process_active_connections): Now, it uses
+	cherokee_header_has_header() instead of cherokee_connection_eoh() 
+
+	* src/header.c (cherokee_header_has_header): Added new function
+
+	* src/connection.c (cherokee_connection_eoh): Dropped out
+
+	* src/thread.c (process_active_connections): Fixed userdir
+	directories management.
+	
+
+2004-08-05  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* bench/connection.h: changed struct sockaddr_in by
+	cherokee_sockaddr_t
+
+	* bench/request.h, bench/request.c: Moved to src, to
+	libcherokee-client. Renamed from cherokee_bench_request_* to
+	cherokee_request_header_*
+
+	* bench/main.c (main): Adapted to last changes: It uses
+	cherokee_buffer_t instead of char *.
+
+	* bench/bench.h (cherokee_bench_add_url), src/url.h
+	(cherokee_url_parse): Now, it accepts a cherokee_buffer_t instead
+	of a char*
+	
+	* bench/url.c, bench/url.h: Moved to src, for libcherokee-client.
+
+	
+2004-07-16  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/read_config_grammar.y ('directory'): Some fixes. Now, it is
+	more generic.
+
+	* src/virtual_server.c, src/virtual_server.h
+	(cherokee_virtual_server_set): Dropped out.
+
+
+2004-07-14  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/socket.c (cherokee_socket_init_tls, initialize_tls_session):
+	Fixed compilation problem reported by Yusuf.
+
+
+2004-07-13  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* README (NAME): Updated to new module name.
+
+	* src/module_loader.c (dylib_open): Fixed to work with the new
+	module prefix.
+
+	* src/Makefile.am: libcherokee_* are now plugin_*
+
+	
+2004-07-12  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* sites-default.sample.pre: Changed form ErrorDocument to the new
+	ErrorHandler syntaxis.
+
+	* src/handler_redir.c (cherokee_handler_redir_new,
+	cherokee_handler_redir_init): Some little fixes.
+
+	* src/handler_error_redir.c (cherokee_handler_error_redir_new),
+	src/Makefile.am, configure.in: Added new file.
+
+	* src/connection.c: Error handling code fixed.
+
+
+2004-07-08  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/connection.c (cherokee_connection_build_header): Fixed to
+	work with the new error management code.
+
+	* src/connection.c (build_response_header): Error related headers
+	are not needed anymore.  The error module now manage all that.
+
+	* src/connection.c (send_buffer_unsafe): Removed! It is not
+	needed anymore.  "Unsafe" is not the right way.. ;-)
+
+	* src/connection.c (build_hardcoded_response_page): Removed!
+	"Hardcoded" sounds horrible!  We can do it much better than
+	that. :-p
+
+	* src/connection.c
+	(cherokee_connection_send_response_page_hardcoded,
+	cherokee_connection_send_response_page_file): Droped out! Now this
+	work is delegated to the internal error handler. Much more clean!!
+	
+	* configure.in: IPv6 detection problem fixed. Reported by Juan
+	Cespedes.
+
+	* debian/rules (build-arch-stamp): It will now execute the tests
+	by default.  We have to check the Python version and add some
+	dependences to the control file before.
+
+	* doc/Intro.txt: It as dupped.  Reported by Juan Cespedes.
+
+	* src/handler.h (HANDLER_SUPPORT_ERROR): Added error handling
+	property.
+
+	* src/read_config_grammar.y (T_FULLDIR), virtual_server.h,
+	virtual_server.c, connection.c: Clean up: it uses a
+	cherokee_buffer_t instead a char* + int
+
+
+2004-07-07  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* 0.4.17 released
+
+
+2004-07-04  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* configure.in: Added check for ClamAV library
+
+	* src/connection.c (cherokee_connection_get_request): Fixed
+	"Host:" header management.  Cesar Fernandez reported a problem
+	with some broken proxies from Telefonica.es
+
+	* src/handler_cgi.c (_set_envs_cgi): Fixed bug.  It was generating
+	a Segment Fault in the CGI process when there was no "Host:" entry
+	in the request headers.
+
+	* README: Added some information about how to compile a Cherokee
+	module by hand (using libtool like in the current Automake code) 
+
+
+2004-07-03  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* Makefile.am (install-data-local, uninstall-local): Addeded new
+	rule to install cherokee-config.h
+
+	* src/cherokee.h, src/Makefile.am: Removed
+
+	* src/module_loader.c: Clean up
+
+
+2004-07-02  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/handler_dirlist.c (build_public_path): Fixed bug in the
+	public path printing.
+
+
+2004-07-01  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/handler.h, src/handler.c (cherokee_handler_free_base): Added
+	new virutal method.
+
+	* src/handler_file.c (file_init): _file_is_init now is
+	cherokee_boolean_t instead int.
+
+	* debian/rules: Updated to install the cherokee binary in
+	/usr/sbin insted /usr/bin
+
+
+2004-06-30  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/Makefile.am (sbin_PROGRAMS): Changed bin_PROGRAMS to
+	sbin_PROGRAMS.  Now the cherokee executable will be installed in
+	/usr/sbin instead /usr/bin.
+	
+
+2004-06-28  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/read_config_scanner.l: Added domain name recognition.
+
+	* sites-default.sample.pre: Added the logging related
+	configuration entries.
+
+	* advanced.conf.sample.pre: Moved LogFlushInterval here.
+
+
+2004-06-27  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/table.c (cherokee_table_while): Bugfix.  There was an error
+	in the parameter order in the parameter function call.
+
+	* src/handler_redir.c (cherokee_handler_redir_new): Better error
+	check.
+
+	* src/read_config_grammar.y (T_HTTP_URL): There was an error with
+	the HTTP redirection configuration entries.
+
+	* src/handler_cgi.c (cherokee_handler_cgi_add_headers): Wrong
+	error handling fixed.
+
+
+2004-06-20  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/mime.c (cherokee_mime_free): Bugfix.  It was free memory
+	twice.
+
+	* src/logger_ncsa.c (build_log_string), src/handler_file.c
+	(cherokee_handler_file_add_headers): Now uses the new FMT_OFFSET
+	constant.
+
+	* src/common.h (FMT_OFFSET): Added constant for format string of
+	off_t
+
+	* src/handler_cgi.c (_read_from_cgi): Some fixes arround the CGI
+	termination.
+	
+
+2004-06-19  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/server.c (set_fdmax_limit): Moved from _new to _init just
+	before to create the threads.
+
+	* src/common.h, src/common.c (set_system_fd_num_limit): Added new
+	function.
+
+	* src/server.c (initialize_server_socket),
+	src/read_config_scanner.l, src/read_config_grammar.y,
+	src/server.h, advanced.conf.sample.pre: Added "ListenQueue" new
+	configuration entry.
+
+	* src/server.h, src/server.c, src/read_config_scanner.l,
+	src/read_config_grammar.y, advanced.conf.sample.pre,
+	src/handler_file.c: Added "Sendfile" new configuration entry.
+
+	* src/virtual_server.c (cherokee_virtual_server_init_tls): OpenSSL
+	implementation error fixed.  It is working now.
+
+	* src/server.c (read_config_path): It did not building the path
+	correctly. Fixed.
+
+	* src/server.c(cherokee_server_init): I was not detecting the TLS
+	configuration correctly. Fixed.
+
+
+2004-06-17  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* advanced.conf.sample.pre: Added new config file
+
+	* src/server.c (print_banner): Added TLS library to the banner.
+
+
+2004-06-13  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/mime.c (cherokee_mime_init): Bugfix
+
+
+2004-06-06  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/cherokee-panic: It was a bug calling mktemp
+
+	* src/Makefile.am (dynamic_validator_htpasswd_lib): It was
+	compiling htpasswd module dinamically even it was set to
+	--enable-static-module=all
+
+	* src/server.c (read_default_config_files): Better mime global
+	object management.
+
+	* cherokee.conf.sample.pre: Commented out PAM example.  Reported
+	by Miguel Angel Ajo, ajo@godsmaze.org
+
+
+2004-06-05  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/socket.c, src/socket.h, src/server.c, src/virtual_server.h,
+	src/virtual_server.c: Added some OpenSSL support code.
+
+	* src/virtual_server.c (cherokee_virtual_server_free): Now it
+	fixes the credentials object.  Memory_leaks--;
+
+	* configure.in, src/Makefile.am, bench/Makefile.am: Added new
+	options to compile with GNUTLS or OpenSSL. 
+	--enable-tls=[gnutls|openssl]
+
+
+2004-06-04  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* bench/url.c (cherokee_url_parse): Bugfix.  There was some
+	incorrect string handling code.
+
+	* bench/bench.c (_cherokee_bench_get_request): Compilation warning
+	fixed.
+
+	* src/logger_ncsa.c (build_log_string): Bug fixed.  It was "int
+	**" instead "int *".
+
+	* src/handler_remote_control.c
+	(cherokee_handler_remote_control_init): Fixed compilation warnings
+	arround the 64bits long files support.
+
+	* src/handler_mono.c (send_headers_callback): Compilation fix.
+
+	* src/handler_dirlist.c (cherokee_handler_dirlist_step): Bugfix.
+	It was: conn->userdir, instead of conn->userdir->len.
+
+	* src/handler_dirlist.c (cherokee_handler_dirlist_step): Two
+	compilation warnings were fixed.
+
+	* src/handler_file.c (check_cached): Bugfix.  It was an char *,
+	instead a single char.
+
+	* src/handler_server_info.c: Fixed some compilation warnings.
+
+	* src/table.c (cherokee_table_while): The last two parameters:
+	return of the key and the value found in the table new can be
+	NULL.
+
+	* src/table.h: New api.
+
+	* src/icons.c (cherokee_icons_get_icon): Fixed to the new
+	cherokee_table_while api.
+
+	* src/handler_cgi.c (_set_envs_cgi): Compilation warnings fixed.
+
+	* src/session_cache.c (equal): Compilation warning fixed.
+
+	* src/thread.c (process_active_connections): 64 bits file in 32
+	bit machines bug fixed.
+	(cherokee_thread_get_new_connection): Compilation warning fixed.
+
+	* src/encoder_gzip.c (cherokee_encoder_gzip_encode): GZip Footer
+	code rewritted.
+
+
+2004-06-03  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/socket.h: Added new type cherokee_sockaddr_t
+
+	* network.m4: Added AC_ACME_SOCKADDR_IN6 and AC_ACME_SOCKADDR_STORAGE
+
+	* src/buffer.c (cherokee_buffer_swap_chars): Now, it returns ret_t
+
+	* src/buffer.c (cherokee_buffer_end_char): Added new helper function
+
+	* src/connection.c
+	(cherokee_connection_build_local_directory_userdir): URL like
+	http://www.alobbs.com/~alo are redirected to
+	http://www.alobbs.com/~alo/
+
+
+2004-05-31  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/socket.c (cherokee_socket_ntop): Conditional compilation
+	reordered.
+
+	* configure.in: Added check for the inet_ntop() function
+
+
+2004-05-28  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/connection.c
+	(cherokee_connection_build_local_directory_userdir): Fixed bug.
+	There was a problem with URL like: http://www.alobbs.com/~/cosa/
+
+
+2004-05-23  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/main.c (panic_handler): Funcion `panic' has been renamed to
+	panic_handler because it was causing a linkage error on MacOS X.
+
+	* configure.in (cherokee_version_len): Check form _pam_dispatch
+	instead of pam_end.
+
+
+2004-05-17  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/access.[ch] (cherokee_access_add), src/read_config_grammar.y
+	(ip_list): Added new method.
+
+	* src/socket.c (cherokee_socket_clean): Now, it cleans the struct
+	sockaddr structure.
+
+	* configure.in: It uses Automake1.8 so depends on autoconf >= 2.58
+
+	* src/server.c (init_tls_library), configure.in, src/Makefile.am:
+	It does not depend on libgnutls-extra library anymore.
+
+	* src/logger_ncsa.c (build_log_string): method and version string
+	len is now NULL.  It was unneeded here.
+
+	* src/http.c (cherokee_http_{version,method}_to_string): Pointer
+	to string len can be NULL.
+
+
+2004-05-16  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee_replace.c (main): Added a new tiny program to replace
+	the paths in the example configuration files.
+
+	* Makefile.am, configure.in: Now use the cherokee_replace hack.
+
+	* cherokee.conf.sample.in: Removed
+
+	* cherokee.conf.sample.pre: Added
+
+	* src/Makefile.am: Fixed problem with "common" handler.  The
+	LDFLAGS of the handlers now is "-module" instead "-shared"
+
+	
+2004-05-15  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/handler_cgi.c (_set_envs_cgi): It now uses the generic
+	CHE_INET_ADDRSTRLEN macro.  Fixed compilation in HP-UX 11.
+
+	* src/socket.h (CHE_INET_ADDRSTRLEN): Added new macro.
+
+
+2004-05-13  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/socket.c (cherokee_socket_sendfile): Added HP-UX sendfile()
+	support.
+
+
+2004-05-12  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/connection.h: Added new phase `phase_send_headers'.
+
+	* src/handler_file.c (cherokee_handler_file_init): Security
+	fix. The request "http://localhost/~bin" was causing a segment
+	fault.
+
+	* src/connection.c (cherokee_connection_send_header): Rewritten.
+
+	* src/connection.c (cherokee_connection_send): Now, it has a
+	better error handling.
+
+	* src/thread.c (process_active_connections): The new phase
+	`phase_send_headers' is integrated now.  The server will not send
+	partial headers on EAGAIN anymore.
+
+
+2004-05-11  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/server.c (cherokee_server_daemonize), src/main.c: Added new
+	parameter -b (background).  Now Cherokee can be running in
+	background in a detached terminal.
+
+	* src/connection.c (cherokee_connection_check_authentication):
+	Bugfix.  It was comparing a string with a random memory chunk.
+
+	* src/connection.c (build_response_header): Some work arround the
+	"WWW-Authenticate" response header.
+
+	* src/connection.c (cherokee_connection_get_plugin_entry):
+	Authentication type are copied from the handler entry to the
+	connection object.
+
+	* src/cherokee-panic: Changed "bt" by "thread apply all bt".
+
+	* src/read_config_grammar.y (directory): It does not add a slash
+	at end of the directory name. Now, http://localhost/about works
+	with the "Directory /about {}" configuration entry.
+
+
+2004-05-10  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/connection.c (build_response_header): Added headers for
+	Digest authentication.
+
+	* src/buffer.h (cherokee_buffer_encode_hex): Bugfix.
+
+	* src/server.h, src/server.c (cherokee_server_get_total_traffic):
+	It uses off_t instead unsigned long int.
+
+	* src/virtual_server.h, src/virtual_server.c: LFS fixes.
+	
+	* src/read_config_grammar.y, src/virtual_server.c,
+	src/virtual_server.h: Fixed virtual host list management.
+
+	* src/handler_table_entry.c (cherokee_handler_table_entry_free):
+	Better management of the memory. There was a little memory leak in
+	the class destructor.
+
+	* cherokee.conf.sample.in, src/handler_server_info.c,
+	src/read_config_grammar.y, src/read_config_scanner.l: Added
+	JustAbout flag.
+
+
+2004-05-09  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/icons.c, src/connection.c, src/handler_file.c,
+	src/handler_nn.c, src/handler_phpcgi: Replaced rindex() by
+	strrchr()
+
+	* src/md5.c, src/md5.h: Clean up
+
+	* src/Makefile.mingw: Some work arround the Windows port.
+
+
+2004-05-08  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/unix4win32.h, src/unix4win32.c, src/unix4win32_errno.h:
+	Added new files to try to port Cherokee to Windows.
+
+	* src/libc_interface.c, src/libc_interface.h, src/libc_internal.h:
+	Removed.
+
+	* src/Makefile.mingw: Lot of changes.
+
+	
+2004-05-05  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/logger_ncsa.c (build_log_string): Fixed for Large File
+	Support.
+
+	* src/handler_file.h: Fixed compilation in archs without
+	sendfile() function.
+
+	* src/cherokee-panic: It uses mktemp instead tempfile. Reported by
+	Ali Ebrahim.
+
+	* bench/Makefile.am, bench/main.c, src/Makefile.am, src/access.c,
+	src/buffer.c, src/buffer.h, src/cherokee-panic, src/common.c,
+	src/common.h, src/connection.c, src/connection.h,
+	src/encoder_gzip.c, src/encoder_gzip.h, src/encoder_table.c,
+	src/encoder_table.h, src/handler.c, src/handler.h,
+	src/handler_cgi.c, src/handler_cgi.h, src/handler_common.c,
+	src/handler_common.h, src/handler_dirlist.c,
+	src/handler_dirlist.h, src/handler_file.c, src/handler_file.,
+	src/handler_nn.c, src/handler_phpcgi.c, src/handler_redir.c,
+	src/handler_remote_control.h, src/handler_server_info.c,
+	src/handler_table.c, src/handler_table.h,
+	src/handler_table_entry.c, src/handler_table_entry.h, src/http.c,
+	src/http.h, src/levenshtein_distance.c,
+	src/levenshtein_distance.h, src/log.c, src/logger.c,
+	src/logger_ncsa.h, src/logger_w3c.c, src/logger_w3c.h, src/md5.c,
+	src/mime.c, src/mime_scanner.l, src/module_loader.c,
+	src/read_config_grammar.y, src/server.c, src/server.h,
+	src/socket.c, src/socket.h, src/thread.c, src/validator.h,
+	src/validator_htpasswd.c, src/validator_pam.c,
+	src/virtual_server.c, src/virtual_server.h: The LFS (Large File
+	Support) is working.  Some header were reordened. Some variables
+	has changed the type.
+
+
+2004-05-02  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* configure.in (cherokee_version_len): Version now uses m4 macros
+	instead shell script code
+
+
+2004-04-29  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* network.m4: Little fix for automake >= 1.8
+
+
+2004-04-28  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/buffer.c (cherokee_buffer_drop_endding): Added better error
+	handling.
+
+	* cherokee.conf.sample.in: Added Digest or Basic authentication
+	example.
+
+
+2004-04-28  Stephen Hemminger  <shemminger@osdl.org> 
+
+	* src/socket.c: Bugfix: There was truncated file outputs running a
+	load test on Linux 2.6 using Cherokee (epoll, sendfile).
+	
+	
+2004-04-27  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/read_config_grammar.y: Added "Digest" authentication mode.
+
+	* src/buffer.c (cherokee_buffer_prepend, cherokee_buffer_add):
+	Little clean up
+
+	* src/buffer.c (cherokee_buffer_add_chunked,
+	cherokee_buffer_add_buffer_chunked): Added new functions.
+
+	* src/handler_file.c (cherokee_handler_file_step): Now it uses the
+	new cherokee_socket_sendfile function.
+
+	* src/socket.c (cherokee_socket_sendfile): Added new function
+
+	* src/http.h, src/http.c (cherokee_http_method_to_string): Added
+	methods DELETE, TRACE and CONNECT.
+
+
+2004-04-26  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/virtual_server.c (cherokee_virtual_server_init_tls): Fixed
+	TLS initialization warning.
+
+	* src/handler_dirlist.c (cherokee_handler_dirlist_step): Fixed
+	bug.  It was showing a bad "Index of" string in aliases
+	directories.  Reported by Ayose.
+
+	* src/handler_table.c (cherokee_handler_table_get): Clean up
+
+
+2004-04-25  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/read_config_grammar.y (directory_option): A bit improved
+
+	* src/cherokee-panic, Makefile.am, cherokee.conf.sample.in,
+	configure.in, debian/rules, src/Makefile.am, src/common.c,
+	src/common.h, src/main.c, src/read_config_grammar.y,
+	src/read_config_scanner.l, src/server.c, src/server.h:
+	Added new "PanicAction" feature.
+
+	* src/handler_dirlist.h, src/handler_dirlist.c
+	(cherokee_handler_dirlist_step): Fixed problem when there were lot
+	of files in the same directory.
+
+	
+2004-04-23  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/validator_plain.c (cherokee_validator_plain_check): Bugfix
+
+	* src/logger_ncsa.c (build_log_string): Better logging without
+	referer.
+
+	* src/thread.c (process_active_connections): Tiny bugfix
+
+
+2004-04-22  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/handler_dirlist.c (cherokee_handler_dirlist_step): Bugfix.
+
+	* src/handler_dirlist.c (cherokee_handler_dirlist_step): I was an
+	error in the memory management when the server had not a loaded
+	icon table
+
+	* src/buffer.h, src/buffer.c (cherokee_buffer_is_endding): Added
+	new function.
+
+	* src/socket.c (cherokee_write, cherokee_read): Fixed GNUTLS error
+	handling.
+	
+
+2004-04-21  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/handler_common.c (cherokee_handler_common_new): Bugfix
+
+	* src/handler_dirlist.c (cherokee_handler_dirlist_init): Little bug fix
+
+
+2004-04-20  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/thread.c: Added support for TLS connections in the mail
+	server_step code (single and multi thread versions)
+
+	* src/session_cache.h (cherokee_session_cache_retrieve): Added new
+	function.
+
+	* src/virtual_server.c (cherokee_virtual_server_free): Fixed
+	managed TLS releated memory manage.
+
+	* src/session_cache.h, src/session_cache.c: Added new class
+
+	
+2004-04-19  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/server.c, src/socket.h, src/socket.c, src/connection.c:
+	Finished the initial TLS support.
+
+	* src/socket.c (cherokee_socket_clean): Added new function.
+
+	* src/handler_file.c (cherokee_handler_file_init): Bug fix arroung
+	TLS and sendfile() support.
+
+	* src/connection.c (send_buffer_unsafe): Little bug fix
+
+
+2004-04-18  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/socket.c (cherokee_socket_ntop): Returns ret_t not char *
+
+
+2004-04-18  CoKi  <coki@nosystem.com.ar>
+
+	* src/common.c (PRINT_ERROR): Fixed security bug.
+	No System Group - http://www.nosystem.com.ar
+
+	
+2004-04-16  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/virtual_server.c (cherokee_virtual_server_get_name): Added
+	new method.
+
+	* src/socket.h: Added new type cherokee_socket_type_t: TLS o
+	non_TLS
+
+	* configure.in: Fixed epoll detection.  It was failing in systems
+	with a new glibc but without kernel support.
+
+
+2004-04-15  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee.m4: Added new tests for needed functions
+
+
+2004-04-14  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee.m4: Added default version to 0.4.16
+
+        * 0.4.16 released.
+	
+	* bench/connection.c: Fixed compilation in Solaris.  It was
+	failing because the FIONBIO constant.
+
+	* Makefile.am, qa/Makefile.am (test): Added new target to execute
+	de QA tests from the Makefile
+
+	* qa/cherokee-test.py: On python version error or execution test
+	error, it returns an error code.
+
+	* src/list_ext.c (cherokee_list_free): Added initialization of the
+	list after free the items.
+
+	
+2004-04-14  Gunnar Wolf  <gunnar@debian.org>
+
+	* Debian support updated
+
+	
+2004-04-13  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/read_config_scenner.l, src/read_config_grammar.y,
+	src/server.c, src/server.h: some work to add the "Include"
+	feature.
+
+
+2004-04-12  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* configure.in, src/common.h, src/common.c: Added strsep()
+	emulation code.
+
+	* src/validator_htpasswd.c (crypt_r_emu): Bugfix for Solaris.
+
+	* src/connection.c (add_error_code_string_to_buffer): Dropped out.
+	Now, the connection class uses the cherokee_http_code_copy
+	function.
+
+	* src/http.c (cherokee_http_code_copy): New function.
+
+	* src/http.h (http_moved_temporarily_string): 302 error message is
+	"Found".
+
+	* src/connection.c (build_hardcoded_response_page): Redirect error
+	now uses the "moved temporarily" not "moved permanently".  Added
+	new error response.
+
+	* src/handler_file.c (cherokee_handler_file_init): Bug fixed.  It
+	was sending all the file in partial contents if the file was too
+	long to use mmap.  
+
+	* src/handler_file.c (cherokee_handler_file_init): There was a bug
+	in the mmap table instance.  Fixed.
+
+	* qa/tests/Test01.py (TestErrorDocumentRedirect): Added new class
+	to check the redirection of the ErrorDocument entries.
+
+	* src/thread.c (process_active_connections): ErrorDocument (on
+	redirection) fixed.
+
+
+2004-04-11  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/handler_cgi.c (_set_envs_cgi): Removed "method" array.  Now,
+	it uses the cherokee_http_method_to_string and
+	cherokee_http_version_to_string functions.
+
+	* src/server.c (initialize_server_socket4,
+	initialize_server_socket6): Better initialization.
+
+	* src/socket.c (cherokee_write): Return parameter is ssize_t not
+	int
+
+	* src/encoder.c, src/encoder.h, src/encoder_gzip.c, src/handler.c,
+	src/handler.h, src/handler_cgi.c, src/handler_dirlist.c,
+	src/handler_file.c, src/handler_gnomevfs.c, src/handler_mono.c,
+	src/handler_nn.c, src/handler_phpcgi.c, src/handler_redir.c,
+	src/handler_remote_control.c, src/handler_server_info.c,
+	src/logger.c, src/logger.h, src/logger_combined.c,
+	src/logger_ncsa.c, src/logger_w3c.c, src/module.c, src/module.h,
+	src/validator.c, src/validator.h, src/validator_htpasswd.c,
+	src/validator_pam.c, src/validator_plain.c: Encoder, Handlers,
+	Validators and Loggers are now based in the module class.  Some
+	code clean ups around it.
+
+
+2004-04-11  Ayose Cazorla León   <setepo@gulic.org>
+
+	* src/handler_cgi.c: Partial fix for the zombies CGIs
+
+	
+2004-04-10  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/logger_combined.h, src/logger_combined.c: Added new logger.
+	It support the NCSA "combined" logging format. It is compatible
+	with the Apache's "combined".
+
+	* src/connection.c (cherokee_connection_log_delayed): log_at_end
+	error fixed.
+
+	* src/thread.c (cherokee_thread_step): Added new "don't block"
+	parameter.  The main thread should not block.. it have to another
+	works like flush the log files.  It fixed a bug arround the log
+	bufferring.
+
+	* src/http.c: Added new file and two new functions:
+	cherokee_http_version_to_string and cherokee_http_method_to_string
+
+	* src/logger_ncsa.c (cherokee_logger_ncsa_write_access): Added
+	user ID support.
+
+	* src/logger_ncsa.c: Little clean up.  There was unneeded macros.
+
+	* src/read_config_grammar.y, src/read_config_scanner.l,
+	cherokee.conf.sample.in: Added "LogFlushInterval" configuration
+	entry to set the elapse time before write down the log to disk
+
+	* src/handler_cgi.c (cherokee_handler_cgi_add_headers): Rewritten.
+
+	* src/read_config_scanner.l: Added "HTTP sort" URLs to grammar.
+	T_FULLDIR, T_HTTP_URL shorted.
+
+	* src/socket.c (cherokee_socket_read): Bugfix
+
+
+2004-04-09  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/buffer.c (cherokee_buffer_move_to_begin): Better
+	implementation.
+
+	* src/common.h: Added new MIN and MAX macros
+
+	* src/access.c (parse_ip): There was a memory error compiling
+	Cherokee without IPv6 support and trying to parse an v6 IP
+	address.
+
+	* src/server.c (cherokee_server_init): Thread creation is now the
+	last action in the init sequence.
+
+	* src/server.c (initialize_server_socket): Jump on non-initialized
+	variable bug fixed.
+
+	* src/access.c (cherokee_access_add_ip): Added a better error
+	handling.
+
+
+2004-04-08  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/handler_file.c (cherokee_handler_file_init): Better error
+	handling creating the mmap object.
+
+	* cherokee.conf.sample.in: Gzip encoding section commented by
+	default.
+
+	* configure.in: Fixed common handler compilation
+
+	* src/Makefile.am (handler_common): Compilation orden changed to
+	ensure that the "handler common" can link with phpcgi, dirlist,
+	etc..
+
+	* configure.in: Fixed getopt_long for system(s?) with libiberty
+	but not getopt.h header file - AFAIK, only Solaris.
+
+	* src/read_config_grammar.y, src/icons_grammar.y: Global variables
+	of the analizer has been set to "static" to prevent linkage
+	problems in Solaris.
+
+	* configure.in: inet_pton detection fixed.
+
+
+2004-04-07  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/access.c (s6_addr32): Dropped out the usage of s6_addr32.
+	It will help to compile in Solaris
+
+	* src/sha1.h, src/sha1.c: Replaced u_int32_t by uint32_t.  I was
+	not compiling in Solaris because it.
+
+	* src/socket.c (cherokee_socket_ntop): SunOS 5.9 compilation bug
+	fixed.
+
+	* src/Makefile.am, bench/main.c: FreeBSD 4.8 with GCC 2.95
+	compilation fix
+
+
+2004-04-06  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* qa/cherokee-test.py: Added a test to check the Python version.
+	It needs >= 2.3
+
+	* configure.in: Added GNUTLS version to 1.0.4
+	
+	* configure.in: Added check for getopt_long function in the
+	gnugetopt or iberty library
+
+	* doc/Intro.txt: Little update
+
+	* src/fdpoll.c, src/fdpoll.h, bench/bench.c, bench/thread.c,
+	bench/thread.h, doc/Intro.txt, src/connection.c, src/server.c,
+	src/thread.c, src/thread.h: Now, the file descriptors poll class
+	uses two parameters: per thread fd limit, and global system fd
+	limit.
+
+	
+2004-04-04  Taher Shihadeh  <taher@shihadeh.net>
+
+	* doc/Intro.txt: LOT of fixes :-)
+
+
+2004-04-03  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/thread.c (cherokee_thread_new), src/read_config_scanner.l,
+	src/read_config_grammar.y, src/server.c, src/server.h: Added
+	support for choose the scheduling policy from the config file
+
+
+2004-04-02  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/thread.c (__accept_from_server): Better error handling of
+	failed connections.
+
+	* src/fdpoll.c (fdpoll_epoll_check): Some small fixes.
+
+	* src/server.c (print_banner): Added more information to the
+	banner line.
+
+
+2004-03-31  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* 0.4.15 released
+
+	* Makefile.am, src/Makefile.am: distcheck fixed.  Now, it removes
+	all the installed files.
+	
+	* Makefile.am (uninstall-local): Added mime.conf and icons.conf
+
+	* bench/Makefile.am (INCLUDES), configure.in: Fixed compilation
+	from remote directories (like in distcheck)
+
+	* src/thread.c (cherokee_thread_new): Fixed gcc 2.95 compilation
+	problem
+
+	
+2004-03-28  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/thread.c (cherokee_thread_new): Fixed single thread version
+	of the server.
+	
+
+2004-03-27  Gunnar Wolf  <gunnar@debian.org>
+
+	* Debian packages writted from scratch (with DebHelper)
+
+
+2004-03-23  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/common.h: Added new macro CHEROKEE_NEW2
+
+	
+2004-03-23  Eugene Rosenzweig  <eugene259@dodo.com.au>
+
+	* src/common.h, src/header.c, src/access.c:
+	(parse_request_first_line): Compilation bugfixes.
+
+	
+2004-03-22  Antonio Buiza Calero  <antonio@buiza.org>
+	
+	* src/main.c: Fixed header inclusion to fix the FreeBSD 4.8
+	compilation.
+
+	
+2004-03-21  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* configure.in: Fixed crypt_data detection
+
+	* src/access.c (s6_addr32): Fixed BSD support
+
+	* src/validator_htpasswd.c (validate_crypt): #ifdef Bugfix
+
+	* bench/Makefile.am (cherokee_bench_LDADD), src/Makefile.am
+	(cherokee_LDADD): Added pthread library
+	
+
+2004-03-20  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/http.h, src/connection.c (add_error_code_string_to_buffer):
+	Added error code 411 "Length Required"
+
+
+2004-03-19  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* configure.in: Fixed detection of crypt_r.  Now it is not a
+	critical error.
+
+	* configure.in: Fixed kqueue and select detection.
+
+	* configure.in: Improved show of supported polling methods.
+
+	* src/handler_cgi.c (cherokee_handler_cgi_init): Better error checking
+	
+
+2004-03-18  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/connection.c (get_encoding,
+	cherokee_connection_parse_header): Added better error handling.
+
+	* qa/tests/Test01.py: Added two new tests: "overflow range
+	detection" and "switched range detection".
+
+	* src/connection.c (get_range): Added switched range detection check.
+
+	* qa/tests/Test01.py: Range tests rewritten. Much cleaner code.
+
+	* src/handler_file.c (cherokee_handler_file_init): Added check for
+	partial petitions out of range.
+
+	* src/http.h (http_not_modified_string), src/connection.c
+	(add_error_code_string_to_buffer): Added error code 416,
+	"Requested range not satisfiable".
+
+
+2004-03-17  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* Released 0.4.14
+
+	* qa: Added new directory
+
+	* src/handler_file.c (cherokee_handler_file_init): Fixed "Range:
+	bytes=" with mmap()ed content
+
+
+2004-03-14  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/module_loader.c (dylib_open): Removed gbl_buffer usage
+
+	* src/connection.c (get_range): Rewritten without gbl_buffer
+
+	* src/read_config_grammar.y (T_FULLDIR): Removed gbl_buffer usage
+
+
+2004-03-12  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* bench: Added file descriptor number limitation.
+
+	
+2004-03-11  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/handler_cgi.c (cherokee_handler_cgi_init): Better error
+	reporting
+
+	* configure.in: Really stupid bug fixed: s/echo -e/echo -n/ 
+	It was counting the new line character as version string.
+
+
+2004-03-10  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/buffer.c (cherokee_buffer_move_to_begin): Bugfix
+
+	* src/socket.c (cherokee_socket_read): Better error checking
+
+	* src/header.c (cherokee_header_parse): Header endding calculation
+	fix.
+
+	* src/server.c: FreeBSD compilation problem.  Fixed by Petr Holub
+	hopet@ics.muni.cz
+
+	* src/connection.c (cherokee_connection_clean): Fixed pipelining
+	bug.  It was failing with FireFox 0.8 (with the
+	network.http.pipelining parameter actived)
+	
+	* src/fdpoll.h, src/fdpoll.c: Droped out get_fd_limit().  Added
+	new parameter to the _new method.
+	
+	* src/server.c (cherokee_server_init): Threads init change to set
+	a file descriptors number limit per each
+
+	* src/handler_mono.c (cherokee_handler_mono_init): Better error
+	reporting when the handler can not contact xsp server
+	
+
+2004-03-09  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* configure.in, src/configure.in : Version management
+	improvement.
+
+	* src/module_loader.c: Better error reporting on module loading
+	fails.
+
+	* src/validator_htpasswd.c: Added crypt_r emulation function for
+	multithread systems that don't support it (like Solaris).
+
+	* src/header.c (cherokee_header_get_number,
+	cherokee_header_foreach):  Implemented.
+
+	* src/validator_htpasswd.c (validate_crypt): Little fix in crypt_r
+	usage.  It was accessing a memory area in the heap that maybe
+	could be droped out.
+
+	* configure.in: Fixed compilation bug arround -D_XOPEN_SOURCE=500
+	parameter.
+
+	* Released 0.4.13
+	
+	* src/fdpoll.c: Better error reporting from epoll functions
+
+	* src/server.c: Droped out add_socket_to_thread_fdpolls.  With the
+	new polling method it is not needed.  Reported by Yusuf
+	Goolamabbas <yusufg@outblaze.com>.
+	
+
+2004-03-08  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* configure.in: New crypt_r detection: -D_GNU_SOURCE
+
+	* src/connection.c (send_buffer_unsafe): Error handling fix.
+
+	* src/validator_htpasswd.c (validate_crypt): Empty user fix.
+
+	* src/server.c (cherokee_server_init): chroot bug fixed. Reported
+	by Haas Wernfried <w.haas@xover.htu.tuwien.ac.at>.
+
+	* src/socket.c: Added filio.h include
+
+	* src/connection.c, src/connection.h, src/header.c, src/thread.c,
+	src/thread.h: Finished the pipelining support.
+
+	* configure.in: Some places was using "$with_threads" instead
+	"$with_phtread".
+
+	* src/header.c (cherokee_header_parse): Pipelined header fix
+
+
+2004-03-07  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/handler_file.c (cherokee_handler_file_init): It should not
+	use mmap() content if it will use an encoder.
+
+	* src/read_config_grammar.y:  Fixed bug reading encoders related
+	information.
+
+	* src/validator_htpasswd.c: Fixed authentication bug.  Reported by
+	Haas Wernfried <w.haas@xover.htu.tuwien.ac.at>.
+
+
+2004-03-06  Hiroshi Yamashita <piro7@SoftHome.net>
+
+	* src/access.c, src/connection.c, mmap.c, src/handler_file.c,
+	src/server.c: Compilation fixes for FreeBSD
+
+	* src/fdpoll.h, src/fdpoll.c: Added support for kqueue()
+
+
+2004-03-05  Yusuf Goolamabbas  <yusufg@outblaze.com>
+
+	* bench/main.c (main): Parsing parameters bugfix.
+
+
+2004-03-04  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/header.c (cherokee_header_get_length): Added new method
+
+	* Released 0.4.12
+
+	* src/thread.c, src/connection.c: Fixed bug.  It was only doing
+	one keepalive connection.  Now it does MAX_KEEPALIVE.
+
+	* src/common.h: Fixed inclusion of stdint.h
+	It didn't compile in Solaris 9.  Fixed by Iván Chavero.
+
+
+2004-03-03  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* configure.in: Switch threading support.  Now, it enabled by
+	default.
+
+	* src/Makefile.am (libcherokee_la_LIBADD): Removed CRYP_LIBS
+
+	* src/mime.c (cherokee_mime_get): Warning fixed
+
+
+2004-03-02  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/handler_mono.c: More code arround the Mono-Cherokee
+	integration.
+
+	* src/read_config_grammar.y: Added new handler property "socket"
+	for the ASPX (Mono) handler.
+
+	* src/header.c, src/header.h (cherokee_header_copy_method,
+	cherokee_header_copy_version): Added new methods.
+
+
+2004-03-01  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/handler_mono.c, src/handler_mono.h: Added new handler
+
+
+2004-02-29  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* 0.4.11 released
+
+	* bench/url_grammar.y, bench/url_grammar.l, bench/bench.c,
+	bench/Makefile.am: Added support for reading URL files.
+
+	* src/common.h: Added stdind.h include by default
+
+	* src/http.h: Added http_put enum entry
+
+	* bench/request.c (cherokee_bench_request_build_string): Added new method
+
+	* bench/url.c (cherokee_url_build_string): Added new method
+
+
+2004-02-27  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* bench/.cvsignore: Added url_* from lex & bison
+
+	* bench/bench.c: It uses the new class "request" instead the "url"
+	one.  "url" now contained in "request".
+
+	* bench/request.c, bench/request.h: Added new class
+	
+	* src/common.h: Added new type cherokee_boolean_t
+
+
+2004-02-26  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* debian/rules, debian/control: Added new package cherokee-bench
+
+	* debian/rules: Added --enable-pthreads
+
+
+2004-02-25  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* bench/info.c, bench.h: New class
+
+	* bench/bench.c, bench/bench.h, bench/main.c: Big clean up.
+
+	* bench/url.h, bench/url.c: Add port URL class
+
+	* bench/main.c, bench/bench.h, bench/bench.c: Remove port form
+	these classes.
+	
+
+2004-02-23  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* bench, bench/bench.c, bench/bench.h, bench/cherokee-bench,
+	bench/connection.c, bench/connection.h, bench/main.c,
+	bench/thread.c, bench/thread.h: Added new benchmarking
+	utility. This is the initial version.
+
+
+2004-02-01  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/header.c, src/header.h, src/http.h, src/socket.c,
+	src/socket.h: Code clean up for better support of TLS.
+
+	
+2004-02-05  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/connection.c (cherokee_connection_recv): Rewritten. It is
+	faster and cleaner than the previous version (uses the new
+	cherokee_buffer_read_from_fd function).
+
+	* src/buffer.c (cherokee_buffer_multiply): Add new method
+
+	* src/buffer.c (cherokee_buffer_read_from_fd): New method
+
+
+2004-01-31  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/handler_file.c, src/mime.c, src/mime.h, src/mime_grammar.y:
+	Changed property mime_name of the mime entry class from a char *
+	to a cherokee_buffer_t * to know the length in handler_file and
+	copy the string faster.
+
+	* mime.conf.sample: Added new xhtml and openoffice.org mime types
+	
+
+2004-01-30  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* debian/rules: Updated mime. Added cherokee-config.1 to man pages
+	installation.
+
+	* src/mime_scanner.l, mime_grammar.y, src/Makefile.am,
+	src/common.h, src/handler_file.c, src/handler_file.h,
+	icons_grammar.y, src/icons_scanner.l, src/mime.c, src/mime.h,
+	read_config_grammar.y, src/server.c, src/server.h, Makefile.am,
+	mime.conf.sample: Added new mime configuration system.
+
+	* Cherokee 0.4.10 released
+
+
+2004-01-29  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* configure.in: epoll() detection rewritten There was a problem
+	reported by Yusuf Goolamabbas.
+
+
+2004-01-28  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* Cherokee 0.4.9 released
+
+	
+2004-01-27  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* configure.in: Removed check for poll_emu
+
+	* src/fdpoll.c: Added support for select()
+
+	* src/poll_emu.c, src/poll_emu.h: Droped out!
+
+	* debian/copyright (Copyright): Removed poll_emu license.
+	
+
+2004-01-25  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* Cherokee 0.4.8 released
+
+
+2004-01-24  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/connection.c
+	(cherokee_connection_send_response_page_hardcoded): Fixed crosss
+	site scripting bug. Bug #29: http://bugs.alobbs.com/29
+
+	* src/buffer.c, src/buffer.h, src/connection.c, src/fdpoll.c,
+	src/fdpoll.h, src/server.c: Some work to add select() to fdpoll.
+
+
+2004-01-22  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/server.c (print_banner): Added the polling method to the
+	banner.
+
+	* src/fdpoll.c, src/fdpoll.h: Added get_method method.
+
+
+2004-01-20  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/connection.c (cherokee_connection_build_header): Fixed
+	non-200 type responses.
+
+
+2004-01-20  Ramon Pons Vivanco  <rpons@rinu.org>
+
+	* Cherokee 0.4.7 released
+
+	
+2004-01-20  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/connection.c (cherokee_connection_send_header_and_mmaped): 
+	Fixed partial content management.
+
+
+2004-01-19  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/access.c, src/common.c, src/connection.c, src/connection.h,
+	src/handler_server_info.c, src/handler_table_entry.h,
+	src/header.c, src/icons.c, src/icons.h, src/log.c, src/mmap.c,
+	src/module_loader.c, src/module_loader.h,
+	src/read_config_grammar.y, src/server.c, src/server.h,
+	src/socket.c, src/thread.c: Clean up to avoid compilation
+	warnings.
+
+	* src/common.c: Dropped vsyslog() usage.
+
+	* src/server.c (initialize_server_socket6): Moved setsockopt()
+	calls to set_server_socket_opts() function.
+
+
+2004-01-18  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/handler_file.c (cherokee_handler_file_add_headers): Switched
+	from two call to cherokee_buffer_add() to one to
+	cherokee_buffer_add_va()
+	
+
+2004-01-16  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/handler_file.c (cherokee_handler_file_init): Fixed mmaped
+	content problem.
+	
+
+2004-01-14  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/thread.c: Big changes to improve multithread mode.
+
+	* src/thread.c: (set_sigpipe):  Added SIGBUS
+
+	* src/server.c (print_banner): Fixed banner
+
+	* configure.in: Added check for poll.h
+
+
+2004-01-13  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/fdpoll.c (fdpoll_poll_new): Clean ups
+
+
+2004-01-10  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/thread.c, src/connection.c: Fixed EAGAIN error management as
+	result of read()
+	
+
+2004-01-08  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/mmap.c:  Now, it's thread-safe.
+
+	* src/mmap.h, src/mmap.c:  Fixed function prototipes that did not
+	return ret_t.
+
+	* src/common.h: Added CHEROKEE_RWLOCK_* macros.
+
+	
+2004-01-08  Ayose Cazorla León   <setepo@gulic.org>
+
+	* src/handler_cgi.c:  Fixed <defunct> processes.
+
+	
+2004-01-07  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/mmap.h, src/mmap.c (cherokee_mmap_init,
+	cherokee_mmap_get_default): Added new methods.
+
+
+2004-01-04  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/common.h (CHEROKEE_MUTEX_TRY_LOCK): Added new macro.
+
+	* src/connection.c (cherokee_connection_open_request): Fixed
+	keep-alive management.
+
+	* src/header.c (parse_first_line): Fixed bug in protocolor version
+	detection code.
+
+	* src/Makefile.am: Fixed PAM library usage
+
+	* src/handler_file.c (cherokee_handler_file_init): Mime fix.
+
+	* src/mime.c (cherokee_mime_init_with_file): Added a better error
+	checking.
+
+	* configure.in: Some clean up.
+
+
+2004-01-03  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* configure.in: Fixed bug in module static compilation.
+	Added code for drop out modules that will not be compiled.
+
+	* src/access.c, src/buffer.c, src/common.h, src/connection.c,
+	src/connection.h, src/fdpoll.c, src/header.c, src/logger_ncsa.c,
+	src/logger_w3c.c, src/module_loader.c, src/read_config_grammar.y,
+	src/read_config_scanner.l, src/server.c, src/server.h,
+	src/socket.c, src/socket.h, src/thread.c, src/thread.h: Lot of
+	changes to improve threaded mode.
+
+	* src/read_config_grammar.y (thread_num): Droped out #ifdef
+	HAVE_PTHREAD
+
+	* src/access.c (parse_netmask): Fixed /128 mask.
+
+	* src/header.c (cherokee_header_parse): Fixed bug: it fails is
+	HEADER_INTERNAL_DEBUG was not defined previously.
+
+	* src/validator_htpasswd.c: Added MD5-digest passwords support.
+
+	* src/logger_w3c.c (cherokee_logger_w3c_write_string): Fixed bad
+	use of syslog() function that could compromise the server.
+	Reported by Matthew Murphy <mattmurphy@kc.rr.com>
+
+
+2004-01-02  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/read_config_grammar.y (ip_list): Added parsing of "Allow
+	from" sentences inside directory configuration.
+
+
+2004-01-01  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/handler_cgi.c (cherokee_handler_cgi_init): Change the
+	current directory to to the program's own directory.
+
+	* src/read_config_scanner.l: Added rule to parse IPv6 addresses.
+
+	* src/access.c, src/access.h, src/buffer.c, src/buffer.h,
+	src/cherokee.h, src/cherokee_modules.c, src/common.c,
+	src/common.h, src/connection.c, src/connection.h, src/encoder.c,
+	src/encoder.h, src/encoder_fixer.c, src/encoder_fixer.h,
+	src/encoder_gzip.c, src/encoder_gzip.h, src/encoder_table.c,
+	src/encoder_table.h, src/fdpoll.c, src/fdpoll.h, src/handler.c,
+	src/handler.h, src/handler_cgi.c, src/handler_cgi.h,
+	src/handler_common.c, src/handler_common.h, src/handler_dirlist.c,
+	src/handler_dirlist.h, src/handler_file.c, src/handler_file.h,
+	src/handler_gnomevfs.c, src/handler_gnomevfs.h, src/handler_nn.c,
+	src/handler_nn.h, src/handler_php4.c, src/handler_php4.h,
+	src/handler_phpcgi.c, src/handler_phpcgi.h, src/handler_redir.c,
+	src/handler_redir.h, src/handler_remote_control.c,
+	src/handler_remote_control.h, src/handler_server_info.c,
+	src/handler_server_info.h, src/handler_table.c,
+	src/handler_table.h, src/handler_table_entry.c,
+	src/handler_table_entry.h, src/header.c, src/header.h, src/http.h,
+	src/icons.c, src/icons.h, src/list_ext.c, src/list_ext.h,
+	src/log.c, src/log.h, src/logger.c, src/logger.h,
+	src/logger_ncsa.c, src/logger_ncsa.h, src/logger_table.c,
+	src/logger_table.h, src/logger_w3c.c, src/logger_w3c.h,
+	src/main.c, src/match.c, src/match.h, src/matching_list.c,
+	src/matching_list.h, src/mime.c, src/mime.h, src/mmap.c,
+	src/mmap.h, src/module.c, src/module.h, src/module_loader.c,
+	src/module_loader.h, src/ncpus.h, src/server.c, src/server.h,
+	src/socket.c, src/socket.h, src/table.c, src/table.h,
+	src/thread.c, src/thread.h, src/validator.c, src/validator.h,
+	src/validator_htpasswd.c, src/validator_htpasswd.,
+	src/validator_pam.c, src/validator_pam.h, src/validator_plain.c,
+	src/validator_plain.h, src/virtual_server.c, src/virtual_server.h:
+	Update copyright notice.
+
+	* src/access.c (cherokee_access_ip_match): Added initial version
+	of access class for filtering based in IP addresses.
+
+
+2003-12-31  Ramon Pons Vivanco  <rpons@rinu.org>
+
+	* Cherokee 0.4.6-20031231 released
+
+
+2003-12-30  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/socket.h: Added two new macros: SOCKET_ADDR_IPv4,
+	SOCKET_ADDR_IPv6
+
+
+2003-12-29  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/handler_common.c (common_init): Added dependency
+	initialization of the phpcgi module.
+
+	* src/handler_phpcgi.c (phpcgi_init): Added security check for the
+	PHP interpreter executable.
+	
+
+2003-12-28  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/md5.h: Added config.h
+
+
+2003-12-27  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/buffer.c (cherokee_buffer_encode_md5): Renamed to
+	cherokee_buffer_encode_md5
+	
+
+2003-12-26  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/connection.c: Fixed DoS problem with POST requests. Reported
+	by vnull@pcnet.com.pl.
+	
+
+2003-12-25  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee.conf.sample.in: Added a /remote directory which uses
+	the remote_control handler.
+	
+
+2003-12-25  Ramon Pons Vivanco  <rpons@rinu.org>
+
+	* Cherokee 0.4.6-20031225 released
+
+
+2003-12-21  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/handler_server_info.c (add_data_sent_row): It now uses the
+	new method get_total_traffic.
+
+	* src/server.c (cherokee_server_get_total_traffic): Added new
+	method.
+
+	* src/header.c (cherokee_header_get_arguments): Bug fix. It was
+	getting just the first argument.
+
+	* src/handler_server_info.c
+	(cherokee_handler_server_info_add_headers): changed
+	cherokee_buffer_add_va -> cherokee_buffer_add
+
+
+2003-12-20  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/connection.c (cherokee_connection_send_header): Added
+	no-cache headers in headers of error pages.
+	
+
+2003-12-18  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* configure.in: Removed phpsite handler and added remote_control
+	one.
+
+	* src/server.c, src/server.h (cherokee_server_get_reusable_conns,
+	cherokee_server_get_active_conns): Add new methods.
+
+	* src/handler_common.c (cherokee_handler_common_new): There was a
+	problem when it get a request of a directory and it contains a
+	index.php (included in DirectoryIndex conf entry) that should be
+	executed. Fixed.
+
+	* src/read_config_grammar.y (directoryindex): It was storing the
+	list of index files inverted. Fixed.
+
+	* src/list_ext.c, src/list_ext.h (cherokee_list_add_tail): Added
+	new function.
+
+	* src/header.c (HEADER_INTERNAL_CHECK): Verbose output
+
+	* cherokee.conf.sample.in: Added index.php to the default
+	DirectoryIndex tag.
+
+	* cherokee-config.1: Added to CVS.
+
+
+2003-12-14  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee-config.1, Makefile.am (man_MANS): Added new manual page
+	to be Debian policy compliant. :-p
+	
+
+2003-12-13  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/handler_server_info.c (PAGE_HEADER): Fixed space after CRLF\
+
+	* debian/copyright: Changed the licence of the MD5 code.
+
+	* src/md5.h, src/md5.c, configure.in, src/buffer.c: Changed the
+	RSA Data Security Inc. copyrighted code by a really free one.
+
+
+2003-12-11  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/thread.c (process_active_connections): Fixed managing for
+	HTTP 300 connections.  It was running like it was a 200
+	connection.
+
+
+2003-12-10  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/handler_file.c (check_cached): "If-None-Match" processing
+	fixes.
+
+	* src/read_config_grammar.y (userdir): Fixed error reporting when
+	Cherokee can not load a handler.
+
+	* src/thread.c (process_active_connections): Bug fixed.  It was
+	logging the HTTP 300 responses as error messages.
+
+	* src/connection.c (cherokee_connection_parse_get_header): Droped
+	out.  It was using the old header processing method.
+
+	* src/handler_file.c (check_cached): Change to use the new header
+	processing method.
+	
+
+2003-12-10  Ramon Pons Vivanco  <rpons@rinu.org>
+
+	* Cherokee 0.4.6-20031210 released
+
+
+2003-12-10  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee.m4: Updated from 0.4.2 to 0.4.5
+
+	* src/handler_gnomevfs.c (cherokee_handler_gnomevfs_new): Fixed
+	GNOME-VFS handler compilation
+	
+
+2003-12-09  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/header.c (cherokee_header_get_arguments): It uses strsep()
+	instead of strtok() to avoid the silly on-by-one bug of strtok:
+	==25427== Invalid read of size 1
+	==25427== at 0x402F349A: strtok (in /lib/libc-2.3.2.so)
+
+	* src/buffer.c (cherokee_buffer_move_to_begin): Changed memcpy by
+	memmove to avoid possible memory overlaping.
+
+	* src/header.c (HEADER_INTERNAL_CHECK): Added new check to ensure
+	the sanity of the information stored in the object
+
+	* src/handler_cgi.c, src/header.c, src/header.h, src/thread.c:
+	Fixed memory problem.  The header class was storing pointers to
+	the content of a buffer that could be reallocated.
+
+
+2003-12-08  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/connection.c: cherokee_connection_parse_args() function now
+	uses the ::get_arguments() method.  Droped out the previous
+	implementation.
+
+	* src/header.c (cherokee_header_get_arguments): Added new method
+
+	* src/handler_cgi.c (_set_envs_cgi): Added HTTP_USER_AGENT
+	enviroment variable.
+	
+
+2003-12-07  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/connection.c (cherokee_connection_clean): Fixed virtual
+	server managing problem with Keep-alive connections.
+
+
+2003-12-06  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/handler_server_info.c: Added a new "General Information"
+	section.
+
+	* src/thread.c: It sets the server and the default virtual server
+	by default to all connections for security reasons.
+
+	* src/connection.h, src/connection.c, src/virtual_server.c,
+	src/virtual_server.h: It stores the received and sent information
+	per virtual host instead of just the tx.
+	
+
+2003-12-05  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/handler_common.c (cherokee_handler_common_new): Bugfix
+	handling PHP index files.
+
+
+2003-12-04  Ramon Pons Vivanco  <rpons@rinu.org>
+
+	* Cherokee 0.4.6-20031204 released
+
+
+2003-12-03  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/read_config_grammar.y: improved error reporting and some
+	clean ups
+
+	* src/connection.c, src/virtual_server.c, src/virtual_server.h:
+	Added data sent counter per virtual host.
+
+	* src/handler_server_info.c: Added data sent row.  It shows the
+	data amount with the right suffix (Kb, Mb, Gb, Tb, ..)
+
+
+2003-12-02  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* configure.in: Added check for spread library:
+	http://www.spread.org
+
+	* src/handler_server_info.c, src/server.c, srv/server.h: Added
+	uptime support.
+
+	* configure.in: Static / Dynamic module compilation improved.
+	Some clean ups and new parameter --enable-static-module=all to
+	compile statically all the modules.
+
+	* src/handler_server_info.c, src/logo.inc: The handler server_info
+	can return a GIF image with the logo.
+
+	* src/handler_server_info.c: Added icons table.
+
+	* contrib/bin2buffer.py, contrib/Makefile.am: Added a mini-utility
+	to encode binary content inside a Cherokee buffer.
+
+
+2003-12-01  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/handler_server_info.c: Added mew handler to get information
+	about the server.
+
+	* src/read_config_grammar.y (thread_number): Fixed problem with
+	the thread number.  I was an error when Cherokee was compiled
+	wihtout pthread library support.
+
+	* src/connection.c (cherokee_connection_get_request): Remove "./"
+	strings from the query.
+
+	* src/buffer.c (cherokee_buffer_decode): Replace null bytes (%00)
+	with spaces to prevents attacks.
+
+	* src/buffer.c (cherokee_buffer_remove_string): Added new method.
+
+	* src/common.c (PRINT_DEBUG): Added new debugging function
+
+
+2003-11-30  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* configure.in: Updated GNUTLS depencente to version 0.9.99.
+
+	* src/Makefile.am: Fixed GNUTLS compilation support
+
+	* src/buffer.c (cherokee_buffer_remove_dups): Added new method
+
+	* src/connection.c, src/header.c, src/http.h, src/thread.c: Added
+	OPTIONS method support.
+	
+	* src/connection.c (delete_double_slash): Fixed potential security
+	problem with corrupted URLs.
+
+
+2003-11-29  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* validator_plain.h, validator_plain.c, cherokee.conf.sample,
+	src/Makefile.am, configure.in: Added new Plain Text validator
+	module.
+
+	* src/encoder_gzip.c, src/connection.c, src/encoder.h,
+	src/encoder_gzip.h, src/handler.h, src/handler_file.c,
+	src/server.c, src/thread.c: Improvements in the GZip encoder.
+	
+
+2003-11-27  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/server.c (cherokee_server_new): Better error handling in TLS
+	init.
+
+
+2003-11-26  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/read_config_grammar.y, connection.c, server.c, server.h,
+	thread.c, virtual_server.c, virtual_server.h: Added virtual
+	servers aliases.  Now, a virtual sever can has more than one
+	domain server name.
+
+	* src/connection.c (cherokee_connection_get_request): Fixed bug in
+	the "Host" header parsing
+
+	* src/buffer.c (cherokee_buffer_print_debug): Print a CRLF at the
+	end of the block.
+
+
+2003-11-25  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/encoder.c, src/connection.c, src/encoder.c, src/encoder.h:
+	Fixed _init() method of the encoder class.
+
+	* src/connection.c, src/connection.h: Added a new buffer to the
+	connection structure to improve the performance of the
+	encoders. cnt->encoder_buffer is reused in all the steps of a
+	connection.
+
+
+2003-11-24  Ayose Cazorla León   <setepo@gulic.org>
+
+	* src/connection.c,http.h: Added http_moved_temporarily
+
+	* CGI handler: POST added
+
+2003-11-24  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/encoder_gzip.c: Some code clean-ups
+
+	* src/handler_common.c (cherokee_handler_common_new): Added check
+	to execute PHP code in the suffix is ".php"
+
+	* configure.in, src/Makefile.am: Fixed problem for system with
+	crypt() in the libcrypt library
+
+	* src/connection.c, src/connection.h, src/header.c, src/header.h,
+	src/thread.c:  Added POST method support.
+
+
+2003-11-23  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/connection.c (process_handler_complex_headers): Added
+	"Status:" header support for accept status from CGI or PHP.
+	(cherokee_connection_open_request): Fixed KeepAlive problem with
+	CGIs.
+
+	* src/connection.c, src/connection.h: Some query_string related
+	clean ups.
+
+	* src/handler_cgi.c (cherokee_handler_cgi_add_headers): Method
+	rewritten.
+
+	* src/header.c (cherokee_header_parse): Improved header parsing.
+
+
+2003-11-23  Ayose Cazorla León   <setepo@gulic.org>
+
+	* src/handler_cgi.c: Use the cherokee_header API for set 
+	 SERVER_NAME a HTTP_COOKIE vars
+
+	* src/handler_phpsite.{c,h}: Very basic handler to combine the
+	common handler and phpcgi
+
+	* configure.in, src/Makefile.am: Compile phpsite handler
+
+	* src/handler_cgi.c, src/header.c: Some fixes to the CGI
+
+	* src/buffer.c (cherokee_buffer_make_empty): Bugfix
+
+	
+2003-11-22  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/handler_cgi.h, src/handler_cgi.c:  Added initial version of
+	PHP handler (forking as CGI).
+
+
+2003-11-19  Alvaro Lopez Ortega  <alvaro@alobbs.com>, Christopher Pruden  <pruden@dyndns.org>
+
+	* src/Makefile.am, src/buffer.c, src/buffer.h,
+	src/cherokee_headers.c, src/connection.c, src/connection.h,
+	src/handler_cgi.c, src/handler_file.c, src/header.c, src/header.h,
+	src/http.h, src/logger_ncsa.c, src/logger_w3c.c, src/thread.c:
+	Added new header parsing method.
+
+
+2003-11-19  Ramon Pons Vivanco  <rpons@rinu.org>
+
+	* Cherokee 0.4.6-20031119 released
+
+
+2003-11-16  William Jon McCann  <mccannwj@pha.jhu.edu>
+
+	* src/Makefile.am: Fixed build on Fedora Linux.
+
+
+2003-11-14  Alvaro Lopez Ortega  <alvaro@alobbs.com>, Ramon Pons <rpons@rinu.org>, Juan Badia <jubapa@alobbs.com>
+
+	* src/read_config_grammar.y, src/server.c: Added dynamic timeout
+	support in the connection headers.
+
+	* src/server.c (look_for_new_connection): Optimized connection
+	time-out. It uses the server bogo_now entry instead of a time()
+	system call.
+
+	* src/common.h: Changed "#ifdef HAVE_PTHREADS" to "#ifdef
+	HAVE_PTHREAD". It fixes lot of random crashes and race
+	conditions.
+
+
+2003-11-11  Ramon Pons Vivanco  <rpons@rinu.org>
+	
+	* icons/*.png: Added 5 new icons.
+
+	* icons.conf.sample: Added the new icons to the sample configuration file.
+
+
+2003-11-11  Christopher Pruden  <pruden@dyndns.org>
+
+	* src/buffer.c (cherokee_buffer_decode): Fixed segmentation fault
+	on empty buffer.
+
+
+2003-11-08  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/connection.c (get_uri): Bugfix in query_string processing
+
+
+2003-11-01  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/read_config_grammar.y (maybe_auth_option_params),
+	src/module_loader.c: Error reporting clean up.
+
+	* src/thread.c (thread_routine), src/main.c: Fixed concurrency
+	problem. Now, each thread catch the broken pipe signal to avoid
+	randomly crashes if Cherokee run in threaded mode.
+
+	* src/sha1.c: Fixed a byte order problem
+
+	* src/common.h: Added byte order macros
+
+	* src/endian_fix.h, src/Makefile.am: Removed
+
+	* configure.in: Added check for endianness
+
+	* src/thread.c (cherokee_thread_free): Fixed race condition.
+
+
+2003-10-30  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* configure.in: Added support for GNU/Linux distributions with
+	2.6.0 kernels but without a libc with epoll() support. (Like
+	Debian at this moment). Added condition to compile TLS/SSL:
+	--dissable-tls
+
+
+2003-10-29  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/connection.c (get_uri): Bug fixed. There was problems with
+	some requests if it had complex referers. Reported by Thomas
+	Seifert.
+
+
+2003-10-28  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/server.c (cherokee_server_read_config_string): It'll show an
+	error if cannot load the icons configuration file. Reported by
+	Thomas Seifert.
+	(look_for_new_connection): Bugfix accepting new connections.
+
+	* src/Makefile.am, src/buffer.c, src/connection.c,
+	src/handler_cgi.c, src/handler_cgi.h, src/read_config_grammar.y,
+	src/read_config_scanner.l, src/server.c, src/server.h,
+	src/socket.c, src/socket.h, src/virtual_server.c,
+	src/virtual_server.h, configure.in: Lot of changes to add TLS
+	support.	
+
+
+2003-10-27  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee.conf.sample.in, src/read_config_grammar.y,
+	src/read_config_scenner.l: Added "SSLCAListFile" configuration key
+	entry.
+
+	* src/server.h: port and port_ssl are now unsigned short instead int.
+
+
+2003-10-26  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* configure.in, openssl.m4: Added check for OpenSSL. 
+	Removed liblzo check. Check for GNU TLS commented.
+
+	* src/buffer.c (cherokee_buffer_add): Added sanity check
+
+	* src/handler_cgi.c, src/connection.c: CGI execution improvements.
+
+	* cherokee.conf.sample.in: Commented ErrorDocument. It's unset by default.
+
+	* src/validator_htpasswd.c (cherokee_validator_htpasswd_check):
+	Client should not download the password file.
+
+
+2003-10-25  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/server.c: Added "Date" header.
+
+	* src/handler_file.c (check_cached): Added support for cached
+	contents based in Etag ("If-None-Match") and in the time
+	("If-Modified-Since").
+
+	* src/tdate_parse.c, src/tdate_parse.h, src/Makefile.am: Added new files.
+
+	* src/handler_file.c (cherokee_handler_file_add_headers): Added
+	"ETag" and "Last-Modified" headers support.
+
+	* src/buffer.c (cherokee_buffer_encode_hex): Added
+	cherokee_buffer_encode_hex() function.
+
+
+2003-10-24  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* configure.in: Added check for crypt_r()
+
+
+2003-10-23  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* pam.d_cherokee, Makefile.am (install-data-local): Added PAM
+	configuration file.
+
+	* cherokee.conf.sample.in: Fixed bug related to icons.conf
+	installation place. Reported by Ayose.
+
+	* src/validator_htpasswd.h, src/validator_htpasswd.c,
+	src/Makefile.am, src/connection.c, src/read_config_grammar.y,
+	src/read_config_scanner.l: Added new validator for htpasswd
+	files.
+
+	* configure.in: Added crypt() check.
+
+	* src/read_config_scanner.l: T_QSTRING returns unquoted.
+
+	* src/connection.c, src/connection.h, src/http.h, src/thread.c,
+	src/validator.c, src/validator.h: Added authentication support.
+
+	* src/Makefile.am, src/buffer.h, src/handler.c,
+	src/handler_file.c, src/handler_file.h, src/logger.c: Clean ups.
+	
+	* src/validator_pam.c, src/validator_pam.h: Added new validator
+	based in PAM library.
+
+	* configure.in: Added check for installed old versions
+
+
+2003-10-22  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/buffer.c (cherokee_buffer_decode_base64): Added new function
+	to decode Base64. 
+	
+	* src/buffer.c (cherokee_buffer_encode_md5): Added new function
+	to encode MD5.
+
+	* src/icons.c, src/icons.h: cherokee_icons_read_file() renamed to
+	cherokee_icons_read_config_file().  Added a new function
+	cherokee_icons_read_config_string() to support configuration from
+	external programs.
+
+
+2003-10-21  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/icons.c, src/icons.h, src/icons_grammar.y,
+	src/icons_scanner.l, icons.conf.sample, src/handler_dirlist.c:
+	Added new icons managment system.
+
+
+2003-10-20  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* icons/image.png, icons/back.png: Added new icons.
+
+
+2003-10-19  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/table.c (cherokee_table_while): Added new function.
+
+
+2003-10-18  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* Makefile.am: Added src/match.h, src/match.c
+
+	* src/read_config_grammar.y, src/read_config_scanner.l: Added
+	Icons configuration entry.
+
+	
+2003-10-18  Juan Cespedes  <cespedes@debian.org>
+
+	* src/match.h, src/match.c: Added match() function.
+	
+
+2003-10-17  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/server.c, src/server.h: server->mimetypes_file clean up.
+
+	* Makefile.am, icons.conf.sample: Added new configuration file.
+
+
+2003-10-16  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* debian/*: Added Debian GNU/Linux packaging information.
+
+	* src/Makefile.mingw, src/libc_internal, src/libc_interface.h,
+	src/libc_interface.c: Added initial Win32 support.
+
+
+2003-10-15  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* configure.in: Added checks for syslog.h, sys/socket.h
+
+	* src/connection.c
+	(cherokee_connection_build_local_directory_userdir): Fixed bug
+	with request like: http://server/~user
+
+	* src/handler_dirlist.c (cherokee_handler_dirlist_init): Fixed
+	redirect with userdirs.
+
+	* src/buffer.c (cherokee_buffer_move_to_begin): Added check for
+	ensure position is great than zero.
+
+	* src/buffer.c (cherokee_buffer_add_buffer): Added new function.
+
+	* src/connection.c, src/connection.h, src/handler.c, src/handler.h,
+	src/handler_dirlist.c, src/handler_nn.c, src/handler_redir.c,
+	src/module_loader.c, src/thread.c: Droped out handler->redirect,
+	instead it uses conn->redirect.
+	
+
+2003-10-14  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/Makefile.am (libcherokee_nn_la_LIBADD): Added
+	libcherokee_redir as dependence of libcherokee_nn
+
+
+2003-10-11  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/connection.c
+	(cherokee_connection_build_local_directory_userdir): Fixed
+	redirection to correct URL. Eg: ~alo/dir/dir2 -> ~alo/dir/dir2
+
+
+2003-10-10  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/module_loader.c, src/module_loader.h, src/validator_pam.c,
+	src/validator_pam.h, src/handler_table.h,
+	src/handler_table_entry.c, src/handler_table_entry.h,
+	src/handler_table.c, src/cherokee_modules.c,
+	src/cherokee_add_static_module.sh: New added files.
+
+	* configure.in, src/Makefile.am, src/buffer.c, src/connection.c,
+	src/connection.h, src/encoder_gzip.c, src/encoder_gzip.h,
+	src/encoder_table.c, src/encoder_table.h, src/fdpoll.c,
+	src/handler_cgi.c, src/handler_common.c, src/handler_dirlist.c,
+	src/handler_file.c, src/handler_gnomevfs.c, src/handler_nn.c,
+	src/handler_redir.c, src/logger_ncsa.c, src/logger_table.c,
+	src/logger_table.h, src/logger_w3c.c, src/module.h,
+	src/read_config_grammar.y, src/read_config_scanner.l,
+	src/server.c, src/server.h, src/socket.h, src/thread.c,
+	src/thread.h, src/validator.c, src/virtual_server.c,
+	src/virtual_server.h: Integration with the new module system.
+	
+	* src/library.c, src/library.h, src/static_encoders.h.orig,
+	src/static_handlers.h.orig, src/static_loggers.h.orig,
+	src/plugin_table.c, src/plugin_table.h, src/plugin_table_entry.c,
+	src/plugin_table_entry.h: Removed files.
+
+
+2003-10-08  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* configure.in: Added check for PAM
+
+
+2003-10-08  Juan Cespedes <cespedes@debian.org>
+
+	* src/buffer.c (cherokee_buffer_add): Fixed bug: Off-by-one.
+	
+
+2003-10-07  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/module.c, src/validator.h, src/validator.c: Added initial
+	version.
+
+	* src/common.h: Added deny to ret_t.
+
+
+2003-10-06  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/module.h: Added.
+
+
+2003-10-05  Stuart Herbert <stuart@gentoo.org>
+
+	* Makefile.am: Fixed a couple of problems.
+
+
+2003-10-02  Silvio Ventres <navigator@altern.org>
+
+	* src/fdpoll.c, src/thread.c: Fixed epoll() support.
+	On socket error, it'll close the connection ASAP.
+
+
+2003-09-28  Alvaro Lopez Ortega <alvaro@alobbs.com>
+
+	* src/thread.c (process_active_connections): Fixed bug #21
+	http://bugs.alobbs.com/21.
+
+
+2003-09-10  Pablo Neira <pneira@optimat.com>
+
+	* src/thread.c (process_active_connections): Bug fixed.  On
+	security check failure, the connections wasn't a virtual host
+	reference.  Now, it uses the default one. 
+
+
+2003-09-09  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/thread.c (process_active_connections): Fixed bug #19
+	http://bugs.alobbs.com/19
+
+	* src/read_config_grammar.y: Moved logging entry from "server"
+	to "virtual server" entry.
+
+
+2003-09-24  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* Removed stolen code from SCO Unix System V
+
+
+2003-08-21  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/server.c (cherokee_server_read_config_file): Now, it stores
+	the last configuration filename.  Maybe the server will need it 
+	if receive a HUP signal.
+	(cherokee_server_read_config_file): Fixed reloading.  There was
+	a bug reusing a Yacc+Lex parser.
+	
+
+2003-08-20  Ramon Pons Vivanco  <rpons@rinu.org>
+
+	* Cherokee 0.4.6-030820 release
+
+
+2003-08-19  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/main.c (process_parameters): Added argument support
+
+	* src/read_config_grammar.y (T_FULLDIR): Fixed compilation w/o
+	GNU/TLS library
+
+	* src/thread.c, src/connection.c, src/virtual_server.c: Fixed
+	"ErrorDocument XXX http://url" redirection feature.
+
+	* src/connection.c (send_buffer_unsafe): Improvement.  If it was an
+	error sending the buffer, it turns off the keepalive flag.
+
+
+2003-08-18  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee.conf.sample.in, src/connection.c, src/connection.h, 
+	src/http.h, src/read_config_grammar.y, src/read_config_scanner.l, 
+	src/thread.c, src/virtual_server.c, src/virtual_server.h:
+	Added "ErrorDocument" support.  Custom error pages based on
+	file content or redirections.
+
+	* cherokee.conf.sample.in, src/connection.c,
+	src/read_config_grammar.y, src/read_config_scanner.l,
+	src/server.c, src/server.h,  src/virtual_server.c: Added
+	"MaxKeepAliveRequests" configuration parameter.
+
+
+2003-08-17  Ramon Pons Vivanco  <rpons@rinu.org>
+
+	* doc/SSL-howto.html: Added self signed certs script
+
+
+2003-08-17  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/read_config_grammar.y, src/virtual_server.c, 
+	srv/virtual_server.h. src/read_config_scanner.l: 
+	cherokee.conf.sample.in: Some work arround the GNU/TLS support
+
+	* doc/SSL-howto.html: Added u-Howto to manage SSL certs
+
+	* src/server.c (cherokee_server_daemonize): Added new method
+
+
+2003-08-16  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* configure.in: Added check for GNUTLS and liblzo:
+	http://www.gnu.org/software/gnutls/
+	http://packages.debian.org/unstable/libdevel/liblzo-dev.html
+
+	* src/connection.c (cherokee_connection_send_response_page),
+	src/handler_dirlist.c (cherokee_handler_dirlist_step):
+	Now uses the new cherokee_buffer_add_version function
+
+	* src/buffer.c (cherokee_buffer_add_version): Added new
+	method
+
+
+2003-08-16  Ramon Pons Vivanco  <rpons@rinu.org>
+
+	* Cherokee 0.4.6-030816 release
+
+
+2003-08-16  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/handler_common.c (cherokee_handler_common_new): 
+	Fixed manage of the local directories
+
+	* src/handler_dirlist.c (cherokee_handler_dirlist_new): 
+	Fixed incorrect initialization.
+
+	* src/read_config_grammar.y (new_string_to_lowercase): 
+	Bugfix
+
+	* configure.in, Makefile.am (EXTRA_DIST), cherokee.pc.in: 
+	Added pkg-config support
+
+	* src/buffer.c (cherokee_buffer_read_file): Added new
+	method to add the file content to a buffer.
+	
+	* src/table.c (cherokee_table_clean): Bugfix
+
+	* src/library.c (cherokee_library_get): Added support for
+	reloading a running enviroment
+
+	* src/table.c (cherokee_table_clean): Bugfix
+
+	* src/handler_dirlist.c (cherokee_handler_dirlist_step),
+	src/read_config_grammar.y, src/read_config_scanner.l:
+	Added new feature "HeaderFile" to handler_dirlist to
+	insert a header file in the response page.
+
+
+2003-08-15  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/handler_file.c (cherokee_handler_file_step): Fixed
+	sendfile() bug on FreeBSD. Thanks to Pablo Neira.
+
+	* aclocal.m4 (HAVE_PTHREAD): Removed SAMBA_SENDFILE
+	funcion.  Added sendfile.samba.m4
+
+	* etr_socket_nsl.m4: Added new func ETR_SOCKET_NSL
+	http://ac-archive.sourceforge.net
+
+	* doc/draft-coar-cgi-v11-03.txt: Added CGI/1.1 rev3
+	documentation
+
+	* src/main.c (restart_server): Clean up
+
+	* src/server.c (cherokee_server_add_directory_index): removed
+	(cherokee_server_handle_HUP): Added new function
+
+	* configure.in (HAVE_EPOLL): Bugfix
+
+	* src/encoder_fixer.h, src/encoder_fixer.c, configure.in,
+	src/Makefile.am: Encoder fixer droped out
+
+	* src/server.c (cherokee_server_init), 
+	src/read_config_grammar.y, src/read_config_scanner.l: 
+	Added chroot
+
+	* src/logger_w3c.c (cherokee_logger_w3c_init),
+	src/logger_ncsa.c (cherokee_logger_ncsa_init):
+	Set the close-on-exec flag to log file descriptors
+
+
+2003-08-14  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/common.h: Fixed bug #12
+
+	* src/connection.c, src/connection.h, src/handler_dirlist.c,
+	src/read_config_gramma.y, src/read_config_scanner.l,
+	src/server.c, src/server.h, src/thread.c: Fixed bug #14
+	http://bugs.alobbs.com/14
+
+
+2003-08-13  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/encoder_table.c (cherokee_encoder_table_get): Bugfix
+
+	* src/encoder_fixer.h, src/encoder_fixer.c, configure.in,
+	src/Makefile.am: Added new encoder module
+	
+	* configure.in: Added check for Tidy library:
+	http://tidy.sourceforge.net
+
+
+2003-08-12  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/mmap.c: Almost implemented. 
+
+	* src/fdpoll.c (fdpoll_epoll_set_mode): Implemented
+
+	* src/handler_dirlist.c (cherokee_handler_dirlist_step): Added
+	initial support for "Show Owner" (handler_dirlist)
+
+	* table.h, table.c, ....: Added new func
+	cherokee_table_get_val() and fixed old calls to cherokee_table_get()
+	with the new function interface.
+
+
+2003-08-11  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/connection.c (cherokee_connection_parse_args): 
+	Added new method to process the QueryString and to
+	build the argument table of the connection.
+
+	* src/endian_fix.h, md5.c, sha1.c: Fixed FreeBSD compilation
+	problem.  Pablo Neira & me.
+
+	* src/connection.c: Some query_string code clean ups
+
+
+2003-08-10  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/fdpoll.h, src/fdpoll.c, server.c: Added /dev/epoll support
+
+	* configure.in: Added --disable-epoll option
+
+
+2003-08-09  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* configure.in: Added check for FastCGI library.
+
+	* src/handler_common.c (cherokee_handler_common_new),
+	src/read_config_grammar.y, src/read_config_scanner.l:
+	Added DirectoryIndex support.  Based on the patch submited
+	by Pablo Neira <pneira@optimat.com>
+	
+	* src/common.h, src/common.c: Added apr_strfsize() function
+	from Apache2 to improve handler_dirlist output.
+	
+	* src/list_ext.h, src/list_ext.c: Added new helper functions to
+	manage list easier.
+	
+	* src/server.c (cherokee_server_free): Virtual servers table
+	deallocation and clean done.
+
+	* src/handler_dirlist.c (cherokee_handler_dirlist_step): Added
+	time and size support.  To set up it, "Show size" and "Show date"
+	in cherokee.conf
+
+
+2003-08-08  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/read_config_grammar.y, src/read_config_scanner.l,
+	src/handler_dirlisrt.h, src/handler_dirlist.c: Added 
+	parameters: bgcolor, text, link, alink, vlink and
+	background.
+
+	* configure.in: Added check for header sys/epoll.h and 
+	libepoll.a and epoll()
+
+
+2003-08-06  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/connection.c: Fixed bug #18
+
+
+2003-08-05  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/connection.c: Fixed bug #16 
+
+
+2003-07-29  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* read_config_grammar.y, read_config_scanner.l, server.c,
+	server.h: Added a parameter to (de)active the IPv6 support
+
+
+2003-07-26  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/server.c (look_for_new_connection): Bugfix
+	
+
+2003-07-25  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* connection.c, encoder_gzip.c, encoder_table.c, handler_cgi.c,
+	handler_file.c, library.c, library.h, logger.h, logger_ncsa.c,
+	logger_table.c, logger_w3c.c, mmap.c, plugin_table.c,
+	server.c, thread.c: Code clean up to compile with "-Wall"
+
+	* src/plugin_table.c (load_plugin_library): Type warning fixed 
+
+	* src/connection.c (delete_double_slash): Fixed bug #17
+	(cherokee_connection_new): Removed two unused globals
+
+2003-07-20  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/plugin_table.c (cherokee_plugin_table_get): Little bugfix
+
+
+2003-07-20  Ayose Cazorla León  <setepo@gulic.org>
+
+	* cherokee.conf.sample.in: Directory entry for cgi-bin
+
+	* configure.in, src/Makefile.am: Added libcherokee_cgi
+
+	* src/connection.c,h: Added query_string
+
+	* src/handler_cgi.c,h: The CGI handler for Cherokee
+
+
+2003-07-14  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/connection.c (cherokee_connection_set_cork): Replaced
+	SOL_TCP by IPPROTO_TCP
+
+	* configure.in: Added check for AC_FUNC_MMAP
+	Added check for TCP CORK option. Added --enable-gnomevfs,
+	the GNOME-VFS handler won't compile by default. Added check
+	for stat64
+
+
+2003-07-13  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/handler_file.c, src/handler_file.h, thread.c: Added sendfile()
+	support.
+
+	* configure.in, acinclude.m4: Added check for sendfile().
+	Copy-Paste from the Samba configure.in ;-)
+	
+
+2003-07-12  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* configure.in: Added check for pthread_rwlock_t
+
+	* acinclude.m4: Added ACX_PTHREAD macro
+
+	* src/fdpoll.h, src/fdpoll.c, src/server.c, src/server.h,
+	src/thread.c, src/thread.h: Thread support is working now
+
+
+2003-07-10  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/thread.c, src/thread.h: Added initial version
+
+	* src/read_config_grammar.y (T_THREAD_NUM): Added "ThreadNumber"
+
+	* src/handler_file.c (cherokee_handler_file_init): Code clean up
+
+	* src/connection.h: Removed "handler_file.h" inclusion
+
+	* src/Makefile.am (libcherokeeinclude_HEADERS): Added some forgoten
+	header files
+
+
+2003-07-09  Pablo Neira <pneira@optimat.com>
+
+	* src/connection.h: Patch for FreeBSD compilation
+
+
+2003-07-08  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* configure.in: Added --enable-pthreads option
+
+	* src/logger.c (cherokee_logger_write_string): Rewritten.
+
+	* src/logger_w3c.c, src/logger_ncsa.c: It'll cut the string if
+	it's too long and add a \n at the end.
+
+	* src/logger_ncsa.c (cherokee_logger_ncsa_write_error): Bugfix
+	working with long requests.
+
+	* src/connection.c (cherokee_connection_send_header): Bugfix. It
+	didn't include the connect-type header in the error replies.
+
+	* src/handler_file.c (cherokee_handler_file_init): Fixed bug. It was 
+	reporting a error 404 (Not Found) instead 403 (Forbidden) in the
+	request for file without reading permission.  Reported by Pablo Neira.
+
+	* src/connection.c (cherokee_connection_send_header): Fixed bug
+	 with some kind of corrupted requests.  Reported by Pablo Neira :)
+
+	* src/logger_ncsa.c (cherokee_logger_ncsa_write_error): Fixed
+	little bug.
+
+
+2003-07-07  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* configure.in: little bug
+
+	* src/logger_w3c.c, src/logger_ncsa.c: Added syslog support
+
+
+2003-07-06  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/common.h (CHEROKEE_TEMP): Added new macro
+
+
+2003-07-04  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* Makefile.am: Fixed bug #15
+
+
+2003-07-03  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/logger_w3c.[ch]: Added new W3C logger
+
+	* src/logger.h, src/logger_ncsa.c, src/logger_ncsa.h: Added the
+	new method: cherokee_logger_write_string().  Added the
+	write_error() and write_string() to the NCSA logger.
+
+
+2003-07-02  Pablo Neira <pneira@optimat.com>
+
+	* src/connection.c: Fixed FreeBSD 5.0 compilation
+
+
+2003-07-02  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/logger.[hc], src/logger_ncsa.[hc]: Added write_access and
+	write_error method and removed the old wirte one.
+
+
+2003-07-01  Pablo Neira <pneira@optimat.com>
+
+	* cherokee.spec.in: Updated.
+	It have been tested in Red Hat 7.2, 8.0 and Mandrake 9.1
+
+	
+2003-07-01  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/logger_table.[hc]: Added new class
+
+	* src/Makefile.am, configure.in: Fixes for the modular loggers support
+
+	* cherokee.conf.in, src/Makefile.am, src/encoder_table.c,
+	src/logger_ncsa.c, src/read_config_grammar.y, src/server.c,
+	src/server.h, src/static_loggers.h.orig, src/virtual_server.c,
+	src/virtual_server.h: Work on loggers integration. 
+
+
+2003-06-30  Miguel Angel Ajo Pelayo <ajo@godsmaze.org>
+
+	* src/logger.c src/logger.h: files added for logger modules suport. 
+	
+	* src/logger_NCSA_common.[ch]: NCSA logger module, based on changes by
+	Pablo Neira
+	
+	* the above files are still not used, untested. 
+
+	
+2003-06-30  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/Makefile.am, src/common.c, common.h, encoder_table.c,
+	plugin_table.c, src/read_config_grammar.y: Integrated with
+	the new class Library
+	
+	* src/library.c, src/library.h: Added new class for module loading
+
+	* cherokee.conf.in, src/connection.c, src/encoder.c, src/encoder.h,
+	src/encoder_table.c, src/encoder_table.h, src/matching_list.c,
+	src/read_config_grammar.y: Added matching support in the encoders.
+	The encoder+matching lists support were partially rewritten.
+
+
+2003-06-29  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/read_config_scanner.l, src/read_config_grammar.y: 
+	Renamed read_config.l and read_config.y
+
+	* configure.in: Added some checks
+
+	* src/server.c (process_active_connections): Bugfix. Reported by rpons
+
+	* src/handler_dirlist.c (cherokee_handler_dirlist_add_headers): 
+	Added header "Content-Type: text/html" to response header of the
+	autogenerated pages. Reported by rpons.
+
+	* src/connection.c (cherokee_connection_build_local_directory_userdir): 
+	Bugfix for userdir request that hasn't directory. This requests are
+	redirected to a slash-finished URL. Eg:
+	http://www.alobbs.com/~alo => http://www.alobbs.com/~alo/	
+	
+
+2003-06-28  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/encoder_gzip.c (cherokee_encoder_gzip_encode): GZip
+	encoder finished.
+
+	* src/buffer.c (cherokee_buffer_prepend): Added new method
+	(cherokee_buffer_print_debug): New methos of debugging
+
+
+2003-06-27  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* doc/.cvsignore, doc/Makefile.am, doc/doxygen.cfg: Added doxygen
+
+	* src/buffer.h: Added CRC32 method
+
+	* crc32.h, crc32.c, src/Makefile.am: Added CRC32 code (from postgresql)
+
+
+2003-06-18  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/connection.c, src/fdpoll.c, src/handler_dirlist.c, src/handler_file.c,
+	src/handler_redir.c, src/matching_list.c, src/mime.c, src/plugin_table.c,
+	src/plugin_table_entry.c, src/server.c, src/table.c: 
+	structures instance clean up.
+
+
+2003-06-17  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* configure.in, icons/Makefile.am: Added icon directory
+
+	* Makefile.am, configure.in, cherokee.conf, cherokee.conf.in: 
+	Removed cherokee.conf. Added the new cherokee.conf.in for 
+	manage the icon path at installation time
+	
+	* configure.in, doc/Makefile.am, doc/es/Makefile.am: Added the
+	new documentation
+
+	* src/read_config.y: Each directory needs a handler. Added a check
+	for this
+
+	* src/connection.c, src/read_config.y: Added DocumentRoot support
+	inside of a Directory entry.. aka "Alias" support
+
+	* src/common.h (CHEROKEE_NEW, CHEROKEE_NEW_STRUCT): New macro 
+	for object instance
+
+
+2003-06-07  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/connection.c, src/connection.h, src/encoder.c, src/encoder.h,
+	src/encoder_gzip.c, src/encoder_gzip.h,  src/encoder_table.c,
+	src/encoder_table.h, src/handler_file.c, src/read_config.y,
+	src/server.c: GZip encoder work, and misc.
+	(cherokee_connection_step): bugfix
+
+2003-06-01  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/buffer.c (cherokee_buffer_move_to_begin): Now can set
+	an empty string as result
+
+	* src/connection.c (cherokee_connection_build_local_directory_userdir): 
+	Bugfix in the request buffer
+
+	* src/server.c (process_active_connections): Bugfix in 
+	the "Host: " support
+
+
+2003-05-31  Ramon Pons  <rpons@rinu.org>
+
+	* src/read_config.y: Compilartion problem fixed
+
+
+2003-05-31  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/server.c (process_active_connections): Bug in 
+	host management
+
+	* src/read_config.y: Mostly rewritten
+
+	* src/Makefile.am: Added static_encoders.h.orig
+	
+
+2003-05-25  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/encoder_table.[ch], src/Makefile.am, src/plugin_table,
+	src/common.c, configure.in: More work on dynamic/static 
+	modules/encoders.
+
+
+2003-05-23  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/read_config.[yl]: Added "encoder" token and rules
+
+	* src/handler*.[hc]: Changed func_* by handler_func_*
+
+	* src/connection.c (get_host): replaced strstr by strchr
+	(get_uri): Added "Accept-Encoding: " detection.
+	(cherokee_connection_parse_header): Keepalive detection
+	optimized.
+
+	* src/encoder_gzip.[ch]: Added initial version
+
+
+2003-05-20  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/Makefile.am (libcherokee_gzip_la): Added new module
+
+	* src/encode.[ch]: Added new files
+
+	* configure.in: Added check for zlib
+
+
+2003-05-11  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/handler_dirlist.c (cherokee_handler_dirlist_step): Added
+	the "hide version" feature.
+
+
+2003-05-10  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/server.c, src/connection.h, src/connection.c, 
+	src/handler.h, src/handler.c, src/handler_file.c, 
+	src/handler_dirlist.c, src/handler_redir.c, 
+	src/handler_nn.c, src/handler_php4.c: Connection
+	has a reference to the server.  Now the handlers can
+	access to the server configuration.
+
+
+2003-05-09  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/connection.c (get_uri): Security problem fixed.
+
+	
+2003-05-06  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* TODO: Updated
+
+
+2003-05-05  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/Makefile.am: Bison and Flex fixes
+
+	* configure.in: GnomeVFS checking fix
+
+	* src/read_config.l, src/read_config.y,
+	src/server.h, src/server.c: Add "hide version" feature.
+
+
+2003-04-20  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* configure.in: pkg-config detection fixed
+
+	* src/read_config.l: now the '\r' character is 
+	"new line" too
+
+	* cherokee.conf: Comment out "User" and "Group"
+
+	* configure.in: Added timezone check
+
+	* src/log.c (cherokee_log), src/common.c (PRINT_ERROR), 
+	configure.in: 
+	Check for vsyslog to fix Cygwin compilation problems
+
+	
+2003-04-18  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/Makefile.am (CLEANFILES): Added files generated
+	by Bison and Flex
+	
+
+2003-04-17  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* *.h: Changed __CHEROKEE2_ by__CHEROKEE_ 
+
+
+2003-04-16  Pablo Neira  <pneira@optimat.com>
+
+	* src/handler_file.c (cherokee_handler_file_add_headers): 
+	changed "Content-type" by "Content-Type"
+
+	* src/handler_file.c (cherokee_handler_file_init): get a 
+	"Forbidden" error when try to access to a directory.
+
+	* src/server.c (look_for_new_connection): Get the addr_in
+	at accept().
+
+	* src/connection.c (cherokee_connection_log): New log writting
+	function CLF (Common Log Format) compliant.
+
+	* src/connection.c (get_uri): HTTP/1.1 needs a Host entry,
+	otherwise it's going to be a Bad Request.
+
+
+2003-04-16  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/http.h (http_type_[2,3,4,5]00): fixed
+
+	* src/connection.c (cherokee_connection_fill_log): Added
+
+	* src/server.c (process_active_connections): New log system
+
+	
+2003-04-15  Pablo Neira  <pneira@optimat.com>
+
+	* contrib/cherokee: Added init.d script for RedHat
+	
+
+2003-04-15  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* contrib/Makefile.am: Added new file
+
+	* doc/Benchmark-0.4.3-pre7.txt: Added new benchmark:
+	Cherokee, Boa, thttpd and Apache
+
+	* src/handler.h, src/handler.c, src/handler_common.h,
+	src/handler_common.c, src/handler_dirlist.h,
+	src/handler_dirlist.c,  src/handler_file.h, src/handler_file.c, 
+	src/handler_gnomevfs.h, src/handler_gnomevfs.c,
+	src/handler_redir.h, src/handler_redir.c: Partial rewritten.
+
+	* src/handler_nn.h, src/handler_nn.c: Added new handler
+
+	* src/buffer.c (cherokee_buffer_swap_chars): Added
+	
+	
+2003-04-14  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/read_config.y: Make handler dir finish with a slash
+
+	* src/buffer.c (cherokee_buffer_decode): Added
+
+
+2003-04-13  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/read_config.y: UserDir must ends with a slash
+
+	* src/handler_redir.c (cherokee_handler_redir_new): Fixed
+	problem if there're any properties
+
+	* configure.in: inet_pton and inet_addr detection work arround
+
+	* src/server.c (process_active_connections): Fixed bug
+	closing connections
+	(look_for_new_connection): Keep-Alive fixed.
+
+	* src/read_config.l: ID can start with a dot.
+	Eg: UserDir .web
+
+
+2003-04-12  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/server.c (process_active_connections): Fixed
+	keep-alive related bug
+
+	* src/handler_gnomevfs.c: Added new handler based in the
+	GNOME (2.0) VFS library
+
+	* src/server.c (process_active_connections): Rewrited.
+	New one is cleanier and faster.
+
+
+2003-04-11  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/read_config.[y,l]: Added listen entry
+
+	* configure.in: Added check for GnomeVFS
+
+
+2003-04-09  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/read_config.[l,y]: Added PidFile configuration entry
+
+	* cherokee.spec.in: Added new file 
+
+	* cherokee.spec.in: Fixed version management
+
+	
+2003-04-07  Pablo Neira  <pneira@optimat.com>
+
+	* cherokee.spec: Added spec file to build RPM packages.
+	
+
+2003-04-07  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/connection.c (cherokee_connection_get_request): 
+	Fixed vulnerability.  Reported by Pablo Neira <pneira@optimat.com>
+
+
+2003-03-22  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* src/server.c (cherokee_server_read_config_string): 
+	Fixed.
+
+
+2003-03-19  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* TODO: Added "IP Range restrictions"
+
+	* cherokee.1: Added new man page
+
+	* src/server.c (cherokee_server_set_min_latency): Added new
+	function 
+

@@ -1,0 +1,75 @@
+TARGET = cherokee
+
+CHEROKEE_TOP := ..
+CHEROKEE_SRC := .
+
+INCLUDES = \
+	-I$(CHEROKEE_SRC) \
+	-I$(CHEROKEE_TOP)
+
+CC      = i586-mingw32msvc-gcc
+CFLAGS  = -O0 -g $(INCLUDES)
+LDFLAGS = -mwindows -lws2_32
+
+DLL_C_SRC = \
+	mime_grammar.c \
+	mime_scanner.c \
+	icons_grammar.c \
+	icons_scanner.c \
+	getopt.c \
+	getopt1.c \
+	unix4win32.c \
+	common.c \
+	crc32.c  \
+	buffer.c \
+	icons.c \
+	md5.c \
+	sha1.c \
+	match.c \
+	matching_list.c \
+	table.c \
+	avl.c \
+	list_ext.c \
+	fdpoll.c \
+	socket.c \
+	virtual_server.c \
+	connection.c \
+	handler.c \
+	header.c \
+	module.c \
+	logger.c \
+	encoder.c \
+	validator.c \
+	http.c \
+	handler_table.c \
+	access.c \
+	mime.c \
+	server.c
+
+
+all: $(TARGET).dll
+
+icons_grammar.c : icons_grammar.y
+	bison -y -p yy_icons_ -v -d $< -o $@
+
+icons_scanner.c : icons_scanner.l
+	flex -Pyy_icons_ -i -o$@ $<
+
+mime_grammar.c : mime_grammar.y
+	bison -y -p yy_mime_ -v -d $< -o $@
+
+mime_scanner.c : mime_scanner.l
+	flex -Pyy_mime_ -i -o$@ $<
+
+DLL_OBJECTS = $(DLL_C_SRC:%.c=%.o) 
+
+.PHONY: all clean
+
+$(TARGET).lib $(TARGET).dll: $(DLL_OBJECTS)
+	$(CC) $(LDFLAGS) -shared $(DLL_OBJECTS) -Wl,--out-implib,$(TARGET).lib -o $(TARGET).dll
+
+clean:
+	rm -f *.o 
+	rm -rf $(TARGET).{dll,lib,exe}
+	rm -f mime_grammar.[ch] mime_scanner.c
+	rm -f icons_grammar.[ch] icons_scanner.c
