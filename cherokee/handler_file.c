@@ -229,13 +229,17 @@ cherokee_handler_file_init (cherokee_handler_file_t *n)
 		return ret_error;
 	}
 
+	/* Set the error code
+	 */
+	if (conn->range_start != 0 || conn->range_end != 0) {
+		conn->error_code = http_partial_content;
+	}
+
 	/* Range 2: Set the file length as the range end
 	 */
 	if (conn->range_end == 0) {
 		conn->range_end = n->info.st_size;
-	} else {
-		conn->error_code = http_partial_content;
-	}
+	} 
 
 	/* Set mmap or file position
 	 */
@@ -248,13 +252,9 @@ cherokee_handler_file_init (cherokee_handler_file_t *n)
 	} else {
 		/* Seek the file is needed
 		 */
-		if (conn->range_start != 0) {
-			conn->error_code = http_partial_content;
-
-			if (conn->mmaped == NULL) {
-				n->offset = conn->range_start;
-				lseek (n->fd, n->offset, SEEK_SET);
-			}
+		if ((conn->range_start != 0) && (conn->mmaped == NULL)) {
+			n->offset = conn->range_start;
+			lseek (n->fd, n->offset, SEEK_SET);
 		}
 	}
 

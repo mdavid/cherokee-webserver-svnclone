@@ -55,7 +55,7 @@ const struct {
 } 
 known_headers_names [] = {
 	{"Connection",      10},
-	{"Range",            5},
+	{"Content-Range",   13},
 	{"Keep-Alive",      10},
 	{"Accept",           6},
 	{"Host",             4},
@@ -462,7 +462,7 @@ cherokee_header_parse (cherokee_header_t *hdr, cherokee_buffer_t *buffer,  chero
 			ret = add_known_header (hdr, header_host, (points+2)-buffer->buf, end-points-2);
 		} 
 		else if ((hdr->header[header_range].info_off == 0) && 
-			 (strncasecmp(begin, "Range", 5) == 0))
+			 (strncasecmp(begin, "Content-Range", 13) == 0))
 		{
 			ret = add_known_header (hdr, header_range, (points+2)-buffer->buf, end-points-2);
 		} 

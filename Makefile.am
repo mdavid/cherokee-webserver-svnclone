@@ -1,6 +1,6 @@
 ## Cherokee: Makefile.am  -*- makefile -*-
 
-SUBDIRS = m4 debian contrib doc icons cherokee cget qa
+SUBDIRS = m4 debian contrib doc icons qa cherokee cget
 bin_SCRIPTS = cherokee-config
 SUFFIXES = .sample.pre .sample
 

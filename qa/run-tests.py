@@ -3,6 +3,7 @@
 import os
 import sys
 import time
+import copy
 import signal
 import shutil
 import thread
@@ -19,7 +20,7 @@ clean    = True
 kill     = True
 quiet    = False
 valgrind = False
-port     = PORT
+port     = None
 
 # Make the DocumentRoot directory
 www = tempfile.mkdtemp ("cherokee_www")
@@ -56,7 +57,9 @@ CONF_BASE = """# Cherokee QA tests
                Keepalive On
                Listen 127.0.0.1
                DocumentRoot %s
-            """ % (port, www)
+               PanicAction /usr/bin/cherokee-panic
+               Directory / { Handler common }
+            """ % (PORT, www)
 
 # Import modules 
 mods = []
@@ -88,23 +91,48 @@ cfg_fd.write (cfg)
 cfg_fd.close()
 
 # Launch Cherokee
-pid = os.fork()
-if pid == 0:
-    if valgrind:
-        os.execl (VALGRIND_PATH, "valgrind", "../cherokee/cherokee", "-C", cfg_file)
+pid = -1
+if port is None:
+    pid = os.fork()
+    if pid == 0:
+        if valgrind:
+            os.execl (VALGRIND_PATH, "valgrind", CHEROKEE_PATH, "-C", cfg_file)
+        else:
+            os.execl (CHEROKEE_PATH, "cherokee", "-C", cfg_file)
     else:
-        os.execl ("../cherokee/cherokee", "cherokee", "-C", cfg_file)
-else:
-    print "Server PID: %d" % (pid)
-    time.sleep(6)
+        print "PID: %d - %s" % (pid, CHEROKEE_PATH)
+        time.sleep(3)
 
-# Execute the tests
-def mainloop_iterator():
-    quit = False
+its_clean = False
+def clean_up():
+    global clean
+    global its_clean
+
+    if its_clean: return
+    its_clean = True
+
+    # Clean up
+    if clean:
+        os.unlink (cfg_file)
+        shutil.rmtree (www, True)
+    else:
+        print "Test directory %s" % (www)
+        print "Configuration  %s" %(cfg_file)
+        print
+
+    # Kill the server
+    if kill and pid > 0:
+        os.kill (pid, signal.SIGTERM)
+        time.sleep (.5)
+        os.kill (pid, signal.SIGKILL)
+
+def mainloop_iterator(objs):
+    global port
+    global its_clean
+
+    time.sleep (.2)
 
     for n in range(num):
-        if quit: break
-    
         for obj in objs:
             go_ahead = obj.Precondition()
 
@@ -120,37 +148,36 @@ def mainloop_iterator():
                 print "Skipped"
                 continue
     
+            if port is None:
+                port = PORT
+
             try:
-                ret = obj.Run()
-            except:
-                ret = -1
+                ret = obj.Run(port)
+            except Exception, e:
+                if not its_clean:
+                    print e
+                    clean_up()
+                sys.exit(1)
 
             if ret is not 0:
-                quit = True
-                print "Failed"
-                print obj
-                break
+                if not its_clean:
+                    print "Failed"
+                    print obj
+                    clean_up()
+                sys.exit(1)
             elif not quiet:
                 print "Sucess"
+                obj.Clean()
+
+
 
 # Maybe launch some threads
 for n in range(thds-1):
-    thread.start_new_thread (mainloop_iterator, ())
+    objs_copy = map (lambda x: copy.copy(x), objs)
+    thread.start_new_thread (mainloop_iterator, (objs_copy,))
 
-# Main thread
-mainloop_iterator()
-
-# Clean up
-if clean:
-    os.unlink (cfg_file)
-    shutil.rmtree (www, True)
-else:
-    print "Test directory %s" % (www)
-    print "Configuration  %s" %(cfg_file)
-    print
+# Execute the tests
+mainloop_iterator(objs)
 
 # It's time to kill Cherokee.. :-(
-if kill:
-    os.kill (pid, signal.SIGTERM)
-    time.sleep (.5)
-    os.kill (pid, signal.SIGKILL)
+clean_up()

@@ -697,6 +697,7 @@ cherokee_SOURCES = main.c
 cherokee_LDADD   = \
 $(PTHREAD_LIBS) \
 $(PTHREAD_CFLAGS) \
+libcherokee-base.la \
 libcherokee-server.la
 
 sbin_PROGRAMS = cherokee

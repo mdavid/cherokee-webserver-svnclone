@@ -1127,6 +1127,12 @@ cherokee_server_unlock_threads (cherokee_server_t *srv)
 	ret_t   ret;
 	list_t *i;
 
+	/* Update bogonow before launch the threads
+	 */
+	update_bogo_now (srv);
+
+	/* Launch all the threads
+	 */
 	list_for_each (i, &srv->thread_list) {
 		ret = cherokee_thread_unlock (THREAD(i));
 		if (unlikely(ret < ret_ok)) return ret;

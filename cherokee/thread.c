@@ -39,17 +39,10 @@
 #define DEBUG_BUFFER(b)  fprintf(stderr, "%s:%d len=%d crc=%d\n", __FILE__, __LINE__, b->len, cherokee_buffer_crc32(b))
 
 
-
-void
-try_to_update_bogo_now (cherokee_thread_t *thd)
+static void
+update_bogo_now (cherokee_thread_t *thd)
 {
-	int unlocked;
 	cherokee_server_t *srv = THREAD_SRV(thd);
-
-	/* Try to lock
-	 */
-	unlocked = CHEROKEE_RWLOCK_TRYREADER (&srv->bogo_now_mutex);        /* 1.- lock a reader */
-	if (unlocked) return;
 
 	/* Update time_t
 	 */
@@ -64,6 +57,22 @@ try_to_update_bogo_now (cherokee_thread_t *thd)
 	cherokee_buffer_clean (thd->bogo_now_string);
 	cherokee_buffer_add_buffer (thd->bogo_now_string, srv->bogo_now_string);
 	
+}
+
+
+static void
+try_to_update_bogo_now (cherokee_thread_t *thd)
+{
+	int unlocked;
+	cherokee_server_t *srv = THREAD_SRV(thd);
+
+	/* Try to lock
+	 */
+	unlocked = CHEROKEE_RWLOCK_TRYREADER (&srv->bogo_now_mutex);        /* 1.- lock a reader */
+	if (unlocked) return;
+
+	update_bogo_now (thd);
+
 	CHEROKEE_RWLOCK_UNLOCK (&srv->bogo_now_mutex);                      /* 2.- release */
 }
 
@@ -77,6 +86,10 @@ thread_routine (void *data)
 	/* Wait to start working
 	 */
 	CHEROKEE_MUTEX_LOCK (&thread->starting_lock);
+
+	/* Update bogonow before start working
+	 */
+	update_bogo_now (thread);
 
 	/* Step, step, step, ..
 	 */
@@ -285,7 +298,10 @@ maybe_purge_closed_connection (cherokee_thread_t *thread, cherokee_connection_t 
 	 */
 	cherokee_connection_clean (conn);
 	conn_set_mode (thread, conn, socket_reading);
-	conn->timeout = thread->bogo_now + srv->timeout;
+
+	/* Update the timeout value
+	 */
+	conn->timeout = thread->bogo_now + srv->timeout;	
 }
 
 
@@ -760,7 +776,6 @@ process_active_connections (cherokee_thread_t *thd)
 			/* Send headers to the client
 			 */
 			ret = cherokee_connection_send_header (conn);
-
 			switch (ret) {
 			case ret_eagain:
 				continue;
@@ -949,10 +964,6 @@ __accept_from_server (cherokee_thread_t *thd, int srv_socket, cherokee_socket_ty
 
 	ret = cherokee_socket_set_sockaddr (CONN_SOCK(new_conn), new_fd, &new_sa);
 	if (unlikely(ret < ret_ok)) goto error;
-
-	/* Set the connection time-out
-	 */
-	new_conn->timeout = thd->bogo_now + THREAD_SRV(thd)->timeout;
 
 	/* May active the TLS support
          */
@@ -1383,13 +1394,11 @@ cherokee_thread_get_new_connection (cherokee_thread_t *thd, cherokee_connection_
 
 	/* Set the basic information to the connection
 	 */
-	new_connection->thread  = thd;
-	new_connection->server  = server;
-	new_connection->vserver = server->vserver_default;
-
-	/* Set the keepalive from server
-	 */
+	new_connection->thread    = thd;
+	new_connection->server    = server;
+	new_connection->vserver   = server->vserver_default;
 	new_connection->keepalive = server->keepalive_max;
+	new_connection->timeout   = thd->bogo_now + THREAD_SRV(thd)->timeout;
 
 	*conn = new_connection;
 	return ret_ok;
