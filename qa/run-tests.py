@@ -22,6 +22,7 @@ kill     = True
 quiet    = False
 valgrind = False
 port     = None
+server   = CHEROKEE_PATH
 
 # Make the DocumentRoot directory
 www = tempfile.mkdtemp ("cherokee_www")
@@ -49,9 +50,10 @@ for p in param:
     elif p == '-q': quiet    = True
     elif p == '-v': valgrind = True
     elif p == '-s': ssl      = True
-    elif p[:2] == '-n': num   = int(p[2:])
-    elif p[:2] == '-t': thds  = int(p[2:])
-    elif p[:2] == '-p': port  = int(p[2:])
+    elif p[:2] == '-n': num    = int(p[2:])
+    elif p[:2] == '-t': thds   = int(p[2:])
+    elif p[:2] == '-p': port   = int(p[2:])
+    elif p[:2] == '-e': server = p[2:]
 
 # Configuration file base
 CONF_BASE = """# Cherokee QA tests
@@ -104,9 +106,10 @@ if port is None:
     pid = os.fork()
     if pid == 0:
         if valgrind:
-            os.execl (VALGRIND_PATH, "valgrind", CHEROKEE_PATH, "-C", cfg_file)
+            os.execl (VALGRIND_PATH, "valgrind", server, "-C", cfg_file)
         else:
-            os.execl (CHEROKEE_PATH, "cherokee", "-C", cfg_file)
+            name = server[server.rfind('/') + 1:]
+            os.execl (server, name, "-C", cfg_file)
     else:
         print "PID: %d - %s" % (pid, CHEROKEE_PATH)
         time.sleep(10)

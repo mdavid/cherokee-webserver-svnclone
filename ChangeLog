@@ -1,3 +1,17 @@
+2005-03-31  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/thread.c (cherokee_thread_step_SINGLE_THREAD): Bug
+	fixed: there was a problem in the pipelined request.
+
+	* configure.in, cherokee/thread.c (cherokee_thread_new): Added
+	detection for pthread_attr_setschedpolicy(). It fixes a
+	compilation problem for some platforms.
+
+2005-03-30  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/Makefile.embedded: Added new Makefile for the
+	u-cherokee version.
+
 2005-03-28  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cherokee/header-protected, cherokee/connection-protected: New

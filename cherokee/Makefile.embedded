@@ -1,4 +1,4 @@
-CFLAGS=-Os -DCHEROKEE_COMPILATION -DCHEROKEE_EMBEDDED -I. -I.. -DCHEROKEE_CONFDIR=\""/etc/cherokee"\" -DCHEROKEE_DEPSDIR=\""/usr/share/cherokee/deps"\"
+CFLAGS=-O0 -g -DCHEROKEE_COMPILATION -DCHEROKEE_EMBEDDED -I. -I.. -DCHEROKEE_CONFDIR=\""/etc/cherokee"\" -DCHEROKEE_DEPSDIR=\""/usr/share/cherokee/deps"\"
 LDFLAGS=-lc -ldl
 
 OBJS = \
@@ -35,13 +35,15 @@ matching_list.o \
 handler_error.o \
 module_loader.o \
 virtual_server.o \
+validator_plain.o \
 handler_table_entry.o \
 read_config_grammar.o \
 read_config_scanner.o \
-handler_file.o \
-handler_dirlist.o \
 handler_cgi.o \
+handler_file.o \
+handler_redir.o \
 handler_phpcgi.o \
+handler_dirlist.o \
 handler_common.o
 
 
@@ -49,10 +51,10 @@ all: u-cherokee
 
 u-cherokee: $(OBJS)
 	$(CC) -o $@ $(LDFLAGS) $(OBJS) 
-	strip -R .note -R .comment $@
-	if [ `type -p upx | wc -c` != 0 ]; then \
-	   upx -9 $@; \
-	fi
+#	strip -R .note -R .comment $@
+#	if [ `type -p upx | wc -c` != 0 ]; then \
+#	   upx -9 $@; \
+#	fi
 
 clean:
 	rm -rf $(OBJS) u-cherokee

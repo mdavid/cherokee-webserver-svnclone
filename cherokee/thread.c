@@ -167,7 +167,9 @@ cherokee_thread_new  (cherokee_thread_t **thd, void *server, cherokee_thread_typ
 		/* Maybe set the scheduling policy
 		 */
 		if (srv->thread_policy != -1) {
+# ifdef HAVE_PTHREAD_SETSCHEDPOLICY
 			pthread_attr_setschedpolicy (&attr, srv->thread_policy);
+# endif
 		}
 
 		/* Set the start lock
@@ -1061,7 +1063,7 @@ cherokee_thread_step_SINGLE_THREAD (cherokee_thread_t *thd, cherokee_boolean_t d
 	}
 	
 	re = cherokee_fdpoll_watch (thd->fdpoll, fdwatch_msecs);
-	if (re <= 0) return ret_ok;
+	if (re <= 0) goto out;
 
 	do {
 		re = __accept_from_server (thd, srv->socket, non_TLS);

@@ -55,9 +55,11 @@ cherokee_module_loader_load (cherokee_module_loader_t *loader, char *modname)
 {
 	if      (strcmp(modname, "common")  == 0) common_init (NULL);
 	else if (strcmp(modname, "file")    == 0) file_init (NULL);
+	else if (strcmp(modname, "redir")   == 0) redir_init (NULL);
 	else if (strcmp(modname, "dirlist") == 0) dirlist_init (NULL);
 	else if (strcmp(modname, "cgi")     == 0) cgi_init (NULL);
 	else if (strcmp(modname, "phpcgi")  == 0) phpcgi_init (NULL);
+	else if (strcmp(modname, "plain")   == 0) plain_init (NULL);
 	else return ret_error;
 
 	return ret_ok;
@@ -68,15 +70,19 @@ cherokee_module_loader_get (cherokee_module_loader_t *loader, char *modname, che
 {
 	extern cherokee_module_info_t cherokee_common_info;
 	extern cherokee_module_info_t cherokee_file_info;
+	extern cherokee_module_info_t cherokee_redir_info;
 	extern cherokee_module_info_t cherokee_dirlist_info;
 	extern cherokee_module_info_t cherokee_cgi_info;
 	extern cherokee_module_info_t cherokee_phpcgi_info;
+	extern cherokee_module_info_t cherokee_plain_info;
 
 	if      (strcmp(modname, "common")  == 0) *info = &cherokee_common_info;
 	else if (strcmp(modname, "file")    == 0) *info = &cherokee_file_info;
+	else if (strcmp(modname, "redir")   == 0) *info = &cherokee_redir_info;
 	else if (strcmp(modname, "dirlist") == 0) *info = &cherokee_dirlist_info;
 	else if (strcmp(modname, "cgi")     == 0) *info = &cherokee_cgi_info;
 	else if (strcmp(modname, "phpcgi")  == 0) *info = &cherokee_phpcgi_info;
+	else if (strcmp(modname, "plain")   == 0) *info = &cherokee_plain_info;
 	else return ret_error;
 
 	return ret_ok;

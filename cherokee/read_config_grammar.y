@@ -775,7 +775,7 @@ handler_option : T_REWRITE T_QSTRING T_QSTRING
 		count = (int*)malloc(sizeof(int));
 		*count = 1;
 
-		cherokee_handler_table_entry_set (current_handler_table_entry, "regex_count", count);
+		cherokee_handler_table_entry_set (current_handler_table_entry, "regex_count", (void *)count);
 	} else {
 		++*count;
 	}
