@@ -1,0 +1,49 @@
+/* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
+
+/* Cherokee
+ *
+ * Authors:
+ *      Alvaro Lopez Ortega <alvaro@alobbs.com>
+ *
+ * Copyright (C) 2001, 2002, 2003, 2004, 2005 Alvaro Lopez Ortega
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of version 2 of the GNU General Public
+ * License as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+ * USA
+ */
+
+#ifndef __CHEROKEE_ENCODE_FIXER_H__
+#define __CHEROKEE_ENCODE_FIXER_H__
+
+#include <buffio.h>
+#include <tidy.h>
+
+#include "encoder.h"
+
+typedef struct {
+	cherokee_encoder_t base;
+
+	TidyBuffer         output;
+	TidyDoc            tdoc;
+} cherokee_encoder_fixer_t;
+
+#define ENC_FIXER(x) ((cherokee_encoder_fixer_t *)(x))
+
+ret_t cherokee_encoder_fixer_new         (cherokee_encoder_fixer_t **encoder);
+ret_t cherokee_encoder_fixer_free        (cherokee_encoder_fixer_t  *encoder);
+ret_t cherokee_encoder_fixer_add_headers (cherokee_encoder_fixer_t  *encoder, cherokee_buffer_t *buf);
+ret_t cherokee_encoder_fixer_init        (cherokee_encoder_fixer_t  *encoder, cherokee_buffer_t *in, cherokee_buffer_t *out);
+ret_t cherokee_encoder_fixer_encode      (cherokee_encoder_fixer_t  *encoder, cherokee_buffer_t *in, cherokee_buffer_t *out);
+
+
+#endif /* __CHEROKEE_ENCODE_FIXER_H__ */

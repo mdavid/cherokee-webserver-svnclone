@@ -1,0 +1,109 @@
+Source: cherokee
+Section: web
+Priority: optional
+Maintainer: Alvaro Lopez Ortega <alvaro@alobbs.com>
+Build-Depends: bison, flex, python (>= 2.3.0), debhelper (>= 4.0.0)
+Standards-Version: 3.5.10.0
+
+Package: cherokee
+Architecture: any
+Depends: ${cherokee:Depends}, logrotate, libcherokee0 (= ${Source-Version})
+Provides: httpd
+Description: Extremely fast and tiny web server
+ Cherokee is an extremely fast and tiny web server. It's
+ embedable, extensible with plug-ins. It has handler-to-path,
+ virtual servers, gzip encoding, modular loggers, CGI support,
+ and can run in a chroot environment, among other features.
+ .
+ This package contains the server and essential handlers.
+
+Package: libcherokee-base0
+Section: libs
+Architecture: any
+Depends: ${libcherokee-base0:Depends}
+Description: Extremely fast and tiny web server - libraries
+ Cherokee is an extremely fast and tiny web server. It's
+ embedable, extensible with plug-ins. It has handler-to-path,
+ virtual servers, gzip encoding, modular loggers, CGI support,
+ and can run in a chroot environment, among other features.
+ .
+ This is the runtime library
+
+Package: libcherokee-base0-dev
+Section: libdevel
+Architecture: any
+Depends: libcherokee-base0 (= ${Source-Version})
+Description: Extremely fast and tiny web server - development files
+ Cherokee is an extremely fast and tiny web server. It's
+ embedable, extensible with plug-ins. It has handler-to-path,
+ virtual servers, gzip encoding, modular loggers, CGI support,
+ and can run in a chroot environment, among other features.
+ .
+ This package contains the development files - headers, .so and .a
+ files.
+
+Package: libcherokee-client0
+Section: libs
+Architecture: any
+Depends: ${libcherokee-client0:Depends}
+Description: Extremely fast and tiny web server - libraries
+ Cherokee is an extremely fast and tiny web server. It's
+ embedable, extensible with plug-ins. It has handler-to-path,
+ virtual servers, gzip encoding, modular loggers, CGI support,
+ and can run in a chroot environment, among other features.
+ .
+ This is the runtime library
+
+Package: libcherokee-client0-dev
+Section: libdevel
+Architecture: any
+Depends: libcherokee-client0 (= ${Source-Version})
+Description: Extremely fast and tiny web server - development files
+ Cherokee is an extremely fast and tiny web server. It's
+ embedable, extensible with plug-ins. It has handler-to-path,
+ virtual servers, gzip encoding, modular loggers, CGI support,
+ and can run in a chroot environment, among other features.
+ .
+ This package contains the development files - headers, .so and .a
+ files.
+
+Package: libcherokee-server0
+Section: libs
+Architecture: any
+Depends: ${libcherokee-server0:Depends}
+Description: Extremely fast and tiny web server - libraries
+ Cherokee is an extremely fast and tiny web server. It's
+ embedable, extensible with plug-ins. It has handler-to-path,
+ virtual servers, gzip encoding, modular loggers, CGI support,
+ and can run in a chroot environment, among other features.
+ .
+ This is the runtime library
+
+Package: libcherokee-server0-dev
+Section: libdevel
+Architecture: any
+Depends: libcherokee-server0 (= ${Source-Version})
+Description: Extremely fast and tiny web server - development files
+ Cherokee is an extremely fast and tiny web server. It's
+ embedable, extensible with plug-ins. It has handler-to-path,
+ virtual servers, gzip encoding, modular loggers, CGI support,
+ and can run in a chroot environment, among other features.
+ .
+ This package contains the development files - headers, .so and .a
+ files.
+
+Package: cherokee-bench
+Architecture: any
+Depends: ${cherokee:Depends}, libcherokee-client0 (= ${Source-Version})
+Description: An HTTP server performance tester
+ cherokee-bench is a tool to measure web server performance.
+ While running, it keeps track of a number of performance metrics,
+ which are summarized in the form of statistics printed at the end 
+ of the test run. It can be used to benchmark a single web server
+ or a whole group.
+
+Package: cget
+Architecture: any
+Depends: ${cherokee:Depends}, libcherokee-client0 (= ${Source-Version})
+Description: A web page downloader
+ To be concluded

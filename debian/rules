@@ -1,0 +1,223 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+# Sample debian/rules that uses debhelper.
+# GNU copyright 1997 to 1999 by Joey Hess.
+#
+# Modified to make a template file for a multi-binary package with separated
+# build-arch and build-indep targets  by Bill Allombert 2001
+
+# Uncomment this to turn on verbose mode.
+export DH_VERBOSE=1
+
+# This has to be exported to make some magic below work.
+export DH_OPTIONS
+
+INSTALL_PROGRAM = /usr/bin/install
+BUILD_DIR = $(CURDIR)/debian/tmp
+
+LIB_BASE_DIR   = $(CURDIR)/debian/libcherokee-base0
+DEV_BASE_DIR   = $(CURDIR)/debian/libcherokee-base0-dev
+LIB_CLIENT_DIR = $(CURDIR)/debian/libcherokee-client0
+DEV_CLIENT_DIR = $(CURDIR)/debian/libcherokee-client0-dev
+LIB_SERVER_DIR = $(CURDIR)/debian/libcherokee-server0
+DEV_SERVER_DIR = $(CURDIR)/debian/libcherokee-server0-dev
+
+CGET_DIR  = $(CURDIR)/debian/cget
+
+# These are used for cross-compiling and for saving the configure script
+# from having to guess our platform (since we know it already)
+DEB_HOST_GNU_TYPE   ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
+DEB_BUILD_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
+
+export DEB_HOST_GNU_TYPE
+export DEB_BUILD_GNU_TYPE
+
+# Compiler flags to use
+CFLAGS = -Wall -g
+
+ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
+        CFLAGS += -O0
+else
+        CFLAGS += -O2
+endif
+ifeq (,$(findstring nostrip,$(DEB_BUILD_OPTIONS)))
+        INSTALL_PROGRAM += -s
+endif
+
+config.status: configure
+	dh_testdir
+	# Add here commands to configure the package
+	./configure  --host=$(DEB_HOST_GNU_TYPE)           \
+			   --build=$(DEB_BUILD_GNU_TYPE)         \
+			   --prefix=/usr                         \
+			   --localstatedir=/var                  \
+			   --mandir=\$${prefix}/share/man        \
+			   --infodir=\$${prefix}/share/info      \
+			   --sysconfdir=/etc                     \
+			   --enable-os-string="Debian GNU/Linux" \
+	 		   --enable-pthreads
+
+#Architecture
+build: build-arch build-indep
+
+build-arch: build-arch-stamp
+
+build-arch-stamp: config.status
+	$(MAKE)
+	# $(MAKE) test
+	touch build-arch-stamp
+
+build-indep: build-indep-stamp
+
+build-indep-stamp: config.status
+	# Add here commands to compile the indep part of the package.
+	#$(MAKE) doc
+
+clean: 
+	dh_testdir
+	dh_testroot
+	-$(MAKE) -i distclean
+	rm -rf build-arch-stamp build-indep-stamp 
+ifneq "$(wildcard /usr/share/misc/config.sub)" ""
+	cp -f /usr/share/misc/config.sub config.sub
+endif
+ifneq "$(wildcard /usr/share/misc/config.guess)" ""
+	cp -f /usr/share/misc/config.guess config.guess
+endif
+	dh_clean
+
+install: install-indep install-arch
+
+install-indep:
+######	dh_testdir
+######	dh_testroot
+######	dh_clean -k -i
+######	dh_installdirs -i
+
+	# Add here commands to install the indep part of the package into
+	# debian/<package>-doc
+	#INSTALLDOC#
+
+######	dh_install -i
+
+install-arch: 
+	dh_testdir
+	dh_testroot
+	dh_clean -k -s
+	dh_installdirs -s
+
+	install -d $(BUILD_DIR) 	
+
+	$(MAKE) install INSTALL_PROGRAM=$(INSTALL_PROGRAM) CFLAGS="$(CFLAGS)" DESTDIR=$(BUILD_DIR)
+
+# cherokee - Main binary package
+	# The main Cherokee package is built in $(BUILD_DIR) - We need only to
+	# remove from it everything that does not belong in there. Here we just
+	# delete the files that are built but not needed, and on the following
+	# lines we will move everything belonging to the different generated
+	# binary packages to its place
+	## rm $(BUILD_DIR)/etc/cherokee/*sample
+
+	# Add the panic action file
+	# install -m755 debian/panic-action $(BUILD_DIR)/usr/share/cherokee/
+
+
+# libcherokee-base0-dev - Development files
+	install -d $(DEV_BASE_DIR)/DEBIAN
+	install -d $(DEV_BASE_DIR)/usr/{bin,sbin,lib/pkgconfig,include/cherokee}
+	install -d $(DEV_BASE_DIR)/usr/share/{doc/libcherokee0-dev,aclocal,man/man1}
+
+	mv $(BUILD_DIR)/usr/lib/libcherokee-base.{a,so}      $(DEV_BASE_DIR)/usr/lib/
+	mv $(BUILD_DIR)/usr/include/cherokee/*               $(DEV_BASE_DIR)/usr/include/cherokee/
+	mv $(BUILD_DIR)/usr/bin/cherokee-config              $(DEV_BASE_DIR)/usr/bin
+	mv $(BUILD_DIR)/usr/share/man/man1/cherokee-config.1 $(DEV_BASE_DIR)/usr/share/man/man1/
+	mv $(BUILD_DIR)/usr/lib/pkgconfig/*                  $(DEV_BASE_DIR)/usr/lib/pkgconfig/
+	mv $(BUILD_DIR)/usr/share/aclocal/*                  $(DEV_BASE_DIR)/usr/share/aclocal/
+
+# libcherokee-client0-dev - Development files for the client libraries
+	install -d $(DEV_CLIENT_DIR)/DEBIAN
+	install -d $(DEV_CLIENT_DIR)/usr/{lib/pkgconfig,include/cherokee}
+	install -d $(DEV_CLIENT_DIR)/usr/share/{doc/libcherokee-client0-dev,man/man1}
+
+	mv $(BUILD_DIR)/usr/lib/libcherokee-client.{a,so}    $(DEV_CLIENT_DIR)/usr/lib
+
+# libcherokee-server0-dev - Development files for the server libraries
+	install -d $(DEV_SERVER_DIR)/DEBIAN
+	install -d $(DEV_SERVER_DIR)/usr/{lib/pkgconfig,include/cherokee}
+	install -d $(DEV_SERVER_DIR)/usr/share/{doc/libcherokee-server0-dev,man/man1}
+
+	mv $(BUILD_DIR)/usr/lib/libcherokee-server.{a,so}    $(DEV_SERVER_DIR)/usr/lib
+
+
+# libcherokee-base0 - Runtime library
+	install -d $(LIB_BASE_DIR)/DEBIAN
+	install -d $(LIB_BASE_DIR)/usr/lib/
+	install -d $(LIB_BASE_DIR)/usr/share/doc/libcherokee-base0
+
+	mv $(BUILD_DIR)/usr/lib/libcherokee-base.so*         $(LIB_BASE_DIR)/usr/lib/
+
+# libcherokee-client0 - Runtime library
+	install -d $(LIB_CLIENT_DIR)/DEBIAN
+	install -d $(LIB_CLIENT_DIR)/usr/lib
+	install -d $(LIB_CLIENT_DIR)/usr/share/doc/libcherokee-client0
+
+	mv $(BUILD_DIR)/usr/lib/libcherokee-client.so*       $(LIB_CLIENT_DIR)/usr/lib/
+
+# libcherokee-server0 - Runtime library
+	install -d $(LIB_SERVER_DIR)/DEBIAN
+	install -d $(LIB_SERVER_DIR)/usr/lib/cherokee
+	install -d $(LIB_SERVER_DIR)/usr/share/{cherokee,doc/libcherokee-server0}
+
+	mv $(BUILD_DIR)/usr/lib/libcherokee-server.so*       $(LIB_SERVER_DIR)/usr/lib/
+	mv $(BUILD_DIR)/usr/share/cherokee/*                 $(LIB_SERVER_DIR)/usr/share/cherokee/
+	mv $(BUILD_DIR)/usr/lib/cherokee/*                   $(LIB_SERVER_DIR)/usr/lib/cherokee/
+
+# cget - Downloader utility
+	install -d $(CGET_DIR)/DEBIAN
+	install -d $(CGET_DIR)/usr/{bin,share/doc/cget}
+
+	mv $(BUILD_DIR)/usr/bin/cget                         $(CGET_DIR)/usr/bin/
+
+# Must not depend on anything. This is to be called by
+# binary-arch/binary-indep
+# in another 'make' thread.
+binary-common:
+	dh_testdir
+	dh_testroot
+	dh_installchangelogs ChangeLog
+	dh_installdocs AUTHORS
+#	dh_installexamples
+#	dh_installmenu
+#	dh_installdebconf
+	dh_installlogrotate
+#	dh_installemacsen
+#	dh_installpam
+#	dh_installmime
+	dh_installinit
+#	dh_installcron
+#	dh_installinfo
+	dh_installman
+	dh_link
+	dh_strip
+	dh_compress
+	dh_fixperms
+#	dh_perl
+#	dh_python
+	dh_installdeb
+	dh_makeshlibs
+	dh_shlibdeps -L libcherokee-base0 -L libcherokee-server0 -L libcherokee-client0 -L libcherokee0-dev -L libcherokee-server0-dev -L libcherokee-client0-dev -L cget -L cherokee -l debian/libcherokee-base0/usr/lib:debian/libcherokee-base0/usr/lib/cherokee:debian/libcherokee-client0/usr/lib:debian/libcherokee-client0/usr/lib/cherokee:debian/libcherokee-server0/usr/lib:debian/libcherokee-server0/usr/lib/cherokee
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+
+# Build architecture independant packages using the common target.
+binary-indep: build-indep install-indep
+####	$(MAKE) -f debian/rules DH_OPTIONS=-i binary-common
+
+# Build architecture dependant packages using the common target.
+binary-arch: build-arch install-arch
+	$(MAKE) -f debian/rules DH_OPTIONS=-a binary-common
+
+binary: binary-arch binary-indep
+
+.PHONY: build clean binary-indep binary-arch binary install install-indep install-arch

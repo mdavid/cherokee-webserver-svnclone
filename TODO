@@ -1,0 +1,27 @@
+To do list
+==========
+
+x - Finished task
+
+[x] Static compilation support
+[x] Virtual domain support
+[x] Home users support (/~user/)
+[x] Net interfaces
+[x] GNOME-VFS handler
+[x] Hide version
+[x] Timeout for keepalive connections
+[x] CGI Daemon
+[x] IPv6 support
+[x] PHP handler
+[x] Information handler
+[x] "Include" in configuration file
+[x] SSL support (TLS)
+[x] Add command line parameters
+[ ] Stat cache
+[ ] Improve setenv() calls in cgi handler
+[ ] IP Ranges restrictions
+[ ] Cache for the encoder modules
+[ ] Something like the <DirectoryMatch> Directive (Apache)
+[ ] CAST-256 rfc2616, Blowfish
+
+
