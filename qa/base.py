@@ -1,6 +1,7 @@
 import os
 import imp
 import sys
+import types
 import socket
 import string
 
@@ -18,13 +19,15 @@ def importfile(path):
 
 class TestBase:
     def __init__ (self):
-        self.name           = None    # Test 01: Basic functionality
-        self.conf           = None    # Directory /test { .. }
-        self.request        = ""      # GET / HTTP/1.0
-        self.reply          = ""      # "200 OK"..
-        self.version        = None    # HTTP/x.y: 9, 0 or 1
-        self.reply_err      = None    # 200
-        self.expected_error = None
+        self.name             = None    # Test 01: Basic functionality
+        self.conf             = None    # Directory /test { .. }
+        self.request          = ""      # GET / HTTP/1.0
+        self.post             = None
+        self.reply            = ""      # "200 OK"..
+        self.version          = None    # HTTP/x.y: 9, 0 or 1
+        self.reply_err        = None    # 200
+        self.expected_error   = None
+        self.expected_content = None
 
     def _do_request (self):
         for res in socket.getaddrinfo(HOST, PORT, socket.AF_UNSPEC, socket.SOCK_STREAM):
@@ -46,8 +49,12 @@ class TestBase:
 
         if s is None:
             raise "Couldn't connect to the server"
+
+        request = self.request + "\r\n"
+        if self.post is not None:
+            request += self.post
         
-        s.send (self.request+"\r\n")
+        s.send (request)
         
         while 1:
             d = s.recv(8192)
@@ -82,6 +89,17 @@ class TestBase:
         if self.reply_err != self.expected_error:
             return -1
 
+        if self.expected_content != None:
+            if type(self.expected_content) == types.StringType:
+                if not self.expected_content in self.reply:
+                    return -1
+            elif type(self.expected_content) == types.ListType:
+                for entry in self.expected_content:
+                    if not entry in self.reply:
+                        return -1
+            else:
+                raise "Syntaxis error"
+                
         return 0
 
     def Prepare (self, www):
@@ -93,27 +111,37 @@ class TestBase:
         return self._check_result()
 
     def __str__ (self):
-        src = "\tName    = %s\n" % (self.name)
+        src = "\tName     = %s\n" % (self.name)
 
         if self.version == 9:
-            src += "\tVersion = HTTP/0.9\n"
+            src += "\tVersion  = HTTP/0.9\n"
         elif self.version == 0:
-            src += "\tVersion = HTTP/1.0\n"
+            src += "\tVersion  = HTTP/1.0\n"
         elif self.version == 1:
-            src += "\tVersion = HTTP/1.1\n"
+            src += "\tVersion  = HTTP/1.1\n"
 
         if self.conf is not None:
-            src += "\tConfig  = %s\n" % (self.conf)
-
-        src += "\tRequest = %s" % (self.request)
+            src += "\tConfig   = %s\n" % (self.conf)
 
         header_full = string.split (self.reply,  "\r\n\r\n")[0]
         headers     = string.split (header_full, "\r\n")
+        requests    = string.split (self.request, "\r\n")
+
+        src += "\tRequest  = %s\n" % (requests[0])
+        for request in requests[1:]:
+            if len(request) > 1:
+                src += "\t\t%s\n" %(request)
+
+        if self.post is not None:
+            src += "\tPost     = %s\n" % (self.post)
 
         if self.expected_error is not None:
-            src += "\tExpected = %d\n" % (self.expected_error)
+            src += "\tExpected = Code: %d\n" % (self.expected_error)
         else:
-            src += "\tExpected = UNSET!\n"
+            src += "\tExpected = Code: UNSET!\n"
+
+        if self.expected_content is not None:
+            src += "\tExpected = Content: %s\n" % (self.expected_content)
 
         src += "\tReply    = %s\n" % (headers[0])
         for header in headers[1:]:
@@ -124,6 +152,7 @@ class TestBase:
     def Mkdir (self, www, dir):
         fulldir = os.path.join (www, dir)
         os.mkdir(fulldir)
+        return fulldir
 
     def WriteFile (self, www, filename, mode, content):
         fullpath = os.path.join (www, filename)
@@ -131,4 +160,4 @@ class TestBase:
         f.write (content)
         f.close()
         os.chmod(fullpath, mode)
-        print fullpath
+

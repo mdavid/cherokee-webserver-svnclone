@@ -10,10 +10,15 @@ import tempfile
 from base import *
 from conf import *
 
+# Configuration parameters
+pause = False
+clean = True
+kill  = True
+
 # Make the DocumentRoot directory
 www = tempfile.mkdtemp ("cherokee_www")
 
-
+# Configuration file base
 CONF_BASE = \
 """# Cherokee QA tests
 Port %d
@@ -23,12 +28,27 @@ DocumentRoot %s
 """ % (PORT, www)
 
 # Make the files list
-files = os.listdir('.') 
-files = filter (lambda x: x[-3:] == '.py', files)
-files = filter (lambda x: x[2] == '-', files)
-files.sort()
+files = []
+param = []
+if len(sys.argv) > 1:
+    argv = sys.argv[1:]
+    files = filter (lambda x: x[0] != '-', argv)
+    param = filter (lambda x: x[0] == '-', argv)
 
-# Import modules
+# If not files were specified, use all of them
+if len(files) == 0:
+    files = os.listdir('.') 
+    files = filter (lambda x: x[-3:] == '.py', files)
+    files = filter (lambda x: x[2] == '-', files)
+    files.sort()
+
+# Process the parameters
+for p in param:
+    if   p == '-p': pause = True
+    elif p == '-n': clean = False
+    elif p == '-k': kill  = False
+
+# Import modules 
 mods = []
 for f in files:
     mod = importfile (f)
@@ -40,15 +60,15 @@ for m in mods:
     obj = m.Test()
     objs.append(obj)
 
+# Prepare www files
+for obj in objs:
+    obj.Prepare(www)
+
 # Generate configuration
 mod_conf = ""
 for obj in objs:
     if obj.conf is not None:
         mod_conf += obj.conf
-
-# Prepare www files
-for obj in objs:
-    obj.Prepare(www)
 
 # Write down the configuration file
 cfg = CONF_BASE + mod_conf
@@ -67,7 +87,11 @@ else:
 
 # Execute the tests
 for obj in objs:
-    print "Test '%s': " % (obj.name),
+    if pause:
+        print "Press <Enter> to continue.."
+        sys.stdin.readline()
+
+    print "%s: " % (obj.name) + " "*(40 - len(obj.name)),
     sys.stdout.flush()
     
     ret = obj.Run()
@@ -79,10 +103,12 @@ for obj in objs:
         break
 
 # Clean up
-os.unlink (cfg_file)
-shutil.rmtree (www, True)
+if clean:
+    os.unlink (cfg_file)
+    shutil.rmtree (www, True)
 
-# Kill Cherokee.. :-(
-os.kill (pid, signal.SIGTERM)
-time.sleep (.5)
-os.kill (pid, signal.SIGKILL)
+# It's time to kill Cherokee.. :-(
+if kill:
+    os.kill (pid, signal.SIGTERM)
+    time.sleep (.5)
+    os.kill (pid, signal.SIGKILL)

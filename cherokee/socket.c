@@ -634,6 +634,7 @@ cherokee_write (cherokee_socket_t *socket, const char *buf, int buf_len, size_t 
 		case EINTR:       
 			return ret_eagain;
 		case EPIPE:       
+		case ETIMEDOUT:
 		case ECONNRESET:  
 			return ret_eof;
 		}
@@ -732,10 +733,11 @@ cherokee_read (cherokee_socket_t *socket, char *buf, int buf_size, size_t *reade
 
 	if (len < 0) {
 		switch (errno) {
-		case EAGAIN:    
 		case EINTR:      
+		case EAGAIN:    
 			return ret_eagain;
 		case EPIPE: 
+		case ETIMEDOUT:
 		case ECONNRESET:
 			return ret_eof;
 		}
@@ -777,6 +779,7 @@ cherokee_writev (cherokee_socket_t *socket, const struct iovec *vector, uint16_t
 		case EINTR: 
 			return ret_eagain;
 		case EPIPE:
+		case ETIMEDOUT:
 		case ECONNRESET:
 			return ret_eof;
 		}

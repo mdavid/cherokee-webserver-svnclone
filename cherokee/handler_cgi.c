@@ -433,6 +433,17 @@ _extract_path (cherokee_handler_cgi_t *cgi)
 
 	conn = CONN(HANDLER(cgi)->connection);
 
+	/* Maybe build the path_info
+	 */
+	if ((conn->request->len > conn->web_directory->len) &&
+	    (strncmp(conn->request->buf, conn->web_directory->buf, conn->web_directory->len) == 0))
+	{
+		cherokee_buffer_new(&cgi->pathinfo);
+		cherokee_buffer_add(cgi->pathinfo, 
+				    conn->request->buf + conn->web_directory->len,
+				    conn->request->len - conn->web_directory->len);
+	}
+
 	/* If we have a ScriptAlias directive, there is no need to find the
 	 * executable file
 	 */
@@ -446,16 +457,6 @@ _extract_path (cherokee_handler_cgi_t *cgi)
 
 		cherokee_buffer_new(&cgi->filename);
 		cherokee_buffer_add(cgi->filename, cgi->script_alias, strlen(cgi->script_alias));
-
-		/* Set the path_info, if any.. */
-		if ((conn->request->len > conn->web_directory->len) &&
-		    (strncmp(conn->request->buf, conn->web_directory->buf, conn->web_directory->len) == 0))
-		{
-			cherokee_buffer_new(&cgi->pathinfo);
-			cherokee_buffer_add(cgi->pathinfo, 
-				conn->request->buf + conn->web_directory->len,
-				conn->request->len - conn->web_directory->len);
-		}
 
 		return ret_ok;
 	}
@@ -809,6 +810,10 @@ cherokee_handler_cgi_add_headers (cherokee_handler_cgi_t *cgi, cherokee_buffer_t
 	int    len;
 	char  *content;
 	int    end_len;
+
+	/* Sanity check
+	 */
+	return_if_fail (buffer != NULL, ret_error);
 
 	/* Read information from the CGI
 	 */

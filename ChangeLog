@@ -1,3 +1,29 @@
+2005-03-19  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/connection.c (get_host): Improved: Now it is slightly
+	faster and has a better broken header detection.
+
+2005-03-18  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/handler_file.c (cherokee_handler_file_init): Fixed
+	compilation problem.
+
+	* cherokee/socket.c (cherokee_read): Added support for the
+	«Connection timed out» error.
+
+2005-03-17  Lidia Fernandez Gago  <lidia@alobbs.com>
+
+	* autogen.sh: Updated.
+
+	* m4/*: Moved macro files.
+
+	* configure.in: Fixed some macro problems.
+
+2005-03-15  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* sendfile_samba.m4, configure.in: Fixed inclusion of sendfile()
+	check - at CeBit 2005, Hanover.
+
 2005-03-06  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cherokee/fdpoll-epoll.c: Some little bug fixes
@@ -38,7 +64,7 @@
 
 2005-02-20  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
-	* cherokee/socket.c (cherokee_socket_gethostbyname): Changed
+	* cherokee/socket.c (cherokee_socket_gethostbyname): Replaced
 	__SUN_PROC by SOLARIS.  There was an error here compiling Cherokee
 	in Solaris with GCC.
 

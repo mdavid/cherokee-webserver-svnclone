@@ -25,7 +25,7 @@ dnl Version
 m4_define([cherokee_major_version], [0])
 m4_define([cherokee_minor_version], [4])
 m4_define([cherokee_micro_version], [18])
-m4_define([cherokee_patch_version], [b59])
+m4_define([cherokee_patch_version], [b61])
 m4_define([cherokee_version], m4_format('%s.%s.%s%s', cherokee_major_version, cherokee_minor_version, cherokee_micro_version, cherokee_patch_version))
 
 m4_define([cherokee_major_version_len], m4_len(cherokee_major_version))
@@ -173,10 +173,6 @@ AH_BOTTOM([
 #endif
 ])
 
-#sinclude(network.m4)
-#sinclude(etr_socket_nsl.m4)
-#sinclude(sendfile_samba.m4)
-
 dnl
 dnl Check for fd events inspect functions
 dnl
@@ -280,8 +276,6 @@ AC_SEARCH_LIBS(accept, socket)
 AC_SEARCH_LIBS(bind, socket)
 AC_SEARCH_LIBS(listen, socket)
 AC_SEARCH_LIBS(setsockopt, socket)
-
-ETR_SOCKET_NSL
 
 dnl
 dnl Check for inet_pton.  We have our own, but on Solaris the version in
@@ -772,6 +766,11 @@ dnl
 #   AC_MSG_RESULT($LIBCLAMAV_LIBS)
 #fi
 
+# From etr_socket_nsl.m4
+ETR_SOCKET_NSL
+
+# From sendfile_samba.m4
+SENDFILE_CHECK
 
 dnl
 dnl Options
@@ -835,7 +834,7 @@ AM_CONDITIONAL(STATIC_VALIDATOR_PAM,          grep pam            $conf_h >/dev/
 AM_CONDITIONAL(STATIC_VALIDATOR_HTPASSWD,     grep htpasswd       $conf_h >/dev/null)
 AM_CONDITIONAL(STATIC_VALIDATOR_PLAIN,        grep plain          $conf_h >/dev/null)
 
-AC_OUTPUT(Makefile cherokee/Makefile cget/Makefile icons/Makefile doc/Makefile doc/es/Makefile contrib/Makefile debian/Makefile qa/Makefile cherokee-config cherokee.spec cherokee.pc)
+AC_OUTPUT(Makefile m4/Makefile cherokee/Makefile cget/Makefile icons/Makefile doc/Makefile doc/doxygen.cfg doc/es/Makefile contrib/Makefile debian/Makefile debian/changelog qa/Makefile cherokee-config cherokee.spec cherokee.pc)
 
 
 methods=""

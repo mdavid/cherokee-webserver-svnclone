@@ -296,9 +296,11 @@ ret_t
 cherokee_connection_setup_error_handler (cherokee_connection_t *cnt)
 {
 	ret_t                           ret;
+	cherokee_server_t              *srv;
 	cherokee_virtual_server_t      *vsrv;
 	cherokee_handler_table_entry_t *entry;	
 
+	srv   = CONN_SRV(cnt);
 	vsrv  = CONN_VSRV(cnt);
 	entry = vsrv->error_handler;
 
@@ -318,6 +320,12 @@ cherokee_connection_setup_error_handler (cherokee_connection_t *cnt)
 	if ((entry != NULL) && (entry->handler_new_func != NULL)) {
 		ret = entry->handler_new_func ((void **) &cnt->handler, cnt, entry->properties);
 		if (ret == ret_ok) goto out;
+
+		/* Sanity check
+		 */
+		if (!HANDLER_SUPPORT_ERROR(cnt->handler)) {
+			SHOULDNT_HAPPEN;
+		}
 	} 
 
 	/* If something was wrong, try with the default error handler
@@ -325,15 +333,13 @@ cherokee_connection_setup_error_handler (cherokee_connection_t *cnt)
 	ret = cherokee_handler_error_new (&cnt->handler, cnt, NULL);
 
 out:
-	/* Maybe turn off the keepalive flag
-	 */
-	if (! HANDLER_SUPPORT_KEEPALIVE(cnt->handler)) {
-		cnt->keepalive = 0;
-	}
-
 	/* Nothing should be mmaped any longer
 	 */
-	cnt->mmaped = NULL;
+	if (cnt->mmaped != NULL) {
+		ret = cherokee_mmap2_unref_entry (srv->mmap_cache, cnt->mmap_entry_ref);
+		cnt->mmaped         = NULL;
+		cnt->mmap_entry_ref = NULL;
+	}
 
 	return ret;
 }
@@ -400,6 +406,16 @@ exit:
 static void
 build_response_header__authenticate (cherokee_connection_t *cnt, cherokee_buffer_t *buffer)
 {
+	/* Basic Authenticatiom
+	 * Eg: WWW-Authenticate: Basic realm=""
+	 */
+	if (cnt->auth_type & http_auth_basic) {
+		cherokee_buffer_ensure_size (buffer, 31 + cnt->realm_ref->len + 4);
+		cherokee_buffer_add (buffer, "WWW-Authenticate: Basic realm=\"", 31);
+		cherokee_buffer_add_buffer (buffer, cnt->realm_ref);
+		cherokee_buffer_add (buffer, "\""CRLF, 3);
+	}
+
 	/* Digest Authenticatiom
 	 * Eg: WWW-Authenticate: Digest realm="", qop="auth,auth-int", nonce="", opaque=""
 	 */
@@ -432,16 +448,6 @@ build_response_header__authenticate (cherokee_connection_t *cnt, cherokee_buffer
 		/* Qop: auth, auth-int, auth-conf
 		 */
 		cherokee_buffer_add (buffer, "qop=\"auth\""CRLF, 12);
-	}
-
-	/* Basic Authenticatiom
-	 * Eg: WWW-Authenticate: Basic realm=""
-	 */
-	if (cnt->auth_type & http_auth_basic) {
-		cherokee_buffer_ensure_size (buffer, 31 + cnt->realm_ref->len + 4);
-		cherokee_buffer_add (buffer, "WWW-Authenticate: Basic realm=\"", 31);
-		cherokee_buffer_add_buffer (buffer, cnt->realm_ref);
-		cherokee_buffer_add (buffer, "\""CRLF, 3);
 	}
 }
 
@@ -884,26 +890,28 @@ get_host (cherokee_connection_t *cnt,
 	  char                  *ptr,
 	  int                    size) 
 {
-	char *end;
-	char *end2;
-	ret_t ret;
+	char  *end;
+	char  *end2;
+	ret_t  ret;
 
 	/* Drop the port if present
 	 * Eg: www.alobbs.com:8080 -> www.alobbs.com
 	 */ 
-	end  = ptr + size;
-	end2 = strchr (ptr, ':');
-	if (end2 && (end2 < end))  {
-		end = end2;
-	}
+	end = end2 = ptr + size;
+	while ((*end2 != ':') && (end2 > ptr)) end2--;
+	if (*end2 == ':') end = end2;
 
+	/* Sanity check: Is the host name empty?
+	 */
+	if (unlikely(end - ptr == 0)) return ret_error;
+
+	/* Copy the string
+	 */
 	size = (end - ptr);
-
 	ret = cherokee_buffer_add (cnt->host, ptr, size);
 	if (unlikely(ret < ret_ok)) return ret;
 
-	/* Security check
-	 * Hostname can't start by dot
+	/* Security check: Hostname shouldn't start with a dot
 	 */
 	if ((cnt->host->len >= 1) && (*cnt->host->buf == '.')) {
 		return ret_error;
@@ -1016,7 +1024,7 @@ get_authorization (cherokee_connection_t *cnt,
 		 */
 		cnt->auth_type |= http_auth_digest;
 
-		PRINT_ERROR ("TODO %s:%d\n", __FILE__, __LINE__);
+		PRINT_ERROR_S ("TODO: unimplemented\n");
 		return ret_error;
 
 	} else {

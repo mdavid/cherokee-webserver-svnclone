@@ -36,14 +36,14 @@
 CHEROKEE_BEGIN_DECLS
 
 typedef enum {
-	ver_full_html,    /* Eg: <address>Cherokee web server 0.5.0 Port 80</address> */
-	ver_port_html     /* Eg: <address>Cherokee web server Port 80</address> */
+	ver_full_html,    /*!< Eg: <address>Cherokee web server 0.5.0 Port 80</address> */
+	ver_port_html     /*!< Eg: <address>Cherokee web server Port 80</address>       */
 } cherokee_version_t;
 
 typedef struct {
-	   char *buf;
-	   int   size;    /* total amount of memory */
-	   int   len;     /* strlen (buf) */
+	char *buf;        /**< Memory chunk           */
+	int   size;       /**< Total amount of memory */
+	int   len;        /**< Lenght of the string   */
 } cherokee_buffer_t;
 
 #define BUF(x) ((cherokee_buffer_t *)(x))

@@ -6,12 +6,12 @@ class Test (TestBase):
         self.name = "CGI Execution"
 
         self.expected_error = 200
-        self.request        = "GET /cgi-bin/test1 HTTP/1.0\r\n"
-        self.conf           = "Directory /cgi-bin { Handler cgi }"
+        self.request        = "GET /cgi-bin1/test HTTP/1.0\r\n"
+        self.conf           = "Directory /cgi-bin1 { Handler cgi }"
 
     def Prepare (self, www):
-        self.Mkdir (www, "cgi-bin")
-        self.WriteFile (www, "cgi-bin/test1", 0755,
+        self.Mkdir (www, "cgi-bin1")
+        self.WriteFile (www, "cgi-bin1/test", 0755,
                         """#!/bin/sh
 
                         echo "Content-Type: text/plain"

@@ -55,8 +55,8 @@ zlib/zlib.h    \
 zlib/zutil.h
 
 dict_src =          \
-dict/dict.h         \
-dict/dict.c         \
+dict/dict_generic.h \
+dict/dict_generic.c \
 dict/sp_tree.h      \
 dict/sp_tree.c      \
 dict/dict_private.h
@@ -500,6 +500,8 @@ buffer.c \
 table.h \
 table-protected.h \
 table.c \
+dict.h \
+dict.c \
 buffer_escape.h \
 buffer_escape.c \
 socket.h \
@@ -532,8 +534,6 @@ access.c \
 mime_grammar.y \
 mime_scanner.l
 
-#mmap.h
-#mmap.c
 
 libcherokee_client_la_SOURCES = \
 url.h \

@@ -157,6 +157,7 @@ cherokee_handler_file_init (cherokee_handler_file_t *n)
 	char *ext;
 	cherokee_mmap2_entry_t *mmap_entry = NULL;
 	cherokee_connection_t  *conn       = HANDLER_CONN(n);
+	cherokee_server_t      *srv        = HANDLER_SRV(n);
 
 	/* Build the local file path                         1.- BUILD
 	 * "return" is forbbiden until 2.
@@ -198,7 +199,7 @@ cherokee_handler_file_init (cherokee_handler_file_t *n)
 	    (conn->socket->is_tls == non_TLS) &&
 	    (n->info.st_size <= MMAP_MAX_FILE_SIZE)) 
 	{
-		ret = cherokee_mmap2_get (HANDLER_SRV(n)->mmap_cache,
+		ret = cherokee_mmap2_get (srv->mmap_cache,
 					  conn->local_directory->buf,
 					  &mmap_entry);
 		if (ret == ret_ok) {

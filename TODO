@@ -17,6 +17,8 @@ x - Finished task
 [x] "Include" in configuration file
 [x] SSL support (TLS)
 [x] Add command line parameters
+[ ] handler_dirlist to manage content-length
+[ ] handler_dirlist to implement shorting
 [ ] Stat cache
 [ ] Improve setenv() calls in cgi handler
 [ ] IP Ranges restrictions

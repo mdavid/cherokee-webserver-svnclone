@@ -127,7 +127,7 @@ cherokee_http_code_copy (cherokee_http_t code, cherokee_buffer_t *buf)
 	case http_not_modified:
 		return cherokee_buffer_add (buf, http_not_modified_string, 16);	
 	case http_length_required:
-		return cherokee_buffer_add (buf, http_length_required_string, 21);	
+		return cherokee_buffer_add (buf, http_length_required_string, 19);	
 	case http_request_uri_too_long:
 		return cherokee_buffer_add (buf, http_request_uri_too_long_string, 24);	
 	case http_range_not_satisfiable:

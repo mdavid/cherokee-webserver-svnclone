@@ -10,7 +10,7 @@
 #ifndef _SP_TREE_H_
 #define _SP_TREE_H_
 
-#include "dict.h"
+#include "dict_generic.h"
 
 BEGIN_DECL
 
@@ -59,11 +59,6 @@ const void *sp_itor_cdata __P((const sp_itor *itor));
 int sp_itor_set_data __P((sp_itor *itor, void *dat, int del));
 int sp_itor_remove __P((sp_itor *itor, int del));
 
-/* alo
- */
-void sp_tree_set_free (sp_tree *tree,
-				   dict_del_func key_del, 
-				   dict_del_func dat_del);
 
 END_DECL
 
