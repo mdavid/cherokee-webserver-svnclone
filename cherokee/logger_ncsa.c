@@ -149,15 +149,13 @@ cherokee_logger_ncsa_free (cherokee_logger_ncsa_t *logger)
 	}
 	
 	if (logger->accesslog_fd != NULL) {
-		ret |= fclose (logger->errorlog_fd);
+		ret |= fclose (logger->accesslog_fd);
 		n--;
 	}
 	
 	if (n != 0) {
 		closelog();
 	}
-	
-	free (logger);
 	
 	return (ret == 0) ? ret_ok : ret_error;
 }

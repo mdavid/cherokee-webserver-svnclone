@@ -612,8 +612,8 @@ pidfile : T_PIDFILE T_FULLDIR
 
 	   file = fopen ($2, "w");
 	   if (file == NULL) {
-			 PRINT_ERROR ("ERROR: Can't write PID file '%s'\n", $2);
-			 return 1;
+			 PRINT_ERROR ("ERROR: Can't write PID file '%s': %s\n", $2, strerror(errno));
+			 return 0;
 	   }
 
 	   snprintf (buffer, buffer_size, "%d\n", getpid());

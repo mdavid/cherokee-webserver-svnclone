@@ -579,10 +579,12 @@ cherokee_write (cherokee_socket_t *socket, const char *buf, int buf_len, size_t 
 		
 		if (len < 0) {
 			switch (len) {
-			case GNUTLS_E_PUSH_ERROR:      return ret_eof;
-			case GNUTLS_E_INTERRUPTED:     return ret_eof;
-			case GNUTLS_E_INVALID_SESSION: return ret_eof;
-			case GNUTLS_E_AGAIN:           return ret_eagain;
+			case GNUTLS_E_PUSH_ERROR:
+			case GNUTLS_E_INTERRUPTED:
+			case GNUTLS_E_INVALID_SESSION: 
+				return ret_eof;
+			case GNUTLS_E_AGAIN:           
+				return ret_eagain;
 			}
 
 			PRINT_ERROR ("ERROR: GNUTLS: gnutls_record_send(%d, ..) -> err=%d '%s'\n", 
@@ -674,8 +676,10 @@ cherokee_read (cherokee_socket_t *socket, char *buf, int buf_size, size_t *reade
 
 		if (len < 0) {
 			switch (len) {
+			case GNUTLS_E_PUSH_ERROR:
 			case GNUTLS_E_INTERRUPTED:              
-			case GNUTLS_E_UNEXPECTED_PACKET_LENGTH: 
+			case GNUTLS_E_INVALID_SESSION:
+			case GNUTLS_E_UNEXPECTED_PACKET_LENGTH:
 				return ret_eof;
 			case GNUTLS_E_AGAIN:
 				return ret_eagain;

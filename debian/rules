@@ -125,7 +125,7 @@ install-arch:
 # libcherokee-base0-dev - Development files
 	install -d $(DEV_BASE_DIR)/DEBIAN
 	install -d $(DEV_BASE_DIR)/usr/{bin,sbin,lib/pkgconfig,include/cherokee}
-	install -d $(DEV_BASE_DIR)/usr/share/{doc/libcherokee0-dev,aclocal,man/man1}
+	install -d $(DEV_BASE_DIR)/usr/share/{doc/libcherokee-base0-dev,aclocal,man/man1}
 
 	mv $(BUILD_DIR)/usr/lib/libcherokee-base.{a,so}      $(DEV_BASE_DIR)/usr/lib/
 	mv $(BUILD_DIR)/usr/include/cherokee/*               $(DEV_BASE_DIR)/usr/include/cherokee/
@@ -205,7 +205,7 @@ binary-common:
 #	dh_python
 	dh_installdeb
 	dh_makeshlibs
-	dh_shlibdeps -L libcherokee-base0 -L libcherokee-server0 -L libcherokee-client0 -L libcherokee0-dev -L libcherokee-server0-dev -L libcherokee-client0-dev -L cget -L cherokee -l debian/libcherokee-base0/usr/lib:debian/libcherokee-base0/usr/lib/cherokee:debian/libcherokee-client0/usr/lib:debian/libcherokee-client0/usr/lib/cherokee:debian/libcherokee-server0/usr/lib:debian/libcherokee-server0/usr/lib/cherokee
+	dh_shlibdeps -L libcherokee-base0 -L libcherokee-server0 -L libcherokee-client0 -L libcherokee-base0-dev -L libcherokee-server0-dev -L libcherokee-client0-dev -L cget -L cherokee -l debian/libcherokee-base0/usr/lib:debian/libcherokee-base0/usr/lib/cherokee:debian/libcherokee-client0/usr/lib:debian/libcherokee-client0/usr/lib/cherokee:debian/libcherokee-server0/usr/lib:debian/libcherokee-server0/usr/lib/cherokee
 	dh_gencontrol
 	dh_md5sums
 	dh_builddeb

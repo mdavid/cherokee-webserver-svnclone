@@ -137,8 +137,6 @@ cherokee_logger_w3c_free (cherokee_logger_w3c_t *logger)
 		closelog();		
 	}
 	
-	free (logger);
-	
 	return ret;
 }
 

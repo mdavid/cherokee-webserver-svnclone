@@ -31,7 +31,9 @@ cherokee_logger_table_new  (cherokee_logger_table_t **lt)
 	ret_t ret;
 	CHEROKEE_NEW_STRUCT(n, logger_table);
 	
-	/* Init the table
+	/* This table is going to store references to the modules
+	 * that the server should load before add a new logger to
+	 * this table.  Eg:  "ncsa" -> pointer to ncsa module.
 	 */
 	ret = cherokee_table_init (&n->table);
 	if (unlikely(ret < ret_ok)) return ret;
@@ -56,6 +58,7 @@ cherokee_logger_table_free (cherokee_logger_table_t *et)
 {
 	return cherokee_table_free (&et->table);
 }
+
 
 ret_t
 cherokee_logger_table_get (cherokee_logger_table_t *et, char *logger, cherokee_module_info_t **info) 

@@ -198,8 +198,7 @@ cherokee_virtual_server_clean (cherokee_virtual_server_t *vserver)
 	cherokee_buffer_free (vserver->name);
 	vserver->name = NULL;
 
-	cherokee_buffer_free (vserver->root);
-	vserver->root = NULL;
+	cherokee_buffer_clean (vserver->root);
 	
 	if (vserver->logger != NULL) {
 		cherokee_logger_free (vserver->logger);

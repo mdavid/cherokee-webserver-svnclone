@@ -1,5 +1,9 @@
 2005-03-25  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* cherokee/logger_ncsa.c (cherokee_logger_ncsa_free): Silly bug
+	fixed. It was closing twice the same file descriptor and forgoting
+	another one unclosed.  Remember: some times copy&paste sucks :-p
+
 	* cherokee/header.c (cherokee_header_parse),
 	cherokee/handler_file.c (cherokee_handler_file_init): Partial
 	content fixes.

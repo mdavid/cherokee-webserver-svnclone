@@ -723,7 +723,6 @@ print_banner (cherokee_server_t *srv)
 		}
 	}
 
-
 	/* Print it!
 	 */
 	for (p = n->buf+TERMINAL_WIDTH; p < n->buf+n->len; p+=80) {
@@ -1080,6 +1079,14 @@ cherokee_server_reinit (cherokee_server_t *srv)
 	}
 
 
+#if 1
+	{
+		int tmp;
+		printf ("Handling server reinit. Press any key to continue..\n");
+		read (0, &tmp, 1);
+	}
+#endif
+
 	ret = cherokee_server_clean (srv);
 	if (ret != ret_ok) {
 		exit(EXIT_SERVER_CLEAN);
@@ -1292,6 +1299,12 @@ read_default_config_files (cherokee_server_t *srv, char *filename)
 {
 	ret_t   ret;
 	list_t *i;
+	
+	/* Support null filename as default config file
+	 */
+	if (filename == NULL) {
+		filename = CHEROKEE_CONFDIR"/cherokee.conf";
+	}
 
 	/* Read the main config file
 	 */
@@ -1348,10 +1361,6 @@ ret_t
 cherokee_server_read_config_file (cherokee_server_t *srv, char *path)
 {
 	ret_t ret;
-
-	if (path == NULL) {
-		path = CHEROKEE_CONFDIR"/cherokee.conf";
-	}
 
 	ret = read_default_config_files (srv, path);
 	if (ret == ret_not_found) {

@@ -10,17 +10,19 @@
 # Version:	@(#)skeleton  1.9  26-Feb-2001  miquels@cistron.nl
 #
 
+. /lib/lsb/init-functions
+
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
-DAEMON=/usr/bin/cherokee
+DAEMON=/usr/sbin/cherokee
 NAME=cherokee
+
+test -x $DAEMON || exit 0
 
 PIDFILE=`grep -i '^PidFile' /etc/cherokee/cherokee.conf | sed -e 's/pidfile[\t ]\+//i'`
 if [ "x$PIDFILE" = "x" ];
 then
         PIDFILE=/var/run/cherokee.pid
 fi
-
-test -x $DAEMON || exit 0
 
 set -e
 
@@ -35,7 +37,7 @@ check_alive() {
 }
 
 case "$1" in
-  start)
+  start)	
 	echo -n "Starting web server: $NAME"
 	start-stop-daemon --start -b --pidfile $PIDFILE --exec $DAEMON
 	;;
@@ -45,11 +47,14 @@ case "$1" in
 	start-stop-daemon --stop --oknodo --pidfile $PIDFILE --exec $DAEMON
 	;;
 
-  reload|force-reload|restart)
-	echo -n "Restarting $NAME configuration"
-	start-stop-daemon --stop --oknodo --pidfile $PIDFILE --exec $DAEMON
-	sleep 1
-	start-stop-daemon --start -b --pidfile $PIDFILE --exec $DAEMON
+  restart)
+	$0 stop
+     sleep 1
+     $1 start
+	;;
+
+  reload|force-reload)
+	start-stop-daemon --stop --signal HUP --pidfile $PIDFILE --name $NAME
 	;;
 
   *)

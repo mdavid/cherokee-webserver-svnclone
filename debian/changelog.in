@@ -1,7 +1,7 @@
 cherokee (@VERSION@-1) unstable; urgency=low
 
   * This Debian package have been generated with the Cherokee source
-tarball.  Probably it isn't the package provided officially by the
-distribution.
+    tarball.  Probably it isn't the package provided officially by the
+    distribution.
 
  -- Alvaro Lopez <alvaro@alobbs.com>  Wed, 1 jan 2005 00:00:00 +0200

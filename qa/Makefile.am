@@ -60,7 +60,8 @@ run-tests.py \
 56-ContentRange3.py \
 57-ContentRange4.py \
 58-ContentRange-Double.py \
-59-ContentRange-Double2.py
+59-ContentRange-Double2.py \
+60-BigPost.py
 
 
 test:
