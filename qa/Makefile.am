@@ -1,6 +1,7 @@
 EXTRA_DIST = \
-base.py \
 conf.py \
+base.py \
+run-tests.py \
 01-basic.py \
 02-MissingProtocol.py \
 03-UnknownMethod.py \
@@ -43,7 +44,13 @@ conf.py \
 40-Auth-Basic2.py \
 41-Auth-Basic3.py \
 42-Pipelining.py \
-43-Pipelining2.py
+43-Pipelining2.py \
+44-Home.py \
+45-Home2.py \
+46-Redir.py \
+47-Redir2.py \
+48-NN.py \
+49-NN-broken.py
 
 
 test:

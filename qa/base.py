@@ -19,15 +19,16 @@ def importfile(path):
 
 class TestBase:
     def __init__ (self):
-        self.name             = None    # Test 01: Basic functionality
-        self.conf             = None    # Directory /test { .. }
-        self.request          = ""      # GET / HTTP/1.0
-        self.post             = None
-        self.reply            = ""      # "200 OK"..
-        self.version          = None    # HTTP/x.y: 9, 0 or 1
-        self.reply_err        = None    # 200
-        self.expected_error   = None
-        self.expected_content = None
+        self.name              = None    # Test 01: Basic functionality
+        self.conf              = None    # Directory /test { .. }
+        self.request           = ""      # GET / HTTP/1.0
+        self.post              = None
+        self.reply             = ""      # "200 OK"..
+        self.version           = None    # HTTP/x.y: 9, 0 or 1
+        self.reply_err         = None    # 200
+        self.expected_error    = None
+        self.expected_content  = None
+        self.forbidden_content = None
 
     def _do_request (self):
         for res in socket.getaddrinfo(HOST, PORT, socket.AF_UNSPEC, socket.SOCK_STREAM):
@@ -99,8 +100,27 @@ class TestBase:
                         return -1
             else:
                 raise "Syntaxis error"
+
+        if self.forbidden_content != None:
+            if type(self.forbidden_content) == types.StringType:
+                if self.forbidden_content in self.reply:
+                    print "esta el el reply!!"
+                    print "->"+self.forbidden_content
+                    print "<>===="
+                    print self.reply
+                    print "<>===="                    
+                    return -1
+            elif type(self.forbidden_content) == types.ListType:
+                for entry in self.forbidden_content:
+                    if entry in self.reply:
+                        return -1
+            else:
+                raise "Syntaxis error"
                 
         return 0
+
+    def Precondition (self):
+        return True
 
     def Prepare (self, www):
         None
@@ -143,6 +163,9 @@ class TestBase:
         if self.expected_content is not None:
             src += "\tExpected = Content: %s\n" % (self.expected_content)
 
+        if self.forbidden_content is not None:
+            src += "\tForbidden= Content: %s\n" % (self.forbidden_content)
+
         src += "\tReply    = %s\n" % (headers[0])
         for header in headers[1:]:
             src += "\t\t%s\n" %(header)
@@ -154,7 +177,7 @@ class TestBase:
         os.mkdir(fulldir)
         return fulldir
 
-    def WriteFile (self, www, filename, mode, content):
+    def WriteFile (self, www, filename, mode=0444, content=''):
         fullpath = os.path.join (www, filename)
         f = open (fullpath, 'w')
         f.write (content)
