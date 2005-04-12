@@ -61,7 +61,16 @@ run-tests.py \
 57-ContentRange4.py \
 58-ContentRange-Double.py \
 59-ContentRange-Double2.py \
-60-BigPost.py
+60-BigPost.py \
+61-PAM.py \
+62-PAM2.py \
+63-DocumentRoot.py \
+64-DirectoryIndex.py \
+65-DirectoryIndex2.py \
+66-DirectoryIndex3.py \
+67-PathInfo.py \
+68-PathInfo2.py \
+69-PathInfo3.py
 
 
 test:

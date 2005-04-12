@@ -97,7 +97,6 @@ ret_t cherokee_handler_free        (cherokee_handler_t  *hdl);
 ret_t cherokee_handler_step        (cherokee_handler_t  *hdl, cherokee_buffer_t *buffer);
 ret_t cherokee_handler_add_headers (cherokee_handler_t  *hdl, cherokee_buffer_t *buffer);
 
-
 CHEROKEE_END_DECLS
 
 #endif /* CHEROKEE_HANDLER_H */

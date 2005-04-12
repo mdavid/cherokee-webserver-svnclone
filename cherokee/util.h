@@ -30,6 +30,7 @@
 #define CHEROKEE_UTIL_H
 
 #include <cherokee/common.h>
+#include <cherokee/buffer.h>
 #include <time.h>
 
 CHEROKEE_BEGIN_DECLS
@@ -51,6 +52,13 @@ struct tm *cherokee_gmtime (const time_t *timep, struct tm *result);
 ret_t cherokee_sys_fdlimit_get (uint32_t *limit);
 ret_t cherokee_sys_fdlimit_set (uint32_t  limit);
 
+
+/* Path walking
+ */
+ret_t cherokee_split_pathinfo (cherokee_buffer_t  *path, 
+			       int                 init_pos,
+			       char              **pathinfo,
+			       int                *pathinfo_len);
 
 CHEROKEE_END_DECLS
 

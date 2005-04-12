@@ -69,7 +69,7 @@ ret_t
 cherokee_handler_phpcgi_new  (cherokee_handler_t **hdl, void *cnt, cherokee_table_t *properties)
 {
 	ret_t  ret;
-	char  *interpreter = DEFAULT_PHP_EXECUTABLE;
+	char  *interpreter = NULL;
 
 	/* Create the new handler CGI object
 	 */
@@ -82,9 +82,11 @@ cherokee_handler_phpcgi_new  (cherokee_handler_t **hdl, void *cnt, cherokee_tabl
 
 	/* Look for the interpreter in the properties
 	 */
-	if (properties) {
+	if (properties)
 		interpreter = cherokee_table_get_val (properties, "interpreter");
-	}	
+
+	if (interpreter == NULL) 
+		interpreter = DEFAULT_PHP_EXECUTABLE;
 
 	/* Check the interpreter
 	 */
@@ -100,6 +102,13 @@ cherokee_handler_phpcgi_new  (cherokee_handler_t **hdl, void *cnt, cherokee_tabl
 		cherokee_buffer_add ( CGIHANDLER(*hdl)->filename, interpreter, strlen(interpreter));
 	}	
 	
+	/* If it has to fake the effective directory, set the -C paramter:
+	 * Do not chdir to the script's directory
+	 */
+	if (!cherokee_buffer_is_empty(CONN(cnt)->effective_directory)) {
+		cherokee_handler_cgi_add_parameter (CGIHANDLER(*hdl), "-C");
+	}
+
 	return ret_ok;
 }
 
@@ -121,20 +130,6 @@ check_interpreter (char *path)
 }
 
 
-static void
-change_to_php_script_directory (cherokee_buffer_t *filepath)
-{
-	char *end;
-
-	end = strrchr (filepath->buf, '/');
-	if (end == NULL) return;
-
-	*end = '\0';
-	chdir (filepath->buf);
-	*end = '/';
-}
-
-
 ret_t 
 cherokee_handler_phpcgi_init (cherokee_handler_t *hdl)
 {
@@ -143,17 +138,21 @@ cherokee_handler_phpcgi_init (cherokee_handler_t *hdl)
 	/* Add parameter to CGI handler
 	 */
 	if (CGIHANDLER(hdl)->parameter == NULL) {
-		cherokee_buffer_new (&CGIHANDLER(hdl)->parameter);
-		cherokee_buffer_add_buffer (CGIHANDLER(hdl)->parameter, conn->local_directory);
-		cherokee_buffer_add_buffer (CGIHANDLER(hdl)->parameter, conn->request);
+		cherokee_buffer_t *ld = conn->local_directory;
 
-		change_to_php_script_directory (CGIHANDLER(hdl)->parameter);
+		cherokee_buffer_new (&CGIHANDLER(hdl)->parameter);
+		cherokee_buffer_add (CGIHANDLER(hdl)->parameter, ld->buf, ld->len - 1);
+		cherokee_buffer_add_buffer (CGIHANDLER(hdl)->parameter, conn->request);
+		
+		cherokee_handler_cgi_split_pathinfo (CGIHANDLER(hdl), 
+						     CGIHANDLER(hdl)->parameter,
+						     ld->len + 1);
 	}
 
 	cherokee_handler_cgi_add_env      (CGIHANDLER(hdl), "REDIRECT_STATUS=200", 19);
 	cherokee_handler_cgi_add_env_pair (CGIHANDLER(hdl), "SCRIPT_FILENAME", 15,
-					   CGIHANDLER(hdl)->parameter->buf, CGIHANDLER(hdl)->parameter->len);
-		
+					   CGIHANDLER(hdl)->parameter->buf, CGIHANDLER(hdl)->parameter->len);	
+
 	return cherokee_handler_cgi_init (CGIHANDLER(hdl));
 }
 
@@ -167,15 +166,12 @@ phpcgi_init (cherokee_module_loader_t *loader)
 {
 	/* Is init?
 	 */
-	if (_phpcgi_is_init) {
-		return;
-	}
+	if (_phpcgi_is_init) return;
+	_phpcgi_is_init = true;
 	
 	/* Load the dependences
 	 */
 	cherokee_module_loader_load (loader, "cgi");
-
-	_phpcgi_is_init = true;
 }
 
 

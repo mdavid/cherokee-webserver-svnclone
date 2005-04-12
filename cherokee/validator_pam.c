@@ -23,7 +23,10 @@
  */
 
 #include "common-internal.h"
+#include "http.h"
 #include "validator_pam.h"
+#include "connection-protected.h"
+#include "module_loader.h"
 
 #include <security/pam_appl.h>
 
@@ -78,9 +81,9 @@ auth_pam_talker (int                        num_msg,
 		 struct pam_response      **resp,
 		 void                      *appdata_ptr)
 {
-	unsigned short i = 0;
-	cherokee_connection_t *conn = CONN(appdata_ptr);
-	struct pam_response *response = 0;
+	unsigned short         i        = 0;
+	struct pam_response   *response = NULL;
+	cherokee_connection_t *conn     = CONN(appdata_ptr);
 
 	/* parameter sanity checking 
 	 */
@@ -129,17 +132,14 @@ auth_pam_talker (int                        num_msg,
 ret_t 
 cherokee_validator_pam_check (cherokee_validator_pam_t  *pam, cherokee_connection_t *conn)
 {
-	int   ret;
-	char *app_data[2];
+	int                  ret;
 	static pam_handle_t *pamhandle = NULL;
 	struct pam_conv      pamconv   = {&auth_pam_talker, conn};
 
 	extern int _pam_dispatch (pam_handle_t *, int, int);
 
-	app_data[0] = NULL;
-	app_data[1] = strdup(conn->passwd->buf);
-
-
+	/* Start the PAM query
+	 */
 	ret = pam_start (CHEROKEE_AUTH_SERVICE, conn->user->buf, &pamconv, &pamhandle);
 	if (ret != PAM_SUCCESS) {
 		conn->error_code = http_internal_error;
@@ -205,3 +205,17 @@ unauthorized:
 	return ret_error;
 }
 
+
+
+/*   Library init function
+ */
+static cherokee_boolean_t _pam_is_init = false;
+
+void
+pam_init (cherokee_module_loader_t *loader)
+{
+	/* Init flag
+	 */
+	if (_pam_is_init) return;
+	_pam_is_init = true;
+}

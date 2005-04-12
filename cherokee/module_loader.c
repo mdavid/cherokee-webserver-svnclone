@@ -260,7 +260,6 @@ get_info (const char *module, cherokee_module_info_t **info, void **dl_handler)
 	/* Maybe it's statically linked
 	 */
 	*info = get_sym_from_enviroment (info_name->buf);
-	printf ("%s -> %p\n", info_name->buf, *info);
 
 	/* Or maybe we have to load a dinamic library
 	 */	

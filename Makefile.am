@@ -25,7 +25,7 @@ cherokee_replace_SOURCES = cherokee_replace.c
 cherokeeconfdir = $(sysconfdir)/cherokee
 
 .sample.pre.sample:
-	$(top_builddir)/cherokee_replace $< $@ "%sysconfdir%" "${sysconfdir}" "%datadir%" "${datadir}" "%prefix%" "${prefix}"
+	$(top_builddir)/cherokee_replace $< $@ "%sysconfdir%" "${sysconfdir}" "%datadir%" "${datadir}" "%prefix%" "${prefix}" "%wwwroot%" "${WWW_ROOT}"
 
 CONFS_PRE =              \
 mods-ssl.sample.pre      \
@@ -48,6 +48,7 @@ $(CONFS)
 EXTRA_DIST =     \
 TODO             \
 config.h.mingw   \
+cherokee.spec    \
 cherokee.spec.in \
 pam.d_cherokee   \
 cherokee.pc.in   \

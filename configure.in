@@ -24,8 +24,8 @@ AC_PREREQ(2.58)
 dnl Version
 m4_define([cherokee_major_version], [0])
 m4_define([cherokee_minor_version], [4])
-m4_define([cherokee_micro_version], [18])
-m4_define([cherokee_patch_version], [])
+m4_define([cherokee_micro_version], [19])
+m4_define([cherokee_patch_version], [b03])
 m4_define([cherokee_version], m4_format('%s.%s.%s%s', cherokee_major_version, cherokee_minor_version, cherokee_micro_version, cherokee_patch_version))
 
 m4_define([cherokee_major_version_len], m4_len(cherokee_major_version))
@@ -594,12 +594,16 @@ fi
 dnl
 dnl Check for pcre library
 dnl
-AC_CHECK_LIB(pcre, pcre_compile, have_pcre_lib=yes, have_pcre_lib=no)
-AC_CHECK_HEADER(pcre.h, have_pcre_include=yes, have_pcre_include=no)
-if test "$have_pcre_lib $have_pcre_include" = "yes yes"; then
-   have_pcre="yes"
-else
-   have_pcre="no"
+have_pcre = "disabled"
+AC_ARG_ENABLE(pcre, AC_HELP_STRING([--disable-pcre],[Disable PCRE support]), use_pcre="$enableval", use_pcre="yes")
+if test "x$use_pcre" = "xyes"; then
+   AC_CHECK_LIB(pcre, pcre_compile, have_pcre_lib=yes, have_pcre_lib=no)
+   AC_CHECK_HEADER(pcre.h, have_pcre_include=yes, have_pcre_include=no)
+   if test "$have_pcre_lib $have_pcre_include" = "yes yes"; then
+	 have_pcre="yes"
+   else
+	 have_pcre="no"
+   fi
 fi
 
 AM_CONDITIONAL(HAVE_PCRE, test "$have_pcre" = "yes")
@@ -616,9 +620,13 @@ AM_CONDITIONAL(HAVE_FCGI, test "$have_fcgi" = "yes")
 dnl
 dnl PAM
 dnl
-AC_CHECK_LIB(pam, _pam_dispatch, have_pam=yes, have_pam=no)
-AC_CHECK_HEADER(security/pam_modules.h, have_pam_include=yes, have_pam_include=no)
-AC_CHECK_HEADERS(security/_pam_macros.h security/pam_appl.h)
+have_pam = "disabled"
+AC_ARG_ENABLE(pam, AC_HELP_STRING([--disable-pam],[Disable PAM support]), use_pam="$enableval", use_pam="yes")
+if test "x$use_pam" = "xyes"; then
+     AC_CHECK_LIB(pam, _pam_dispatch, have_pam=yes, have_pam=no)
+     AC_CHECK_HEADER(security/pam_modules.h, have_pam_include=yes, have_pam_include=no)
+     AC_CHECK_HEADERS(security/_pam_macros.h security/pam_appl.h)
+fi
 AM_CONDITIONAL(HAVE_PAM, test "$have_pam $have_pam_include" = "yes yes")
 
 dnl
@@ -749,6 +757,13 @@ then
 		fi
 fi
 
+dnl
+dnl WWW root directory
+dnl
+AC_ARG_WITH(wwwroot, AC_HELP_STRING([--with-wwwroot=DIR], [Set the WWW root directory]),
+		  WWW_ROOT="$withval", WWW_ROOT="/var/www")
+
+AC_SUBST(WWW_ROOT)
 
 dnl
 dnl ClamAV

@@ -63,6 +63,7 @@ CONF_BASE = """# Cherokee QA tests
                DocumentRoot %s
                PanicAction /usr/bin/cherokee-panic
                Directory / { Handler common }
+               DirectoryIndex test_index.html, test_index.php, /super_test_index.php
             """ % (PORT, www)
 
 if ssl:
@@ -112,7 +113,7 @@ if port is None:
             os.execl (server, name, "-C", cfg_file)
     else:
         print "PID: %d - %s" % (pid, CHEROKEE_PATH)
-        time.sleep(10)
+        time.sleep(3)
 
 its_clean = False
 def clean_up():
@@ -164,7 +165,9 @@ def mainloop_iterator(objs):
                 port = PORT
 
             try:
+                obj.JustBefore(www)
                 ret = obj.Run(port, ssl)
+                obj.JustAfter(www)
             except Exception, e:
                 if not its_clean:
                     print e

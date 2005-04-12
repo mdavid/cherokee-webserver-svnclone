@@ -29,13 +29,9 @@
 #include <stdarg.h>
 #include <string.h>
 
-#ifdef HAVE_SYSLOG_H
-# include <syslog.h>
-#endif
-
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #ifdef HAVE_SYS_TIME_H
 # include <sys/time.h>
@@ -44,7 +40,7 @@
 #if defined (HAVE_SYS_RESOURCE_H)
 # include <sys/resource.h>
 #elif defined (HAVE_RESOURCE_H)
-# include <unistd.h>
+# include <resource.h>
 #endif
 
 
@@ -281,3 +277,44 @@ cherokee_gmtime (const time_t *timep, struct tm *result)
 # endif
 #endif
 }
+
+
+ret_t 
+cherokee_split_pathinfo (cherokee_buffer_t  *path, 
+			 int                 init_pos,
+			 char              **pathinfo,
+			 int                *pathinfo_len)
+{
+	char        *cur;
+	struct stat  st;
+	
+	for (cur = path->buf + init_pos; *cur; ++cur) {
+		if (*cur != '/') continue;		
+		*cur = '\0';
+
+		/* Handle not found case
+		 */
+		if (stat (path->buf, &st) == -1) {
+			*cur = '/';
+			return ret_not_found;
+		}
+
+		/* Handle directory case
+		 */
+		if (S_ISDIR(st.st_mode)) {
+			*cur = '/';
+			continue;
+		}
+		
+		/* Build the PathInfo string 
+		 */
+		*cur = '/';
+		*pathinfo = cur;
+		*pathinfo_len = (path->buf + path->len) - cur;
+		return ret_ok;
+	}
+
+	*pathinfo_len = 0;
+	return ret_ok;
+}
+

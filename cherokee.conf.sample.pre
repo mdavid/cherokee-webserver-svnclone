@@ -36,7 +36,7 @@ IPv6 Off
 ##
 ## Chroot:
 ##
-# Chroot /var/www
+# Chroot %wwwroot%
 
 ##
 ## Timeout: The number of seconds before receives and sends time out.
@@ -68,7 +68,7 @@ DirectoryIndex index.php, index.html, index.htm, index.shtml
 ## documents. By default, all requests are taken from this directory, but
 ## symbolic links and aliases may be used to point to other locations.
 ##
-DocumentRoot /var/www
+DocumentRoot %wwwroot%
 
 ##
 ## ServerTokens:  This directive configures what you return as the Server 

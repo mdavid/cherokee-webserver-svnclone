@@ -76,21 +76,20 @@ extern int yylex (void);
 extern char *yytext;
 extern int   yylineno;
 
-char                                  *current_yacc_file           = NULL;
-static cherokee_handler_table_t       *current_handler_table       = NULL;
-static cherokee_handler_table_entry_t *current_handler_table_entry = NULL;
-static cherokee_virtual_server_t      *current_virtual_server      = NULL;
-static cherokee_encoder_table_entry_t *current_encoder_entry       = NULL;
-static cherokee_module_info_t         *current_module_info         = NULL;
-// static list_t                         *current_list                = NULL;
+char                                   *current_yacc_file           = NULL;
+static cherokee_handler_table_t        *current_handler_table       = NULL;
+static cherokee_handler_table_entry_t  *current_handler_table_entry = NULL;
+static cherokee_virtual_server_t       *current_virtual_server      = NULL;
+static cherokee_encoder_table_entry_t  *current_encoder_entry       = NULL;
+static cherokee_module_info_t          *current_module_info         = NULL;
 
 struct {
-	   char                          *handler_name;
+	   char                           *handler_name;
 	   cherokee_handler_table_entry_t *entry;
-	   cherokee_virtual_server_t     *vserver;
-	   cherokee_handler_table_t      *plugins;
-	   char                          *document_root;
-	   char                          *directory_name;
+	   cherokee_virtual_server_t      *vserver;
+	   cherokee_handler_table_t       *plugins;
+	   char                           *document_root;
+	   char                           *directory_name;
 } directory_content_tmp;
 
 typedef struct {
@@ -191,7 +190,6 @@ yyerror (char* msg)
 %}
 
 
-
 %token T_QUOTE T_DENY T_THREAD_NUM T_SSL_CERT_KEY_FILE T_SSL_CERT_FILE T_KEEPALIVE_MAX_REQUESTS T_ERROR_HANDLER
 %token T_TIMEOUT T_KEEPALIVE T_DOCUMENT_ROOT T_LOG T_MIME_FILE T_DIRECTORY T_HANDLER T_USER T_GROUP T_POLICY
 %token T_SERVER T_USERDIR T_URL T_PIDFILE T_LISTEN T_FILEDIR T_SERVER_TOKENS T_ENCODER T_ALLOW 
@@ -204,10 +202,11 @@ yyerror (char* msg)
 %token <string> T_QSTRING T_FULLDIR T_ID T_HTTP_URL T_HTTPS_URL T_HOSTNAME T_IP T_DOMAIN_NAME
 
 %type <name_ptr> directory_option handler
-%type <string> host_name http_generic
-%type <list> id_list ip_list domain_list
+%type <string> host_name http_generic id_or_path
+%type <list> id_list ip_list domain_list id_path_list
 
 %%
+
 
 conffile : /* Empty */
          | lines
@@ -285,6 +284,30 @@ directories :
             | directories directory;
 
 
+/* ID/Path List
+ */
+id_or_path : T_ID      { $$ = $1; }
+           | T_FULLDIR { $$ = $1; };
+
+id_path_list : id_or_path
+{
+	   linked_list_t *n = (linked_list_t *) malloc(sizeof(linked_list_t));
+	   n->next = NULL;
+	   n->string = $1;
+	   
+	   $$ = n;
+};
+
+id_path_list : id_or_path ',' id_path_list
+{
+	   linked_list_t *n = (linked_list_t *) malloc(sizeof(linked_list_t));
+	   n->next = $3;
+	   n->string = $1;
+
+	   $$ = n;
+};
+
+
 /* ID List
  */
 id_list : T_ID 
@@ -299,7 +322,6 @@ id_list : T_ID
 id_list : T_ID ',' id_list
 {
 	   linked_list_t *n = (linked_list_t *) malloc(sizeof(linked_list_t));
-
 	   n->next = $3;
 	   n->string = $1;
 
@@ -321,7 +343,6 @@ domain_list : host_name
 domain_list : host_name ',' domain_list
 {
 	   linked_list_t *n = (linked_list_t *) malloc(sizeof(linked_list_t));
-
 	   n->next = $3;
 	   n->string = $1;
 
@@ -1135,7 +1156,7 @@ userdir : T_USERDIR T_ID
 };
 
 
-directoryindex : T_DIRECTORYINDEX id_list
+directoryindex : T_DIRECTORYINDEX id_path_list
 {
 	   linked_list_t *i = $2;
 

@@ -1,5 +1,72 @@
+2005-04-12  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/handler_cgi.c (_extract_path): Bug fix. Indirecty
+	reported by Allan Wind <allan_wind@lifeintegrity.com>.
+
+2005-04-11  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee.spec.in, Makefile.am: Remake RPM. It is a JDS/SuSE
+	package.
+
+	* configure.in: Added new parameter --with-wwwroot
+
+2005-04-09  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/handler_dirlist.c, cherokee/handler_dirlist.h: Added
+	support for sorting out files.
+	
+2005-04-05  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/handler_phpcgi.c (cherokee_handler_phpcgi_new): Tiny
+	bugfix in a corned case.
+	
+	* cherokee/connection-protected.h, cherokee/handler_cgi.c,
+	cherokee/handler_cgi.h, cherokee/handler_common.c,
+	cherokee/handler_phpcgi.c, cherokee/util.c: Added a much better
+	support of PathInfo. Lot of stuff have been changed to make it
+	work.
+
+	* qa/66-DirectoryIndex3.py, qa/67-PathInfo.py, qa/68-PathInfo2.py,
+	69-PathInfo3.py: Added new test cases.
+
+	* cherokee/handler_cgi.c: Some variables has been fixed to make
+	DokuWiki and PHP Indexer work. Reported by Rodolfo Pilas
+	<rodolfo@pilas.net>
+	
+2005-04-02  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/handler_cgi.c (cherokee_handler_cgi_init),
+	cherokee/connection-private.h, cherokee/connection.c,
+	cherokee/handler_common.c: Added support for effective directory.
+
+	* cherokee/connection.c (cherokee_connection_create_handler):
+	Little fix: if the directory is using the "common" handler and the
+	server receives a request for a file that doesn't exists, it
+	doesn't need to instance a file handler to return the error. It is
+	a little speed improvement for a corner case.
+
+	* cherokee/common.deps: Added cgi
+
+	* debian/cherokee.init (restart): Fixed.
+
+	* cherokee/read_config_grammar.y: Slightly modified to support
+	full paths in the DocumentIndex configuration entry.
+
+2005-04-01  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/validator_pam.c: Fixed compilation. Reported by Link
+	Dupont <link@subpop.net>.  Ilya Pashkovsky
+	<ilya.pashkovsky@gmail.com> also sent a patch for this.
+	
+	* cherokee/validator_pam.c (cherokee_validator_pam_check): Fixed
+	little memory leak.
+
+	* configure.in: Added new configuration parameter to disable PAM.
+	
 2005-03-31  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* 0.4.18 released
+	
 	* cherokee/thread.c (cherokee_thread_step_SINGLE_THREAD): Bug
 	fixed: there was a problem in the pipelined request.
 
