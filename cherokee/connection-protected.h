@@ -122,30 +122,32 @@ struct cherokee_connection {
 	cherokee_buffer_t            *encoder_buffer;
 
 	/* Eg:
-	 * http://www.alobbs.com/cherokee/dir/file
+	 * http://www.alobbs.com/cherokee/dir/file/param1
 	 */
-	cherokee_buffer_t            *local_directory;  /* /var/www/  or  /home/alo/public_html/ */
-	cherokee_buffer_t            *web_directory;    /* /cherokee/ */
-	cherokee_buffer_t            *request;          /* /dir/file */
+	cherokee_buffer_t            *local_directory;     /* /var/www/  or  /home/alo/public_html/ */
+	cherokee_buffer_t            *web_directory;       /* /cherokee/ */
+	cherokee_buffer_t            *request;             /* /dir/file */
+	cherokee_buffer_t            *pathinfo;            /* /param1 */
+	cherokee_buffer_t            *userdir;             /* 'alo' in http://www.alobbs.com/~alo/thing */
 	cherokee_buffer_t            *host;
-	cherokee_buffer_t            *userdir;          /* 'alo' in http://www.alobbs.com/~alo/thing */
+	cherokee_buffer_t            *effective_directory;
 
 	/* Espace versions
 	 */
-	cherokee_buffer_escape_t     *request_escape;   /* Buffer escape for the request */
+	cherokee_buffer_escape_t     *request_escape;      /* Buffer escape for the request */
 
 	/* Authentication
 	 */
-	cherokee_buffer_t            *user;             /* alo    */
-	cherokee_buffer_t            *passwd;           /* secret */
-	cherokee_buffer_t            *realm_ref;        /* "My private data" */
-	cherokee_http_auth_t          auth_type;        /* Digest, Basic */
+	cherokee_buffer_t            *user;                /* alo    */
+	cherokee_buffer_t            *passwd;              /* secret */
+	cherokee_buffer_t            *realm_ref;           /* "My private data" */
+	cherokee_http_auth_t          auth_type;           /* Digest, Basic */
 
 	/* Traffic
 	 */
-	size_t                        rx;               /* Bytes received */
-	size_t                        tx;               /* Bytes sent */
-	time_t                        traffic_next;     /* Time to update traffic */
+	size_t                        rx;                  /* Bytes received */
+	size_t                        tx;                  /* Bytes sent */
+	time_t                        traffic_next;        /* Time to update traffic */
 
 	/* Post info
 	 */

@@ -29,17 +29,37 @@
 
 #include <dirent.h>
 
+#include "list.h"
 #include "buffer.h"
 #include "handler.h"
 #include "module_loader.h"
 
 
+enum cherokee_sort {
+	Name_Down,
+	Name_Up,
+	Size_Down,
+	Size_Up,
+	Date_Down,
+	Date_Up
+};
+typedef enum cherokee_sort cherokee_sort_t;
+
+
 typedef struct {
 	cherokee_handler_t handler;
 
-	DIR  *dir;	
-	int page_begining;
-	int num;
+	/* File list
+	 */
+	struct list_head dirs;
+	struct list_head files;
+	cherokee_sort_t  sort;
+
+	/* State
+	 */
+	cherokee_boolean_t  page_header;
+	list_t             *dir_ptr;
+	list_t             *file_ptr;
 
 	/* Properties
 	 */

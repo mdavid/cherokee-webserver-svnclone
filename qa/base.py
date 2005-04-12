@@ -146,6 +146,12 @@ class TestBase:
     def Prepare (self, www):
         None
 
+    def JustBefore (self, www):
+        None
+
+    def JustAfter (self, www):
+        None
+
     def Run (self, port, ssl):
         self._do_request(port, ssl)
         self._parse_output()
@@ -197,7 +203,7 @@ class TestBase:
 
     def Mkdir (self, www, dir):
         fulldir = os.path.join (www, dir)
-        os.mkdir(fulldir)
+        os.makedirs(fulldir)
         return fulldir
 
     def WriteFile (self, www, filename, mode=0444, content=''):
@@ -207,3 +213,10 @@ class TestBase:
         f.close()
         os.chmod(fullpath, mode)
 
+    def Remove (self, www, filename):
+        fullpath = os.path.join (www, filename)
+        if os.path.isfile(fullpath):
+            os.unlink (fullpath)
+        else:
+            os.removedirs (fullpath)
+            

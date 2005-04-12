@@ -27,7 +27,7 @@ openssl req -days 1000 -new -x509 -nodes -out /etc/cherokee/ssl/cherokee.pem -ke
 
 7.- How to compile the embedded version
 --------------------------------------
-./configure --prefix=/usr --sysconfdir=/etc --disable-pthread --disable-tls --disable-largefile
+./configure --prefix=/usr --sysconfdir=/etc --disable-pthread --disable-tls --disable-largefile --disable-pcre
 cd cherokee && make -f Makefile.embedded 
 
 

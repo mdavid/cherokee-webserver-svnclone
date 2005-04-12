@@ -25,6 +25,7 @@
 
 #include "common-internal.h"
 #include "handler_cgi.h"
+#include "util.h"
 
 #ifdef HAVE_STDARG_H
 # include <stdarg.h>
@@ -96,12 +97,12 @@ cherokee_handler_cgi_new  (cherokee_handler_t **hdl, void *cnt, cherokee_table_t
 	n->pipeOutput        = 0;
 	n->post_data_sent    = 0;
 	n->pid               = -1;
-	n->pathinfo          = NULL;
 	n->filename          = NULL;
 	n->data              = NULL;
 	n->parameter         = NULL;
 	n->cgi_fd_in_poll    = false;
 	n->script_alias      = NULL;
+	n->extra_param       = NULL;
 
 	/* envp
 	 */
@@ -186,11 +187,6 @@ cherokee_handler_cgi_free (cherokee_handler_cgi_t *cgi)
 		cgi->data = NULL;
 	}
 
-	if (cgi->pathinfo != NULL) {
-		cherokee_buffer_free (cgi->pathinfo);
-		cgi->pathinfo = NULL;
-	}
-
 	if (cgi->filename != NULL) {
 		cherokee_buffer_free (cgi->filename);
 		cgi->filename = NULL;
@@ -217,6 +213,13 @@ cherokee_handler_cgi_free (cherokee_handler_cgi_t *cgi)
 	do_reap();
 
 	return ret_ok;
+}
+
+
+void 
+cherokee_handler_cgi_add_parameter (cherokee_handler_cgi_t *cgi, char *param)
+{
+	cgi->extra_param = param;
 }
 
 
@@ -397,24 +400,33 @@ build_envp (cherokee_connection_t *conn, cherokee_handler_cgi_t* cgi)
 		if (p != NULL) *p = ':';
 	}
 
-	/* Sets REQUEST_URI 
+	/* Set PATH_INFO 
+	 */
+	if (! cherokee_buffer_is_empty(conn->pathinfo)) {
+		set_env_pair (cgi, "PATH_INFO", 9, conn->pathinfo->buf, conn->pathinfo->len);
+	}
+
+	/* Set REQUEST_URI 
 	 */
 	cherokee_buffer_clean (tmp);
 	cherokee_header_copy_request_w_args (conn->header, tmp);
 	set_env_pair(cgi, "REQUEST_URI", 11, tmp->buf, tmp->len);
 
-	/* SCRIPT_NAME is the same that REQUEST_URI, but without the PATH_INFO 
+	/* Set SCRIPT_NAME
 	 */
-	cherokee_buffer_drop_endding (tmp, cgi->pathinfo ? cgi->pathinfo->len : 0);
-	set_env_pair (cgi, "SCRIPT_NAME", 11, tmp->buf, tmp->len);
-
-	/* Fake path */
-	if (cgi->pathinfo) {
-		set_env_pair (cgi, "PATH_INFO", 9, cgi->pathinfo->buf, cgi->pathinfo->len);
+	if (cgi->parameter) {
+		p = cgi->parameter->buf + conn->local_directory->len -1;
+		set_env_pair (cgi, "SCRIPT_NAME", 11, p, (cgi->parameter->buf + cgi->parameter->len) - p);
+	} else {	
+		cherokee_buffer_clean (tmp);
+		cherokee_header_copy_request (conn->header, tmp);
+		set_env_pair(cgi, "REQUEST_URI", 11, tmp->buf, tmp->len);
 	}
 
+	/* SCRIPT_FILENAME
+	 */
 	if (cgi->filename) {
-		set_env_pair (cgi, "SCRIPT_FILE_NAME", 16, cgi->filename->buf, cgi->filename->len);
+		set_env_pair (cgi, "SCRIPT_FILENAME", 16, cgi->filename->buf, cgi->filename->len);
 	}
 
 	/* TODO: Fill the others CGI environment variables
@@ -427,107 +439,90 @@ build_envp (cherokee_connection_t *conn, cherokee_handler_cgi_t* cgi)
 }
 
 
+ret_t
+cherokee_handler_cgi_split_pathinfo (cherokee_handler_cgi_t *cgi, cherokee_buffer_t *buf, int init_pos) 
+{
+	ret_t                  ret;
+	char                  *pathinfo;
+	int                    pathinfo_len;
+	cherokee_connection_t *conn = HANDLER_CONN(cgi);
+
+	/* Look for the pathinfo
+	 */
+	ret = cherokee_split_pathinfo (buf, init_pos, &pathinfo, &pathinfo_len);
+	if (ret == ret_not_found) {
+		conn->error_code = http_not_found;
+		return ret_error;
+	}
+
+	/* Build the PathInfo string 
+	 */
+	cherokee_buffer_add (conn->pathinfo, pathinfo, pathinfo_len);
+	
+	/* Drop it out from the original string
+	 */
+	cherokee_buffer_drop_endding (buf, pathinfo_len);
+
+	return ret_ok;
+}
+
+
 static ret_t
 _extract_path (cherokee_handler_cgi_t *cgi)
 {
-	int                    dr_len;
 	struct stat            st;
-	char                  *cur;
-	cherokee_connection_t *conn;
+	ret_t                  ret  = ret_ok;
+	cherokee_connection_t *conn = HANDLER_CONN(cgi);
 
-	conn = CONN(HANDLER(cgi)->connection);
-
-	/* Maybe build the path_info
+	/* ScriptAlias: If there is a ScriptAlias directive, it
+	 * doesn't need to find the executable file..
 	 */
-	if ((conn->request->len > conn->web_directory->len) &&
-	    (strncmp(conn->request->buf, conn->web_directory->buf, conn->web_directory->len) == 0))
-	{
-		cherokee_buffer_new(&cgi->pathinfo);
-		cherokee_buffer_add(cgi->pathinfo, 
-				    conn->request->buf + conn->web_directory->len,
-				    conn->request->len - conn->web_directory->len);
-	}
-
-	/* If we have a ScriptAlias directive, there is no need to find the
-	 * executable file
-	 */
-	if (cgi->script_alias != NULL)
-	{
-		if (stat(cgi->script_alias, &st) == -1)
-		{
-			conn->error_code = http_not_found;
-			return ret_error;
-		}
-
-		cherokee_buffer_new(&cgi->filename);
-		cherokee_buffer_add(cgi->filename, cgi->script_alias, strlen(cgi->script_alias));
-
-		return ret_ok;
-	}
-
-	/* Append URI to DocumentRoot 
-	 */
-	dr_len = conn->local_directory->len;
-	cherokee_buffer_add_buffer (conn->local_directory, conn->request); 
-
-	/* Search the executable file 
-	 */
-	for (cur = conn->local_directory->buf + dr_len + 1; *cur; ++cur)
-	{
-		if (*cur == '/') {
-			*cur = 0;
-			if (stat (conn->local_directory->buf, &st) == -1)
-			{
-				*cur = '/';
-				dbg("CGI: Not found %s\n", conn->local_directory->buf);
-				conn->error_code = http_not_found;
-				return ret_error;
-			}
-
-			if (S_ISDIR(st.st_mode))
-				*cur = '/';
-			else
-			{
-				/* This can be the CGI to run 
-				 */
-				cherokee_buffer_new (&cgi->pathinfo);
-				cherokee_buffer_new (&cgi->filename);
-
-				cherokee_buffer_add_buffer (cgi->filename, 
-							    conn->local_directory);
-
-				/* Path info 
-				 */
-				*cur = '/';
-				cherokee_buffer_add (cgi->pathinfo, 
-						     cur, strlen(cur));
-
-				break;
-			}
-		}
-	}
-
-	/* Is the filename set? 
-	 */
-	if (cgi->filename == NULL) {
-		/* We have to check if the file exists 
-		 */
-		if (stat(conn->local_directory->buf, &st) == -1)
-		{
+	if (cgi->script_alias != NULL) {
+		if (stat(cgi->script_alias, &st) == -1) {
 			conn->error_code = http_not_found;
 			return ret_error;
 		}
 
 		cherokee_buffer_new (&cgi->filename);
-		cherokee_buffer_add_buffer (cgi->filename, conn->local_directory);
+		cherokee_buffer_add (cgi->filename, cgi->script_alias, strlen(cgi->script_alias));
+		return ret_ok;
 	}
 
-	/* Restore local_directory 
+	/* Maybe the request contains pathinfo
 	 */
-	conn->local_directory->len = dr_len;
-	conn->local_directory->buf[dr_len] = '\0';
+	if ((cgi->parameter == NULL) &&
+	    cherokee_buffer_is_empty (conn->pathinfo)) 
+	{
+		int req_len;
+		int local_len;
 
-	return ret_ok;
+		req_len   = conn->request->len;
+		local_len = conn->local_directory->len;
+
+		cherokee_buffer_add_buffer (conn->local_directory, conn->request); 
+
+		ret = cherokee_handler_cgi_split_pathinfo (cgi, conn->local_directory, local_len +1);
+		if (unlikely(ret < ret_ok)) goto bye;
+		
+		/* Is the filename set? 
+		 */
+		if (cgi->filename == NULL) {		
+			/* We have to check if the file exists 
+			 */
+			if (stat(conn->local_directory->buf, &st) == -1) {
+				conn->error_code = http_not_found;
+				return ret_error;
+			}
+			
+			cherokee_buffer_new (&cgi->filename);
+			cherokee_buffer_add_buffer (cgi->filename, conn->local_directory);
+		}
+		
+	bye:
+		cherokee_buffer_drop_endding (conn->local_directory, req_len);		
+	}
+
+	return ret;
 }
 
 
@@ -623,9 +618,8 @@ cherokee_handler_cgi_init (cherokee_handler_cgi_t *cgi)
 		/* Child process
 		 */
 		int   re;
-		char *file;
-		char *absolute_path;
-		char *argv[3] = { NULL, NULL, NULL };
+		char *absolute_path = cgi->filename->buf;
+		char *argv[4]       = { NULL, NULL, NULL };
 
 		/* Close useless sides
 		 */
@@ -649,11 +643,6 @@ cherokee_handler_cgi_init (cherokee_handler_cgi_t *cgi)
 
 		/* Enable blocking mode
 		 */
-//		_fd_set_properties (STDIN_FILENO,  O_NDELAY | O_SYNC, O_NONBLOCK);
-//		_fd_set_properties (STDOUT_FILENO, O_NDELAY | O_SYNC, O_NONBLOCK);
-///		_fd_set_properties (STDIN_FILENO,  O_SYNC, O_NONBLOCK);
-///		_fd_set_properties (STDOUT_FILENO, O_SYNC, O_NONBLOCK);
-
 		_fd_set_properties (STDIN_FILENO,  0, O_NONBLOCK);
 		_fd_set_properties (STDOUT_FILENO, 0, O_NONBLOCK);
 		_fd_set_properties (STDERR_FILENO, 0, O_NONBLOCK);
@@ -666,26 +655,31 @@ cherokee_handler_cgi_init (cherokee_handler_cgi_t *cgi)
 		 */			
 		build_envp (conn, cgi);
 
-		/* Change the current directory to to the program's own directory.
+		/* Change the directory 
 		 */
-		absolute_path = cgi->filename->buf;
-		file = strrchr (absolute_path, '/');
-		*file = '\0';
-		chdir (absolute_path);
-		*file = '/';
-		file++;
+		if (!cherokee_buffer_is_empty (conn->effective_directory)) {
+			chdir (conn->effective_directory->buf);
+		} else {
+			char *file = strrchr (absolute_path, '/');
+
+			*file = '\0';
+			chdir (absolute_path);
+			*file = '/';
+		}
 
 		/* Build de argv array
 		 */
 		argv[0] = absolute_path;
 		if (cgi->parameter != NULL) {
 			argv[1] = cgi->parameter->buf;
+			argv[2] = cgi->extra_param;
+		} else {
+			argv[1] = cgi->extra_param;
 		}
 
 		/* Lets go.. execute it!
 		 */
 		re = execve (absolute_path, argv, cgi->envp);
-
 		if (re < 0) {
 			switch (errno) {
 			case ENOENT:

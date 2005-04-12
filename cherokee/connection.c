@@ -120,8 +120,10 @@ cherokee_connection_new  (cherokee_connection_t **cnt)
 
 	cherokee_buffer_new (&n->local_directory);
 	cherokee_buffer_new (&n->web_directory);
+	cherokee_buffer_new (&n->effective_directory);
 	cherokee_buffer_new (&n->userdir);
 	cherokee_buffer_new (&n->request);
+	cherokee_buffer_new (&n->pathinfo);
 	cherokee_buffer_new (&n->redirect);
 	cherokee_buffer_new (&n->host);
 	cherokee_buffer_new (&n->query_string);
@@ -168,6 +170,7 @@ cherokee_connection_free (cherokee_connection_t  *cnt)
 	cherokee_buffer_escape_free (cnt->request_escape);
 	cherokee_buffer_free (cnt->request);
 
+	cherokee_buffer_free (cnt->pathinfo);
 	cherokee_buffer_free (cnt->user);
 	cherokee_buffer_free (cnt->passwd);
 	cherokee_buffer_free (cnt->buffer);
@@ -177,10 +180,11 @@ cherokee_connection_free (cherokee_connection_t  *cnt)
 
 	cherokee_buffer_free (cnt->local_directory);
 	cherokee_buffer_free (cnt->web_directory);
+	cherokee_buffer_free (cnt->effective_directory);
 	cherokee_buffer_free (cnt->userdir);
 	cherokee_buffer_free (cnt->redirect);
 	cherokee_buffer_free (cnt->host);
-	
+
 	if (cnt->arguments != NULL) {
 		cherokee_table_free2 (cnt->arguments, free);
 		cnt->arguments = NULL;
@@ -240,10 +244,12 @@ cherokee_connection_clean (cherokee_connection_t *cnt)
 	cherokee_buffer_escape_clean (cnt->request_escape);
 	cherokee_buffer_escape_set_ref (cnt->request_escape, cnt->request);
 
+	cherokee_buffer_clean (cnt->pathinfo);
 	cherokee_buffer_clean (cnt->user);
 	cherokee_buffer_clean (cnt->passwd);
 	cherokee_buffer_clean (cnt->local_directory);
 	cherokee_buffer_clean (cnt->web_directory);
+	cherokee_buffer_clean (cnt->effective_directory);
 	cherokee_buffer_clean (cnt->userdir);
 	cherokee_buffer_clean (cnt->redirect);
 	cherokee_buffer_clean (cnt->host);
@@ -1555,8 +1561,10 @@ cherokee_connection_create_handler (cherokee_connection_t *cnt, cherokee_handler
 	/* Create and assign a handler object
 	 */
 	ret = (plugin_entry->handler_new_func) ((void **)&cnt->handler, cnt, plugin_entry->properties);
-	if ((ret != ret_ok) || (cnt->handler == NULL)) {
-		cnt->error_code = http_internal_error;
+	if (ret != ret_ok) {
+		if ((cnt->handler == NULL) && (cnt->error_code == http_ok)) {
+			cnt->error_code = http_internal_error;
+		}
 		return ret_error;
 	}
 
