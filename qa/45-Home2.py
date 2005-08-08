@@ -9,15 +9,19 @@ class Test (TestBase):
         TestBase.__init__ (self)
         self.name = "Valid home"
 
-        # Get the current username
-        self.user = os.getlogin()
-
-        self.request          = "GET /~%s/ HTTP/1.0\r\n" % (self.user)
         self.conf             = "UserDir %s { Directory / { Handler common }}" % (PUBLIC_HTML)
         self.expected_error   = 200
 
-
     def Precondition (self):
+        # Get the current username
+        try:
+            self.user = os.getlogin()
+        except OSError:
+            # Fixme: Why is happening this?
+            return False
+
+        self.request          = "GET /~%s/ HTTP/1.0\r\n" % (self.user)
+
         # Read the /etc/passwd file
         f = open ("/etc/passwd", "r")
         pwuser = filter(lambda x: x.find(self.user) == 0, f.readlines())

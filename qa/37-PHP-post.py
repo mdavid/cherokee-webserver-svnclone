@@ -6,8 +6,6 @@ class Test (TestBase):
     def __init__ (self):
         TestBase.__init__ (self)
         self.name             = "PHP post"
-        self.conf             = "Directory /php3 { Handler common }"
-
         self.request          = "POST /php3/post.php HTTP/1.0\r\n" +\
                                 "Content-type: application/x-www-form-urlencoded\r\n" +\
                                 "Content-length: %d\r\n" % (6+len(MAGIC))

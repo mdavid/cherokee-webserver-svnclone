@@ -21,11 +21,15 @@ clean    = True
 kill     = True
 quiet    = False
 valgrind = False
+strace   = False
 port     = None
+method   = None
 server   = CHEROKEE_PATH
 
 # Make the DocumentRoot directory
 www = tempfile.mkdtemp ("cherokee_www")
+tmp = www + "/_tmp/"
+os.makedirs (tmp)
 
 # Make the files list
 files = []
@@ -44,16 +48,18 @@ if len(files) == 0:
 
 # Process the parameters
 for p in param:
-    if   p == '-d': pause    = True
-    elif p == '-c': clean    = False
-    elif p == '-k': kill     = False
-    elif p == '-q': quiet    = True
-    elif p == '-v': valgrind = True
-    elif p == '-s': ssl      = True
-    elif p[:2] == '-n': num    = int(p[2:])
-    elif p[:2] == '-t': thds   = int(p[2:])
-    elif p[:2] == '-p': port   = int(p[2:])
-    elif p[:2] == '-e': server = p[2:]
+    if   p     == '-d': pause    = True
+    elif p     == '-c': clean    = False
+    elif p     == '-k': kill     = False
+    elif p     == '-q': quiet    = True
+    elif p     == '-v': valgrind = True
+    elif p     == '-s': ssl      = True
+    elif p     == '-x': strace   = True
+    elif p[:2] == '-n': num      = int(p[2:])
+    elif p[:2] == '-t': thds     = int(p[2:])
+    elif p[:2] == '-p': port     = int(p[2:])
+    elif p[:2] == '-m': method   = p[2:]
+    elif p[:2] == '-e': server   = p[2:]
 
 # Configuration file base
 CONF_BASE = """# Cherokee QA tests
@@ -64,6 +70,7 @@ CONF_BASE = """# Cherokee QA tests
                PanicAction /usr/bin/cherokee-panic
                Directory / { Handler common }
                DirectoryIndex test_index.html, test_index.php, /super_test_index.php
+               Extension php { Handler phpcgi }
             """ % (PORT, www)
 
 if ssl:
@@ -71,6 +78,10 @@ if ssl:
                    SSLCertificateKeyFile %s
                    SSLCAListFile         %s
                  """ % (SSL_CERT_FILE, SSL_CERT_KEY_FILE, SSL_CA_FILE)
+
+if method:
+    CONF_BASE += """ PollMethod %s
+                 """ % (method)
 
 # Import modules 
 mods = []
@@ -82,6 +93,7 @@ for f in files:
 objs = []
 for m in mods:
     obj = m.Test()
+    obj.tmp = tmp
     objs.append(obj)
 
 # Prepare www files
@@ -107,7 +119,9 @@ if port is None:
     pid = os.fork()
     if pid == 0:
         if valgrind:
-            os.execl (VALGRIND_PATH, "valgrind", server, "-C", cfg_file)
+            os.execl (VALGRIND_PATH, "valgrind", "--num-callers=20", "--leak-check=yes", server, "-C", cfg_file)
+        elif strace:
+            os.execl (STRACE_PATH, "strace", server, "-C", cfg_file)            
         else:
             name = server[server.rfind('/') + 1:]
             os.execl (server, name, "-C", cfg_file)

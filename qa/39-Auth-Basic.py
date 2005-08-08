@@ -12,7 +12,6 @@ class Test (TestBase):
         self.WriteFile (www, "auth1/passwd", 0444, 'user:cherokee')
 
         self.conf             = """Directory /auth1 {
-                                     Handler common
                                      Auth Basic {
                                           Name "Test"
                                           Method plain { PasswdFile %s }

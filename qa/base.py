@@ -4,8 +4,10 @@ import sys
 import types
 import socket
 import string
+import tempfile
 
 from conf import *
+from util import *
 
 def importfile(path):
     filename = os.path.basename(path)
@@ -109,29 +111,52 @@ class TestBase:
 
         return 0
 
+    def _check_result_expected_item (self, item):
+        if item.startswith("file:"):
+            f = open (item[5:])
+            error = not f.read() in self.reply
+            f.close
+            if error:
+                return -1
+        else:
+            if not item in self.reply:
+                print "Quiere '%s' en '%s'" % (item, self.reply)
+                return -1
+
+    def _check_result_forbidden_item (self, item):
+        if item.startswith("file:"):
+            f = open (item[5:])
+            error = f.read() in self.reply
+            f.close
+            if error:
+                return -1
+        else:
+            if item in self.reply:
+                return -1
+
     def _check_result (self):
         if self.reply_err != self.expected_error:
             return -1
 
         if self.expected_content != None:
             if type(self.expected_content) == types.StringType:
-                if not self.expected_content in self.reply:
-                    return -1
+                r = self._check_result_expected_item (self.expected_content)
+                if r == -1: return -1
             elif type(self.expected_content) == types.ListType:
                 for entry in self.expected_content:
-                    if not entry in self.reply:
-                        return -1
+                    r = self._check_result_expected_item (entry)
+                    if r == -1: return -1
             else:
                 raise Exception("Syntax error")
 
         if self.forbidden_content != None:
             if type(self.forbidden_content) == types.StringType:
-                if self.forbidden_content in self.reply:
-                    return -1
+                r = self._check_result_forbidden_item (self.forbidden_content)
+                if r == -1: return -1
             elif type(self.forbidden_content) == types.ListType:
                 for entry in self.forbidden_content:
-                    if entry in self.reply:
-                        return -1
+                    r = self._check_result_forbidden_item (entry)
+                    if r == -1: return -1
             else:
                 raise Exception("Syntax error")
                 
@@ -212,6 +237,7 @@ class TestBase:
         f.write (content)
         f.close()
         os.chmod(fullpath, mode)
+        return fullpath
 
     def Remove (self, www, filename):
         fullpath = os.path.join (www, filename)
@@ -220,3 +246,12 @@ class TestBase:
         else:
             os.removedirs (fullpath)
             
+    def WriteTemp (self, content):
+        while 1:
+            name = self.tmp + "/%s" % (letters_random(40))
+            if not os.path.exists(name): break
+
+        f = open (name, "w+")
+        f.write (content)
+        f.close()
+        return name
