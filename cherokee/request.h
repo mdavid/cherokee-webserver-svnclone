@@ -30,27 +30,31 @@
 #include "http.h"
 
 typedef struct {
-	   struct list_head  list_entry;
-	   cherokee_url_t   *url;
-
-	   uint16_t                pipeline;
-	   cherokee_boolean_t      keepalive;
-	   cherokee_http_method_t  method;
-	   cherokee_http_version_t version;
-
+	struct list_head        list_entry;
+	cherokee_url_t          url;
+	
+	uint16_t                pipeline;
+	cherokee_boolean_t      keepalive;
+	cherokee_http_method_t  method;
+	cherokee_http_version_t version;
+	off_t                   post_len;
 } cherokee_request_header_t;
+
 
 #define REQUEST(r)           ((cherokee_request_header_t *)(r))
 #define REQUEST_METHOD(r)    (REQUEST(r)->method)
 #define REQUEST_VERSION(r)   (REQUEST(r)->version)
 #define REQUEST_PIPELINE(r)  (REQUEST(r)->pipeline)
 #define REQUEST_KEEPALIVE(r) (REQUEST(r)->keepalive)
-#define REQUEST_URL(r)       (URL(REQUEST(r)->url))
+#define REQUEST_POST(r)      (REQUEST(r)->post_len)
+#define REQUEST_URL(r)       (URL(&REQUEST(r)->url))
 
 
-ret_t cherokee_request_header_new   (cherokee_request_header_t **request);
-ret_t cherokee_request_header_free  (cherokee_request_header_t  *request);
+ret_t cherokee_request_header_init     (cherokee_request_header_t *request);
+ret_t cherokee_request_header_clean    (cherokee_request_header_t *request);
+ret_t cherokee_request_header_mrproper (cherokee_request_header_t *request);
 
+ret_t cherokee_request_header_set_url      (cherokee_request_header_t *request, cherokee_url_t *url);
 ret_t cherokee_request_header_build_string (cherokee_request_header_t *request, cherokee_buffer_t *buf);
 
 #endif /* CHEROKEE_REQUEST_H */

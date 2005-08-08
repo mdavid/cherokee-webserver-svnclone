@@ -27,8 +27,7 @@
 
 #include <common-internal.h>
 
-#include <zlib.h>
-
+#include "zlib/zlib.h"
 #include "module.h"
 #include "encoder.h"
 

@@ -43,10 +43,12 @@
 # include <arpa/inet.h>  
 #endif
 
+#include "resolv_cache.h"
+
+
 #ifndef AF_INET6
 # define AF_INET6 10
 #endif
-
 
 typedef enum { 
 	ipv4 = AF_INET,
@@ -86,6 +88,7 @@ new_ip (void)
 	if (n == NULL) return NULL;
 
 	INIT_LIST_HEAD((list_t*)n);
+	memset (&n->ip, 0, sizeof(ip_t));
 
 	return n;
 }
@@ -102,6 +105,9 @@ new_subnet (void)
 {
 	subnet_item_t *n = malloc (sizeof(subnet_item_t));
 	if (n == NULL) return NULL;
+
+	memset (&n->base.ip, 0, sizeof(ip_t));
+	memset (&n->mask, 0, sizeof(ip_t));
 
 	INIT_LIST_HEAD((list_t*)n);
 	return n;
@@ -193,7 +199,7 @@ parse_ip (char *ip, ip_item_t *n)
 # ifdef HAVE_IPV6
 	if (n->type == ipv6) {
 		if (IN6_IS_ADDR_V4MAPPED (&(n->ip).ip6)) {
-			PRINT_ERROR ("This IP '%s' is IPv6-mapped IPv6 address.  "
+			PRINT_ERROR ("ERROR: This IP '%s' is IPv6-mapped IPv6 address.  "
 				     "Please, specify IPv4 in a.b.c.d style instead "
 				     "of ::ffff:a.b.c.d style\n", ip);
 			return ret_error;
@@ -294,7 +300,7 @@ parse_netmask (char *netmask, subnet_item_t *n)
 }
 
 
-static ret_t 
+static ret_t
 cherokee_access_add_ip (cherokee_access_t *entry, char *ip)
 {
 	ret_t ret;
@@ -314,6 +320,23 @@ cherokee_access_add_ip (cherokee_access_t *entry, char *ip)
 	list_add ((list_t *)n, &entry->list_ips);
 
 	return ret;
+}
+
+
+static ret_t
+cherokee_access_add_domain (cherokee_access_t *entry, char *domain)
+{
+	ret_t                    ret;
+	const char              *ip;
+	cherokee_resolv_cache_t *resolv;
+
+	ret = cherokee_resolv_cache_get_default (&resolv);
+	if (unlikely(ret!=ret_ok)) return ret;
+
+	ret = cherokee_resolv_cache_resolve (resolv, domain, &ip);
+	if (unlikely(ret!=ret_ok)) return ret;
+
+	return cherokee_access_add_ip (entry, (char *)ip);
 }
 
 
@@ -369,15 +392,30 @@ error:
 ret_t 
 cherokee_access_add (cherokee_access_t *entry, char *ip_or_subnet)
 {
-	char *slash;
-	int   mask;
+	ret_t  ret;
+	char  *slash;
+	int    mask;
+	char   sep;
 
 	slash = strpbrk(ip_or_subnet, "/\\");
 
 	/* Add a single IP address
 	 */
 	if (slash == NULL) {
-		return cherokee_access_add_ip (entry, ip_or_subnet);
+		char *i         = ip_or_subnet;
+		int   is_domain = 0;
+
+		while (*i && !is_domain) {
+			if (((*i >= 'a') && (*i <= 'z')) ||
+			    ((*i >= 'A') && (*i <= 'Z')))
+				is_domain = 1;
+			i++;
+		}
+
+		if (is_domain)
+			return cherokee_access_add_domain (entry, ip_or_subnet);
+		else
+			return cherokee_access_add_ip (entry, ip_or_subnet);
 	}
 	
 	/* Special cases of subnets
@@ -385,11 +423,19 @@ cherokee_access_add (cherokee_access_t *entry, char *ip_or_subnet)
 	mask = atoi(slash+1);
 
 	if ((strchr(ip_or_subnet, ':') != NULL) && (mask == 128)) {
-		return cherokee_access_add_ip (entry, ip_or_subnet);		
+		sep = *slash;
+		*slash = '\0';
+		ret = cherokee_access_add_ip (entry, ip_or_subnet);
+		*slash = sep;
+		return ret;
 	}
 
 	if ((strchr(ip_or_subnet, '.') != NULL) && (mask == 32)) {
+		sep = *slash;
+		*slash = '\0';
 		return cherokee_access_add_ip (entry, ip_or_subnet);		
+		*slash = sep;
+		return ret;
 	}
 
 	/* Add a subnet
@@ -432,20 +478,40 @@ cherokee_access_ip_match (cherokee_access_t *entry, cherokee_socket_t *sock)
 	/* Check in the IP list
 	 */
 	list_for_each (i, (list_t*)&entry->list_ips) {
+		
+#ifdef HAVE_IPV6
+		/* This is a special case:
+		 * The socket is IPv6 with a mapped IPv4 address
+		 */
+		if ((SOCKET_AF(sock) == ipv6) &&
+		    (IP_NODE(i)->type == ipv4) &&
+		    (IN6_IS_ADDR_V4MAPPED (&SOCKET_ADDR_IPv6(sock)->sin6_addr)) &&
+		    (!memcmp (&SOCKET_ADDR_IPv6(sock)->sin6_addr.s6_addr[12], &IP_NODE(i)->ip, 4))) 
+		{
+			return ret_ok;
+		}
+#endif
+
 		if (SOCKET_AF(sock) == IP_NODE(i)->type) {
 			switch (IP_NODE(i)->type) {
 			case ipv4:
 				re = memcmp (&SOCKET_ADDR_IPv4(sock)->sin_addr, &IP_NODE(i)->ip, 4);
+				/*
+				printf ("4 remote "); print_ip(ipv4, &SOCKET_ADDRESS_IPv4(sock)); printf ("\n");
+				printf ("4 list   "); print_ip(ipv4, &IP_NODE(i)->ip); printf ("\n");
+				*/
 				break;
 #ifdef HAVE_IPV6
 			case ipv6:
-				re = memcmp (&SOCKET_ADDR_IPv6(sock)->sin6_addr, &IP_NODE(i)->ip, 16);
+				re = (! IN6_ARE_ADDR_EQUAL (&SOCKET_ADDR_IPv6(sock)->sin6_addr, &IP_NODE(i)->ip.ip6));
+
+				// re = memcmp (&SOCKET_ADDR_IPv6(sock)->sin6_addr, &IP_NODE(i)->ip, 16);
 				/*
-				printf ("family=%d, ipv6=%d\n", SOCKET_ADDR_IPv6(sock)->sin6_family, ipv6);
-				printf ("port=%d\n",            SOCKET_ADDR_IPv6(sock)->sin6_port);
-				printf ("remote "); print_ip(ipv6, &SOCKET_ADDRESS_IPv6(sock)); printf ("\n");
-				printf ("lista  "); print_ip(ipv6, &IP_NODE(i)->ip); printf ("\n");
-				printf ("re = %d\n", re);
+				printf ("6 family=%d, ipv6=%d\n", SOCKET_ADDR_IPv6(sock)->sin6_family, ipv6);
+				printf ("6 port=%d\n",            SOCKET_ADDR_IPv6(sock)->sin6_port);
+				printf ("6 remote "); print_ip(ipv6, &SOCKET_ADDRESS_IPv6(sock)); printf ("\n");
+				printf ("6 list   "); print_ip(ipv6, &IP_NODE(i)->ip); printf ("\n");
+				printf ("6 re = %d\n", re);
 				*/
 				break;
 #endif
@@ -466,6 +532,27 @@ cherokee_access_ip_match (cherokee_access_t *entry, cherokee_socket_t *sock)
 	list_for_each (i, (list_t*)&entry->list_subnets) {
 		int j;
 		ip_t masqued_remote, masqued_list;
+
+#ifdef HAVE_IPV6
+		if ((SOCKET_AF(sock) == ipv6) &&
+		    (IP_NODE(i)->type == ipv4) &&
+		    IN6_IS_ADDR_V4MAPPED (&SOCKET_ADDR_IPv6(sock)->sin6_addr)) 
+		{
+			cuint_t ip4_sock;
+
+			memcpy (&ip4_sock, &SOCKET_ADDR_IPv6(sock)->sin6_addr.s6_addr[12], 4);
+
+			masqued_list.ip4.s_addr   = (IP_NODE(i)->ip.ip4.s_addr &
+						     SUBNET_NODE(i)->mask.ip4.s_addr);
+
+			masqued_remote.ip4.s_addr = (ip4_sock &
+						     SUBNET_NODE(i)->mask.ip4.s_addr);
+			
+			if (masqued_remote.ip4.s_addr == masqued_list.ip4.s_addr) {
+				return ret_ok;
+			}
+		}
+#endif
 		
 		if (SOCKET_AF(sock) == IP_NODE(i)->type) {
 			switch (IP_NODE(i)->type) {
@@ -484,10 +571,6 @@ cherokee_access_ip_match (cherokee_access_t *entry, cherokee_socket_t *sock)
 			case ipv6:
 			{
 				cherokee_boolean_t equal = true;
-
-//				printf ("remote IPv6: ");
-//				print_ip (ipv6, &SOCKET_ADDR_IPv6(sock)->sin6_addr);
-//				printf ("\n");
 
 				for (j=0; j<16; j++) {
 					masqued_list.ip6.s6_addr[j] = (

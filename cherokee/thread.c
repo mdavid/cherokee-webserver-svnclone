@@ -44,9 +44,13 @@
 
 
 static void
-update_bogo_now (cherokee_thread_t *thd)
+update_bogo_now_internal (cherokee_thread_t *thd)
 {
 	cherokee_server_t *srv = THREAD_SRV(thd);
+
+	/* Has it changed?
+	 */
+	if (thd->bogo_now == srv->bogo_now) return;
 
 	/* Update time_t
 	 */
@@ -65,6 +69,14 @@ update_bogo_now (cherokee_thread_t *thd)
 
 
 static void
+update_bogo_now (cherokee_thread_t *thd)
+{
+	CHEROKEE_RWLOCK_READER (&THREAD_SRV(thd)->bogo_now_mutex);
+	update_bogo_now_internal(thd);
+	CHEROKEE_RWLOCK_UNLOCK (&THREAD_SRV(thd)->bogo_now_mutex);
+}
+
+static void
 try_to_update_bogo_now (cherokee_thread_t *thd)
 {
 	int unlocked;
@@ -75,7 +87,7 @@ try_to_update_bogo_now (cherokee_thread_t *thd)
 	unlocked = CHEROKEE_RWLOCK_TRYREADER (&srv->bogo_now_mutex);        /* 1.- lock a reader */
 	if (unlocked) return;
 
-	update_bogo_now (thd);
+	update_bogo_now_internal (thd);
 
 	CHEROKEE_RWLOCK_UNLOCK (&srv->bogo_now_mutex);                      /* 2.- release */
 }
@@ -117,8 +129,20 @@ cherokee_thread_unlock (cherokee_thread_t *thd)
 
 
 ret_t 
+cherokee_thread_wait_end (cherokee_thread_t *thd)
+{
+#ifdef HAVE_PTHREAD
+	/* Wait until the thread exits
+	 */
+	pthread_join (thd->thread, NULL);
+#endif
+	return ret_ok;	
+}
+
+
+ret_t 
 cherokee_thread_new  (cherokee_thread_t **thd, void *server, cherokee_thread_type_t type, 
-		      int system_fd_num, int fd_num)
+		      cherokee_poll_type_t fdpoll_type, int system_fd_num, int fd_num)
 {
 	cherokee_server_t *srv = SRV(server);
 	CHEROKEE_NEW_STRUCT (n, thread);
@@ -130,7 +154,10 @@ cherokee_thread_new  (cherokee_thread_t **thd, void *server, cherokee_thread_typ
 	INIT_LIST_HEAD((list_t*)&n->reuse_list);
 	INIT_LIST_HEAD((list_t*)&n->polling_list);
 	
-	cherokee_fdpoll_best_new (&n->fdpoll, system_fd_num, fd_num);
+	if (fdpoll_type == cherokee_poll_UNSET)
+		cherokee_fdpoll_best_new (&n->fdpoll, system_fd_num, fd_num);
+	else
+		cherokee_fdpoll_new (&n->fdpoll, fdpoll_type, system_fd_num, fd_num);
 
 	n->active_list_num   = 0;
 	n->polling_list_num  = 0;
@@ -152,6 +179,11 @@ cherokee_thread_new  (cherokee_thread_t **thd, void *server, cherokee_thread_typ
 	n->accept.recalculate    = 0;
 	n->accept.continuous     = 0;
 	n->accept.continuous_max = 0;
+
+	/* The thread must adquire this mutex before 
+	 * process its connections
+	 */
+	CHEROKEE_MUTEX_INIT (&n->ownership, NULL);
 	
 	/* Do some related work..
 	 */
@@ -162,7 +194,7 @@ cherokee_thread_new  (cherokee_thread_t **thd, void *server, cherokee_thread_typ
 		/* Init the thread attributes
 		 */
 		pthread_attr_init (&attr);
-		pthread_attr_setdetachstate (&attr, PTHREAD_CREATE_DETACHED);
+		pthread_attr_setdetachstate (&attr, PTHREAD_CREATE_JOINABLE);
 		
 		/* Maybe set the scheduling policy
 		 */
@@ -252,16 +284,8 @@ connection_reuse_or_free (cherokee_thread_t *thread, cherokee_connection_t *conn
 
 
 static void
-purge_closed_connection (cherokee_thread_t *thread, cherokee_connection_t *conn)
+purge_connection (cherokee_thread_t *thread, cherokee_connection_t *conn)
 {
-	/* Delete from file descriptors poll
-	 */
-	cherokee_fdpoll_del (thread->fdpoll, SOCKET_FD(conn->socket));
-
-	/* Delete from active connections list
-	 */
-	del_connection (thread, conn);
-
 	/* Maybe have a delayed log
 	 */
 	cherokee_connection_log_delayed (conn);
@@ -273,6 +297,41 @@ purge_closed_connection (cherokee_thread_t *thread, cherokee_connection_t *conn)
 	/* Add it to the rusable list
 	 */	
 	connection_reuse_or_free (thread, conn);
+}
+
+
+static void
+purge_closed_polling_connection (cherokee_thread_t *thread, cherokee_connection_t *conn)
+{
+	/* Delete from file descriptors poll
+	 */
+	cherokee_fdpoll_del (thread->fdpoll, conn->extra_polling_fd);
+
+	/* Remove from the polling list
+	 */
+	del_connection_polling (thread, conn);
+	
+	/* The connection hasn't the main fd in the file descriptor poll
+	 * so, we just have to remove the connection.
+	 */
+	purge_connection (thread, conn);
+}
+
+
+static void
+purge_closed_connection (cherokee_thread_t *thread, cherokee_connection_t *conn)
+{
+	/* Delete from file descriptors poll
+	 */
+	cherokee_fdpoll_del (thread->fdpoll, SOCKET_FD(conn->socket));
+
+	/* Remove from active connections list
+	 */
+	del_connection (thread, conn);
+
+	/* Finally, purge connection
+	 */
+	purge_connection (thread, conn);
 }
 
 
@@ -324,7 +383,7 @@ process_polling_connections (cherokee_thread_t *thd)
 		/* May the connection was too much time w/o any work
 		 */
 		if (conn->timeout < thd->bogo_now) {
-			purge_closed_connection (thd, conn);
+			purge_closed_polling_connection (thd, conn);
 			continue;
 		}
 		
@@ -512,7 +571,6 @@ process_active_connections (cherokee_thread_t *thd)
 
 
 		case phase_reading_header: 
-
 			/* Maybe the buffer has a request (previous pipelined)
 			 */
 			if (! cherokee_buffer_is_empty (conn->incoming_header)) {
@@ -593,8 +651,7 @@ process_active_connections (cherokee_thread_t *thd)
 			conn->phase = phase_setup_connection;
 			
 		case phase_setup_connection: {
-			
-			cherokee_handler_table_entry_t *plugin_entry = NULL;
+			cherokee_dirs_table_entry_t entry;
 
 			/* Turn the connection in write mode
 			 */
@@ -603,12 +660,7 @@ process_active_connections (cherokee_thread_t *thd)
 			/* Get the virtual host and maybe set a new vserver reference
 			 */
 			if (!cherokee_buffer_is_empty(conn->host)) {
-				cherokee_virtual_server_t *vserver;
-
-				vserver = cherokee_table_get_val (srv->vservers_ref, conn->host->buf);
-				if (vserver != NULL) {
-					conn->vserver = vserver;
-				}
+				cherokee_table_get (srv->vservers_ref, conn->host->buf, &conn->vserver);
 			}
 
 			/* Set the logger of the connection
@@ -617,35 +669,56 @@ process_active_connections (cherokee_thread_t *thd)
 
 			/* Is it already an error response?
 			 */
-			if (http_type_400(conn->error_code)) {
+			if (http_type_300(conn->error_code) ||
+			    http_type_400(conn->error_code)) 
+			{
 				cherokee_connection_setup_error_handler (conn);
 				conn->phase = phase_init;
 				continue;
 			}
 
-			/* Build local request string
+			cherokee_dirs_table_entry_init (&entry);
+
+			/* Read the extension configuration
+			 */
+			if (CONN_VSRV(conn)->exts != NULL) 
+			{
+				ret = cherokee_connection_get_ext_entry (conn, CONN_VSRV(conn)->exts, &entry);
+				if (unlikely (ret != ret_ok)) {
+					cherokee_connection_setup_error_handler (conn);
+					conn->phase = phase_init;
+					continue;
+				}				
+			}
+
+			/* Read the directory configuration
 			 */
 			if (!cherokee_buffer_is_empty (CONN_VSRV(conn)->userdir) &&
 			    !cherokee_buffer_is_empty (conn->userdir))
 			{
-				ret = cherokee_connection_get_plugin_entry (conn, CONN_VSRV(conn)->userdir_plugins, &plugin_entry);
+				ret = cherokee_connection_get_dir_entry (conn, CONN_VSRV(conn)->userdir_dirs, &entry);
 				if (unlikely (ret != ret_ok)) {
 					cherokee_connection_setup_error_handler (conn);
 					conn->phase = phase_init;
 					continue;
 				}
-
-				ret = cherokee_connection_build_local_directory_userdir (conn, CONN_VSRV(conn), plugin_entry);
+				
+				if (cherokee_buffer_is_empty (conn->local_directory)) {
+					ret = cherokee_connection_build_local_directory_userdir (conn, CONN_VSRV(conn), &entry);
+				}
 
 			} else {
 
-				ret = cherokee_connection_get_plugin_entry (conn, CONN_VSRV(conn)->plugins, &plugin_entry);
+				ret = cherokee_connection_get_dir_entry (conn, &CONN_VSRV(conn)->dirs, &entry);
 				if (unlikely (ret != ret_ok)) {
 					cherokee_connection_setup_error_handler (conn);
 					conn->phase = phase_init;
 					continue;
 				}
-				ret = cherokee_connection_build_local_directory (conn, CONN_VSRV(conn), plugin_entry);
+
+				if (cherokee_buffer_is_empty (conn->local_directory)) {
+					ret = cherokee_connection_build_local_directory (conn, CONN_VSRV(conn), &entry);
+				}
 			}
 			if (unlikely (ret != ret_ok)) {
 				cherokee_connection_setup_error_handler (conn);
@@ -655,7 +728,7 @@ process_active_connections (cherokee_thread_t *thd)
 
 			/* Check Only-Secure connections
 			 */
-			ret = cherokee_connection_check_only_secure (conn, plugin_entry);
+			ret = cherokee_connection_check_only_secure (conn, &entry);
 			if (unlikely (ret != ret_ok)) {
 				cherokee_connection_setup_error_handler (conn);
 				conn->phase = phase_init;
@@ -664,7 +737,7 @@ process_active_connections (cherokee_thread_t *thd)
 
 			/* Check for IP validation
 			 */
-			ret = cherokee_connection_check_ip_validation (conn, plugin_entry);
+			ret = cherokee_connection_check_ip_validation (conn, &entry);
 			if (unlikely (ret != ret_ok)) {
 				cherokee_connection_setup_error_handler (conn);
 				conn->phase = phase_init;
@@ -673,15 +746,22 @@ process_active_connections (cherokee_thread_t *thd)
 
 			/* Check for authentication
 			 */
-			ret = cherokee_connection_check_authentication (conn, plugin_entry);
+			ret = cherokee_connection_check_authentication (conn, &entry);
 			if (unlikely (ret != ret_ok)) {
 				cherokee_connection_setup_error_handler (conn);
 				conn->phase = phase_init;
 				continue;
 			}
 			
-			ret = cherokee_connection_create_handler (conn, plugin_entry);
-			if (unlikely (ret != ret_ok)) {
+			/* Create the handler
+			 */
+			ret = cherokee_connection_create_handler (conn, &entry);
+			switch (ret) {
+			case ret_ok:
+				break;
+			case ret_eagain:
+				continue;
+			default:
 				cherokee_connection_setup_error_handler (conn);
 				conn->phase = phase_init;
 				continue;
@@ -697,6 +777,10 @@ process_active_connections (cherokee_thread_t *thd)
 			}
 
 			conn->phase = phase_init;			
+
+			/* There isn't need of free entry, it is in the stack and the
+			 * buffers inside it are just references..
+			 */
 		}
 			
 		case phase_init: 
@@ -724,7 +808,7 @@ process_active_connections (cherokee_thread_t *thd)
 			/* If it is an error, and the connection has not a handler to manage
 			 * this error, the handler has to be changed
 			 */
- 			if (http_type_400(conn->error_code) &&
+ 			if ((http_type_300(conn->error_code) || http_type_400(conn->error_code)) &&
 			    conn->handler && (!HANDLER_SUPPORT_ERROR(conn->handler)))
 			{
 				/* Try to setup an error handler
@@ -827,12 +911,12 @@ process_active_connections (cherokee_thread_t *thd)
 					continue;
 				case ret_eof:
 				case ret_error:
-					cherokee_mmap2_unref_entry (srv->mmap_cache, conn->mmap_entry_ref);
+					cherokee_iocache_mmap_release (srv->iocache, conn->io_entry_ref);
 					conn->phase = phase_lingering;
 					goto phase_lingering_close;
 
 				default:
-					cherokee_mmap2_unref_entry (srv->mmap_cache, conn->mmap_entry_ref);
+					cherokee_iocache_mmap_release (srv->iocache, conn->io_entry_ref);
 					maybe_purge_closed_connection (thd, conn);
 					continue;
 				}
@@ -931,11 +1015,16 @@ cherokee_thread_free (cherokee_thread_t *thd)
 		cherokee_connection_free (CONN(i));
 	}
 
-	/* Destroy the thread
-	 */
-#ifdef HAVE_PTHREAD
-	pthread_exit (NULL);
-#endif	
+	CHEROKEE_MUTEX_DESTROY (&thd->starting_lock);
+	CHEROKEE_MUTEX_DESTROY (&thd->ownership);
+
+//	if (thd->fcgi_managers != NULL) {
+		// FIXME: It can not depend on cherokee_fcgi_* functions
+		//
+//		cherokee_table_free2 (thd->fcgi_managers, 
+//				      (cherokee_table_free_item_t) cherokee_fcgi_manager_free);
+//		thd->fcgi_managers = NULL;
+//	}
 
 	free (thd);
 	return ret_ok;
@@ -947,7 +1036,7 @@ __accept_from_server (cherokee_thread_t *thd, int srv_socket, cherokee_socket_ty
 {
 	ret_t                  ret;
 	int                    new_fd;
-	struct sockaddr        new_sa;
+	cherokee_sockaddr_t    new_sa;
 	cherokee_connection_t *new_conn;
 	
 
@@ -979,12 +1068,21 @@ __accept_from_server (cherokee_thread_t *thd, int srv_socket, cherokee_socket_ty
                 new_conn->phase = phase_tls_handshake;
         }
 	
-	/* Add the new connection to the thread
+	/* It is about to add a new connection to the thread, 
+	 * so it MUST adquire the thread ownership now.
+	 */
+	CHEROKEE_MUTEX_LOCK (&thd->ownership);
+
+	/* Lets add the new connection
 	 */
 	ret = cherokee_thread_add_connection (thd, new_conn);
 	if (unlikely (ret < ret_ok)) {
 		goto error;
 	}
+
+	/* Release the thread ownership
+	 */
+	CHEROKEE_MUTEX_UNLOCK (&thd->ownership);
 
 	return 1;
 
@@ -1104,10 +1202,18 @@ step_MULTI_THREAD_block (cherokee_thread_t *thd, int socket, pthread_mutex_t *mu
 	cherokee_fdpoll_reset (thd->fdpoll, socket);
 	cherokee_fdpoll_watch (thd->fdpoll, fdwatch_msecs);
 	
+	/* This thread might been blocked for long long time,
+	 * so it's really important to update the local bogo now
+	 * values before accept new connections.  Otherwhise, it
+	 * will use an old value for the new connections timeout
+	 * and it'll drop it out in the next step.
+	 */
+	update_bogo_now (thd);
+
 	do {
 		re = __accept_from_server (thd, socket, non_TLS);
 	} while (__should_accept_more_from_server (thd, re));
-	
+
 	cherokee_fdpoll_del (thd->fdpoll, socket);
 	CHEROKEE_MUTEX_UNLOCK (mutex);
 	
@@ -1281,6 +1387,11 @@ step_MULTI_THREAD_TLS_block (cherokee_thread_t *thd, int fdwatch_msecs,
 	/* Inspect the fds and get new connections
 	 */
 	cherokee_fdpoll_watch (thd->fdpoll, fdwatch_msecs);
+
+	/* Update the thread time values before accept new connections.
+	 * This ensure a good timeout value for it.
+	 */
+	update_bogo_now (thd);
 		
 	do {
 		re = __accept_from_server (thd, socket1, type1);
@@ -1311,8 +1422,13 @@ step_MULTI_THREAD_TLS_block (cherokee_thread_t *thd, int fdwatch_msecs,
 ret_t 
 cherokee_thread_step_MULTI_THREAD (cherokee_thread_t *thd, cherokee_boolean_t dont_block)
 {
+	ret_t              ret;
 	cherokee_server_t *srv           = THREAD_SRV(thd);
 	int                fdwatch_msecs = srv->fdwatch_msecs;
+
+	/* Try to update bogo_now
+	 */
+	try_to_update_bogo_now (thd);
 
 	/* If the thread is full of connections, it should not
 	 * get new connections
@@ -1333,7 +1449,8 @@ cherokee_thread_step_MULTI_THREAD (cherokee_thread_t *thd, cherokee_boolean_t do
 	/* Try to get new connections from https
 	 */
 	if (srv->tls_enabled) {
-		if ((thd->active_list_num == 0) &&
+		if ((thd->exit == false) &&
+		    (thd->active_list_num == 0) &&
 		    (thd->polling_list_num == 0) && (!dont_block)) {
 			step_MULTI_THREAD_TLS_block (thd, fdwatch_msecs, 
 						     srv->socket, &THREAD_SRV(thd)->accept_mutex, 	
@@ -1350,7 +1467,8 @@ cherokee_thread_step_MULTI_THREAD (cherokee_thread_t *thd, cherokee_boolean_t do
 
 	/* Try to get new connections from http
 	 */
-	if ((thd->active_list_num == 0) && 
+	if ((thd->exit == false) &&
+	    (thd->active_list_num == 0) && 
 	    (thd->polling_list_num == 0) && (!dont_block)) {
 		step_MULTI_THREAD_block (thd, srv->socket, &THREAD_SRV(thd)->accept_mutex, fdwatch_msecs);
 	} else {
@@ -1358,9 +1476,9 @@ cherokee_thread_step_MULTI_THREAD (cherokee_thread_t *thd, cherokee_boolean_t do
 	}
 	
 out:
-	/* Try to update bogo_now
+	/* Adquire the ownership of the thread
 	 */
-	try_to_update_bogo_now (thd);
+	CHEROKEE_MUTEX_LOCK (&thd->ownership);
 
 	/* Process polling connections
 	 */
@@ -1368,7 +1486,13 @@ out:
 
 	/* Process active connections
 	 */
-	return process_active_connections (thd);
+	ret = process_active_connections (thd);
+
+	/* Release the thread
+	 */
+	CHEROKEE_MUTEX_UNLOCK (&thd->ownership);
+
+	return ret;
 }
 
 #endif /* HAVE_PTHREAD */
@@ -1380,6 +1504,7 @@ cherokee_thread_get_new_connection (cherokee_thread_t *thd, cherokee_connection_
 {
 	cherokee_connection_t *new_connection;
 	cherokee_server_t     *server;
+	static cuint_t         last_conn_id = 0;
 
 	server = thd->server;
 
@@ -1402,6 +1527,7 @@ cherokee_thread_get_new_connection (cherokee_thread_t *thd, cherokee_connection_
 
 	/* Set the basic information to the connection
 	 */
+	new_connection->id        = last_conn_id++;
 	new_connection->thread    = thd;
 	new_connection->server    = server;
 	new_connection->vserver   = server->vserver_default;
@@ -1452,12 +1578,20 @@ cherokee_thread_close_all_connections (cherokee_thread_t *thd)
  */
 
 ret_t 
-cherokee_thread_deactive_to_polling (cherokee_thread_t *thd, cherokee_connection_t *conn, int fd)
+cherokee_thread_deactive_to_polling (cherokee_thread_t *thd, cherokee_connection_t *conn, int fd, int rw)
 {	
 	cherokee_socket_t *socket = CONN_SOCK(conn);
 
+	/* Set the information in the connection
+	 */
+	conn->extra_polling_fd = fd;
+
+	/* Remove the connection file descriptor and add the new one
+	 */
 	cherokee_fdpoll_del (thd->fdpoll, SOCKET_FD(socket));
-	return cherokee_thread_move_connection_to_polling (thd, conn, fd);
+	cherokee_fdpoll_add (thd->fdpoll, fd, rw);
+
+	return cherokee_thread_move_connection_to_polling (thd, conn);
 }
 
 ret_t 
@@ -1465,23 +1599,25 @@ cherokee_thread_reactive_from_polling (cherokee_thread_t *thd, cherokee_connecti
 {	
 	cherokee_socket_t *socket = CONN_SOCK(conn);
 
+	/* Set the connection file descriptor and remove the old one
+	 */
+	cherokee_fdpoll_del (thd->fdpoll, conn->extra_polling_fd);
 	cherokee_fdpoll_add (thd->fdpoll, socket->socket, socket->status);
+
+	/* Remove the polling fd from the connection
+	 */
+	conn->extra_polling_fd = -1;
+
 	return cherokee_thread_move_connection_to_active (thd, conn);
 }
 
 
 ret_t 
-cherokee_thread_move_connection_to_polling (cherokee_thread_t *thd, cherokee_connection_t *conn, int fd)
+cherokee_thread_move_connection_to_polling (cherokee_thread_t *thd, cherokee_connection_t *conn)
 {
-	/* Set the information in the connection
-	 */
-	conn->extra_polling_fd = fd;
-
-	/* Move from 'active' to 'polling'
-	 */
 	del_connection (thd, conn);
-	add_connection_polling (thd, conn);
-	
+	add_connection_polling (thd, conn);	
+
 	return ret_ok;
 }
 
@@ -1489,12 +1625,6 @@ cherokee_thread_move_connection_to_polling (cherokee_thread_t *thd, cherokee_con
 ret_t 
 cherokee_thread_move_connection_to_active (cherokee_thread_t *thd, cherokee_connection_t *conn)
 {
-	/* Remove the polling fd from the connection
-	 */
-	conn->extra_polling_fd = -1;
-
-	/* Move from 'active' to 'polling'
-	 */
 	del_connection_polling (thd, conn);
 	add_connection (thd, conn);
 

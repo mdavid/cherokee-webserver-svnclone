@@ -40,11 +40,11 @@
 #include "connection.h"
 #include "connection-protected.h"
 #include "module.h"
-#include "mmap2.h"
+#include "iocache.h"
 #include "util.h"
 
 
-cherokee_module_info_t cherokee_file_info = {
+cherokee_module_info_t MODULE_INFO(file) = {
 	cherokee_handler,            /* type     */
 	cherokee_handler_file_new    /* new func */
 };
@@ -58,8 +58,9 @@ cherokee_handler_file_new  (cherokee_handler_t **hdl, cherokee_connection_t *cnt
 	 */
 	cherokee_handler_init_base (HANDLER(n), cnt);
 
+	MODULE(n)->free         = (module_func_free_t) cherokee_handler_file_free;
+	MODULE(n)->get_name     = (module_func_get_name_t) cherokee_handler_file_get_name;
 	MODULE(n)->init         = (handler_func_init_t) cherokee_handler_file_init;
-	MODULE(n)->free         = (handler_func_free_t) cherokee_handler_file_free;
 	HANDLER(n)->step        = (handler_func_step_t) cherokee_handler_file_step;
 	HANDLER(n)->add_headers = (handler_func_add_headers_t) cherokee_handler_file_add_headers;
 
@@ -73,6 +74,14 @@ cherokee_handler_file_new  (cherokee_handler_t **hdl, cherokee_connection_t *cnt
 	n->offset         = 0;
 	n->mime           = NULL;
 	n->using_sendfile = false;
+	n->info           = NULL;
+	n->nocache        = false;
+
+	/* Check some properties
+	 */
+	if (properties != NULL) {
+		cherokee_typed_table_get_int (properties, "cache", &n->nocache);
+	}
 
 	/* Return the object
 	 */
@@ -90,6 +99,13 @@ cherokee_handler_file_free (cherokee_handler_file_t *fhdl)
 	}
 
 	return ret_ok;
+}
+
+
+void  
+cherokee_handler_file_get_name (cherokee_handler_file_t *module, const char **name)
+{
+	*name = "file";
 }
 
 
@@ -127,7 +143,7 @@ check_cached (cherokee_handler_file_t *n)
 		
 		/* The file is cached in the client
 		 */
-		if (n->info.st_mtime <= req_time) {
+		if (n->info->st_mtime <= req_time) {
 			conn->error_code = http_not_modified;
 			return ret_error;	
 		}
@@ -141,7 +157,7 @@ check_cached (cherokee_handler_file_t *n)
 			int    tmp_len;
 			CHEROKEE_TEMP(tmp,100);
 			
-			tmp_len = snprintf (tmp, tmp_size, "%lx=" FMT_OFFSET "x", n->info.st_mtime, n->info.st_size);
+			tmp_len = snprintf (tmp, tmp_size, "%lx=" FMT_OFFSET "x", n->info->st_mtime, n->info->st_size);
 
 			if (strncmp (header, tmp, tmp_len) == 0) {
 				conn->error_code = http_not_modified;
@@ -153,42 +169,114 @@ check_cached (cherokee_handler_file_t *n)
 	return ret_ok;
 }
 
+
+static ret_t 
+open_local_directory (cherokee_handler_file_t *n, cherokee_connection_t *conn)
+{
+	/* Check if it is already open
+	 */
+	if (n->fd > 0)
+		return ret_ok;
+
+	/* Open it
+	 */
+	n->fd = open (conn->local_directory->buf, CHE_O_READ);
+	if (n->fd > 0) return ret_ok;
+
+	/* Manage errors
+	 */
+	switch (errno) {
+	case EACCES:
+		conn->error_code = http_access_denied;
+		break;
+	case ENOENT:
+		conn->error_code = http_not_found;
+		break;
+	default:
+		conn->error_code = http_internal_error;
+	}
+	return ret_error;
+}
+
+
+static ret_t
+stat_local_directory (cherokee_handler_file_t *n, cherokee_connection_t *conn, cherokee_iocache_entry_t **io_entry, struct stat **info)
+{	
+	int                re;
+	ret_t              ret;
+	cherokee_server_t *srv = CONN_SRV(conn);
+
+	/* Without cache
+	 */
+	if (n->nocache) {
+		re = stat (conn->local_directory->buf, &n->nocache_info);
+		if (re < 0) {
+			switch (errno) {
+			case ENOENT: 
+				conn->error_code = http_not_found;
+				break;
+			case EACCES: 
+				conn->error_code = http_access_denied;
+				break;
+			default:     
+				conn->error_code = http_internal_error;
+			}
+
+			cherokee_buffer_drop_endding (conn->local_directory, conn->request->len);
+			return ret_error;
+		}
+
+		*info = &n->nocache_info;		
+		return ret_ok;
+	} 
+
+	/* I/O cache
+	 */
+	ret = cherokee_iocache_stat_get (srv->iocache, conn->local_directory->buf, io_entry);
+	if (ret != ret_ok) {
+		switch (ret) {
+		case ret_not_found:
+			conn->error_code = http_not_found;
+			break;
+		case ret_deny:
+			conn->error_code = http_access_denied;
+			break;
+		default:
+			conn->error_code = http_internal_error;
+		}
+		
+		cherokee_buffer_drop_endding (conn->local_directory, conn->request->len);
+		return ret_error;		
+	}
+
+	*info = &(*io_entry)->state;
+	return ret_ok;
+}
+
+
 ret_t 
 cherokee_handler_file_init (cherokee_handler_file_t *n)
 {
 	int   ret;
 	char *ext;
-	cherokee_mmap2_entry_t *mmap_entry = NULL;
-	cherokee_connection_t  *conn       = HANDLER_CONN(n);
-	cherokee_server_t      *srv        = HANDLER_SRV(n);
+	cherokee_boolean_t        use_io   = false;
+	cherokee_iocache_entry_t *io_entry = NULL;
+	cherokee_connection_t    *conn     = HANDLER_CONN(n);
+	cherokee_server_t        *srv      = HANDLER_SRV(n);
 
 	/* Build the local file path                         1.- BUILD
-	 * "return" is forbbiden until 2.
+	 * Take care with "return"s until 2.
 	 */
 	if (conn->request->len > 1) {
 		cherokee_buffer_add (conn->local_directory, conn->request->buf+1, conn->request->len-1); 
 	}
 
-	/* Open the file and stat
+	/* Query the I/O cache
 	 */
-	n->fd = open (conn->local_directory->buf, O_RDONLY);
+	ret = stat_local_directory (n, conn, &io_entry, &n->info);
+	if (ret != ret_ok) return ret;
 
-	if (n->fd != -1) {
-		ret = fstat (n->fd, &n->info);
-	} else {
-		/* We have no access to that file. Why? */
-		if (errno == EACCES)
-			conn->error_code = http_access_denied;
-		else if (errno == ENOENT)
-			conn->error_code = http_not_found;
-		else
-			conn->error_code = http_internal_error;
-
-		cherokee_buffer_drop_endding (conn->local_directory, conn->request->len);
-		return ret_error;
-	}
-
-	/* Is it cached in the client?
+	/* Is it cached on the client?
 	 */
 	ret = check_cached(n);
 	if (ret != ret_ok) {
@@ -196,22 +284,47 @@ cherokee_handler_file_init (cherokee_handler_file_t *n)
 		return ret;
 	}
 
-	/* Is this file cached in the mmap table?
+	/* Is this file cached in the io cache?
 	 */
 #ifndef CHEROKEE_EMBEDDED
-	if ((conn->encoder == NULL) &&
-	    (conn->socket->is_tls == non_TLS) &&
-	    (n->info.st_size <= MMAP_MAX_FILE_SIZE) &&
-	    (http_mehod_with_body (conn->header->method))) 
-	{
-		ret = cherokee_mmap2_get (srv->mmap_cache,
-					  conn->local_directory->buf,
-					  &mmap_entry);
+	use_io = ((!n->nocache) &&
+		  (conn->encoder == NULL) &&
+		  (conn->socket->is_tls == non_TLS) &&
+		  (n->info->st_size <= IOCACHE_MAX_FILE_SIZE) &&
+		  (http_mehod_with_body (conn->header->method)));
+	
+	if (use_io) {
+		ret = cherokee_iocache_mmap_lookup (srv->iocache,
+						    conn->local_directory->buf,
+						    &io_entry);
+		if (ret != ret_ok) {
+			ret = open_local_directory (n, conn);
+			if (ret != ret_ok) {
+				cherokee_buffer_drop_endding (conn->local_directory, conn->request->len);
+				return ret;
+			}
+
+			ret = cherokee_iocache_mmap_get_w_fd (srv->iocache,
+							      conn->local_directory->buf,
+							      n->fd,
+							      &io_entry);
+		}
+
 		if (ret == ret_ok) {
-			conn->mmap_entry_ref = mmap_entry;
+			conn->io_entry_ref = io_entry;
 		}
 	}
 #endif
+
+	/* Maybe open the file
+	 */
+	if ((n->fd < 0) && (!use_io)) {
+		ret = open_local_directory (n, conn);
+		if (ret != ret_ok) {
+			cherokee_buffer_drop_endding (conn->local_directory, conn->request->len);
+			return ret;
+		}
+	}
 
 	/* Undo the local file path                          2.- UNDO
 	 * "return" is allowed again
@@ -220,15 +333,15 @@ cherokee_handler_file_init (cherokee_handler_file_t *n)
 
 	/* Is it a directory?
 	 */
-	if (S_ISDIR(n->info.st_mode)) {
+	if (S_ISDIR(n->info->st_mode)) {
 		conn->error_code = http_access_denied;
 		return ret_error;		
 	}
 
 	/* Range 1: Check the range and file size
 	 */
-	if ((conn->range_start > n->info.st_size) ||
-	    (conn->range_end   > n->info.st_size)) 
+	if ((conn->range_start > n->info->st_size) ||
+	    (conn->range_end   > n->info->st_size)) 
 	{
 		conn->error_code = http_range_not_satisfiable;
 		return ret_error;
@@ -243,17 +356,17 @@ cherokee_handler_file_init (cherokee_handler_file_t *n)
 	/* Range 2: Set the file length as the range end
 	 */
 	if (conn->range_end == 0) {
-		conn->range_end = n->info.st_size;
+		conn->range_end = n->info->st_size;
 	} 
 
 	/* Set mmap or file position
 	 */
-	if (conn->mmap_entry_ref != NULL) {
+	if (conn->io_entry_ref != NULL) {
 		/* Set the mmap info
 		 */
-		conn->mmaped     = conn->mmap_entry_ref->mmaped +  conn->range_start;
-		conn->mmaped_len = conn->mmap_entry_ref->mmaped_len - (
-			conn->range_start + (conn->mmap_entry_ref->mmaped_len - conn->range_end));
+		conn->mmaped     = conn->io_entry_ref->mmaped +  conn->range_start;
+		conn->mmaped_len = conn->io_entry_ref->mmaped_len - (
+			conn->range_start + (conn->io_entry_ref->mmaped_len - conn->range_end));
 	} else {
 		/* Seek the file is needed
 		 */
@@ -282,10 +395,14 @@ cherokee_handler_file_init (cherokee_handler_file_t *n)
 #ifdef HAVE_SENDFILE
 	n->using_sendfile = ((conn->mmaped == NULL) &&
 			     (conn->encoder == NULL) &&
-			     (n->info.st_size >= srv->sendfile.min) && 
-			     (n->info.st_size <  srv->sendfile.max) &&
+			     (n->info->st_size >= srv->sendfile.min) && 
+			     (n->info->st_size <  srv->sendfile.max) &&
 			     (conn->socket->is_tls == non_TLS));
-	
+
+# ifdef HAVE_SENDFILE_BROKEN
+	n->using_sendfile = false;
+# endif
+
 	if (n->using_sendfile) {
 		cherokee_connection_set_cork(conn, 1);
 	}
@@ -313,7 +430,11 @@ cherokee_handler_file_step (cherokee_handler_file_t *fhdl,
 						conn->range_end - fhdl->offset,    /* size_t             size   */
 						&fhdl->offset,                     /* off_t             *offset */
 						&sent);                            /* ssize_t           *sent   */
-		if (ret < ret_ok) return ret;
+
+		if (ret == ret_no_sys) {
+			fhdl->using_sendfile = false;
+			goto exit_sendfile;
+		}
 
 		/* cherokee_handler_file_init() activated the TCP_CORK flags.
 		 * After it, the header was sent.  And now, the first
@@ -324,12 +445,21 @@ cherokee_handler_file_step (cherokee_handler_file_t *fhdl,
 			cherokee_connection_set_cork (conn, 0);
 		}
 
+		if (ret < ret_ok) return ret;
+
+		/* This connection is not using the cherokee_connection_send() method,
+		 * so we have to update the connection traffic counter here.
+		 */
+		cherokee_connection_tx_add (conn, sent);
+
 		if (fhdl->offset >= conn->range_end) {
 			return ret_eof;
 		}
 
 		return ret_ok_and_sent;
 	}
+
+exit_sendfile:
 #endif
 
 	/* Check the amount to read
@@ -367,27 +497,27 @@ ret_t
 cherokee_handler_file_add_headers (cherokee_handler_file_t *fhdl,
 				   cherokee_buffer_t       *buffer)
 {
-	int       len;
 	off_t     length;
 	struct tm modified_tm;
 
-	CHEROKEE_TEMP(tmp,100);
-
-	/* Add "Content-length:" header
+	/* We stat()'ed the file in the handler constructor
 	 */
-	if (fhdl->fd != -1) {
-		/* We stat()'ed the file in the handler constructor
-		 */
-		length = HANDLER_CONN(fhdl)->range_end - HANDLER_CONN(fhdl)->range_start;		
-		if (length < 0) {
-			length = 0;
-		}
+	length = HANDLER_CONN(fhdl)->range_end - HANDLER_CONN(fhdl)->range_start;		
+	if (length < 0) {
+		length = 0;
+	}
 
-		if (HANDLER_SUPPORT_LENGTH(fhdl) && 
-		    (HANDLER_CONN(fhdl)->encoder == NULL)) 
-		{
-			cherokee_buffer_add_va (buffer, "Content-length: " FMT_OFFSET CRLF, length);
+	if (HANDLER_CONN(fhdl)->encoder == NULL) {
+		if(HANDLER_CONN(fhdl)->error_code == http_partial_content) {
+			cherokee_buffer_add_va (buffer,
+						"Content-Range: " FMT_OFFSET "-"
+						FMT_OFFSET "/" FMT_OFFSET CRLF,
+						HANDLER_CONN(fhdl)->range_start,
+						HANDLER_CONN(fhdl)->range_end - 1,
+						fhdl->info->st_size);
 		}
+		
+		cherokee_buffer_add_va (buffer, "Content-Length: " FMT_OFFSET CRLF, length);
 
 	} else {
 		/* Can't use Keep-alive w/o "Content-length:", so
@@ -412,14 +542,21 @@ cherokee_handler_file_add_headers (cherokee_handler_file_t *fhdl,
 	/* Etag
 	 */
 	if (HANDLER_CONN(fhdl)->header->version >= http_version_11) { 
-		cherokee_buffer_add_va (buffer, "Etag: %lx=%lx"CRLF, fhdl->info.st_mtime, fhdl->info.st_size);
+		cherokee_buffer_add_va (buffer, "Etag: %lx=%lx"CRLF, fhdl->info->st_mtime, fhdl->info->st_size);
 	}
 
 	/* Last-Modified:
 	 */
-	len = strftime (tmp, tmp_size, "Last-Modified: %a, %d %b %Y %H:%M:%S GMT"CRLF, 
-			cherokee_gmtime(&fhdl->info.st_mtime, &modified_tm));
-	cherokee_buffer_add (buffer, tmp, len);
+	cherokee_gmtime(&fhdl->info->st_mtime, &modified_tm);
+
+	cherokee_buffer_add_va (buffer, "Last-Modified: %s, %02d %s %d %02d:%02d:%02d GMT"CRLF,
+				cherokee_weekdays[modified_tm.tm_wday],
+				modified_tm.tm_mday,
+				cherokee_months[modified_tm.tm_mon], 
+				modified_tm.tm_year + 1900,
+				modified_tm.tm_hour,
+				modified_tm.tm_min,
+				modified_tm.tm_sec);
 
 	return ret_ok;
 }
@@ -431,7 +568,7 @@ cherokee_handler_file_add_headers (cherokee_handler_file_t *fhdl,
 static cherokee_boolean_t _file_is_init = false;
 
 void
-file_init (cherokee_module_loader_t *loader)
+MODULE_INIT(file) (cherokee_module_loader_t *loader)
 {
 	ret_t ret;
 	cherokee_mime_t *mime;

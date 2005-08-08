@@ -40,7 +40,7 @@ struct cherokee_logger_private {
 	pthread_mutex_t mutex;
 #endif
 
-	int dummy;
+	cherokee_boolean_t backup_mode;
 };
 
 #define PRIV(x)  (LOGGER(x)->priv)
@@ -62,6 +62,7 @@ cherokee_logger_init_base (cherokee_logger_t *logger)
 
 	/* Private
 	 */	
+	logger->priv->backup_mode = false;
 	CHEROKEE_MUTEX_INIT (&PRIV(logger)->mutex, NULL);
 
 	cherokee_buffer_new (&logger->buffer);
@@ -100,6 +101,13 @@ ret_t
 cherokee_logger_flush (cherokee_logger_t *logger)
 {
 	ret_t ret = ret_error;
+
+	/* If the logger is on backup mode, it shouldn't write anything
+	 * to the disk.  Maintaince tasks have been taking place.
+	 */
+	if (logger->priv->backup_mode) {
+		return ret_ok;
+	}
 
 	if (logger->flush) {
 		CHEROKEE_MUTEX_LOCK (&PRIV(logger)->mutex);
@@ -165,16 +173,75 @@ cherokee_logger_write_string (cherokee_logger_t *logger, const char *format, ...
 		return ret_ok;
 
 	if (logger->write_string) {
-		CHEROKEE_TEMP (tmp, 200);
+		ret_t             ret;
+		cherokee_buffer_t tmp = CHEROKEE_BUF_INIT;
 
 		CHEROKEE_MUTEX_LOCK(&PRIV(logger)->mutex);
 		va_start (ap, format);
-		vsnprintf (tmp, tmp_size, format, ap);
+		cherokee_buffer_add_va_list (&tmp, (char *)format, ap);
 		va_end (ap);
 		CHEROKEE_MUTEX_UNLOCK(&PRIV(logger)->mutex);
 
-		return logger->write_string (logger, tmp);
+		ret = logger->write_string (logger, tmp.buf);
+
+		cherokee_buffer_mrproper (&tmp);
+		return ret;
 	}
 
 	return ret_error;
+}
+
+
+ret_t 
+cherokee_logger_reopen (cherokee_logger_t *logger)
+{
+	ret_t ret = ret_error;
+
+	if (logger->reopen != NULL) {
+		CHEROKEE_MUTEX_LOCK (&PRIV(logger)->mutex);
+		ret = logger->reopen (logger);
+		CHEROKEE_MUTEX_UNLOCK (&PRIV(logger)->mutex);
+	}
+
+	return ret;
+}
+
+
+ret_t 
+cherokee_logger_set_backup_mode (cherokee_logger_t *logger, cherokee_boolean_t active)
+{
+	ret_t ret;
+
+	/* Set backup mode: ON
+	 */
+	if (active == true) {
+		logger->priv->backup_mode = true;
+		return ret_ok;
+	}
+
+	/* Set backup mode: OFF
+	 */
+	logger->priv->backup_mode = false;
+
+	ret = cherokee_logger_reopen (logger);
+	if (unlikely(ret != ret_ok)) return ret;
+
+	ret = cherokee_logger_flush (logger);
+	if (unlikely(ret != ret_ok)) return ret;
+
+	/* Free the buffer and create a new one in order to ensure
+	 * it didn't get too big while the logger was in backup mode.
+	 */
+	cherokee_buffer_free (logger->buffer);
+	cherokee_buffer_new (&logger->buffer);
+
+	return ret_ok;
+}
+
+
+ret_t 
+cherokee_logger_get_backup_mode (cherokee_logger_t *logger, cherokee_boolean_t *active)
+{
+	*active = logger->priv->backup_mode;
+	return ret_ok;
 }

@@ -23,29 +23,32 @@
  */
 
 #include "common-internal.h"
-
 #include "module_loader.h"
-#include "module_loader-protected.h"
-
-#include "table.h"
-#include "buffer.h"
 
 #include <stdlib.h>
 #include <string.h>
 #include <dlfcn.h>
 
+#include "table.h"
+#include "buffer.h"
+
+
+typedef struct {
+	cherokee_module_info_t *info;
+	void                   *dlopen_ref;
+} entry_t;
+
 
 #ifdef CHEROKEE_EMBEDDED
 
 ret_t
-cherokee_module_loader_new  (cherokee_module_loader_t **loader)
+cherokee_module_loader_init  (cherokee_module_loader_t *loader)
 {
-	*loader = NULL;
 	return ret_ok;
 }
 
 ret_t 
-cherokee_module_loader_free (cherokee_module_loader_t *loader)
+cherokee_module_loader_mrproper (cherokee_module_loader_t *loader)
 {  
 	return ret_ok; 
 }
@@ -53,20 +56,34 @@ cherokee_module_loader_free (cherokee_module_loader_t *loader)
 ret_t 
 cherokee_module_loader_load (cherokee_module_loader_t *loader, char *modname)
 {
-	if      (strcmp(modname, "common")  == 0) common_init (NULL);
-	else if (strcmp(modname, "file")    == 0) file_init (NULL);
-	else if (strcmp(modname, "redir")   == 0) redir_init (NULL);
-	else if (strcmp(modname, "dirlist") == 0) dirlist_init (NULL);
-	else if (strcmp(modname, "cgi")     == 0) cgi_init (NULL);
-	else if (strcmp(modname, "phpcgi")  == 0) phpcgi_init (NULL);
-	else if (strcmp(modname, "plain")   == 0) plain_init (NULL);
+	extern void MODULE_INIT(common)  (cherokee_module_loader_t *);
+	extern void MODULE_INIT(file)    (cherokee_module_loader_t *);
+	extern void MODULE_INIT(redir)   (cherokee_module_loader_t *);
+	extern void MODULE_INIT(dirlist) (cherokee_module_loader_t *);
+	extern void MODULE_INIT(cgi)     (cherokee_module_loader_t *);
+	extern void MODULE_INIT(phpcgi)  (cherokee_module_loader_t *);
+	extern void MODULE_INIT(plain)   (cherokee_module_loader_t *);
+
+	if      (strcmp(modname, "common")  == 0) MODULE_INIT(common) (NULL);
+	else if (strcmp(modname, "file")    == 0) MODULE_INIT(file) (NULL);
+	else if (strcmp(modname, "redir")   == 0) MODULE_INIT(redir) (NULL);
+	else if (strcmp(modname, "dirlist") == 0) MODULE_INIT(dirlist) (NULL);
+	else if (strcmp(modname, "cgi")     == 0) MODULE_INIT(cgi) (NULL);
+	else if (strcmp(modname, "phpcgi")  == 0) MODULE_INIT(phpcgi) (NULL);
+	else if (strcmp(modname, "plain")   == 0) MODULE_INIT(plain) (NULL);
 	else return ret_error;
 
 	return ret_ok;
 }
 
 ret_t 
-cherokee_module_loader_get (cherokee_module_loader_t *loader, char *modname, cherokee_module_info_t **info)
+cherokee_module_loader_unload (cherokee_module_loader_t *loader, char *modname)
+{
+	return ret_ok;
+}
+
+ret_t 
+cherokee_module_loader_get_info (cherokee_module_loader_t *loader, char *modname, cherokee_module_info_t **info)
 {
 	extern cherokee_module_info_t cherokee_common_info;
 	extern cherokee_module_info_t cherokee_file_info;
@@ -101,13 +118,21 @@ cherokee_module_loader_get (cherokee_module_loader_t *loader, char *modname, che
 # define RTLD_BASE RTLD_LAZY
 #endif
 
-#ifdef HAVE_RTLDGLOBAL
-# define RTLD_OPTIONS 	| RTLD_GLOBAL;
-#else 
-# define RTLD_OPTIONS
-#endif
 
 typedef void *func_new_t;
+
+
+static void
+add_static_entry (cherokee_module_loader_t *loader, const char *name, void *info)
+{
+	entry_t *entry;
+
+	entry = malloc (sizeof(entry_t));
+	entry->dlopen_ref = dlopen (NULL, RTLD_BASE);
+	entry->info       = info; 
+
+	cherokee_table_add (loader, (char *)name, entry);
+}
 
 
 static ret_t
@@ -122,39 +147,40 @@ load_static_linked_modules (cherokee_module_loader_t *loader)
 	return ret_ok;
 }
 
+static void
+free_entry (void *item)
+{
+	entry_t *entry = (entry_t *)item;
+
+	if (entry->dlopen_ref) {
+		dlclose (entry->dlopen_ref);
+		entry->dlopen_ref = NULL;
+	}
+
+	free (item);
+}
+
 
 ret_t
-cherokee_module_loader_new  (cherokee_module_loader_t **loader)
+cherokee_module_loader_init (cherokee_module_loader_t *loader)
 {
 	ret_t ret;
 	
-	CHEROKEE_NEW_STRUCT (n, module_loader);
-	
-	ret = cherokee_table_new(&n->table);
+	ret = cherokee_table_init (TABLE(loader));
 	if (unlikely(ret < ret_ok)) return ret;
 	
-	ret = load_static_linked_modules (n);
+	ret = load_static_linked_modules (loader);
 	if (unlikely(ret < ret_ok)) return ret;
 
-	*loader = n;
 	return ret_ok;
 }
 
 
 ret_t 
-cherokee_module_loader_free (cherokee_module_loader_t *loader)
+cherokee_module_loader_mrproper (cherokee_module_loader_t *loader)
 {
-	cherokee_table_free (loader->table);
-
-	free (loader);
+	cherokee_table_mrproper2 (loader, (cherokee_table_free_item_t)free_entry);
 	return ret_ok;
-}
-
-
-static void *
-get_sym_from_enviroment (const char *sym)
-{
-	return dlsym (NULL, sym);
 }
 
 
@@ -162,84 +188,89 @@ static void *
 get_sym_from_dlopen_handler (void *dl_handle, const char *sym)
 {
 	void *re;
+	char *error;
 	   
-	/* Get the sym
+	/* Clear the possible error and look for the symbol
 	 */
+	dlerror();
 	re = (void *) dlsym(dl_handle, sym);
-	if (re == NULL) {
-		PRINT_ERROR ("ERROR: %s\n", dlerror());
+	if ((error = dlerror()) != NULL)  {
+		PRINT_MSG ("ERROR: %s\n", dlerror());
 		return NULL;
 	}
 	
 	return re;
 }
 
+
 static ret_t
-dylib_open (const char *libname, void **handler_out) 
+dylib_open (const char *libname, void **handler_out, int extra_flags) 
 {
-	ret_t  ret;
-	void  *lib;
-	int    flags;
-	CHEROKEE_NEW(tmp, buffer);
+	ret_t             ret;
+	void             *lib;
+	int               flags;
+	cherokee_buffer_t tmp = CHEROKEE_BUF_INIT; 
 	
-	flags = RTLD_BASE RTLD_OPTIONS;
+	flags = RTLD_BASE | extra_flags;
 
 	/* Build the path string
 	 */
-	ret = cherokee_buffer_add_va (tmp, CHEROKEE_PLUGINDIR "/libplugin_%s." SO_SUFFIX, libname);
+	ret = cherokee_buffer_add_va (&tmp, CHEROKEE_PLUGINDIR "/libplugin_%s." SO_SUFFIX, libname);
 	if (unlikely(ret < ret_ok)) return ret;
 	
 	/* Open the library	
 	 */
-	lib = dlopen (tmp->buf, flags);
+	lib = dlopen (tmp.buf, flags);
 	if (lib == NULL) {
-		PRINT_ERROR ("ERROR: dlopen(): %s\n", dlerror());
+		PRINT_ERROR ("ERROR: dlopen(%s): %s\n", tmp.buf, dlerror());
 		goto error;
 	}
 
 	/* Free the memory
 	 */
-	cherokee_buffer_free (tmp);
+	cherokee_buffer_mrproper (&tmp);
 
 	*handler_out = lib;
 	return ret_ok;
 
 error:
-	cherokee_buffer_free(tmp);
+	cherokee_buffer_mrproper (&tmp);
 	return ret_error;
 }
 
 
 static ret_t
-execute_init_func (cherokee_module_loader_t *loader, const char *module, void *dl_handler)
+execute_init_func (cherokee_module_loader_t *loader, const char *module, entry_t *entry)
 {
 	ret_t ret;
 	void (*init_func) (cherokee_module_loader_t *);
-	CHEROKEE_NEW(init_name, buffer);
-	
+	cherokee_buffer_t init_name = CHEROKEE_BUF_INIT;
+
 	/* Build the init function name
 	 */
-	ret = cherokee_buffer_add_va (init_name, "%s_init", module);
+	ret = cherokee_buffer_add_va (&init_name, "cherokee_module_%s_init", module);
 	if (unlikely(ret < ret_ok)) return ret;
 
 	/* Get the function
 	 */
-	if (dl_handler == NULL) 
-		init_func = get_sym_from_dlopen_handler (dl_handler, init_name->buf);
-	else 
-		init_func = get_sym_from_enviroment (init_name->buf);
-	
+	if (entry->dlopen_ref == NULL) 
+		return ret_error;
 
-	/* Free the init function name string
-	 */
-	cherokee_buffer_free (init_name);
-	
+	init_func = get_sym_from_dlopen_handler (entry->dlopen_ref, init_name.buf);
+		
 	/* Only try to execute if it exists
 	 */
 	if (init_func == NULL) {
+		PRINT_ERROR ("WARNING: %s doesn't found\n", init_name.buf);
+
+		cherokee_buffer_mrproper (&init_name);
 		return ret_not_found;
 	}
-	
+
+	/* Free the init function name string
+	 */
+	cherokee_buffer_mrproper (&init_name);
+
 	/* Execute the init func
 	 */
 	init_func(loader);
@@ -248,42 +279,34 @@ execute_init_func (cherokee_module_loader_t *loader, const char *module, void *d
 
 
 static ret_t
-get_info (const char *module, cherokee_module_info_t **info, void **dl_handler)
+get_info (const char *module, int flags, cherokee_module_info_t **info, void **dl_handler)
 {
-	ret_t ret;
-	CHEROKEE_NEW(info_name,buffer);
-	
+	ret_t             ret;
+	cherokee_buffer_t info_name = CHEROKEE_BUF_INIT;
+
 	/* Build the info struct string
 	 */
-	cherokee_buffer_add_va (info_name, "cherokee_%s_info", module);
+	cherokee_buffer_add_va (&info_name, "cherokee_%s_info", module);
 
-	/* Maybe it's statically linked
-	 */
-	*info = get_sym_from_enviroment (info_name->buf);
-
-	/* Or maybe we have to load a dinamic library
-	 */	
-	if (*info == NULL) {
-		ret = dylib_open (module, dl_handler);
-		if (ret != ret_ok) {
-			ret = ret_error;
-			goto error;
-		}
-
-		*info = get_sym_from_dlopen_handler (*dl_handler, info_name->buf);
-		if (*info == NULL) {
-			ret = ret_not_found;
-			goto error;
-		}
+	ret = dylib_open (module, dl_handler, flags);
+	if (ret != ret_ok) {
+		ret = ret_error;
+		goto error;
 	}
 	
+	*info = get_sym_from_dlopen_handler (*dl_handler, info_name.buf);
+	if (*info == NULL) {
+		ret = ret_not_found;
+		goto error;
+	}
+
 	/* Free the info struct string
 	 */
-	cherokee_buffer_free (info_name);
+	cherokee_buffer_mrproper (&info_name);
 	return ret_ok;
 
 error:
-	cherokee_buffer_free (info_name);
+	cherokee_buffer_mrproper (&info_name);
 	return ret;	
 }
 
@@ -291,12 +314,12 @@ error:
 ret_t
 check_deps_file (cherokee_module_loader_t *loader, char *modname)
 {
-	FILE  *file;
-	char   temp[128];
-	CHEROKEE_NEW (filename, buffer);
+	FILE             *file;
+	char              temp[128];
+	cherokee_buffer_t filename = CHEROKEE_BUF_INIT;
 
-	cherokee_buffer_add_va (filename, "%s/%s.deps", CHEROKEE_DEPSDIR, modname);
-	file = fopen (filename->buf, "r");
+	cherokee_buffer_add_va (&filename, "%s/%s.deps", CHEROKEE_DEPSDIR, modname);
+	file = fopen (filename.buf, "r");
 	if (file == NULL) goto exit;
 
 	while (!feof(file)) {
@@ -321,19 +344,22 @@ check_deps_file (cherokee_module_loader_t *loader, char *modname)
 	fclose (file);
 
 exit:
-	cherokee_buffer_free (filename);
+	cherokee_buffer_mrproper (&filename);
 	return ret_ok;
 }
 
 
-ret_t 
-cherokee_module_loader_load (cherokee_module_loader_t *loader, char *modname)
+static ret_t
+load_common (cherokee_module_loader_t *loader, char *modname, int flags)
 {
 	ret_t                   ret;
+	entry_t                *entry     = NULL;
 	cherokee_module_info_t *info      = NULL;
 	void                   *dl_handle = NULL;
-	
-	ret = cherokee_table_get (loader->table, modname, &dl_handle);
+
+	/* If it is already loaded just return 
+	 */
+	ret = cherokee_table_get (loader, modname, (void **)&entry);
 	if (ret == ret_ok) return ret_ok;
 	
 	/* Check deps
@@ -343,7 +369,7 @@ cherokee_module_loader_load (cherokee_module_loader_t *loader, char *modname)
 
 	/* Get the module info
 	 */
-	ret = get_info (modname, &info, &dl_handle);
+	ret = get_info (modname, flags, &info, &dl_handle);
 	switch (ret) {
 	case ret_ok:
 		break;
@@ -358,21 +384,99 @@ cherokee_module_loader_load (cherokee_module_loader_t *loader, char *modname)
 		return ret_error;
 	}
 	
+	/* Add new entry
+	 */
+	entry = malloc (sizeof(entry_t));
+	entry->dlopen_ref = dl_handle;
+	entry->info       = info; 
+	
+	ret = cherokee_table_add (loader, modname, entry);
+	if (unlikely(ret != ret_ok)) return ret;
+
 	/* Execute init function
 	 */
-	execute_init_func (loader, modname, dl_handle);
-	
-	ret = cherokee_table_add (loader->table, modname, info);
-	if (unlikely(ret != ret_ok)) return ret;
-	
+	execute_init_func (loader, modname, entry);
+
 	return ret_ok;
 }
 
 
 ret_t 
-cherokee_module_loader_get (cherokee_module_loader_t *loader, char *modname, cherokee_module_info_t **info)
+cherokee_module_loader_load_no_global (cherokee_module_loader_t *loader, char *modname)
 {
-	return cherokee_table_get (loader->table, modname, (void **)info);
+	return load_common (loader, modname, 0);
+}
+
+
+ret_t 
+cherokee_module_loader_load (cherokee_module_loader_t *loader, char *modname)
+{
+#ifdef HAVE_RTLDGLOBAL
+	return load_common (loader, modname, RTLD_GLOBAL);
+#else
+	return load_common (loader, modname, 0);
+#endif
+}
+
+
+ret_t 
+cherokee_module_loader_unload (cherokee_module_loader_t *loader, char *modname)
+{
+	int      re     = 0;
+	ret_t    ret;
+	entry_t *entry;
+
+	/* Remove item from the table
+	 */
+	ret = cherokee_table_del (loader, modname, (void **)&entry);
+	if (ret != ret_ok) return ret;
+
+	/* Free the resources
+	 */
+	if (entry->dlopen_ref != NULL) {
+		re = dlclose (entry->dlopen_ref);
+	}
+
+	free (entry);
+
+	return (re == 0) ? ret_ok : ret_error;
+}
+
+
+ret_t 
+cherokee_module_loader_get_info (cherokee_module_loader_t *loader, char *modname, cherokee_module_info_t **info)
+{
+	ret_t    ret;
+	entry_t *entry;
+
+	ret = cherokee_table_get (loader, modname, (void **)&entry);
+	if (ret != ret_ok) return ret;
+
+	*info = entry->info;
+	return ret_ok;
+}
+
+
+ret_t
+cherokee_module_loader_get_sym  (cherokee_module_loader_t *loader, char *modname, char *name, void **sym)
+{
+	ret_t    ret;
+	entry_t *entry;
+	void    *tmp;
+
+	/* Get the symbol from a dynamic library
+	 */
+	ret = cherokee_table_get (loader, modname, (void **)&entry);
+	if (ret != ret_ok) return ret;
+
+	if (entry->dlopen_ref == NULL) 
+		return ret_not_found;
+
+	tmp = get_sym_from_dlopen_handler (entry->dlopen_ref, name);
+	if (tmp == NULL) return ret_not_found;
+
+	*sym = tmp;
+	return ret_ok;
 }
 
 #endif

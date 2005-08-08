@@ -46,6 +46,7 @@ typedef ret_t (* logger_func_new_t)          (void **logger, cherokee_table_t *p
 typedef ret_t (* logger_func_init_t)         (void  *logger);
 typedef ret_t (* logger_func_free_t)         (void  *logger);
 typedef ret_t (* logger_func_flush_t)        (void  *logger);
+typedef ret_t (* logger_func_reopen_t)       (void  *logger);
 typedef ret_t (* logger_func_write_access_t) (void  *logger, void *conn);
 typedef ret_t (* logger_func_write_error_t)  (void  *logger, void *conn);
 typedef ret_t (* logger_func_write_string_t) (void  *logger, const char *format);
@@ -63,6 +64,7 @@ typedef struct {
 	/* Pure virtual methods
 	 */
 	logger_func_flush_t        flush;
+	logger_func_reopen_t       reopen;
 	logger_func_write_access_t write_access;
 	logger_func_write_error_t  write_error;
 	logger_func_write_string_t write_string;
@@ -77,14 +79,20 @@ typedef struct {
 #define LOGGER_BUFFER(b) (LOGGER(b)->buffer)
 
 
-ret_t cherokee_logger_init_base    (cherokee_logger_t *logger);
+ret_t cherokee_logger_init_base (cherokee_logger_t *logger);
 
-ret_t cherokee_logger_init         (cherokee_logger_t *logger);
-ret_t cherokee_logger_free         (cherokee_logger_t *logger);
-ret_t cherokee_logger_flush        (cherokee_logger_t *logger);
+ret_t cherokee_logger_init  (cherokee_logger_t *logger);
+ret_t cherokee_logger_free  (cherokee_logger_t *logger);
+
+ret_t cherokee_logger_reopen (cherokee_logger_t *logger);
+ret_t cherokee_logger_flush  (cherokee_logger_t *logger);
+
 ret_t cherokee_logger_write_access (cherokee_logger_t *logger, void *conn);
 ret_t cherokee_logger_write_error  (cherokee_logger_t *logger, void *conn);
 ret_t cherokee_logger_write_string (cherokee_logger_t *logger, const char *format, ...);
+
+ret_t cherokee_logger_set_backup_mode (cherokee_logger_t *logger, cherokee_boolean_t active);
+ret_t cherokee_logger_get_backup_mode (cherokee_logger_t *logger, cherokee_boolean_t *active);
 
 
 CHEROKEE_END_DECLS

@@ -44,30 +44,32 @@
 #include "server.h"
 #include "list.h"
 #include "fdpoll.h"
-#include "handler_table.h"
+#include "dirs_table.h"
 #include "virtual_server.h"
 #include "encoder_table.h"
 #include "logger_table.h"
 #include "thread.h"
 #include "module_loader.h"
 #include "icons.h"
-#include "mmap2.h"
+#include "iocache.h"
+#include "regex.h"
 
 struct cherokee_server {
 	/* Current time
 	 */
-	time_t             start_time;
-	time_t             bogo_now;
-	struct tm          bogo_now_tm;
-	cherokee_buffer_t *bogo_now_string;
+	time_t                       start_time;
+	time_t                       bogo_now;
+	struct tm                    bogo_now_tm;
+	cherokee_buffer_t           *bogo_now_string;
 #ifdef HAVE_PTHREAD
-	pthread_rwlock_t   bogo_now_mutex;
+	pthread_rwlock_t             bogo_now_mutex;
 #endif
 
 	/* Exit related
 	 */
-	char *panic_action;
-	int   wanna_exit;
+	char                        *panic_action;
+	cherokee_boolean_t           wanna_exit;
+	cherokee_server_reinit_cb_t  reinit_callback;
 	
 	/* Virtual servers
 	 */
@@ -77,77 +79,81 @@ struct cherokee_server {
 	
 	/* Threads
 	 */
-	cherokee_thread_t *main_thread;
-	int                thread_num;
-	struct list_head   thread_list;
-	int                thread_policy;
+	cherokee_thread_t         *main_thread;
+	int                        thread_num;
+	struct list_head           thread_list;
+	int                        thread_policy;
 
 	/* Modules
 	 */
-	cherokee_logger_table_t  *loggers;
-	cherokee_module_loader_t *loader;
-	cherokee_encoder_table_t *encoders;
+	cherokee_logger_table_t   *loggers;
+	cherokee_module_loader_t   loader;
+	cherokee_encoder_table_t  *encoders;
 
-	/* Tables: icons, mmap
+	/* Tables: icons, iocache
 	 */
-	cherokee_icons_t *icons;
-	cherokee_mmap2_t *mmap_cache;
-	time_t            mmap_cache_clean_next;
-
-	/* Default index files
-	 */
-	list_t index_list;
+	cherokee_icons_t          *icons;
+	cherokee_regex_table_t    *regexs;
+	cherokee_iocache_t        *iocache;
+	time_t                     iocache_clean_next;
 
 	/* Logging
 	 */
-	int    log_flush_elapse;
-	time_t log_flush_next;
+	int                        log_flush_elapse;
+	time_t                     log_flush_next;
 
 	/* Main socket
 	 */
-	int socket;
-	int socket_tls;
+	int                        socket;
+	int                        socket_tls;
+	cherokee_poll_type_t       fdpoll_method;
 
 #ifdef HAVE_PTHREAD
-	pthread_mutex_t accept_mutex;
+	pthread_mutex_t            accept_mutex;
 # ifdef HAVE_TLS
-	pthread_mutex_t accept_tls_mutex;	
+	pthread_mutex_t            accept_tls_mutex;	
 # endif
 #endif
 
 	/* System related
 	 */
- 	int      ncpus;
-	int      max_fds;
-	uint32_t system_fd_limit;
+ 	int                        ncpus;
+	int                        max_fds;
+	uint32_t                   system_fd_limit;
 
 	/* Networking config
 	 */
-	int   ipv6;
-	char *listen_to;	
-	int   fdwatch_msecs;
-	int   listen_queue;
+	int                        ipv6;
+	char                      *listen_to;	
+	int                        fdwatch_msecs;
+	int                        listen_queue;
 
-	unsigned short port;
-	unsigned short port_tls;
-	cherokee_boolean_t tls_enabled;
+	unsigned short             port;
+	unsigned short             port_tls;
+	cherokee_boolean_t         tls_enabled;
 
-	cherokee_server_token_t  server_token;
-	cherokee_buffer_t       *server_string;
+	/* Server name
+	 */
+	cherokee_server_token_t    server_token;
+	cherokee_buffer_t         *server_string;
 
-	uid_t  user;
-	uid_t  user_orig;
-	gid_t  group;
-	gid_t  group_orig;
+	/* User/group and chroot
+	 */
+	uid_t                      user;
+	uid_t                      user_orig;
+	gid_t                      group;
+	gid_t                      group_orig;
 
-	char  *chroot;
-	int    chrooted;
+	char                      *chroot;
+	int                        chrooted;
 
-	int                timeout;
-	cherokee_buffer_t *timeout_header;
+	/* Time
+	 */
+	int                        timeout;
+	cherokee_buffer_t         *timeout_header;
 
-	cherokee_boolean_t keepalive;
-	uint32_t           keepalive_max;
+	cherokee_boolean_t         keepalive;
+	uint32_t                   keepalive_max;
 
 	struct {
 		off_t min;
@@ -156,14 +162,17 @@ struct cherokee_server {
 
 	/* Another config files
 	 */
-	char             *config_file;
-	char             *mime_file;
-	char             *icons_file;
-	struct list_head  include_list;
+	char                      *config_file;
+	char                      *mime_file;
+	char                      *icons_file;
+	struct list_head           include_list;
 
 	/* Performance
 	 */
-	int max_conn_reuse;
+	int                        max_conn_reuse;
 };
+
+
+ret_t cherokee_server_del_connection (cherokee_server_t *srv, char *begin);
 
 #endif /* CHEROKEE_SERVER_PROTECTED_H */

@@ -32,25 +32,38 @@
 #include <cherokee/common.h>
 #include <cherokee/buffer.h>
 #include <time.h>
+#include <dirent.h>
+#include <netinet/in.h>
+
 
 CHEROKEE_BEGIN_DECLS
 
+/* Some global information
+ */
+const extern char *cherokee_months[]; 
+const extern char *cherokee_weekdays[]; 
+
+/* System
+ */
+ret_t cherokee_tls_init (void);
 
 /* String management functions
  */
-int   cherokee_hexit      (char c);
-char *cherokee_min_str    (char *s1, char *s2);
-char *cherokee_strfsize   (unsigned long long size, char *buf);
+int   cherokee_hexit              (char c);
+char *cherokee_min_str            (char *s1, char *s2);
+char *cherokee_strfsize           (unsigned long long size, char *buf);
+int   cherokee_estimate_va_length (char *format, va_list ap);
 
 /* Thread safe functions
  */
-int        cherokee_setenv (const char *name, const char *value, int overwrite);
-struct tm *cherokee_gmtime (const time_t *timep, struct tm *result);
+struct tm *cherokee_gmtime        (const time_t *timep, struct tm *result);
+int        cherokee_readdir       (DIR *dirstream, struct dirent *entry, struct dirent **result);
+ret_t      cherokee_gethostbyname (const char *hostname, struct in_addr *addr);
 
 /* Misc
  */
-ret_t cherokee_sys_fdlimit_get (uint32_t *limit);
-ret_t cherokee_sys_fdlimit_set (uint32_t  limit);
+ret_t cherokee_sys_fdlimit_get (cuint_t *limit);
+ret_t cherokee_sys_fdlimit_set (cuint_t  limit);
 
 
 /* Path walking
@@ -59,6 +72,11 @@ ret_t cherokee_split_pathinfo (cherokee_buffer_t  *path,
 			       int                 init_pos,
 			       char              **pathinfo,
 			       int                *pathinfo_len);
+
+ret_t cherokee_split_arguments (cherokee_buffer_t *request,
+				int                init_pos,
+				char             **arguments,
+				int               *arguments_len);
 
 CHEROKEE_END_DECLS
 

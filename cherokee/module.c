@@ -28,9 +28,26 @@
 ret_t 
 cherokee_module_init_base  (cherokee_module_t *module)
 {
-	   module->new  = NULL;
-	   module->init = NULL;
-	   module->free = NULL;
+	   module->new      = NULL;
+	   module->init     = NULL;
+	   module->get_name = NULL;
+	   module->free     = NULL;
 
 	   return ret_ok;
 }
+
+
+void
+cherokee_module_get_name (cherokee_module_t *module, const char **name)
+{
+	/* Sanity check
+	 */
+	if (module == NULL) return;
+
+	if (module->get_name != NULL) {
+		return module->get_name (module, name);
+	}
+
+	*name = "unknown";
+}
+

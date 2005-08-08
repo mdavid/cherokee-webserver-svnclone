@@ -27,37 +27,177 @@
 #include "handler_redir.h"
 
 #include "connection.h"
+#include "server-protected.h"
 #include "connection-protected.h"
+#include "pcre/pcre.h"
+#include "regex.h"
+#include "util.h"
+#include "list_ext.h"
 
-#ifdef HAVE_PCRE
-# include <pcre.h>
-#endif
+
+cherokee_module_info_t MODULE_INFO(redir) = {
+	cherokee_handler,             /* type     */
+	cherokee_handler_redir_new    /* new func */
+};
 
 
-#ifdef HAVE_PCRE
-static pcre* compile_regex (char* pattern);
-static void  substitute_groups (cherokee_buffer_t* url, int groupsfound,
-			       const char* subject, const char *subs,
-			       int strings[]);
+#ifndef CHEROKEE_EMBEDDED
 
 struct cre_list {
 	pcre* re;
 	char* subs;
 	struct cre_list *next;
 };
-#endif /* HAVE_PCRE */
 
 
-cherokee_module_info_t cherokee_redir_info = {
-	cherokee_handler,             /* type     */
-	cherokee_handler_redir_new    /* new func */
-};
+static void
+build_regexs_list (cherokee_handler_redir_t *n, cherokee_connection_t *cnt, list_t *regex_list)
+{
+	ret_t             ret;
+	list_t           *i;
+ 	struct cre_list **last_item; 
+	
+ 	last_item = (struct cre_list**)&(n->regex_list_cre); 
+
+	list_for_each (i, regex_list) {
+		char            *pattern;
+		int              pattern_len;
+		char            *subs;
+		int              subs_len;
+		pcre            *re;
+		struct cre_list *new;
+		char            *tmp = LIST_ITEM_INFO(i);
+
+		/* Read the values
+		 */
+		n->is_hidden = (tmp[0] == 0);
+
+		pattern = tmp+1;
+		pattern_len = strlen(pattern);
+
+		subs = pattern + pattern_len + 1;
+		subs_len = strlen (subs);
+
+		/* Look for the pattern
+		 */
+		ret = cherokee_regex_table_get (CONN_SRV(cnt)->regexs, pattern, (void **)&re);
+		if (ret != ret_ok) continue;
+
+		/* Add to the list in the same order that they are read
+		 */
+		new = (struct cre_list*)malloc(sizeof(struct cre_list));
+		new->re = re;
+		new->subs = subs;
+		new->next = NULL;
+
+		/* Add entry to the list
+		 */
+ 		*last_item = new; 
+ 		last_item = &(new->next); 
+	}
+}
+
+
+static void 
+substitute_groups (cherokee_buffer_t* url, const char* subject, 
+		   const char* subs, int ovector[], int stringcount)
+{
+	int               dollar;
+	cherokee_buffer_t buff = CHEROKEE_BUF_INIT;
+	
+	cherokee_buffer_ensure_size (&buff, 1024);
+
+	for(dollar = 0; *subs != '\0'; subs++) {
+
+		if (dollar) {
+			char num = *subs - '0';
+
+			if (num >= 0 && num <= 9) {
+				pcre_copy_substring (subject, ovector, stringcount, num, buff.buf, buff.size-1);
+				cherokee_buffer_add (url, buff.buf, strlen(buff.buf));
+
+			} else {
+				/* If it is not a number, add both characters 
+				 */
+				cherokee_buffer_add (url, (char *)"$",  1);
+				cherokee_buffer_add (url, (char *)subs, 1);
+			}
+
+			dollar = 0;
+		} else {
+			if (*subs == '$')
+				dollar = 1;
+			else 
+				cherokee_buffer_add (url, (char *)subs, 1);
+		}
+	}
+
+	cherokee_buffer_mrproper (&buff);
+}
+
+
+static ret_t
+match_and_substitute (cherokee_handler_redir_t *n) 
+{
+	struct cre_list       *list;
+	cherokee_connection_t *conn = HANDLER_CONN(n);
+
+	list = (struct cre_list*)n->regex_list_cre;
+	while (list != NULL) {	
+		int   ovector[30], rc;
+		char *subject     = conn->request->buf + conn->web_directory->len;
+		int   subject_len = strlen (subject);
+
+		rc = pcre_exec (list->re, NULL, subject, subject_len, 0, 0, ovector, 30);
+		if (rc == 0) {
+			PRINT_ERROR_S("Too many groups in the regex\n");
+		}
+		
+		if (rc <= 0) {
+			list = list->next;
+			continue;
+		}
+
+		/* Internal redirect
+		 */
+		if (n->is_hidden == true) {
+			int   len;
+			char *args;
+			char *subject_copy = strdup (subject);
+
+			cherokee_buffer_ensure_size (conn->request, conn->request->len + subject_len);
+			cherokee_buffer_clean (conn->request);
+
+			substitute_groups (conn->request, subject_copy, list->subs, ovector, rc);
+
+			cherokee_split_arguments (conn->request, 0, &args, &len);
+
+			if (len > 0) {
+				cherokee_buffer_clean (conn->query_string);
+				cherokee_buffer_add (conn->query_string, args, len);
+				cherokee_buffer_drop_endding (conn->request, len+1);
+			}
+			
+			free (subject_copy);
+			return ret_eagain;
+		}
+		
+		/* External redirect
+		 */
+		cherokee_buffer_ensure_size (conn->redirect, conn->request->len + subject_len);
+		substitute_groups (conn->redirect, subject, list->subs, ovector, rc);
+		return ret_ok;
+	}
+
+	return ret_ok;
+}
+
+#endif
 
 ret_t 
 cherokee_handler_redir_new (cherokee_handler_t **hdl, void *cnt, cherokee_table_t *properties)
 {
-	int i;
-	int *count;
+	ret_t ret;
 	CHEROKEE_NEW_STRUCT (n, handler_redir);
 	
 	/* Init the base class object
@@ -71,56 +211,35 @@ cherokee_handler_redir_new (cherokee_handler_t **hdl, void *cnt, cherokee_table_
 	HANDLER(n)->connection  = cnt;
 	HANDLER(n)->support     = hsupport_nothing;
 
-	n->regex_list           = NULL;
+	n->regex_list_ref       = NULL;
+	n->regex_list_cre       = NULL;
 	n->target_url           = NULL;
 	n->target_url_len       = 0;
+	n->is_hidden            = false;
 	
 	/* It needs at least the "URL" configuration parameter..
 	 */
 	if (cherokee_buffer_is_empty (CONN(cnt)->redirect) && properties) {
-
 		/* Get the URL property, if needed
 		 */
 		n->target_url     = cherokee_table_get_val (properties, "url");
 		n->target_url_len = (n->target_url == NULL ? 0 : strlen(n->target_url));
 	}
 
-	/* Create the list of compiled regexs
+	/* Manage the regex rules
 	 */
-#ifdef HAVE_PCRE
-	if (cherokee_table_get (properties, "regex_count", &count) == ret_ok)
-	{
-		struct cre_list **last_item;
-		last_item = (struct cre_list**)&(n->regex_list);
-
-		for (i = 0; i < *count; i++)
-		{
-			char name[32];
-			char *pattern, *subs;
-			pcre *re;
-			struct cre_list *new;
-
-			snprintf(name, sizeof(name), "regex_%d_expr", i);
-			if ((pattern = cherokee_table_get_val(properties, name)) == NULL)
-				continue;
-
-			snprintf(name, sizeof(name), "regex_%d_subs", i);
-			if ((subs = cherokee_table_get_val(properties, name)) == NULL)
-				continue;
-
-			if ((re = compile_regex(pattern)) == NULL)
-				continue;
-
-			/* Add to the list in the same order that they are read
-			 */
-			new = (struct cre_list*)malloc(sizeof(struct cre_list));
-			new->re = re;
-			new->subs = subs;
-			new->next = NULL;
-
-			*last_item = new;
-			last_item = &(new->next);
+#ifndef CHEROKEE_EMBEDDED
+	if (properties != NULL) {
+		cherokee_typed_table_get_list (properties, "regex_list", &n->regex_list_ref);
+		if (n->regex_list_ref != NULL) {
+			build_regexs_list (n, cnt, n->regex_list_ref);
 		}
+	}
+
+	ret = match_and_substitute (n);
+	if (ret == ret_eagain) {
+		cherokee_handler_redir_free (n);
+		return ret_eagain;
 	}
 #endif
 
@@ -134,17 +253,6 @@ cherokee_handler_redir_new (cherokee_handler_t **hdl, void *cnt, cherokee_table_
 ret_t 
 cherokee_handler_redir_free (cherokee_handler_redir_t *rehdl)
 {
-#ifdef HAVE_PCRE
-	struct cre_list *n, *list;
-
-	list = (struct cre_list *)rehdl->regex_list;
-	while (list != NULL) {
-		n = list->next;
-		free(list);
-		list = n;
-	}
-#endif
-
 	return ret_ok;
 }
 
@@ -152,56 +260,36 @@ cherokee_handler_redir_free (cherokee_handler_redir_t *rehdl)
 ret_t 
 cherokee_handler_redir_init (cherokee_handler_redir_t *n)
 {
+	int                    request_end;
+	char                  *request_endding;
 	cherokee_connection_t *conn = HANDLER_CONN(n);
     
-	conn->error_code = http_moved_permanently;
-	
-#ifdef HAVE_PCRE
-        /* First, look up in the regex list
+	/* Maybe ::new -> match_and_substitute() has already set
+	 * this redirection
 	 */
-	{
-		struct cre_list *list;
-		
-		list = (struct cre_list*)n->regex_list;
-		while (list != NULL)
-		{
-			int strings[30], rc;
-			char *subject = conn->request->buf + conn->web_directory->len;
-			
-			rc = pcre_exec (list->re, NULL, subject, strlen(subject), 0, 0, strings, 30);
-			
-			if (rc == 0) {
-				/* TODO: write to error.log 
-				 */
-				PRINT_ERROR_S("Too many groups in the regex\n");
-				
-			} else if (rc > 0) {
-				/* Eureka!
-				 */
-				substitute_groups (conn->redirect, rc, subject, list->subs, strings);
-				return ret_error;
-			}
-			
-			list = list->next;
-		}
+	if (! cherokee_buffer_is_empty (conn->redirect)) {		
+		conn->error_code = http_moved_permanently;
+		return ret_error;
 	}
-#endif
+	
+	/* Check if it has the URL
+	 */
+	if (n->target_url_len <= 0) {
+		conn->error_code = http_internal_error;
+		return ret_error;		
+	}
 
 	/* Try with URL directive
 	 */
-	if (cherokee_buffer_is_empty (conn->redirect)) {
-		int   request_end;
-		char *request_endding;
+	request_end = (conn->request->len - conn->web_directory->len);
+	request_endding = conn->request->buf + conn->web_directory->len;
+	
+	cherokee_buffer_ensure_size (conn->redirect, request_end + n->target_url_len +1);
+	
+	cherokee_buffer_add (conn->redirect, n->target_url, n->target_url_len);
+	cherokee_buffer_add (conn->redirect, request_endding, request_end);
 
-		request_end = (conn->request->len - conn->web_directory->len);
-		request_endding = conn->request->buf + conn->web_directory->len;
-
-		cherokee_buffer_ensure_size (conn->redirect, request_end + n->target_url_len +1);
-
-		cherokee_buffer_add (conn->redirect, n->target_url, n->target_url_len);
-		cherokee_buffer_add (conn->redirect, request_endding, request_end);
-	} 
-
+	conn->error_code = http_moved_permanently;
 	return ret_ok;
 }
 
@@ -209,116 +297,18 @@ cherokee_handler_redir_init (cherokee_handler_redir_t *n)
 ret_t 
 cherokee_handler_redir_add_headers (cherokee_handler_redir_t *rehdl, cherokee_buffer_t *buffer)
 {
-	cherokee_connection_t *conn = CONN(HANDLER(rehdl)->connection);
-	
-	if (!cherokee_buffer_is_empty (conn->redirect)) {
-		cherokee_buffer_add (buffer, "Location: ", 10);
-		cherokee_buffer_add_buffer (buffer, conn->redirect);
-		cherokee_buffer_add (buffer, CRLF, 2);
-	}
-
 	return ret_ok;
 }
 
 
-/* PCRE code
- */
-#ifdef HAVE_PCRE
-
-
-static struct {
-# ifdef HAVE_PTHREAD
-	pthread_rwlock_t rwlock;
-# endif
-	cherokee_table_t *cache;
-} regex_cache;
-
-
-static pcre* 
-compile_regex (char* pattern)
-{
-	pcre* re;
-
-	CHEROKEE_RWLOCK_READER(&regex_cache.rwlock);
-	re = (pcre*)cherokee_table_get_val (regex_cache.cache, pattern);
-	CHEROKEE_RWLOCK_UNLOCK(&regex_cache.rwlock);
-
-	if (re == NULL)
-	{
-		CHEROKEE_RWLOCK_WRITER(&regex_cache.rwlock);
-
-		/* Check again, because another thread can create it after the
-		 * previous unlock.
-		 */
-		re = (pcre*)cherokee_table_get_val (regex_cache.cache, pattern);
-		if (re == NULL)
-		{
-			const char* error_msg;
-			int         error_offset;
-
-			re = pcre_compile (pattern, 0, &error_msg, &error_offset, NULL);
-
-			if (re == NULL) {
-				/* TODO: Write the error to error.log
-				 */
-				PRINT_ERROR ("Error in regex <<%s>>: \"%s\", offset %d\n", 
-					     pattern, error_msg, error_offset);
-			} else {
-				cherokee_table_add (regex_cache.cache, pattern, re);
-			}
-		}
-		CHEROKEE_RWLOCK_UNLOCK(&regex_cache.rwlock);
-	}
-
-	return re;
-}
-
-
-static void 
-substitute_groups (cherokee_buffer_t* url, int groupsfound, 
-		   const char* subject, const char* subs, int strings[])
-{
-	char buff[512];
-	int dollar;
-
-	cherokee_buffer_ensure_size(url, strlen(subs));
-	dollar = 0;
-
-	for(; *subs; subs++) {
-		if (dollar) {
-			if (*subs >= '0' && *subs <= '9') {
-				pcre_copy_substring (subject, strings, groupsfound,
-						     *subs - '0', buff, sizeof(buff));
-				cherokee_buffer_add (url, buff, strlen(buff));
-
-			} else {
-				/* If it is not a number, add both characters 
-				 */
-				cherokee_buffer_add (url, "$", 1);
-				cherokee_buffer_add (url, subs, 1);
-			}
-
-			dollar = 0;
-		} else {
-			if (*subs == '$')
-				dollar = 1;
-			else 
-				cherokee_buffer_add (url, subs, 1);
-		}
-	}
-}
-
-#endif /* HAVE_PCRE */
-
 
 /* Library init function
  */
+static cherokee_boolean_t _redir_is_init = false;
 
 void 
-redir_init (cherokee_module_loader_t *loader)
+MODULE_INIT(redir) (cherokee_module_loader_t *loader)
 {
-#ifdef HAVE_PCRE
-	CHEROKEE_RWLOCK_INIT (&regex_cache.rwlock, NULL);
-	cherokee_table_new(&regex_cache.cache);
-#endif /* HAVE_PCRE */
+	if (_redir_is_init) return;
+	_redir_is_init = true;
 }

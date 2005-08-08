@@ -36,7 +36,7 @@
 #include "server-protected.h"
 #include "module_loader-protected.h"
 
-cherokee_module_info_t cherokee_server_info_info = {
+cherokee_module_info_t MODULE_INFO(server_info) = {
 	cherokee_handler,                /* type     */
 	cherokee_handler_server_info_new /* new func */
 };
@@ -232,6 +232,7 @@ build_modules_table_content_while (const char *key, void *value, void *params[])
 	int                    *handlers   = (int *) params[3];
 	int                    *encoders   = (int *) params[4];
 	int                    *validators = (int *) params[5];
+	int                    *generic    = (int *) params[6];
 	cherokee_module_info_t *mod        = value;
 	   
 	if (mod->type & cherokee_logger) {
@@ -242,6 +243,8 @@ build_modules_table_content_while (const char *key, void *value, void *params[])
 		*encoders += 1;
 	} else if (mod->type & cherokee_validator) {
 		*validators += 1;
+	} else if (mod->type & cherokee_generic) {
+		*generic += 1;
 	} else {
 		SHOULDNT_HAPPEN;
 	}
@@ -256,9 +259,10 @@ build_modules_table_content (cherokee_buffer_t *buf, cherokee_server_t *srv)
 	int   handlers   = 0;
 	int   encoders   = 0;
 	int   validators = 0;	   
-	void *params[]   = {buf, srv, &loggers, &handlers, &encoders, &validators};
+	int   generic    = 0;
+	void *params[]   = {buf, srv, &loggers, &handlers, &encoders, &validators, &generic};
 
-	cherokee_table_while (srv->loader->table, 
+	cherokee_table_while (&srv->loader, 
 			      (cherokee_table_while_func_t) build_modules_table_content_while, 
 			      params, NULL, NULL);
 
@@ -266,6 +270,7 @@ build_modules_table_content (cherokee_buffer_t *buf, cherokee_server_t *srv)
 	table_add_row_int (buf, "Handlers", handlers);
 	table_add_row_int (buf, "Encoders",  encoders);
 	table_add_row_int (buf, "Validators", validators);
+	table_add_row_int (buf, "Generic", generic);
 }
 
 static ret_t
@@ -368,11 +373,7 @@ cherokee_handler_server_info_new  (cherokee_handler_t **hdl, cherokee_connection
 	cherokee_buffer_ensure_size (n->buffer, 4*1024);
 
 	if (properties) {
-		void *tmp;
-		ret_t ret;
-
-		ret = cherokee_table_get (properties, "about", &tmp);
-		n->just_about = (ret == ret_ok);
+		cherokee_typed_table_get_int (properties, "about", &n->just_about);
 	}
 
 	*hdl = HANDLER(n);
@@ -444,4 +445,18 @@ cherokee_handler_server_info_add_headers (cherokee_handler_server_info_t *hdl, c
 	}
 
 	return ret_ok;
+}
+
+
+/* Library init function
+ */
+static cherokee_boolean_t _server_info_is_init = false;
+
+void
+MODULE_INIT(server_info) (cherokee_module_loader_t *loader)
+{
+	/* Is init?
+	 */
+	if (_server_info_is_init) return;
+	_server_info_is_init = true;
 }

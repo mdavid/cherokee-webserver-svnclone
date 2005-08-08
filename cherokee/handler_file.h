@@ -43,9 +43,11 @@ typedef struct {
 	
 	int                    fd;
 	off_t                  offset;
-	struct stat            info;
+	struct stat           *info;
 	cherokee_mime_entry_t *mime;
 	cherokee_boolean_t     using_sendfile;
+	cherokee_boolean_t     nocache;
+	struct stat            nocache_info;	
 } cherokee_handler_file_t;
 
 #define FHANDLER(x)  ((cherokee_handler_file_t *)(x))
@@ -60,6 +62,7 @@ ret_t cherokee_handler_file_new (cherokee_handler_t **hdl, cherokee_connection_t
  */
 ret_t cherokee_handler_file_init        (cherokee_handler_file_t *hdl);
 ret_t cherokee_handler_file_free        (cherokee_handler_file_t *hdl);
+void  cherokee_handler_file_get_name    (cherokee_handler_file_t *hdl, const char **name);
 ret_t cherokee_handler_file_step        (cherokee_handler_file_t *hdl, cherokee_buffer_t *buffer);
 ret_t cherokee_handler_file_add_headers (cherokee_handler_file_t *hdl, cherokee_buffer_t *buffer);
 

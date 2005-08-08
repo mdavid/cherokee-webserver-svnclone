@@ -22,19 +22,21 @@
  * USA
  */
 
-#ifndef __CHEROKEE_VALIDATOR_H__
-#define __CHEROKEE_VALIDATOR_H__
+#ifndef CHEROKEE_VALIDATOR_H
+#define CHEROKEE_VALIDATOR_H
 
 #include "common.h"
 #include "buffer.h"
 #include "module.h"
 #include "table.h"
+#include "http.h"
 
 
 /* Callback function definitions
  */
-typedef ret_t (* validator_func_new_t)   (void **validator, cherokee_table_t *properties); 
-typedef ret_t (* validator_func_check_t) (void  *validator, void *conn);
+typedef ret_t (* validator_func_new_t)         (void **validator, cherokee_table_t *properties); 
+typedef ret_t (* validator_func_check_t)       (void  *validator, void *conn);
+typedef ret_t (* validator_func_add_headers_t) (void  *validator, void *conn, cherokee_buffer_t *buf);
 
 
 typedef struct {
@@ -44,16 +46,23 @@ typedef struct {
 	
 	/* Pure virtual methods	
 	 */
-	validator_func_check_t check;
+	validator_func_check_t       check;
+	validator_func_add_headers_t add_headers;
+
+	/* Properties
+	 */
+	cherokee_http_auth_t support;
 	
 } cherokee_validator_t;
 
 #define VALIDATOR(x) ((cherokee_validator_t *)(x))
 
 
-ret_t cherokee_validator_init_base    (cherokee_validator_t *validator);
+ret_t cherokee_validator_init_base (cherokee_validator_t *validator);
+ret_t cherokee_validator_free_base (cherokee_validator_t *validator);   
 
-ret_t cherokee_validator_free  (cherokee_validator_t *validator);
-ret_t cherokee_validator_check (cherokee_validator_t *validaror, void *conn);
+ret_t cherokee_validator_free        (cherokee_validator_t *validator);
+ret_t cherokee_validator_check       (cherokee_validator_t *validator, void *conn);
+ret_t cherokee_validator_add_headers (cherokee_validator_t *validator, void *conn, cherokee_buffer_t *buf);
 
-#endif /* __CHEROKEE_VALIDATOR_H__ */
+#endif /* CHEROKEE_VALIDATOR_H */

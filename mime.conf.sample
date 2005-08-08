@@ -21,6 +21,10 @@ text/css {
   suffixes css
 }
 
+text/plain {
+  suffixes txt
+}
+
 text/xml {
   suffixes xml, dtd
 }

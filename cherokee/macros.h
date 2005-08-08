@@ -31,7 +31,11 @@
 #define CHEROKEE_MACROS_H
 
 #include <stdio.h>
-#include <stdint.h>
+#include <stdarg.h>
+
+#ifdef HAVE_SYS_VARARGS
+# include <sys/varargs.h>
+#endif
 
 #ifdef  __cplusplus
 #  define CHEROKEE_BEGIN_DECLS  extern "C" {
@@ -84,9 +88,12 @@
 #define DEFAULT_CONN_REUSE            20
 #define TERMINAL_WIDTH                80
 #define DEFAULT_TRAFFIC_UPDATE        10
+#define CGI_TIMEOUT                   65
+#define MSECONS_TO_LINGER             2000
 
-#define MMAP_MAX_FILE_SIZE            50000
-#define MMAP_DEFAULT_CLEAN_ELAPSE     30
+#define IOCACHE_MAX_FILE_SIZE            50000
+#define IOCACHE_DEFAULT_CLEAN_ELAPSE     20
+#define IOCACHE_BASIC_SIZE               50
 
 #define EXIT_CANT_CREATE_SERVER_SOCKET4 10
 #define EXIT_SERVER_CLEAN               30
@@ -154,8 +161,10 @@
  */
 #ifdef __GNUC__
 # define PRINT_ERROR(fmt,arg...) fprintf(stderr, "%s/%d: "fmt, __FILE__, __LINE__, ##arg)
+# define PRINT_MSG(fmt,arg...)   fprintf(stderr, fmt, ##arg)
 #else
 # define PRINT_ERROR(fmt,...)    fprintf(stderr, "%s/%d: "fmt, __FILE__, __LINE__, __VA_ARGS__)
+# define PRINT_MSG(fmt,...)      fprintf(stderr, fmt, __VA_ARGS__)
 #endif
 
 #ifdef DEBUG
@@ -173,6 +182,8 @@
 #endif
 
 #define PRINT_ERROR_S(str) PRINT_ERROR("%s",str)
+#define PRINT_MSG_S(str)   PRINT_MSG("%s",str)
+
  
 /* Conversions
  */
@@ -211,6 +222,26 @@
 #else
 # define FMT_OFFSET "%lu"
 # define CST_OFFSET unsigned long
+#endif
+
+
+#ifdef O_NOATIME
+# define CHE_O_READ O_RDONLY | O_NOATIME
+#else
+# define CHE_O_READ O_RDONLY
+#endif
+
+
+#ifndef va_copy
+# ifdef __va_copy
+#  define va_copy(DEST,SRC) __va_copy((DEST),(SRC))
+# else
+#  ifdef HAVE_VA_LIST_AS_ARRAY
+#   define va_copy(DEST,SRC) (*(DEST) = *(SRC))
+#  else
+#   define va_copy(DEST,SRC) ((DEST) = (SRC))
+#  endif
+# endif
 #endif
 
 

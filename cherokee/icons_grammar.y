@@ -50,7 +50,7 @@ static list_t  current_list;
 void
 yy_icons_error(char* msg)
 {
-        PRINT_ERROR ("Error parsing configuration: '%s', line %d, symbol '%s' (0x%x)\n", 
+        PRINT_ERROR ("ERROR: parsing configuration: '%s', line %d, symbol '%s' (0x%x)\n", 
 				 msg, yy_icons_lineno, yy_icons_text, yy_icons_text[0]);
 }
 
@@ -90,7 +90,7 @@ files : T_FILE maybe_nl '{' maybe_nl files_entries maybe_nl '}';
 files_entries : files_entries file_entry
               | file_entry;
 
-file_entry : T_FULLDIR list_ids
+file_entry : T_ID list_ids
 {
 	   cherokee_icons_set_files (ICONS(icons), $2, $1);
 	   cherokee_list_free ($2, free);
@@ -106,7 +106,7 @@ suffixes_entries : suffix_entry
                  | suffixes_entries suffix_entry
                  | nl;
 
-suffix_entry : T_FULLDIR list_ids
+suffix_entry : T_ID list_ids
 {
 	   cherokee_icons_set_suffixes (ICONS(icons), $2, $1);	   
 	   cherokee_list_free ($2, free);
@@ -116,21 +116,21 @@ suffix_entry : T_FULLDIR list_ids
 
 /* Default
  */
-default : T_DEFAULT T_FULLDIR
+default : T_DEFAULT T_ID
 {
 	   cherokee_icons_set_default (ICONS(icons), $2);
 };
 
 /* Directory
  */
-directory : T_DIRECTORY T_FULLDIR
+directory : T_DIRECTORY T_ID
 {
 	   cherokee_icons_set_directory (ICONS(icons), $2);
 };
 
 /* Parent directory
  */
-parent : T_PARENT T_FULLDIR
+parent : T_PARENT T_ID
 {
 	   cherokee_icons_set_parentdir (ICONS(icons), $2);
 };

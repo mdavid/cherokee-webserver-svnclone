@@ -29,6 +29,16 @@
 #include <poll.h>
 #include <port.h>
 #include <unistd.h>
+#include <errno.h>
+
+#define WRITE ""
+#define READ  NULL
+
+#define POLL_READ   (POLLIN)
+#define POLL_WRITE  (POLLOUT)
+#define POLL_ERROR  (POLLHUP | POLLERR | POLLNVAL)
+
+
 
 /***********************************************************************/
 /* Solaris 10: Event ports                                             */
@@ -51,17 +61,45 @@
 typedef struct {
 	struct cherokee_fdpoll poll;
 
-	int port;
+	int                    port;
+	port_event_t           *port_events;
+	int                    *port_activefd;
+	int                    port_readyfds;
 } cherokee_fdpoll_port_t;
 
+
+static ret_t
+fd_associate( cherokee_fdpoll_port_t *fdp, int fd, void *rw )
+{
+	int rc;
+	
+	rc = port_associate (fdp->port,                /* port */
+			     PORT_SOURCE_FD,           /* source */
+			     fd,                       /* object */
+			     rw?POLL_WRITE:POLL_READ,  /* events */
+			     rw);                      /* user data */
+
+	if ( rc == -1 ) {
+                PRINT_ERROR ("ERROR: port_associate: fd %d: %s\n", fd, 
+			     strerror(errno));
+		return ret_error;
+	}
+	
+	return ret_ok;
+}
 
 
 static ret_t 
 _free (cherokee_fdpoll_port_t *fdp)
 {
-	port_close (fdp->port);
-
-        free (fdp);        
+	if ( fdp->port > 0 ) { 
+		close (fdp->port);
+	}
+	
+	free( fdp->port_events );
+	free( fdp->port_activefd );
+	
+	free( fdp );
         return ret_ok;	   
 }
 
@@ -69,72 +107,145 @@ _free (cherokee_fdpoll_port_t *fdp)
 static ret_t
 _add (cherokee_fdpoll_port_t *fdp, int fd, int rw)
 {
-/*	int port_associate (int port, 
-			    int source,  
-			    uintptr_t object,
-			    int events, 
-			    void *user);*/
-	     
+	int rc;
 
-	port_associate (fdp->port,         /* port */
-			PORT_SOURCE_FD,    /* source */
-			fd,                /* object */
-			rw?POLLOUT:POLLIN, /* events */
-			NULL);             /* user */
+	rc = fd_associate(fdp, fd, rw?WRITE:READ);
+	if ( rc == -1 ) {
+                PRINT_ERROR ("ERROR: port_associate: fd %d: %s\n", fd, 
+			     strerror(errno));
+		return ret_error;
+	}
+
+	FDPOLL(fdp)->npollfds++;
+	return ret_ok;
 }
 
 
 static ret_t
 _del (cherokee_fdpoll_port_t *fdp, int fd)
 {
+	int rc;
+
+	rc = port_dissociate( fdp->port,      /* port */
+			      PORT_SOURCE_FD, /* source */
+			      fd); /* object */
+	if ( rc == -1 ) {
+		PRINT_ERROR ("ERROR: port_dissociate: %d,%s\n", fd, 
+			     strerror(errno));
+		return ret_error;
+	}
+
+	FDPOLL(fdp)->npollfds--;
+
+	/* remote fd from the active fd list
+	 */
+	fdp->port_activefd[fd] = -1;
+
+	return ret_ok;
 }
 
 
 static int
 _watch (cherokee_fdpoll_port_t *fdp, int timeout_msecs)
 {
-	int          re;
-	int          i, fd;
-	uint_t       nget;
-	timespec_t   to;
-	port_event_t pe[5];
+	int          i, rc, fd;
+	struct timespec  timeout;
 
-	to.tv_sec  = timeout_msecs / 1000L;
-	to.tv_nsec = ( timeout_msecs % 1000L ) * 1000000L;
-	
-	re = port_getn (fdp->port, &pe, 5, &nget, &to);
-	if ((re) || (nget == -1)) {
-		/* port_close, close ? */
-		return ret_error;
+	timeout.tv_sec  = timeout_msecs/1000L;
+	timeout.tv_nsec = ( timeout_msecs % 1000L ) * 1000000L;
+
+	memset(fdp->port_activefd, -1, FDPOLL(fdp)->system_nfiles);
+
+	/* First call to get the number of file descriptors with activity
+	 */
+	rc = port_getn (fdp->port, fdp->port_events, 0,	&fdp->port_readyfds,
+			&timeout);
+	if ( rc < 0 ) {
+		PRINT_ERROR ("ERROR: port_getn: %s\n", strerror(errno));
+		return 0;
 	}
 
-	fd = pe.portev_object;
-	printf ("fd = %d\n", fd);
-	
-/*
-     int port_get(int port, port_event_t  *pe,  const  timespec_t
-     *timeout);
+	if ( fdp->port_readyfds == 0 ) {
+		/* Get at least 1 fd to wait for activity
+		 */
+		fdp->port_readyfds = 1;
+	}
 
-     int port_getn(int port,  port_event_t  list[],  uint_t  max,
-     uint_t *nget, const timespec_t *timeout);
-*/
+	/* Second call to get the events of the file descriptors with
+	 * activity
+	 */
+	rc = port_getn (fdp->port, fdp->port_events,FDPOLL(fdp)->nfiles, 
+			&fdp->port_readyfds, &timeout);
+	if ( ( (rc < 0) && (errno != ETIME) ) || (fdp->port_readyfds == -1)) {
+		PRINT_ERROR ("ERROR: port_getn: %s\n", strerror(errno));
+		return 0;
+	}
+
+	for ( i = 0; i < fdp->port_readyfds; ++i ) {
+		int nfd;
+
+		nfd = fdp->port_events[i].portev_object;
+		fdp->port_activefd[nfd] = fdp->port_events[i].portev_events;
+		rc = fd_associate( fdp, 
+				   nfd, 
+				   fdp->port_events[i].portev_user);
+		if ( rc < 0 ) {
+			PRINT_ERROR ("ERROR: port_associate: %s\n", 
+				     strerror(errno));
+		}
+	}
+
+
+	return fdp->port_readyfds;
 }
 
 
 static int
 _check (cherokee_fdpoll_port_t *fdp, int fd, int rw)
 {
+	uint32_t events;
+
+	/* Sanity check: is it a wrong fd?
+	 */
+	if ( fd < 0 ) return -1;
+
+	events = fdp->port_activefd[fd];
+	if ( events == -1 ) return 0;
+
+	switch (rw) {
+	case 0:
+		events &= (POLL_READ | POLL_ERROR);
+		break;
+	case 1:
+		events &= (POLL_WRITE | POLL_ERROR);
+		break;
+	}
+
+	return events;
 }
 
 
 static ret_t
 _reset (cherokee_fdpoll_port_t *fdp, int fd)
 {
+	return ret_ok;
 }
+
 
 static void
 _set_mode (cherokee_fdpoll_port_t *fdp, int fd, int rw)
 {
+	int rc;
+
+	rc = port_associate( fdp->port,
+			     PORT_SOURCE_FD,
+			     fd,
+			     rw ? POLLOUT : POLLIN,
+			     rw ? WRITE   : READ);
+	if ( rc == -1 ) {
+		PRINT_ERROR ("ERROR: port_associate: fd %d: %s\n", fd, 
+			     strerror(errno));
+	}
 }
 
 
@@ -163,9 +274,23 @@ fdpoll_port_new (cherokee_fdpoll_t **fdp, int sys_limit, int limit)
 	nfd->check         = (fdpoll_func_check_t) _check;
 	nfd->watch         = (fdpoll_func_watch_t) _watch;	
 
-	/* Look for max fd limit	
+	/*
 	 */
-	n->port = port_create();
+	n->port_readyfds = 0;
+	n->port_events = ( port_event_t *)malloc(sizeof(port_event_t)*nfd->nfiles);
+	n->port_activefd = (int *)malloc(sizeof(int) * nfd->system_nfiles);
+
+	if ( (!n->port_events) || (!n->port_activefd) ) {
+		_free( n );
+		return ret_nomem;
+	}
+
+	memset(n->port_activefd, -1, nfd->system_nfiles);
+
+	if ( (n->port = port_create()) == -1 ) {
+		_free( n );
+		return ret_error;
+	}
 
 	/* Return the object
 	 */

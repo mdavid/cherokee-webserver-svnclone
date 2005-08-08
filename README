@@ -1,6 +1,14 @@
 Cherokee Web Server
 ===================
 
+A mailing-list cherokee@alobbs.com is available, to subscribe:
+    http://alobbs.com/cgi-bin/mailman/listinfo/cherokee
+
+The list archive is at:
+    http://www.0x50.org/archives/
+
+
+
 1.- How to compile it
 ---------------------
 ./configure --prefix=/usr --sysconfdir=/etc
@@ -29,14 +37,6 @@ openssl req -days 1000 -new -x509 -nodes -out /etc/cherokee/ssl/cherokee.pem -ke
 --------------------------------------
 ./configure --prefix=/usr --sysconfdir=/etc --disable-pthread --disable-tls --disable-largefile --disable-pcre
 cd cherokee && make -f Makefile.embedded 
-
-
-For developers
-==============
-Let see how to compile a Cherokee module by hand.
-For example, to compile module "foo":
-
-NAME=foo && if /bin/sh ../libtool --mode=compile gcc -O0 -g -Werror -DHAVE_CONFIG_H -I. -I. -I.. -DCHEROKEE_PLUGINDIR="\""/usr/lib/cherokee"\"" -DCHEROKEE_DATADIR=\"""/usr/share/cherokee""\" -DCHEROKEE_CONFDIR=\""/etc/cherokee"\" -I/usr/include -I/usr/include -pthread -D_XOPEN_SOURCE=500 -MT handler_$NAME.lo -MD -MP -MF ".deps/handler_$NAME.Tpo" -c -o handler_$NAME.lo handler_$NAME.c; then mv -f ".deps/handler_$NAME.Tpo" ".deps/handler_$NAME.Plo"; else rm -f ".deps/handler_$NAME.Tpo"; exit 1; fi && /bin/sh ../libtool --mode=link gcc -O0 -g -Werror -o libplugin_$NAME.la -rpath "/usr/lib/cherokee" -module -avoid-version -no-undefined handler_$NAME.lo -ldl && install -c .libs/libplugin_$NAME.so /usr/lib/cherokee/
 
 
 --

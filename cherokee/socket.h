@@ -70,7 +70,11 @@
 #ifdef INET6_ADDRSTRLEN
 # define CHE_INET_ADDRSTRLEN INET6_ADDRSTRLEN
 #else
-# define CHE_INET_ADDRSTRLEN INET_ADDRSTRLEN
+#  ifdef INET_ADDRSTRLEN
+#    define CHE_INET_ADDRSTRLEN INET_ADDRSTRLEN
+#  else
+#    define CHE_INET_ADDRSTRLEN 16
+#  endif
 #endif
 
 
@@ -127,6 +131,7 @@ typedef struct {
 #endif
 #ifdef HAVE_OPENSSL
 	SSL            *session;
+	SSL_CTX        *ssl_ctx;  /* Only client socket */
 #endif
 } cherokee_socket_t;
 
@@ -150,15 +155,19 @@ ret_t cherokee_socket_new           (cherokee_socket_t **socket);
 ret_t cherokee_socket_free          (cherokee_socket_t  *socket);
 ret_t cherokee_socket_clean         (cherokee_socket_t  *socket);
 
-ret_t cherokee_socket_init_tls      (cherokee_socket_t *socket, cherokee_virtual_server_t *vserver);
-ret_t cherokee_socket_close         (cherokee_socket_t *socket);
-ret_t cherokee_socket_accept        (cherokee_socket_t *socket, int server_socket);
-ret_t cherokee_socket_set_client    (cherokee_socket_t *socket);
+ret_t cherokee_socket_init_tls        (cherokee_socket_t *socket, cherokee_virtual_server_t *vserver);
+ret_t cherokee_socket_init_client_tls (cherokee_socket_t *socket);
 
-ret_t cherokee_socket_write         (cherokee_socket_t *socket, cherokee_buffer_t *buf, size_t *writed);
-ret_t cherokee_socket_read          (cherokee_socket_t *socket, cherokee_buffer_t *buf, size_t count, size_t *readed);
+ret_t cherokee_socket_close         (cherokee_socket_t *socket);
+ret_t cherokee_socket_shutdown      (cherokee_socket_t *socket, int how);
+ret_t cherokee_socket_accept        (cherokee_socket_t *socket, int server_socket);
+ret_t cherokee_socket_set_client    (cherokee_socket_t *socket, int type);
+
+ret_t cherokee_socket_write         (cherokee_socket_t *socket, cherokee_buffer_t *buf, size_t *written);
+ret_t cherokee_socket_read          (cherokee_socket_t *socket, cherokee_buffer_t *buf, size_t count, size_t *read);
 ret_t cherokee_socket_sendfile      (cherokee_socket_t *socket, int fd, size_t size, off_t *offset, ssize_t *sent);
 ret_t cherokee_socket_connect       (cherokee_socket_t *socket);
+ret_t cherokee_socket_set_timeout   (cherokee_socket_t *socket, cuint_t timeout);
 
 ret_t cherokee_socket_ntop          (cherokee_socket_t *socket, char *buf, size_t buf_size);
 ret_t cherokee_socket_pton          (cherokee_socket_t *socket, cherokee_buffer_t *buf);
@@ -168,13 +177,13 @@ ret_t cherokee_socket_gethostbyname (cherokee_socket_t *socket, cherokee_buffer_
 
 /* Low level functions
  */
-ret_t cherokee_read   (cherokee_socket_t *socket, char *buf, int buf_size, size_t *readed);
-ret_t cherokee_write  (cherokee_socket_t *socket, const char *buf, int len, size_t *writed);
-ret_t cherokee_writev (cherokee_socket_t *socket, const struct iovec *vector, uint16_t vector_len, size_t *writed);
+ret_t cherokee_read   (cherokee_socket_t *socket, char *buf, int buf_size, size_t *read);
+ret_t cherokee_write  (cherokee_socket_t *socket, const char *buf, int len, size_t *written);
+ret_t cherokee_writev (cherokee_socket_t *socket, const struct iovec *vector, uint16_t vector_len, size_t *written);
 
 /* Extra
  */
-ret_t cherokee_socket_accept_fd    (int server_socket, int *new_fd, struct sockaddr *sa);
-ret_t cherokee_socket_set_sockaddr (cherokee_socket_t *socket, int fd, struct sockaddr *sa);
+ret_t cherokee_socket_accept_fd    (int server_socket, int *new_fd, cherokee_sockaddr_t *sa);
+ret_t cherokee_socket_set_sockaddr (cherokee_socket_t *socket, int fd, cherokee_sockaddr_t *sa);
 
 #endif /* CHEROKEE_SOCKET_H */

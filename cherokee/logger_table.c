@@ -47,13 +47,6 @@ cherokee_logger_table_new  (cherokee_logger_table_t **lt)
 
 
 ret_t 
-cherokee_logger_table_clean (cherokee_logger_table_t *et)
-{
-	return cherokee_table_clean (&et->table);
-}
-
-
-ret_t 
 cherokee_logger_table_free (cherokee_logger_table_t *et)
 {
 	return cherokee_table_free (&et->table);

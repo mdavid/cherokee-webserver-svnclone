@@ -24,6 +24,8 @@
 
 #include "common-internal.h"
 #include "virtual_server.h"
+#include "dirs_table_entry.h"
+#include "list_ext.h"
 
 #include "handler_error.h"
 
@@ -38,15 +40,19 @@ cherokee_virtual_server_new (cherokee_virtual_server_t **vserver)
        	CHEROKEE_NEW_STRUCT (vsrv, virtual_server);
 
 	INIT_LIST_HEAD(&vsrv->list_entry);
+	INIT_LIST_HEAD(&(vsrv->index_list));
 
 	vsrv->error_handler = NULL;
 
+	vsrv->exts          = NULL;
 	vsrv->logger        = NULL;
 	vsrv->logger_props  = NULL;
 
 	vsrv->data.rx       = 0;
 	vsrv->data.tx       = 0;
-	
+	CHEROKEE_MUTEX_INIT(&vsrv->data.rx_mutex, NULL);
+	CHEROKEE_MUTEX_INIT(&vsrv->data.tx_mutex, NULL);
+
 	vsrv->server_cert  = NULL;
 	vsrv->server_key   = NULL;
 	vsrv->ca_cert      = NULL;
@@ -69,7 +75,7 @@ cherokee_virtual_server_new (cherokee_virtual_server_t **vserver)
 	ret = cherokee_buffer_new (&vsrv->name);
 	if (unlikely(ret < ret_ok)) return ret;
 
-	ret = cherokee_handler_table_new (&vsrv->plugins);
+	ret = cherokee_dirs_table_init (&vsrv->dirs);
 	if (unlikely(ret < ret_ok)) return ret;
 
         /* User dir
@@ -77,7 +83,7 @@ cherokee_virtual_server_new (cherokee_virtual_server_t **vserver)
 	ret = cherokee_buffer_new (&vsrv->userdir);
 	if (unlikely(ret < ret_ok)) return ret;
 
-	ret = cherokee_handler_table_new (&vsrv->userdir_plugins);
+	ret = cherokee_dirs_table_new (&vsrv->userdir_dirs);
 	if (unlikely(ret < ret_ok)) return ret;
 
 	/* Return the object
@@ -106,7 +112,7 @@ cherokee_virtual_server_free (cherokee_virtual_server_t *vserver)
 	}
 
 	if (vserver->error_handler != NULL) {
-		cherokee_handler_table_entry_free (vserver->error_handler);
+		cherokee_dirs_table_entry_free (vserver->error_handler);
 		vserver->error_handler = NULL;
 	}
 
@@ -140,85 +146,24 @@ cherokee_virtual_server_free (cherokee_virtual_server_t *vserver)
 		vserver->logger_props = NULL;
 	}
 	
-	cherokee_handler_table_free (vserver->plugins);
-	vserver->plugins = NULL;
-
-	/* User dir
+	/* Destroy the dirs list
 	 */
-	cherokee_handler_table_free (vserver->userdir_plugins);
-	vserver->userdir_plugins = NULL;
+	cherokee_dirs_table_mrproper (&vserver->dirs);
+	cherokee_dirs_table_free     (vserver->userdir_dirs);
 
 	cherokee_buffer_free (vserver->userdir);
 	vserver->userdir = NULL;
 
-	free (vserver);	
-	return ret_ok;
-}
-
-
-ret_t 
-cherokee_virtual_server_clean (cherokee_virtual_server_t *vserver)
-{
-	if (vserver->server_cert != NULL) {
-		free (vserver->server_cert);
-		vserver->server_cert = NULL;
-	}
-	
-	if (vserver->server_key != NULL) {
-		free (vserver->server_key);
-		vserver->server_key = NULL;
-	}
-
-	if (vserver->ca_cert != NULL) {
-		free (vserver->ca_cert);
-		vserver->ca_cert = NULL;
-	}
-
-	if (vserver->error_handler != NULL) {
-		cherokee_handler_table_entry_free (vserver->error_handler);
-		vserver->error_handler = NULL;
-	}
-
-#ifdef HAVE_TLS
-	cherokee_session_cache_free (vserver->session_cache);
-	cherokee_session_cache_new (&vserver->session_cache);
-
-# ifdef HAVE_GNUTLS
-	if (vserver->credentials != NULL) {
-		gnutls_certificate_free_credentials (vserver->credentials);
-		vserver->credentials = NULL;
-	}
-# endif
-# ifdef HAVE_OPENSSL
-	if (vserver->context != NULL) {
-		SSL_CTX_free (vserver->context);
-		vserver->context = NULL;
-	}
-# endif
-#endif
-
-	cherokee_buffer_free (vserver->name);
-	vserver->name = NULL;
-
-	cherokee_buffer_clean (vserver->root);
-	
-	if (vserver->logger != NULL) {
-		cherokee_logger_free (vserver->logger);
-		vserver->logger = NULL;
-	}
-
-	if (vserver->logger_props != NULL) {
-		cherokee_table_free (vserver->logger_props);
-		vserver->logger_props = NULL;
-	}
-
-	cherokee_buffer_clean (vserver->userdir);
-
-	/* TODO:
-	 * It has to clean the plugin tables:
-	 * ->plugins and ->userdir_plugins
+	/* Extension table
 	 */
+	if (vserver->exts != NULL) {
+		cherokee_exts_table_free (vserver->exts);
+		vserver->exts = NULL;
+	}
 
+	cherokee_list_free (&vserver->index_list, free);
+
+	free (vserver);	
 	return ret_ok;
 }
 
@@ -320,7 +265,8 @@ cherokee_virtual_server_init_tls (cherokee_virtual_server_t *vsrv)
 	generate_rsa_params (&vsrv->rsa_params);
 
 	gnutls_certificate_set_dh_params (vsrv->credentials, vsrv->dh_params);
-	gnutls_certificate_set_rsa_params (vsrv->credentials, vsrv->rsa_params);
+	gnutls_anon_set_server_dh_params (vsrv->credentials, vsrv->dh_params);
+	gnutls_certificate_set_rsa_export_params (vsrv->credentials, vsrv->rsa_params);
 #endif
 
 #ifdef HAVE_OPENSSL

@@ -22,22 +22,24 @@
  * USA
  */
 
-#ifndef __CHEROKEE_VALIDATOR_HTPASSWD_H__
-#define __CHEROKEE_VALIDATOR_HTPASSWD_H__
+#ifndef CHEROKEE_VALIDATOR_HTPASSWD_H
+#define CHEROKEE_VALIDATOR_HTPASSWD_H
 
 #include "validator.h"
 #include "connection.h"
 
 typedef struct {
-	   cherokee_validator_t validator;
-	   const char *htpasswd_file_ref;
+	   cherokee_validator_t  validator;
+	   const char           *file_ref;
 } cherokee_validator_htpasswd_t;
 
 #define HTPASSWD(x) ((cherokee_validator_htpasswd_t *)(x))
 
 
-ret_t cherokee_validator_htpasswd_new   (cherokee_validator_htpasswd_t **htpasswd, cherokee_table_t *properties);
-ret_t cherokee_validator_htpasswd_free  (cherokee_validator_htpasswd_t  *htpasswd);
-ret_t cherokee_validator_htpasswd_check (cherokee_validator_htpasswd_t  *htpasswd, cherokee_connection_t *conn);
+ret_t cherokee_validator_htpasswd_new  (cherokee_validator_htpasswd_t **htpasswd, cherokee_table_t *properties);
+ret_t cherokee_validator_htpasswd_free (cherokee_validator_htpasswd_t  *htpasswd);
 
-#endif /* __CHEROKEE_VALIDATOR_HTPASSWD_H__ */
+ret_t cherokee_validator_htpasswd_check       (cherokee_validator_htpasswd_t  *htpasswd, cherokee_connection_t *conn);
+ret_t cherokee_validator_htpasswd_add_headers (cherokee_validator_htpasswd_t  *htpasswd, cherokee_connection_t *conn, cherokee_buffer_t *buf);
+
+#endif /* CHEROKEE_VALIDATOR_HTPASSWD_H */

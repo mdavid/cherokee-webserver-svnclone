@@ -43,14 +43,15 @@ typedef enum {
 	cherokee_version_full
 } cherokee_server_token_t;
 
-
 typedef struct cherokee_server cherokee_server_t;
+typedef void (* cherokee_server_reinit_cb_t) (cherokee_server_t *new_srv);
+
 #define SRV(x) ((cherokee_server_t *)(x))
 
-ret_t cherokee_server_new   (cherokee_server_t **srv);
-ret_t cherokee_server_init  (cherokee_server_t  *srv);
-ret_t cherokee_server_clean (cherokee_server_t  *srv);
-ret_t cherokee_server_free  (cherokee_server_t  *srv);
+ret_t cherokee_server_new                (cherokee_server_t **srv);
+ret_t cherokee_server_init               (cherokee_server_t  *srv);
+ret_t cherokee_server_clean              (cherokee_server_t  *srv);
+ret_t cherokee_server_free               (cherokee_server_t  *srv);
 
 void  cherokee_server_step               (cherokee_server_t *srv);
 void  cherokee_server_set_min_latency    (cherokee_server_t *srv, int msecs);
@@ -64,10 +65,13 @@ ret_t cherokee_server_get_active_conns   (cherokee_server_t *srv, int *num);
 ret_t cherokee_server_get_reusable_conns (cherokee_server_t *srv, int *num);
 ret_t cherokee_server_get_total_traffic  (cherokee_server_t *srv, size_t *rx, size_t *tx);
 
+ret_t cherokee_server_set_backup_mode    (cherokee_server_t *srv, cherokee_boolean_t active);
+ret_t cherokee_server_get_backup_mode    (cherokee_server_t *srv, cherokee_boolean_t *active);
+
 
 /* System signal callback
  */
-ret_t cherokee_server_handle_HUP   (cherokee_server_t *srv);
+ret_t cherokee_server_handle_HUP   (cherokee_server_t *srv, cherokee_server_reinit_cb_t callback);
 ret_t cherokee_server_handle_panic (cherokee_server_t *srv);
 
 

@@ -43,6 +43,7 @@ typedef struct {
 
 #define ICONS(x)  ((cherokee_icons_t *)(x))
 
+
 ret_t cherokee_icons_new   (cherokee_icons_t **icons);
 ret_t cherokee_icons_free  (cherokee_icons_t  *icons);
 ret_t cherokee_icons_clean (cherokee_icons_t  *icons);
@@ -50,10 +51,10 @@ ret_t cherokee_icons_clean (cherokee_icons_t  *icons);
 ret_t cherokee_icons_read_config_file   (cherokee_icons_t *icons, char *file);
 ret_t cherokee_icons_read_config_string (cherokee_icons_t *icons, const char *string);
  
-ret_t cherokee_icons_get_icon     (cherokee_icons_t *icons, char *file, char **icon);
-ret_t cherokee_icons_set_suffixes (cherokee_icons_t *icons, list_t *suf_list, char *icon);
-ret_t cherokee_icons_set_files    (cherokee_icons_t *icons, list_t *nam_list, char *icon);
+ret_t cherokee_icons_get_icon (cherokee_icons_t *icons, char *file, char **icon);
 
+ret_t cherokee_icons_set_suffixes  (cherokee_icons_t *icons, list_t *suf_list, char *icon);
+ret_t cherokee_icons_set_files     (cherokee_icons_t *icons, list_t *nam_list, char *icon);
 ret_t cherokee_icons_set_default   (cherokee_icons_t *icons, char *icon);
 ret_t cherokee_icons_set_directory (cherokee_icons_t *icons, char *icon);
 ret_t cherokee_icons_set_parentdir (cherokee_icons_t *icons, char *icon);

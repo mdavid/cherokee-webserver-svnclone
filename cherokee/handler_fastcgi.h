@@ -29,13 +29,52 @@
 
 #include "buffer.h"
 #include "handler.h"
+#include "module_loader.h"
+#include "connection.h"
+#include "socket.h"
+#include "fastcgi.h"
+#include "cgi.h"
+#include "fcgi_manager.h"
+
+#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>	
+#include <errno.h>	
+#include <string.h>	
+#include <sys/types.h>
+#include <sys/socket.h>	
+#include <sys/un.h>	
+
+
+typedef union {
+	cherokee_sockaddr_t tcp;
+	struct sockaddr_un  local;
+} cherokee_fcgi_sockaddr_t;
+
 
 typedef struct {
-	cherokee_handler_t handler;
+	cherokee_handler_t  handler;
 	
+	/* FastCGI manager
+	 */
+	cherokee_fcgi_manager_t *manager_ref;
+	char                    *host_ref;
+	char                    *interpreter_ref;
+	cuint_t                  id;
+
+	/* FastCGI protocol stuff
+	 */
+	cherokee_buffer_t        environment;
+	cherokee_buffer_t        write_buffer;
+	cherokee_buffer_t        incoming_buffer;
+
 } cherokee_handler_fastcgi_t;
 
-#define FHANDLER(x)  ((cherokee_handler_fastcgi_t *)(x))
+#define FCGI(x)  ((cherokee_handler_fastcgi_t *)(x))
+
+#define FCGI_SOCKADD_LOCAL(x)  (FCGI(x)->addr.local)
+#define FCGI_SOCKADD_TCP(x)    (FCGI(x)->addr.tcp)
+
 
 /* Library init function
  */

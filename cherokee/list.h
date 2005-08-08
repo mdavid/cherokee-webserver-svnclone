@@ -181,7 +181,20 @@ static inline void list_splice(struct list_head *list, struct list_head *head)
         	pos = pos->prev)
         	
 
-static inline int list_len(struct list_head *head)
+static inline void list_reparent (struct list_head *list, struct list_head *new)
+{
+	   if (list_empty(list))
+			 return;
+
+	   new->next = list->next;
+	   new->prev = list->prev;
+
+	   new->prev->next = new;
+	   new->next->prev = new;
+}
+
+
+static inline int list_len (struct list_head *head)
 {
 	   int n = 0;
 	   list_t *i;

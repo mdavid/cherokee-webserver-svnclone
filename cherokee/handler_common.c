@@ -30,13 +30,9 @@
 # include <sys/types.h>
 #endif
 
-#ifdef HAVE_SYS_STAT_H
-# include <sys/stat.h>
-#endif
-
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
+#include <sys/stat.h>
+#include <unistd.h>
+#include <errno.h>
 
 #ifdef HAVE_STRINGS_H
 # include <strings.h>
@@ -48,75 +44,95 @@
 #include "server-protected.h"
 #include "module.h"
 #include "connection.h"
+
 #include "handler_file.h"
 #include "handler_dirlist.h"
-#include "handler_phpcgi.h"
-#include "handler_cgi.h"
 #include "list_ext.h"
 
 
-cherokee_module_info_t cherokee_common_info = {
+cherokee_module_info_t MODULE_INFO(common) = {
 	cherokee_handler,              /* type     */
 	cherokee_handler_common_new    /* new func */
 };
 
 
-
 static ret_t
-instance_new_nondir_handler (cherokee_handler_t **hdl, void *cnt, cherokee_table_t *properties)
-{
-	int   len  = CONN(cnt)->request->len;
-	char *buf  = CONN(cnt)->request->buf;
+stat_file (cherokee_boolean_t useit, cherokee_iocache_t *iocache, struct stat *nocache_info, 
+	   char *path, cherokee_iocache_entry_t **io_entry, struct stat **info)
+{	
+	int   re;
+	ret_t ret;
 
-	/* It is to small to look for the extension
+	/* Without cache
 	 */
-	if (len <= 3) {
-		return cherokee_handler_file_new (hdl, cnt, properties);
-	}
+	if (!useit) {
+		re = stat (path, nocache_info);
+		if (re < 0) {
+			switch (errno) {
+			case ENOENT: 
+				return ret_not_found;
+			case EACCES: 
+				return ret_deny;
+			default:     
+				return ret_error;
+			}
+		}
 
-	/* Two charactes extension
+		*info = nocache_info;		
+		return ret_ok;
+	} 
+
+	/* I/O cache
 	 */
-	if (len <= 4) {
-		if (!strncasecmp(".pl", buf+len-3, 3) ||
-		    !strncasecmp(".py", buf+len-3, 3) ||
-		    !strncasecmp(".sh", buf+len-3, 3)) {
-			return cherokee_handler_cgi_new (hdl, cnt, properties);
-		} else {
-			return cherokee_handler_file_new (hdl, cnt, properties);
+	ret = cherokee_iocache_stat_get (iocache, path, io_entry);
+	if (ret != ret_ok) {
+		switch (ret) {
+		case ret_not_found:
+			return ret_not_found;
+		case ret_deny:
+			return ret_deny;
+		default:
+			return ret_error;
 		}
 	}
-	
-	/* Three or more characters
-	 */
-	if (!strncasecmp(".php", buf+len - 4, 4)) {
-		return cherokee_handler_phpcgi_new (hdl, cnt, properties);	
-	} else if (!strncasecmp(".cgi", buf+len - 4, 4)) {
-		return cherokee_handler_cgi_new (hdl, cnt, properties);	
-	}
-	
-	return cherokee_handler_file_new (hdl, cnt, properties);
-}
 
+	*info = &(*io_entry)->state;
+	return ret_ok;
+}
 
 
 ret_t 
 cherokee_handler_common_new (cherokee_handler_t **hdl, void *cnt, cherokee_table_t *properties)
 {
-	int                    exists;
-	struct stat            info;
-	cherokee_connection_t *conn = CONN(cnt);
-	cherokee_server_t     *srv  = CONN_SRV(cnt);
+	ret_t                     ret;
+	int                       exists;
+	struct stat               nocache_info;
+	struct stat              *info;
+	cherokee_iocache_t       *iocache;
+	cherokee_iocache_entry_t *file;
+ 	cherokee_boolean_t        use_iocache = true;
+	cherokee_connection_t    *conn        = CONN(cnt);
 
 #if 0
 	PRINT_DEBUG ("request: '%s'\n", conn->request->buf);
 	PRINT_DEBUG ("local:   '%s'\n", conn->local_directory->buf);
 #endif
 
+	/* Check some properties
+	 */
+	if (properties != NULL) {
+		cherokee_typed_table_get_int (properties, "cache", &use_iocache);
+	}
+
 	/* Check the request
 	 */
 	cherokee_buffer_add_buffer (conn->local_directory, conn->request);
 
-	exists = (stat (conn->local_directory->buf, &info) == 0);
+	cherokee_iocache_get_default (&iocache);
+	ret = stat_file (use_iocache, iocache, &nocache_info, conn->local_directory->buf, &file, &info);
+//	ret = cherokee_iocache_stat_get (iocache, conn->local_directory->buf, &file);
+	exists = (ret == ret_ok);
+	
 	if (!exists) {
 		ret_t  ret;
 		char  *pathinfo;
@@ -129,37 +145,34 @@ cherokee_handler_common_new (cherokee_handler_t **hdl, void *cnt, cherokee_table
 		begin = conn->local_directory->len - conn->request->len;
 		
 		ret = cherokee_split_pathinfo (conn->local_directory, begin, &pathinfo, &pathinfo_len);
-		if (ret == ret_not_found) {
+		if ((ret == ret_not_found) || (pathinfo_len <= 0)) {
 			conn->error_code = http_not_found;
 			return ret_error;
 		}
 		
-		/* Copy the PathInfo and clean the request - if needed
+		/* Copy the PathInfo and clean the request 
 		 */
-		if (pathinfo_len > 0) {
-			cherokee_buffer_add (conn->pathinfo, pathinfo, pathinfo_len);
-			cherokee_buffer_drop_endding (conn->request, pathinfo_len);
-			cherokee_buffer_drop_endding (conn->local_directory, pathinfo_len);
-		}
+		cherokee_buffer_add (conn->pathinfo, pathinfo, pathinfo_len);
+		cherokee_buffer_drop_endding (conn->request, pathinfo_len);
 
-		/* Try to instance the handler with the clean request
+		/* Clean the local_directory, this connection is going
+		 * to restart the connection setup phase
 		 */
-		ret = instance_new_nondir_handler (hdl, cnt, properties);
-		cherokee_buffer_drop_endding (conn->local_directory, conn->request->len);
-		return ret;
+		cherokee_buffer_clean (conn->local_directory);
+		return ret_eagain;
 	}	
 
 	cherokee_buffer_drop_endding (conn->local_directory, conn->request->len);
 
 	/* Is it a file?
 	 */
-	if (S_ISREG(info.st_mode)) {
-		return instance_new_nondir_handler (hdl, cnt, properties);
+	if (S_ISREG(info->st_mode)) {
+		return cherokee_handler_file_new (hdl, cnt, properties);
 	}
 
 	/* Is it a directory
 	 */
-	if (S_ISDIR(info.st_mode)) {
+	if (S_ISDIR(info->st_mode)) {
 		list_t *i;
 
 		/* Maybe it has to be redirected
@@ -174,14 +187,14 @@ cherokee_handler_common_new (cherokee_handler_t **hdl, void *cnt, cherokee_table
 
 		/* Have an index file inside?
 		 */
-		list_for_each (i, &srv->index_list) {
+		list_for_each (i, &CONN_VSRV(conn)->index_list) {
 			char *index     = LIST_ITEM_INFO(i);
 			int   index_len = strlen (index);
 
 			/* Check if the index is fullpath
 			 */
 			if (*index == '/') {
-				cherokee_buffer_t *new_local_dir;
+				cherokee_buffer_t new_local_dir = CHEROKEE_BUF_INIT; 
 
 				/* This means there is a configuration entry like:
 				 * 'DirectoryIndex index.php, /index_default.php'
@@ -194,46 +207,49 @@ cherokee_handler_common_new (cherokee_handler_t **hdl, void *cnt, cherokee_table
 
 				/* Lets reconstruct the local directory
 				 */
-				cherokee_buffer_new (&new_local_dir);
-				cherokee_buffer_add_buffer (new_local_dir, CONN_VSRV(conn)->root);
-				cherokee_buffer_add (new_local_dir, index, index_len);
+				cherokee_buffer_add_buffer (&new_local_dir, CONN_VSRV(conn)->root);
+				cherokee_buffer_add (&new_local_dir, index, index_len);
 				
-				exists = (stat (new_local_dir->buf, &info) == 0);
-				if (!exists) {
-					cherokee_buffer_free (new_local_dir);
-					continue;
-				}
+//				ret = cherokee_iocache_stat_get (iocache, new_local_dir.buf, &file);
+				ret = stat_file (use_iocache, iocache, &nocache_info, new_local_dir.buf, &file, &info);
+				exists = (ret == ret_ok);
+
+				cherokee_buffer_mrproper (&new_local_dir);
+				if (!exists) continue;
 				
-				cherokee_buffer_drop_endding (new_local_dir, index_len);
-				cherokee_buffer_free (conn->local_directory);
-				conn->local_directory = new_local_dir;
+				/* Build the new request before respin
+				 */
+				cherokee_buffer_clean (conn->local_directory);
+				cherokee_buffer_clean (conn->request);
+				cherokee_buffer_add (conn->request, index, index_len);				
 
-				cherokee_buffer_make_empty (conn->request);
-				cherokee_buffer_add (conn->request, index, index_len);
-
-				return instance_new_nondir_handler (hdl, cnt, properties);
+				return ret_eagain;
 			}
 
 			/* Stat() the possible new path
 			 */
 			cherokee_buffer_add (conn->local_directory, index, index_len);
-			exists = (stat (conn->local_directory->buf, &info) == 0);
+
+//			ret = cherokee_iocache_stat_get (iocache, conn->local_directory->buf, &file);
+			ret = stat_file (use_iocache, iocache, &nocache_info, conn->local_directory->buf, &file, &info);
+			exists = (ret == ret_ok);
+
 			cherokee_buffer_drop_endding (conn->local_directory, index_len);
 
 			/* If the file doesn't exist or it is a directory, try with the next one
 			 */
 			if (!exists) continue;
-			if (S_ISDIR(info.st_mode)) continue;
+			if (S_ISDIR(info->st_mode)) continue;
 			
 			/* Add the index file to the request and clean up
 			 */
-			cherokee_buffer_drop_endding (conn->local_directory, conn->request->len); 
+			cherokee_buffer_drop_endding (conn->local_directory,  conn->request->len);
 			cherokee_buffer_add (conn->request, index, index_len);
 
-			return instance_new_nondir_handler (hdl, cnt, properties);
-		} 
+			return ret_eagain;
+		}
 
-		/* If t	he dir hasn't a index file, it uses dirlist
+		/* If the dir hasn't a index file, it uses dirlist
 		 */
 		cherokee_buffer_drop_endding (conn->local_directory, conn->request->len);
 		return cherokee_handler_dirlist_new (hdl, cnt, properties);
@@ -253,17 +269,13 @@ cherokee_handler_common_new (cherokee_handler_t **hdl, void *cnt, cherokee_table
 static cherokee_boolean_t _common_is_init = false;
 
 void
-common_init (cherokee_module_loader_t *loader)
+MODULE_INIT(common) (cherokee_module_loader_t *loader)
 {
-	if (_common_is_init) {
-		return;
-	}
+	if (_common_is_init) return;
+	_common_is_init = true;
 
 	/* Load the dependences
 	 */
 	cherokee_module_loader_load (loader, "file");
-	cherokee_module_loader_load (loader, "phpcgi");
 	cherokee_module_loader_load (loader, "dirlist");
-
-	_common_is_init = true;
 }

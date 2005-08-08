@@ -1,6 +1,6 @@
 ## Cherokee: Makefile.am  -*- makefile -*-
 
-SUBDIRS = m4 debian contrib doc icons qa cherokee cget
+SUBDIRS = m4 contrib www doc icons qa cherokee cget 
 bin_SCRIPTS = cherokee-config
 SUFFIXES = .sample.pre .sample
 
@@ -10,8 +10,10 @@ m4data_DATA = cherokee.m4
 
 # Man pag
 man_MANS = \
+cget.1 \
 cherokee.1 \
-cherokee-config.1
+cherokee-config.1 \
+cherokee_logrotate.1
 
 # pkg-config
 pkgconfigdir = $(libdir)/pkgconfig
@@ -36,7 +38,8 @@ sites-example.sample.pre
 
 CONFS_DONE =      \
 mime.conf.sample  \
-icons.conf.sample
+icons.conf.sample \
+mods-admin.sample
 
 CONFS = \
 $(CONFS_PRE:.sample.pre=.sample)
@@ -45,16 +48,18 @@ DISTCLEANFILES = \
 cherokee.pc      \
 $(CONFS)
 
-EXTRA_DIST =     \
-TODO             \
-config.h.mingw   \
-cherokee.spec    \
-cherokee.spec.in \
-pam.d_cherokee   \
-cherokee.pc.in   \
-$(m4data_DATA)   \
-$(CONFS_DONE)    \
-$(CONFS_PRE)     \
+EXTRA_DIST =        \
+TODO                \
+config.h.mingw      \
+cherokee.spec       \
+cherokee.spec.in    \
+build_solaris.sh.in \
+build_solaris.sh    \
+pam.d_cherokee      \
+cherokee.pc.in      \
+$(m4data_DATA)      \
+$(CONFS_DONE)       \
+$(CONFS_PRE)        \
 $(man_MANS)
 
 
@@ -103,7 +108,7 @@ install-data-local: $(CONFS) $(CONFS_DONE) install-data-local-config
 		echo "$@ will not overwrite existing $(cherokeeconfdir)/sites-available/default"; \
 	else \
 		$(INSTALL_DATA) $(top_builddir)/sites-default.sample $(DESTDIR)$(cherokeeconfdir)/sites-available/default; \
-		$(LN_S) $(DESTDIR)$(cherokeeconfdir)/sites-available/default $(DESTDIR)$(cherokeeconfdir)/sites-enabled/default; \
+		$(SHELL) -c "cd $(DESTDIR)$(cherokeeconfdir)/sites-enabled/ && $(LN_S) ../sites-available/default ."; \
 	fi
 	@if test -f $(DESTDIR)$(cherokeeconfdir)/sites-available/example.com ; then \
 		echo "$@ will not overwrite existing $(cherokeeconfdir)/sites-available/example.com"; \
@@ -114,6 +119,11 @@ install-data-local: $(CONFS) $(CONFS_DONE) install-data-local-config
 		echo "$@ will not overwrite existing $(cherokeeconfdir)/mods-available/ssl"; \
 	else \
 		$(INSTALL_DATA) $(top_builddir)/mods-ssl.sample $(DESTDIR)$(cherokeeconfdir)/mods-available/ssl; \
+	fi
+	@if test -f $(DESTDIR)$(cherokeeconfdir)/mods-available/admin ; then \
+		echo "$@ will not overwrite existing $(cherokeeconfdir)/mods-available/admin"; \
+	else \
+		$(INSTALL_DATA) $(top_srcdir)/mods-admin.sample $(DESTDIR)$(cherokeeconfdir)/mods-available/admin; \
 	fi
 	$(mkinstalldirs) $(DESTDIR)$(localstatedir)
 
@@ -136,6 +146,9 @@ uninstall-local: uninstall-local-config
 	fi
 	@if test -f $(DESTDIR)$(cherokeeconfdir)/mods-available/ssl ; then \
 		$(RM) -f $(DESTDIR)$(cherokeeconfdir)/mods-available/ssl; \
+	fi
+	@if test -f $(DESTDIR)$(cherokeeconfdir)/mods-available/admin ; then \
+		$(RM) -f $(DESTDIR)$(cherokeeconfdir)/mods-available/admin; \
 	fi
 	@if test -f $(DESTDIR)$(cherokeeconfdir)/sites-available/default ; then \
 		$(RM) -f $(DESTDIR)$(cherokeeconfdir)/sites-available/default; \

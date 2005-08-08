@@ -45,6 +45,15 @@ Log combined {
 # }
 
 ##
+## Extension:
+## Set some basic extensions
+##
+Extension php, php3, php4 {
+		Handler phpcgi
+}
+
+
+##
 ## Handler to directory configuration
 ## This is the default directory configuration.
 ##
@@ -122,15 +131,15 @@ Directory /cgi-bin {
 ##
 ## Digest authentication example
 ##
-Directory /private2 {
-          Handler common
-          Auth Digest {
-                  Name "My private data 2"
-                  Method htpasswd {
-					PasswdFile /var/www/private2/.htpasswd
-			   }
-          }
-}
+#Directory /private2 {
+#          Handler common
+#          Auth Digest {
+#                  Name "My private data 2"
+#                  Method htpasswd {
+#					PasswdFile /var/www/private2/.htpasswd
+#			   }
+#          }
+#}
 
 ##
 ## Basic OR Digest authentication

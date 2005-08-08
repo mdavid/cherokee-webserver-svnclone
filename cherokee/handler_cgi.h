@@ -34,8 +34,16 @@
 
 #include "buffer.h"
 #include "handler.h"
+#include "cgi.h"
 
 #define ENV_VAR_NUM 30
+
+
+typedef enum {
+	hcgi_phase_init,
+	hcgi_phase_sent_post
+} cgi_init_phase_t;
+
 
 typedef struct {
 	cherokee_handler_t handler;
@@ -50,6 +58,7 @@ typedef struct {
 	char *envp[ENV_VAR_NUM]; /* Environ variables for execve() */
 	int   envp_last;
 
+	cgi_init_phase_t   init_phase;
 	cherokee_boolean_t cgi_fd_in_poll;
 
 	cherokee_buffer_t *filename;
@@ -83,9 +92,6 @@ ret_t cherokee_handler_cgi_split_pathinfo (cherokee_handler_cgi_t *cgi,
 					   int                     pos);
 
 void  cherokee_handler_cgi_add_parameter  (cherokee_handler_cgi_t *cgi, char *name);
-
-void  cherokee_handler_cgi_add_env        (cherokee_handler_cgi_t *cgi,
-				 	  char *string, int string_len);
 
 void  cherokee_handler_cgi_add_env_pair   (cherokee_handler_cgi_t *cgi, 
 				          char *name,    int name_len,

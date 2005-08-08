@@ -40,7 +40,7 @@ typedef enum {
 	cherokee_poll_port,
 	cherokee_poll_poll,
 	cherokee_poll_select,
-	cherokee_poll_NUM
+	cherokee_poll_UNSET
 } cherokee_poll_type_t;
 
 #define FDPOLL(x) ((cherokee_fdpoll_t *)(x))

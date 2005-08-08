@@ -31,6 +31,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/socket.h>
 #include <unistd.h>
 
 #ifdef HAVE_SYS_TIME_H
@@ -43,8 +44,26 @@
 # include <resource.h>
 #endif
 
+#ifdef HAVE_NETDB_H
+# include <netdb.h>         /* defines gethostbyname()  */
+#endif
 
-char *cherokee_version = PACKAGE_VERSION;
+#if defined(HAVE_GNUTLS)
+# include <gnutls/gnutls.h>
+#elif defined(HAVE_OPENSSL)
+# include <openssl/lhash.h>
+# include <openssl/ssl.h>
+# include <openssl/err.h>
+# include <openssl/rand.h>
+#endif
+
+
+const char *cherokee_version    = PACKAGE_VERSION;
+const char *cherokee_months[]   = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", 
+				   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+const char *cherokee_weekdays[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+
+
 
 int
 cherokee_hexit (char c)
@@ -122,7 +141,7 @@ cherokee_min_str (char *s1, char *s2)
 
 
 ret_t 
-cherokee_sys_fdlimit_get (uint32_t *limit)
+cherokee_sys_fdlimit_get (cuint_t *limit)
 {
 #ifdef HAVE_GETRLIMIT
         struct rlimit rlp;
@@ -156,7 +175,7 @@ cherokee_sys_fdlimit_get (uint32_t *limit)
 
 
 ret_t
-cherokee_sys_fdlimit_set (uint32_t limit)
+cherokee_sys_fdlimit_set (cuint_t limit)
 {
 	int           re;
 	struct rlimit rl;
@@ -215,7 +234,7 @@ strcasestr (register char *s, register char *find)
 		do {
 			do {
 				if ((sc = *s++) == 0)
-					return (NULL);
+					return NULL;
 			} while (sc != c);
 		} while (strncasecmp(s, find, len) != 0);
 		s--;
@@ -223,29 +242,6 @@ strcasestr (register char *s, register char *find)
 	return ((char *) s);
 }
 #endif
-
-
-
-
-#ifdef HAVE_PTHREAD
-static pthread_mutex_t env_mutex = PTHREAD_MUTEX_INITIALIZER;
-#endif
-
-int   
-cherokee_setenv (const char *name, const char *value, int overwrite)
-{
-#if !defined (HAVE_PTHREAD) || defined (SETENV_IS_THREADSAFE)
-	return setenv(name, value, overwrite);
-#else
-	int r;
-
-	CHEROKEE_MUTEX_LOCK (&env_mutex);
-	r = setenv (name, value, overwrite);
-	CHEROKEE_MUTEX_UNLOCK (&env_mutex);
-
-	return r;
-# endif
-}
 
 
 
@@ -274,6 +270,67 @@ cherokee_gmtime (const time_t *timep, struct tm *result)
 	CHEROKEE_MUTEX_UNLOCK (&gmtime_mutex);
 
 	return result;
+# endif
+#endif
+}
+
+
+
+#if defined(HAVE_PTHREAD) && !defined(HAVE_READDIR_R)
+static pthread_mutex_t readdir_mutex = PTHREAD_MUTEX_INITIALIZER;
+#endif
+
+/* The readdir subroutine is reentrant when an application program
+ * uses different DirectoryPointer parameter values (returned from the
+ * opendir subroutine). Use the readdir_r subroutine when multiple
+ * threads use the same directory pointer.
+ */
+
+int 
+cherokee_readdir (DIR *dirstream, struct dirent *entry, struct dirent **result)
+{
+#ifdef HAVE_POSIX_READDIR_R
+	return readdir_r (dirstream, entry, result);
+
+#else
+# ifdef HAVE_OLD_READDIR_R
+        int ret = 0;
+        
+        /* We cannot rely on the return value of readdir_r
+	 * as it differs between various platforms
+         * (HPUX returns 0 on success whereas Solaris returns non-zero)
+         */
+        entry->d_name[0] = '\0';
+        readdir_r(dirp, entry);
+        
+        if (entry->d_name[0] == '\0') {
+                *result = NULL;
+                ret = errno;
+        } else {
+                *result = entry;
+        }
+
+        return ret;
+
+# else
+        struct dirent *ptr;
+        int            ret = 0;
+	
+	CHEROKEE_MUTEX_LOCK (&readdir_mutex);
+        
+        errno = 0;        
+        ptr = readdir(dirp);
+        
+        if (!ptr && errno != 0)
+                ret = errno;
+
+        if (ptr)
+                memcpy(entry, ptr, sizeof(*ptr));
+
+        *result = ptr;
+	
+	CHEROKEE_MUTEX_UNLOCK (&readdir_mutex);
+        return ret;
 # endif
 #endif
 }
@@ -318,3 +375,237 @@ cherokee_split_pathinfo (cherokee_buffer_t  *path,
 	return ret_ok;
 }
 
+
+ret_t 
+cherokee_split_arguments (cherokee_buffer_t *request,
+			  int                init_pos,
+			  char             **arguments,
+			  int               *arguments_len)
+{
+	char *tmp;
+	char *p   = request->buf + init_pos;
+	char *end = request->buf + request->len;
+
+	tmp = strchr (p, '?');
+	if (tmp == NULL) return ret_ok;
+
+	*arguments = tmp+1;
+	*arguments_len = end - *arguments;
+
+	return ret_ok;
+}
+
+
+int
+cherokee_estimate_va_length (char *fmt, va_list ap)
+{
+	char      *p;
+	int        ch;
+	cullong_t  ul;
+	int        base, lflag, llflag, width;
+	char       padc;
+	unsigned   len = 0;
+
+	for (;;) {
+		padc = ' ';
+		width = 0;
+		while ((ch = *(char *)fmt++) != '%') {
+			if (ch == '\0')
+				return len+1;
+			len++;
+		}
+		lflag = llflag = 0;
+
+reswitch:	
+		switch (ch = *(char *)fmt++) {
+		case '0':
+			padc = '0';
+			goto reswitch;
+		case '1': case '2': case '3': case '4':
+		case '5': case '6': case '7': case '8': case '9':
+			for (width = 0;; ++fmt) {
+				width = width * 10 + ch - '0';
+				ch = *fmt;
+				if (ch < '0' || ch > '9')
+					break;
+			}
+			len += width;
+			goto reswitch;
+		case 'l':
+			if (lflag == 0) 
+				lflag = 1;
+			else
+				llflag = 1;
+			goto reswitch;
+		case 'c':
+			va_arg(ap, int);
+			len++;
+			break;
+		case 's':
+			p = va_arg(ap, char *);
+			len += strlen (p? p: "(null)");
+			break;
+		case 'd':
+			ul = lflag ? va_arg(ap, culong_t) : va_arg(ap, int);
+			if (ul < 0) {
+				ul = -ul;
+				len++;
+			}
+			base = 10;
+			goto number;
+		case 'o':
+			ul = lflag ? va_arg(ap, culong_t) : va_arg(ap, int);
+			base = 8;
+			goto number;
+		case 'u':
+			if (llflag) {
+				ul = va_arg(ap, cullong_t);
+			} else {
+				ul = lflag ? va_arg(ap, long) : va_arg(ap, int);
+			}
+			base = 10;
+			goto number;
+		case 'f':
+			ul = va_arg(ap, double); // FIXME: Add float numbers support
+			len += 30; 
+			base = 10;
+			goto number;			
+		case 'x':
+			ul = lflag ? va_arg(ap, culong_t) : va_arg(ap, int);
+			base = 16;
+number:
+			do {
+				ul /= base;
+				len++;
+			} while (ul > 0);
+			len++;
+			break;
+			;
+		case '%':
+			len++;
+		}
+	}
+
+	return -1;
+}
+
+
+
+/* gethostbyname_r () emulation
+ */
+#if defined(HAVE_PTHREAD) && !defined(HAVE_GETHOSTBYNAME_R)
+static pthread_mutex_t __global_gethostbyname_mutex = PTHREAD_MUTEX_INITIALIZER;
+#endif
+
+ret_t
+cherokee_gethostbyname (const char *hostname, struct in_addr *addr)
+{
+#if !defined(HAVE_PTHREAD) || (defined(HAVE_PTHREAD) && !defined(HAVE_GETHOSTBYNAME_R))
+
+        struct hostent *host;
+
+        CHEROKEE_MUTEX_LOCK (&__global_gethostbyname_mutex);
+        /* Resolv the host name
+         */
+        host = gethostbyname (hostname);
+        if (host == NULL) {
+                CHEROKEE_MUTEX_UNLOCK (&__global_gethostbyname_mutex);
+                return ret_error;
+        }
+
+        /* Copy the address
+         */
+        memcpy (addr, host->h_addr, host->h_length);
+        CHEROKEE_MUTEX_UNLOCK (&__global_gethostbyname_mutex);
+        return ret_ok;
+
+#elif defined(HAVE_PTHREAD) && defined(HAVE_GETHOSTBYNAME_R)
+
+/* Maximum size that should use gethostbyname_r() function.
+ * It will return ERANGE, if more space is needed.
+ */
+# define GETHOSTBYNAME_R_BUF_LEN 512
+
+        int             r;
+        int             h_errnop;
+        struct hostent  hs;
+        struct hostent *hp;
+        char   tmp[GETHOSTBYNAME_R_BUF_LEN];
+        
+
+#ifdef SOLARIS
+        /* Solaris 10:
+         * struct hostent *gethostbyname_r
+         *        (const char *, struct hostent *, char *, int, int *h_errnop);
+         */
+        hp = gethostbyname_r (hostname, &hs, tmp, 
+			      GETHOSTBYNAME_R_BUF_LEN - 1, &h_errnop);
+        if (hp == NULL) {
+                return ret_error;
+        }       
+#else
+        /* Linux glibc2:
+         *  int gethostbyname_r (const char *name,
+         *         struct hostent *ret, char *buf, size_t buflen,
+         *         struct hostent **result, int *h_errnop);
+         */
+        r = gethostbyname_r (hostname, 
+                             &hs, tmp, GETHOSTBYNAME_R_BUF_LEN - 1, 
+                             &hp, &h_errnop);
+        if (r != 0) {
+                return ret_error;
+        }
+#endif  
+
+        /* Copy the address
+         */
+        memcpy (addr, hp->h_addr, hp->h_length);
+
+        return ret_ok;
+#else
+
+        SHOULDNT_HAPPEN;
+        return ret_error;
+#endif
+}
+
+
+#ifdef HAVE_GNUTLS
+# ifdef GCRY_THREAD_OPTION_PTHREAD_IMPL
+GCRY_THREAD_OPTION_PTHREAD_IMPL;
+# endif
+#endif
+
+ret_t
+cherokee_tls_init (void)
+{	
+#ifdef HAVE_GNUTLS
+	int rc;
+
+# ifdef GCRY_THREAD_OPTION_PTHREAD_IMPL
+	/* Although the GnuTLS library is thread safe by design, some
+	 * parts of the crypto backend, such as the random generator,
+	 * are not; hence, it needs to initialize some semaphores.
+	 */
+	gcry_control (GCRYCTL_SET_THREAD_CBS, &gcry_threads_pthread); 
+# endif
+
+	/* Gnutls library-width initialization
+	 */
+	rc = gnutls_global_init();
+	if (rc < 0) {
+		PRINT_ERROR_S ("Global GNUTLS state initialisation failed.\n");
+		return ret_error;
+	}
+#endif
+
+#ifdef HAVE_OPENSSL
+	SSL_load_error_strings();
+	SSL_library_init();
+	
+	SSLeay_add_all_algorithms ();
+	SSLeay_add_ssl_algorithms ();
+#endif
+
+	return ret_ok;
+}

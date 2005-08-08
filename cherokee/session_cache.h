@@ -39,8 +39,8 @@ typedef struct {
 ret_t cherokee_session_cache_new  (cherokee_session_cache_t **tab);
 ret_t cherokee_session_cache_free (cherokee_session_cache_t  *tab);
 
-ret_t cherokee_session_cache_del      (cherokee_session_cache_t *tab, char *key, int key_len);
-ret_t cherokee_session_cache_add      (cherokee_session_cache_t *tab, char *key, int key_len, char  *value, int  value_len);
-ret_t cherokee_session_cache_retrieve (cherokee_session_cache_t *tab, char *key, int key_len, void **buf,   int *but_len);
+ret_t cherokee_session_cache_del      (cherokee_session_cache_t *tab, unsigned char *key, int key_len);
+ret_t cherokee_session_cache_add      (cherokee_session_cache_t *tab, unsigned char *key, unsigned int key_len, unsigned char *value, unsigned int value_len);
+ret_t cherokee_session_cache_retrieve (cherokee_session_cache_t *tab, unsigned char *key, int key_len, void **buf, unsigned int *but_len);
 
 #endif /* CHEROKEE_SESSION_CACHE_H */

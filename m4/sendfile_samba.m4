@@ -65,7 +65,7 @@ samba_cv_HAVE_BROKEN_LINUX_SENDFILE=yes,samba_cv_HAVE_BROKEN_LINUX_SENDFILE=no)]
 	fi
 
 	;;
-	*freebsd*)
+	*freebsd* | *DragonFly* )
 		AC_CACHE_CHECK([for freebsd sendfile support],samba_cv_HAVE_SENDFILE,[
 		AC_TRY_LINK([\
 #include <sys/types.h>

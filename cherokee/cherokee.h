@@ -42,6 +42,8 @@
 #include <cherokee/list_merge_sort.h>
 #include <cherokee/url.h>
 #include <cherokee/header.h>
+#include <cherokee/resolv_cache.h>
+#include <cherokee/typed_table.h>
 
 /* Server library
  */
@@ -56,6 +58,12 @@
 /* Client library
  */
 #include <cherokee/downloader.h>
+
+/* Config library
+ */
+#include <cherokee/admin_client.h>
+#include <cherokee/connection_info.h>
+
 
 #undef CHEROKEE_INSIDE_CHEROKEE_H
 

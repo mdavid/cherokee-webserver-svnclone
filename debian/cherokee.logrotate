@@ -1,8 +1,0 @@
-/var/log/cherokee*log {
-  rotate 7
-  daily
-  compress
-  copytruncate
-  missingok
-  notifempty
-}

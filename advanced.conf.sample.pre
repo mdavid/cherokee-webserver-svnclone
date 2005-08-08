@@ -4,8 +4,15 @@
 ##
 
 ##
+## PollMethod:
+## Force to use a polling method. It's available:
+## epoll, kqueue, ports, poll and select.
+##
+# PollMethod epoll
+
+##
 ## LogFlushInterval: 
-## Indicates how often, in seconds, the log cache should be flushed 
+## Indicates how often, in seconds, the log cache will be flushed 
 ##
 LogFlushInterval 2
 

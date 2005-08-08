@@ -22,22 +22,25 @@
  * USA
  */
 
-#ifndef __CHEROKEE_VALIDATOR_PLAIN_H__
-#define __CHEROKEE_VALIDATOR_PLAIN_H__
+#ifndef CHEROKEE_VALIDATOR_PLAIN_H
+#define CHEROKEE_VALIDATOR_PLAIN_H
 
 #include "validator.h"
 #include "connection.h"
 
+
 typedef struct {
-	   cherokee_validator_t validator;
-	   const char *plain_file_ref;
+	   cherokee_validator_t  validator;
+	   const char           *file_ref;
 } cherokee_validator_plain_t;
 
 #define PLAIN(x) ((cherokee_validator_plain_t *)(x))
 
 
-ret_t cherokee_validator_plain_new   (cherokee_validator_plain_t **plain, cherokee_table_t *properties);
-ret_t cherokee_validator_plain_free  (cherokee_validator_plain_t  *plain);
-ret_t cherokee_validator_plain_check (cherokee_validator_plain_t  *plain, cherokee_connection_t *conn);
+ret_t cherokee_validator_plain_new  (cherokee_validator_plain_t **plain, cherokee_table_t *properties);
+ret_t cherokee_validator_plain_free (cherokee_validator_plain_t  *plain);
 
-#endif /* __CHEROKEE_VALIDATOR_PLAIN_H__ */
+ret_t cherokee_validator_plain_check       (cherokee_validator_plain_t  *plain, cherokee_connection_t *conn);
+ret_t cherokee_validator_plain_add_headers (cherokee_validator_plain_t  *plain, cherokee_connection_t *conn, cherokee_buffer_t *buf);
+
+#endif /* CHEROKEE_VALIDATOR_PLAIN_H */

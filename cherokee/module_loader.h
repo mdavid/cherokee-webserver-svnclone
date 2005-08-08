@@ -31,22 +31,27 @@
 
 #include <cherokee/common.h>
 #include <cherokee/module.h>
+#include <cherokee/table.h>
 
 CHEROKEE_BEGIN_DECLS
 
 
-typedef struct cherokee_module_loader cherokee_module_loader_t;
+//typedef struct cherokee_module_loader cherokee_module_loader_t;
+typedef struct cherokee_table cherokee_module_loader_t;
 
 #define MODINFO(x)   ((cherokee_module_info_t *) (x))
 #define MODLOADER(x) ((cherokee_module_loader_t *) (x))
 
 
-ret_t cherokee_module_loader_new  (cherokee_module_loader_t **loader);
-ret_t cherokee_module_loader_free (cherokee_module_loader_t  *loader);
+ret_t cherokee_module_loader_init     (cherokee_module_loader_t *loader);
+ret_t cherokee_module_loader_mrproper (cherokee_module_loader_t *loader);
 
-ret_t cherokee_module_loader_load (cherokee_module_loader_t  *loader, char *modname);
-ret_t cherokee_module_loader_get  (cherokee_module_loader_t  *loader, char *modname, cherokee_module_info_t **info);
+ret_t cherokee_module_loader_load           (cherokee_module_loader_t *loader, char *modname);
+ret_t cherokee_module_loader_load_no_global (cherokee_module_loader_t *loader, char *modname);
+ret_t cherokee_module_loader_unload         (cherokee_module_loader_t *loader, char *modname);
 
+ret_t cherokee_module_loader_get_info (cherokee_module_loader_t *loader, char *modname, cherokee_module_info_t **info);
+ret_t cherokee_module_loader_get_sym  (cherokee_module_loader_t *loader, char *modname, char *name, void **sym);
 
 CHEROKEE_END_DECLS
 

@@ -90,9 +90,15 @@ cherokee_buffer_escape_clean (cherokee_buffer_escape_t *esc)
 ret_t 
 cherokee_buffer_escape_set_ref (cherokee_buffer_escape_t *esc, cherokee_buffer_t *buf_ref)
 {
+	/* The buffer has been already set
+	 */
+	if (buf_ref == esc->reference) 
+		return ret_ok;
+
+	/* If it's a different buffer, clean everything
+	 */
 	if (esc->reference != NULL) {
-		/* Warning ?
-		 */
+		cherokee_buffer_escape_clean (esc);
 	}
 
 	esc->reference = buf_ref;

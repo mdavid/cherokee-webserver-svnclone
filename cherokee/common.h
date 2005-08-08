@@ -41,6 +41,7 @@ typedef enum {
 } cherokee_boolean_t;
 
 typedef enum {
+	ret_no_sys          = -4,
 	ret_nomem           = -3, 
 	ret_deny            = -2, 
 	ret_error           = -1,
@@ -53,7 +54,19 @@ typedef enum {
 	ret_ok_and_sent     =  6
 } ret_t;
 
-typedef unsigned int crc_t;
+typedef unsigned int   crc_t;
+
+typedef int                 cint_t;
+typedef char                cchar_t;
+typedef short               cshort_t;
+typedef long                clong_t;
+typedef long long           cllong_t;
+
+typedef unsigned int        cuint_t;
+typedef unsigned char       cuchar_t;
+typedef unsigned short      cushort_t;
+typedef unsigned long       culong_t;
+typedef unsigned long long  cullong_t;
 
 
 CHEROKEE_END_DECLS

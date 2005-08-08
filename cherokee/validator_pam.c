@@ -31,7 +31,7 @@
 #include <security/pam_appl.h>
 
 
-cherokee_module_info_t cherokee_pam_info = {
+cherokee_module_info_t MODULE_INFO(pam) = {
 	cherokee_validator,           /* type     */
 	cherokee_validator_pam_new    /* new func */
 };
@@ -49,9 +49,11 @@ cherokee_validator_pam_new (cherokee_validator_pam_t **pam, cherokee_table_t *pr
 	/* Init 
 	 */
 	cherokee_validator_init_base (VALIDATOR(n));
+	VALIDATOR(n)->support = http_auth_basic;
 
-	MODULE(n)->free     = (module_func_free_t)     cherokee_validator_pam_free;
-	VALIDATOR(n)->check = (validator_func_check_t) cherokee_validator_pam_check;
+	MODULE(n)->free           = (module_func_free_t)           cherokee_validator_pam_free;
+	VALIDATOR(n)->check       = (validator_func_check_t)       cherokee_validator_pam_check;
+	VALIDATOR(n)->add_headers = (validator_func_add_headers_t) cherokee_validator_pam_add_headers;
 
 	*pam = n;
 	return ret_ok;
@@ -61,7 +63,7 @@ cherokee_validator_pam_new (cherokee_validator_pam_t **pam, cherokee_table_t *pr
 ret_t 
 cherokee_validator_pam_free (cherokee_validator_pam_t *pam)
 {
-	free (pam);
+	cherokee_validator_free_base (VALIDATOR(pam));
 	return ret_ok;
 }
 
@@ -206,13 +208,19 @@ unauthorized:
 }
 
 
+ret_t 
+cherokee_validator_pam_add_headers (cherokee_validator_pam_t  *pam, cherokee_connection_t *conn, cherokee_buffer_t *buf)
+{
+	return ret_ok;
+}
+
 
 /*   Library init function
  */
 static cherokee_boolean_t _pam_is_init = false;
 
 void
-pam_init (cherokee_module_loader_t *loader)
+MODULE_INIT(pam) (cherokee_module_loader_t *loader)
 {
 	/* Init flag
 	 */

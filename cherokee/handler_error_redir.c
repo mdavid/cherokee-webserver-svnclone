@@ -30,7 +30,7 @@
 #include "handler_redir.h"
 #include "module_loader.h"
 
-cherokee_module_info_t cherokee_error_redir_info = {
+cherokee_module_info_t MODULE_INFO(error_redir) = {
 	   cherokee_handler,                 /* type     */
 	   cherokee_handler_error_redir_new  /* new func */
 };
@@ -49,10 +49,8 @@ cherokee_handler_error_redir_new (cherokee_handler_t **hdl, cherokee_connection_
 
 	snprintf (code, 4, "%d", cnt->error_code);
 	   
-	ret = cherokee_table_get (properties, code, (void **) &dir);
-	if (ret != ret_ok) {
-		return ret_error;
-	}
+	ret = cherokee_typed_table_get_str (properties, code, (void **) &dir);
+	if (ret != ret_ok) return ret_error;
 
 	cherokee_buffer_add (cnt->redirect, dir, strlen(dir));
 	cnt->error_code = http_moved_permanently;
@@ -61,21 +59,19 @@ cherokee_handler_error_redir_new (cherokee_handler_t **hdl, cherokee_connection_
 }
 
 
-/*   Library init function
+/* Library init function
  */
 static cherokee_boolean_t _error_redir_is_init = false;
 
 void
-error_redir_init (cherokee_module_loader_t *loader)
+MODULE_INIT(error_redir) (cherokee_module_loader_t *loader)
 {
 	/* Is init?
 	 */
-	if (_error_redir_is_init)
-		return;
+	if (_error_redir_is_init) return;
+	_error_redir_is_init = true;
 	   
 	/* Load the dependences
 	 */
 	cherokee_module_loader_load (loader, "redir");
-
-	_error_redir_is_init = true;
 }

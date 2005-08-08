@@ -90,34 +90,6 @@ cherokee_icons_free (cherokee_icons_t *icons)
 
 
 ret_t 
-cherokee_icons_clean (cherokee_icons_t *icons)
-{
-	/* TODO: Set a free_item function.
-	 */
-	cherokee_table_clean2 (icons->files, free);
-	cherokee_table_clean2 (icons->suffixes, free);
-	cherokee_table_clean2 (icons->files_matching, free);
-
-	if (icons->default_icon != NULL) {
-		free (icons->default_icon);
-		icons->default_icon = NULL;
-	}
-
-	if (icons->directory_icon != NULL) {
-		free (icons->directory_icon);
-		icons->directory_icon = NULL;
-	}
-
-	if (icons->parentdir_icon != NULL) {
-		free (icons->parentdir_icon);
-		icons->parentdir_icon = NULL;
-	}
-
-	return ret_ok;
-}
-
-
-ret_t 
 cherokee_icons_read_config_file (cherokee_icons_t *icons, char *filename)
 {
 	int   error;
@@ -284,4 +256,3 @@ cherokee_icons_get_icon (cherokee_icons_t *icons, char *file, char **icon_ret)
 
 	return ret_ok;
 }
-

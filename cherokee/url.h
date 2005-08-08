@@ -38,25 +38,29 @@ CHEROKEE_BEGIN_DECLS
 
 
 typedef struct {	
-	cherokee_buffer_t  *host;
-	cherokee_buffer_t  *request;
-	unsigned int        port;
+	cherokee_buffer_t  user;
+	cherokee_buffer_t  passwd;
+
+	cherokee_buffer_t  host;
+	cuint_t            port;
+	cherokee_buffer_t  request;
 	
 	enum {
 		http,
 		https
-	}                   protocol;
+	}                  protocol;
 
 } cherokee_url_t;
 
 #define URL(u)           ((cherokee_url_t *)(u))
-#define URL_HOST(u)      (URL(u)->host)
-#define URL_REQUEST(u)   (URL(u)->request)
 #define URL_PORT(u)      (URL(u)->port)
+#define URL_HOST(u)      (&URL(u)->host)
+#define URL_REQUEST(u)   (&URL(u)->request)
 
 
-ret_t cherokee_url_new   (cherokee_url_t **url);
-ret_t cherokee_url_free  (cherokee_url_t  *url);
+ret_t cherokee_url_init     (cherokee_url_t *url);
+ret_t cherokee_url_clean    (cherokee_url_t *url);
+ret_t cherokee_url_mrproper (cherokee_url_t *url);
 
 ret_t cherokee_url_parse        (cherokee_url_t *url, cherokee_buffer_t *string);
 ret_t cherokee_url_build_string (cherokee_url_t *url, cherokee_buffer_t *buf);

@@ -27,8 +27,8 @@
  * USA
  */
 
-#ifndef __CHEROKEE_LOGGER_W3C_COMMON_H__
-#define __CHEROKEE_LOGGER_W3C_COMMON_H__
+#ifndef CHEROKEE_LOGGER_W3C_COMMON_H
+#define CHEROKEE_LOGGER_W3C_COMMON_H
 
 #include "common.h"
 
@@ -58,9 +58,12 @@ ret_t cherokee_logger_w3c_new (cherokee_logger_t **logger, cherokee_table_t *pro
  */
 ret_t cherokee_logger_w3c_init         (cherokee_logger_w3c_t *logger);
 ret_t cherokee_logger_w3c_free         (cherokee_logger_w3c_t *logger);
+
 ret_t cherokee_logger_w3c_flush        (cherokee_logger_w3c_t *logger);
+ret_t cherokee_logger_w3c_reopen       (cherokee_logger_w3c_t *logger);
+
 ret_t cherokee_logger_w3c_write_access (cherokee_logger_w3c_t *logger, cherokee_connection_t *conn);
 ret_t cherokee_logger_w3c_write_error  (cherokee_logger_w3c_t *logger, cherokee_connection_t *conn);
 ret_t cherokee_logger_w3c_write_string (cherokee_logger_w3c_t *logger, const char *string);
 
-#endif /* __CHEROKEE_LOGGER_W3C_COMMON_H__ */
+#endif /* CHEROKEE_LOGGER_W3C_COMMON_H */

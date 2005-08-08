@@ -2,39 +2,39 @@
 # File: Special files
 #
 file {
-	/icons/readme.png   *README*
-	/icons/bomb.png     core
+	readme.png   *README*
+	bomb.png     core
 }
 
 #
 # Suffix: File extensions to Icons
 #
 suffix {
-	/icons/text.png        txt, text
-	/icons/image.png       jpg, jpeg, jpe, png, gif, xcf, bmp, pcx, tiff, tif, cdr, psd, xpm, xbm
-	/icons/sound.png       au, snd, mid, midi, kar, mpga, mpega, mp2, mp3, m3u, sid, wav, aif, aiff, aifc, gsm, m3u, wma, wax, ra, rm, ram, pls, sd2, ogg
-	/icons/movie.png       avi, ogg
-	/icons/compressed.png  tar, gz, bz2, zip, rar, ace, lha, Z
-	/icons/binary.png      bin, exe, com, msi
-	/icons/script.png      sh, csh, ksh, tcl, tk, py, pl, php
-	/icons/tex.png         tex, latex, ltx, sty, cls
-	/icons/ps.png          ps, eps, ai
-	/icons/pdf.png         pdf
-	/icons/iso.png         iso, nrg, cue
-	/icons/java.png        java, class, jar
+	text.png        txt, text
+	image.png       jpg, jpeg, jpe, png, gif, xcf, bmp, pcx, tiff, tif, cdr, psd, xpm, xbm
+	sound.png       au, snd, mid, midi, kar, mpga, mpega, mp2, mp3, m3u, sid, wav, aif, aiff, aifc, gsm, m3u, wma, wax, ra, rm, ram, pls, sd2, ogg
+	movie.png       avi, ogg
+	compressed.png  tar, gz, bz2, zip, rar, ace, lha, Z
+	binary.png      bin, exe, com, msi
+	script.png      sh, csh, ksh, tcl, tk, py, pl, php
+	tex.png         tex, latex, ltx, sty, cls
+	ps.png          ps, eps, ai
+	pdf.png         pdf
+	iso.png         iso, nrg, cue
+	java.png        java, class, jar
 }
 
 #
 # Directory: Icon for directories
 #
-Directory /icons/folder.png
+Directory folder.png
 
 #
 # ParentDirectory: Parent Directory icon
 #
-ParentDirectory /icons/back.png
+ParentDirectory back.png
 
 #
 # Default: Icon for the rest
 #
-Default /icons/unknown.png
+Default unknown.png

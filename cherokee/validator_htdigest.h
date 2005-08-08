@@ -22,33 +22,24 @@
  * USA
  */
 
-#ifndef CHEROKEE_MMAP2_H
-#define CHEROKEE_MMAP2_H
+#ifndef CHEROKEE_VALIDATOR_HTDIGEST_H
+#define CHEROKEE_VALIDATOR_HTDIGEST_H
 
-#include <cherokee/common.h>
-
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-
-typedef struct cherokee_mmap2 cherokee_mmap2_t;
+#include "validator.h"
+#include "connection.h"
 
 typedef struct {
-	struct stat  state;
-	void        *mmaped;
-	size_t       mmaped_len;
-} cherokee_mmap2_entry_t;
+	   cherokee_validator_t  validator;
+	   char                 *file_ref;
+} cherokee_validator_htdigest_t;
 
-#define MMAP2(x)       ((cherokee_mmap2_t *)(x))
-#define MMAP2_ENTRY(x) ((cherokee_mmap2_entry_t *)(x))
+#define HTDIGEST(x) ((cherokee_validator_htdigest_t *)(x))
 
 
-ret_t cherokee_mmap2_new         (cherokee_mmap2_t **mmap2);
-ret_t cherokee_mmap2_free        (cherokee_mmap2_t  *mmap2);
-ret_t cherokee_mmap2_clean       (cherokee_mmap2_t  *mmap2);
+ret_t cherokee_validator_htdigest_new  (cherokee_validator_htdigest_t **htdigest, cherokee_table_t *properties);
+ret_t cherokee_validator_htdigest_free (cherokee_validator_htdigest_t  *htdigest);
 
-ret_t cherokee_mmap2_get         (cherokee_mmap2_t *mmap2, char *file, cherokee_mmap2_entry_t **entry);
-ret_t cherokee_mmap2_unref_entry (cherokee_mmap2_t *mmap2, cherokee_mmap2_entry_t *entry);
-ret_t cherokee_mmap2_clean_up    (cherokee_mmap2_t *mmap2);
+ret_t cherokee_validator_htdigest_check       (cherokee_validator_htdigest_t *htdigest, cherokee_connection_t *conn);
+ret_t cherokee_validator_htdigest_add_headers (cherokee_validator_htdigest_t *htdigest, cherokee_connection_t *conn, cherokee_buffer_t *buf);
 
-#endif /* CHEROKEE_MMAP2_H */
+#endif /* CHEROKEE_VALIDATOR_HTDIGEST_H */

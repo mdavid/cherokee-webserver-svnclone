@@ -39,26 +39,30 @@
 #include "list.h"
 #include "session_cache.h"
 #include "handler.h"
-#include "handler_table.h"
-#include "handler_table_entry.h"
+#include "dirs_table.h"
+#include "exts_table.h"
+#include "dirs_table_entry.h"
 #include "logger.h"
 
 
 typedef struct {
 	struct list_head list_entry;
 
-	cherokee_buffer_t              *name;             /* Default name.   Eg: www.0x50.org      */
-	cherokee_handler_table_t       *plugins;          /* plugin-to-path. Eg: (/public, common) */
-	cherokee_handler_table_entry_t *error_handler;    /* Default internal error handler        */
+	cherokee_buffer_t           *name;           /* Default name.   Eg: www.0x50.org */
+	cherokee_dirs_table_t        dirs;           /* Eg: (/public, common)            */
+	cherokee_exts_table_t       *exts;           /* Eg: (.php,    phpcgi)            */
+	cherokee_dirs_table_entry_t *error_handler;  /* Default internal error handler   */
 
-	cherokee_logger_t              *logger;           /* Logger obj */
-	cherokee_table_t               *logger_props;     /* Logger properties table */
+	cherokee_logger_t           *logger;         /* Logger obj              */
+	cherokee_table_t            *logger_props;   /* Logger properties table */
 
-	cherokee_buffer_t              *root;             /* Document root. Eg: /var/www */
-	cherokee_buffer_t              *userdir;          /* Eg: public_html */
-	cherokee_handler_table_t       *userdir_plugins;  /* plugin-to-path. Eg: (/public, common) */
+	cherokee_buffer_t           *root;           /* Document root. Eg: /var/www */
+	cherokee_buffer_t           *userdir;        /* Eg: public_html             */
+	cherokee_dirs_table_t       *userdir_dirs;   /* Eg: (/public, common)       */
 
-	struct {                                          /* Number of bytes {up,down}loaded */
+	list_t                       index_list;     /* Eg: index.html, index.php */
+
+	struct {                                     /* Number of bytes {up,down}loaded */
 		size_t tx;
 		size_t rx;
 

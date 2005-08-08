@@ -5,9 +5,8 @@
  * Authors:
  *      Alvaro Lopez Ortega <alvaro@alobbs.com>
  *
- * This piece of code by:
+ * Some patches by:
  *      Ricardo Cardenes Medina <ricardo@conysis.com>
- *      Alvaro Lopez Ortega <alvaro@alobbs.com>
  *
  * Copyright (C) 2001, 2002, 2003, 2004, 2005 Alvaro Lopez Ortega
  *
@@ -44,10 +43,6 @@
 # include <sys/sockio.h>    /* defines SIOCATMARK */
 #endif
 
-#ifdef HAVE_NETDB_H
-# include <netdb.h>         /* defines gethostbyname()  */
-#endif
-
 #ifdef HAVE_SYS_SOCKET_H
 # include <sys/socket.h> 
 #endif
@@ -63,7 +58,10 @@
 
 /* sendfile() function related includes
  */
-#if defined(LINUX_SENDFILE_API) || defined(SOLARIS_SENDFILE_API)
+#if defined(LINUX_SENDFILE_API) 
+# include <sys/sendfile.h>
+
+#elif defined(SOLARIS_SENDFILE_API)
 # include <sys/sendfile.h>
 
 #elif defined(HPUX_SENDFILE_API)
@@ -80,16 +78,11 @@
 #endif
 
 
-/* gethostbyname_r () emulation
- */
-#if defined(HAVE_PTHREAD) && !defined(HAVE_GETHOSTBYNAME_R)
-static pthread_mutex_t __global_gethostbyname_mutex = PTHREAD_MUTEX_INITIALIZER;
-#endif
-
 #include <errno.h>
 #include <unistd.h>
 #include <fcntl.h>
 
+#include "util.h"
 #include "buffer.h"
 #include "virtual_server.h"
 
@@ -101,6 +94,12 @@ cherokee_socket_new (cherokee_socket_t **socket)
 
 	/* Init 
 	 */
+#ifdef HAVE_TLS
+	n->session = NULL;
+# ifdef HAVE_OPENSSL
+	n->ssl_ctx = NULL;
+# endif
+#endif
 	cherokee_socket_clean (n);
 
 	/* Client address
@@ -130,6 +129,25 @@ cherokee_socket_clean (cherokee_socket_t *socket)
 #ifdef HAVE_TLS
 	socket->initialized = false;
 	socket->vserver_ref = NULL;
+#endif
+
+#ifdef HAVE_GNUTLS
+	if (socket->session != NULL) {
+		gnutls_deinit (socket->session);
+		socket->session = NULL;
+	}
+#endif
+
+#ifdef HAVE_OPENSSL
+	if (socket->session != NULL) {
+		SSL_free (socket->session);
+		socket->session = NULL;
+	}
+
+	if (socket->ssl_ctx != NULL) {
+		SSL_CTX_free (socket->ssl_ctx);
+		socket->ssl_ctx = NULL;
+	}
 #endif
 	
 	return ret_ok;
@@ -233,8 +251,18 @@ initialize_tls_session (cherokee_socket_t *socket, cherokee_virtual_server_t *vs
 	 */
 	gnutls_set_default_priority (socket->session);   
 
+	{
+		static const int kx_priority[] = { GNUTLS_KX_RSA, 
+						   GNUTLS_KX_DHE_DSS, 
+						   GNUTLS_KX_DHE_RSA, 
+						   GNUTLS_KX_ANON_DH, 0 };
+
+		gnutls_kx_set_priority (socket->session, kx_priority);
+	}
+
 	/* Set the virtual host credentials
 	 */
+ 	gnutls_credentials_set (socket->session, GNUTLS_CRD_ANON, vserver->credentials);
  	gnutls_credentials_set (socket->session, GNUTLS_CRD_CERTIFICATE, vserver->credentials);
 	
 	/* Request client certificate if any.
@@ -256,7 +284,7 @@ initialize_tls_session (cherokee_socket_t *socket, cherokee_virtual_server_t *vs
 
 # elif defined (HAVE_OPENSSL)
 
-	/* New context
+	/* New session
 	 */
 	socket->session = SSL_new (vserver->context);
 	if (socket->session == NULL) {
@@ -325,7 +353,7 @@ cherokee_socket_init_tls (cherokee_socket_t *socket, cherokee_virtual_server_t *
 		case SSL_ERROR_WANT_CONNECT:
 			return ret_eagain;
 		default:
-			PRINT_ERROR ("ERROR: OpenSSL: %s\n", ERR_error_string(ERR_get_error(), NULL));
+			PRINT_ERROR ("ERROR: Init OpenSSL: %s\n", ERR_error_string(ERR_get_error(), NULL));
 			return ret_error;
 		}
 	}
@@ -340,7 +368,8 @@ cherokee_socket_free (cherokee_socket_t *socket)
 {
 #ifdef HAVE_GNUTLS
 	if (socket->session != NULL) {
-		
+		gnutls_deinit (socket->session);
+		socket->session = NULL;
 	}
 #endif
 
@@ -348,6 +377,11 @@ cherokee_socket_free (cherokee_socket_t *socket)
 	if (socket->session != NULL) {
 		SSL_free (socket->session);
 		socket->session = NULL;
+	}
+
+	if (socket->ssl_ctx != NULL) {
+		SSL_CTX_free (socket->ssl_ctx);
+		socket->ssl_ctx = NULL;
 	}
 #endif
 
@@ -382,6 +416,21 @@ cherokee_socket_close (cherokee_socket_t *socket)
 	socket->is_tls = non_TLS;
 
 	return (re == 0) ? ret_ok : ret_error;
+}
+
+
+ret_t 
+cherokee_socket_shutdown (cherokee_socket_t *socket, int how)
+{
+	int re;
+
+	if (socket->socket <= 0) {
+		return ret_error;
+	}
+
+	re = shutdown (socket->socket, how);	
+
+	return (re == 0)? ret_ok : ret_error;
 }
 
 
@@ -443,9 +492,11 @@ cherokee_socket_pton (cherokee_socket_t *socket, cherokee_buffer_t *host)
 		r = inet_pton (AF_INET6, host->buf, &SOCKET_SIN_ADDR(socket));
 	} else 
 #endif
-	{
+#ifdef HAVE_INET_PTON
 		r = inet_pton (AF_INET, host->buf, &SOCKET_SIN_ADDR(socket));
-	}
+#else		
+	        r = inet_aton (host->buf, &SOCKET_SIN_ADDR(socket));
+#endif
 
 	return (r > 0) ? ret_ok : ret_error;
 }
@@ -454,9 +505,9 @@ cherokee_socket_pton (cherokee_socket_t *socket, cherokee_buffer_t *host)
 ret_t 
 cherokee_socket_accept (cherokee_socket_t *socket, int server_socket)
 {
-	ret_t           ret;
-	int             fd;
-	struct sockaddr sa;
+	ret_t               ret;
+	int                 fd;
+	cherokee_sockaddr_t sa;
 
 	ret = cherokee_socket_accept_fd (server_socket, &fd, &sa);
 	if (unlikely(ret < ret_ok)) return ret;
@@ -468,11 +519,11 @@ cherokee_socket_accept (cherokee_socket_t *socket, int server_socket)
 }
 
 ret_t 
-cherokee_socket_set_sockaddr (cherokee_socket_t *socket, int fd, struct sockaddr *sa)
+cherokee_socket_set_sockaddr (cherokee_socket_t *socket, int fd, cherokee_sockaddr_t *sa)
 {
 	/* Copy the client address
 	 */
-	switch (sa->sa_family) {
+	switch (sa->sa.sa_family) {
 	case AF_INET: 
 		socket->client_addr_len = sizeof(struct sockaddr_in);
 		break;
@@ -494,15 +545,16 @@ cherokee_socket_set_sockaddr (cherokee_socket_t *socket, int fd, struct sockaddr
 
 
 ret_t
-cherokee_socket_accept_fd (int server_socket, int *new_fd, struct sockaddr *sa)
+cherokee_socket_accept_fd (int server_socket, int *new_fd, cherokee_sockaddr_t *sa)
 {
-	int tmp = 1;
-	int new_socket;
+	socklen_t len;
+	int       new_socket;
+	int       tmp = 1;
 
 	/* Get the new connection
 	 */
-	tmp = sizeof (struct sockaddr);
-	new_socket = accept (server_socket, sa, &tmp);
+	len = sizeof (cherokee_sockaddr_t);
+	new_socket = accept (server_socket, &sa->sa, &len);
 	if (new_socket <= 0) {
 		return ret_error;
 	}		
@@ -539,9 +591,9 @@ cherokee_socket_accept_fd (int server_socket, int *new_fd, struct sockaddr *sa)
 
 
 ret_t 
-cherokee_socket_set_client (cherokee_socket_t *sock)
+cherokee_socket_set_client (cherokee_socket_t *sock, int type)
 {
-	sock->socket = socket (AF_INET, SOCK_STREAM, 0);
+	sock->socket = socket (type, SOCK_STREAM, 0);
 	if (sock->socket < 0) {
 		return ret_error;
 	}
@@ -566,7 +618,7 @@ cherokee_socket_set_status (cherokee_socket_t *socket, cherokee_socket_status_t 
 
 
 ret_t 
-cherokee_write (cherokee_socket_t *socket, const char *buf, int buf_len, size_t *writed)
+cherokee_write (cherokee_socket_t *socket, const char *buf, int buf_len, size_t *written)
 {
 	ssize_t len;
 
@@ -590,7 +642,7 @@ cherokee_write (cherokee_socket_t *socket, const char *buf, int buf_len, size_t 
 			PRINT_ERROR ("ERROR: GNUTLS: gnutls_record_send(%d, ..) -> err=%d '%s'\n", 
 				     SOCKET_FD(socket), len, gnutls_strerror(len));
 
-			*writed = 0;
+			*written = 0;
 			return ret_error;
 
 		} else if (len == 0) {
@@ -613,7 +665,7 @@ cherokee_write (cherokee_socket_t *socket, const char *buf, int buf_len, size_t 
 			PRINT_ERROR ("ERROR: SSL_write (%d, ..) -> err=%d '%s'\n", 
 				     SOCKET_FD(socket), len, ERR_error_string(re, NULL));
 
-			*writed = 0;
+			*written = 0;
 			return ret_error;
 
 		} else if (len == 0) {
@@ -645,7 +697,7 @@ cherokee_write (cherokee_socket_t *socket, const char *buf, int buf_len, size_t 
 		PRINT_ERROR ("ERROR: write(%d, ..) -> errno=%d '%s'\n", 
 			     SOCKET_FD(socket), errno, strerror(errno));
 
-		*writed = 0;
+		*written = 0;
 		return ret_error;
 
 	}  else if (len == 0) {
@@ -655,13 +707,13 @@ cherokee_write (cherokee_socket_t *socket, const char *buf, int buf_len, size_t 
 out:
 	/* Return info
 	 */
-	*writed = len;
+	*written = len;
 	return ret_ok;
 }
 
 
 ret_t
-cherokee_read (cherokee_socket_t *socket, char *buf, int buf_size, size_t *readed)
+cherokee_read (cherokee_socket_t *socket, char *buf, int buf_size, size_t *done)
 {
 	ssize_t len;
 
@@ -688,7 +740,7 @@ cherokee_read (cherokee_socket_t *socket, char *buf, int buf_size, size_t *reade
 			PRINT_ERROR ("ERROR: GNUTLS: gnutls_record_recv(%d, ..) -> err=%d '%s'\n", 
 				     SOCKET_FD(socket), len, gnutls_strerror(len));
 
-			*readed = 0;
+			*done = 0;
 			return ret_error;
 			
 		} else if (len == 0) {
@@ -717,7 +769,7 @@ cherokee_read (cherokee_socket_t *socket, char *buf, int buf_size, size_t *reade
 			PRINT_ERROR ("ERROR: OpenSSL: SSL_read (%d, ..) -> err=%d '%s'\n", 
 				     SOCKET_FD(socket), len, ERR_error_string(re, NULL));
 
-			*readed = 0;
+			*done = 0;
 			return ret_error;
 
 		} else if (len == 0) {
@@ -750,7 +802,7 @@ cherokee_read (cherokee_socket_t *socket, char *buf, int buf_size, size_t *reade
 		PRINT_ERROR ("ERROR: read(%d, ..) -> errno=%d '%s'\n", 
 			     SOCKET_FD(socket), errno, strerror(errno));
 		
-		*readed = 0;
+		*done = 0;
 		return ret_error;
 
 	} else if (len == 0) {
@@ -760,15 +812,15 @@ cherokee_read (cherokee_socket_t *socket, char *buf, int buf_size, size_t *reade
 out:
 	/* Return info
 	 */
-	if (readed != NULL)
-		*readed = len;
+	if (done != NULL)
+		*done = len;
 
 	return ret_ok;
 }
 
 
 ret_t 
-cherokee_writev (cherokee_socket_t *socket, const struct iovec *vector, uint16_t vector_len, size_t *writed)
+cherokee_writev (cherokee_socket_t *socket, const struct iovec *vector, uint16_t vector_len, size_t *written)
 {
 #ifdef _WIN32
 	DWORD re;
@@ -792,35 +844,35 @@ cherokee_writev (cherokee_socket_t *socket, const struct iovec *vector, uint16_t
 		PRINT_ERROR ("ERROR: writev(%d, ..) -> errno=%d '%s'\n", 
 			     SOCKET_FD(socket), errno, strerror(errno));
 
-		*writed = 0;
+		*written = 0;
 		return ret_error;
 	}
 
-	*writed = re;
+	*written = re;
 	return ret_ok;
 }
 
 
 ret_t       
-cherokee_socket_write (cherokee_socket_t *socket, cherokee_buffer_t *buf, size_t *writed)
+cherokee_socket_write (cherokee_socket_t *socket, cherokee_buffer_t *buf, size_t *written)
 {
 	ret_t   ret;
-	size_t _writed;
+	size_t _written;
 
-	ret = cherokee_write (socket, buf->buf, buf->len, &_writed);
+	ret = cherokee_write (socket, buf->buf, buf->len, &_written);
 
-	*writed = _writed;
+	*written = _written;
 	return ret;
 }
 
 
 ret_t      
-cherokee_socket_read (cherokee_socket_t *socket, cherokee_buffer_t *buf, size_t count, size_t *readed)
+cherokee_socket_read (cherokee_socket_t *socket, cherokee_buffer_t *buf, size_t count, size_t *done)
 {
 	ret_t    ret;
 	char    *starting;
 	
-	/* Special case: read to /dev/null
+	/* Special case: read to empty the buffer
 	 */
 	if (buf == NULL) {
 		return cherokee_read (socket, NULL, count, NULL);
@@ -833,9 +885,9 @@ cherokee_socket_read (cherokee_socket_t *socket, cherokee_buffer_t *buf, size_t 
 
 	starting = buf->buf + buf->len;
 
-	ret = cherokee_read (socket, starting, count, readed);
+	ret = cherokee_read (socket, starting, count, done);
 	if (ret == ret_ok) {
-		buf->len += *readed;
+		buf->len += *done;
 		buf->buf[buf->len] = '\0';
 	}
 
@@ -920,23 +972,44 @@ cherokee_socket_sendfile (cherokee_socket_t *socket, int fd, size_t size, off_t 
 	}
 	*offset = *offset + *sent;
 
-# else
+# elif SOLARIS_SENDFILE_API
+
+	/* TODO!!
+	 */
+	return ret_no_sys;
+
+# elif HAVE_SENDFILE_BROKEN
+
+	/* Some Linux 2.4 kernels doesn't support sendfile in a LFS environment
+	 */
+	return ret_no_sys;
+
+# elif LINUX_SENDFILE_API
+
 	/* Linux sendfile
 	 *
 	 * ssize_t 
 	 * sendfile (int out_fd, int in_fd, off_t *offset, size_t *count);
 	 */
-	*sent = sendfile (SOCKET_FD(socket),              /* int     out_fd */
-			  fd,                             /* int     in_fd  */
-			  offset,                         /* off_t  *offset */
-			  size);                          /* size_t  count  */
-
-	if (*sent < 0) {
-		if (errno == EAGAIN) 
-			return ret_eagain;
+	do {
+		*sent = sendfile (SOCKET_FD(socket),            /* int     out_fd */
+				  fd,                           /* int     in_fd  */
+				  offset,                       /* off_t  *offset */
+				  size);                        /* size_t  count  */
+	} while ((*sent == -1) && (errno == EINTR));
 		
+	if (*sent < 0) {
+		switch (errno) {
+		case ENOSYS: return ret_no_sys;
+		case EAGAIN: return ret_eagain;
+		}
+
 		return ret_error;
 	}
+
+# else
+	SHOULDNT_HAPPEN;
+	return ret_no_sys;
 # endif
 
 	return ret_ok;
@@ -948,73 +1021,7 @@ cherokee_socket_sendfile (cherokee_socket_t *socket, int fd, size_t size, off_t 
 ret_t
 cherokee_socket_gethostbyname (cherokee_socket_t *socket, cherokee_buffer_t *hostname)
 {
-#if !defined(HAVE_PTHREAD) || (defined(HAVE_PTHREAD) && !defined(HAVE_GETHOSTBYNAME_R))
-
-	struct hostent *host;
-
-	CHEROKEE_MUTEX_LOCK (&__global_gethostbyname_mutex);
-	/* Resolv the host name
-	 */
-	host = gethostbyname (hostname->buf);
-	if (host == NULL) {
-		CHEROKEE_MUTEX_UNLOCK (&__global_gethostbyname_mutex);
-		return ret_error;
-	}
-
-	/* Copy the address
-	 */
-	memcpy (&SOCKET_SIN_ADDR(socket), host->h_addr, host->h_length);
-	CHEROKEE_MUTEX_UNLOCK (&__global_gethostbyname_mutex);
-	return ret_ok;
-
-#elif defined(HAVE_PTHREAD) && defined(HAVE_GETHOSTBYNAME_R)
-
-/* Maximum size that should use gethostbyname_r() function.
- * It will return ERANGE, if more space is needed.
- */
-# define GETHOSTBYNAME_R_BUF_LEN 512
-
-	int             r;
-	int             h_errnop;
-	struct hostent  hs;
-	struct hostent *hp;
-	char   tmp[GETHOSTBYNAME_R_BUF_LEN];
-	
-
-#ifdef SOLARIS
-	/* Solaris 10:
-	 * struct hostent *gethostbyname_r
-	 *        (const char *, struct hostent *, char *, int, int *h_errnop);
-	 */
-	hp = gethostbyname_r (hostname->buf, &hs, 
-			      tmp, GETHOSTBYNAME_R_BUF_LEN - 1, &h_errnop);
-	if (hp == NULL) {
-		return ret_error;
-	}	
-#else
-	/* Linux glibc2:
-	 *  int gethostbyname_r (const char *name,
-	 *         struct hostent *ret, char *buf, size_t buflen,
-	 *         struct hostent **result, int *h_errnop);
-	 */
-	r = gethostbyname_r (hostname->buf, 
-			     &hs, tmp, GETHOSTBYNAME_R_BUF_LEN - 1, 
-			     &hp, &h_errnop);
-	if (r != 0) {
-		return ret_error;
-	}
-#endif	
-
-	/* Copy the address
-	 */
-	memcpy (&SOCKET_SIN_ADDR(socket), hp->h_addr, hp->h_length);
-
-	return ret_ok;
-#else
-
-	SHOULDNT_HAPPEN;
-	return ret_error;
-#endif
+	return cherokee_gethostbyname (hostname->buf, &SOCKET_SIN_ADDR(socket));
 }
 
 
@@ -1038,4 +1045,129 @@ cherokee_socket_connect (cherokee_socket_t *socket)
 	}
 
 	return ret_ok;
+}
+
+
+ret_t 
+cherokee_socket_init_client_tls (cherokee_socket_t *socket)
+{
+#ifdef HAVE_TLS
+	int re;
+
+	socket->is_tls = TLS;
+
+# ifdef HAVE_GNUTLS
+	const int kx_priority[] = {GNUTLS_KX_ANON_DH, 0};
+
+	gnutls_anon_client_credentials   anoncred;
+	
+	/* Acredentials
+	 */
+	gnutls_anon_allocate_client_credentials(&anoncred);
+
+	/* Init session
+	 */
+	re = gnutls_init (&socket->session, GNUTLS_CLIENT);
+	if (unlikely (re != GNUTLS_E_SUCCESS)) return ret_error;
+
+	
+	/* Settings
+	 */
+	gnutls_set_default_priority(socket->session);
+	gnutls_kx_set_priority (socket->session, kx_priority);
+
+	gnutls_credentials_set (socket->session, GNUTLS_CRD_ANON, anoncred);
+	gnutls_transport_set_ptr (socket->session, (gnutls_transport_ptr)socket->socket);
+
+
+	do {
+		re = gnutls_handshake (socket->session);
+		if (re < 0) {
+			switch (re) {
+			case GNUTLS_E_AGAIN:
+			case GNUTLS_E_INTERRUPTED:
+				break;
+			default:
+				return ret_error;
+			}
+		}
+	} while ((re == GNUTLS_E_AGAIN) ||
+		 (re == GNUTLS_E_INTERRUPTED));
+
+# endif
+
+# ifdef HAVE_OPENSSL
+
+	/* New context
+	 */
+	socket->ssl_ctx = SSL_CTX_new (SSLv23_client_method());
+	if (socket->ssl_ctx == NULL) {
+		PRINT_ERROR ("ERROR: OpenSSL: Unable to create a new SSL context: %s\n",
+			     ERR_error_string(ERR_get_error(), NULL));
+		return ret_error;
+	}
+
+	SSL_CTX_set_default_verify_paths (socket->ssl_ctx);
+	SSL_CTX_load_verify_locations (socket->ssl_ctx, NULL, NULL);
+
+	SSL_CTX_set_verify (socket->ssl_ctx, SSL_VERIFY_NONE, NULL);
+	SSL_CTX_set_mode (socket->ssl_ctx, SSL_MODE_ENABLE_PARTIAL_WRITE);
+
+	/* New session
+	 */
+	socket->session = SSL_new (socket->ssl_ctx);
+	if (socket->session == NULL) {
+		PRINT_ERROR ("ERROR: OpenSSL: Unable to create a new SSL connection from the SSL context: %s\n",
+			     ERR_error_string(ERR_get_error(), NULL));
+		return ret_error;
+	}
+
+	/* Set the socket file descriptor
+	 */
+	re = SSL_set_fd (socket->session, socket->socket);
+	if (re != 1) {
+		PRINT_ERROR ("ERROR: OpenSSL: Can not set fd(%d): %s\n",
+			     socket->socket, ERR_error_string(ERR_get_error(), NULL));
+		return ret_error;
+	}
+
+	SSL_set_connect_state (socket->session); 
+
+	re = SSL_connect (socket->session);
+	if (re <= 0) {
+		PRINT_ERROR ("ERROR: OpenSSL: Can not connect: %s\n",
+			     ERR_error_string(ERR_get_error(), NULL));
+		return ret_error;
+	}
+
+# endif
+#endif
+	return ret_ok;
+}
+
+
+ret_t 
+cherokee_socket_set_timeout (cherokee_socket_t *socket, cuint_t timeout)
+{
+	cuint_t block;
+
+	if (socket->socket <= 0) {
+		return ret_error;
+	}
+
+	if (timeout < 0)
+		timeout = 0;
+	
+	/* Set the socket to blocking
+	 */
+	block = 0;
+	if (ioctl (socket->socket, FIONBIO, &block) < 0)
+		return ret_error;
+
+	/* Set the send / receive timeouts
+	 */
+	setsockopt (socket->socket, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
+	setsockopt (socket->socket, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout));
+
+	return ret_ok;		      
 }
