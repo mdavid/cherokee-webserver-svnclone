@@ -1,10 +1,10 @@
 import random
 import string
 from base import *
+from util import *
 
-MAGIC=''
-for i in xrange(100*1024):
-    MAGIC += random.choice(string.letters)
+LENGTH = 100*1024
+
 
 class Test (TestBase):
     def __init__ (self):
@@ -13,16 +13,19 @@ class Test (TestBase):
 
         self.request          = "POST /Post100k.php HTTP/1.0\r\n" +\
                                 "Content-type: application/x-www-form-urlencoded\r\n" +\
-                                "Content-length: %d\r\n" % (4+len(MAGIC))
-        self.post             = "var="+MAGIC
+                                "Content-length: %d\r\n" % (4+LENGTH)
         self.expected_error   = 200
-        self.expected_content = MAGIC
 
     def Prepare (self, www):
+        random  = letters_random (100*1024)
+        tmpfile = self.WriteTemp (random)
+
         self.WriteFile (www, "Post100k.php", 0444,
                         "<?php echo $_POST['var']; ?>")
 
+        self.post             = "var="+random
+        self.expected_content = "file:%s" % (tmpfile)
+
     def Precondition (self):
         return os.path.exists (PHPCGI_PATH)
-
 

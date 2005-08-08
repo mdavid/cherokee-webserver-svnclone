@@ -16,7 +16,8 @@ class Test (TestBase):
 
     def Prepare (self, www):
         self.Mkdir (www, "directoryindex2")
-        self.WriteFile (www, "directoryindex2/test_index.php", 0444, '<?php echo "%s"."%s"; ?>'%(MAGIC1, MAGIC2))
+        self.WriteFile (www, "directoryindex2/test_index.php", 0444,
+                        '<?php echo "%s"."%s"; ?>'%(MAGIC1, MAGIC2))
 
     def Precondition (self):
         return os.path.exists (PHPCGI_PATH)

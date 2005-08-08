@@ -1,10 +1,10 @@
 import random
 import string
 from base import *
+from util import *
 
-MAGIC=""
-for i in xrange(100*1024):
-    MAGIC += random.choice(string.letters)
+LENGTH = 100*1024
+
 
 class Test (TestBase):
     def __init__ (self):
@@ -13,8 +13,8 @@ class Test (TestBase):
 
         self.request          = "GET /100k HTTP/1.0\r\n"
         self.expected_error   = 200
-        self.expected_content = MAGIC
 
     def Prepare (self, www):
-        self.WriteFile (www, "100k", 0444, MAGIC)
+        f = self.WriteFile (www, "100k", 0444, str_random (LENGTH))
+        self.expected_content = "file:" + f
 

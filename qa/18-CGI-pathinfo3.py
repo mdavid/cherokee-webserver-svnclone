@@ -12,12 +12,11 @@ class Test (TestBase):
         self.expected_content = "PathInfo is /test_parameter"
 
     def Prepare (self, www):
-        self.Mkdir (www, "cgi-bin4")
         self.Mkdir (www, "cgi-bin4/inside")
         self.WriteFile (www, "cgi-bin4/inside/test", 0755,
                         """#!/bin/sh
 
                         echo "Content-Type: text/plain"
                         echo
-                        echo "echo PathInfo is $PATH_INFO"
+                        echo "PathInfo is $PATH_INFO"
                         """)

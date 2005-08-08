@@ -1,6 +1,7 @@
 EXTRA_DIST = \
 conf.py \
 base.py \
+util.py \
 run-tests.py \
 01-basic.py \
 02-MissingProtocol.py \
@@ -37,7 +38,7 @@ run-tests.py \
 33-DirIndex.py \
 34-DirIndex2.py \
 35-PHP-simple.py \
-36-PHP-simple2.py \
+36-DocumentRoot-common.py \
 37-PHP-post.py \
 38-PHP-get.py \
 39-Auth-Basic.py \
@@ -70,7 +71,22 @@ run-tests.py \
 66-DirectoryIndex3.py \
 67-PathInfo.py \
 68-PathInfo2.py \
-69-PathInfo3.py
+69-PathInfo3.py \
+70-Inherit.py \
+71-Inherit2.py \
+72-Inherit3.py \
+73-Access.py \
+74-Access2.py \
+75-AccessRange.py \
+76-AccessRange2.py \
+77-AccessRange3.py \
+78-AccessAny.py \
+79-Extension.py \
+80-Extension2.py \
+81-DocumentRoot-Common-index.py \
+82-Auth-header.py \
+83-RedirParam.py \
+84-RedirParamShow.py
 
 
 test:

@@ -6,7 +6,6 @@ class Test (TestBase):
     def __init__ (self):
         TestBase.__init__ (self)
         self.name             = "PHP get"
-        self.conf             = "Directory /php4 { Handler common }"
         self.request          = "GET /php4/get.php?this=1&magic=%s HTTP/1.0\r\n" % (MAGIC)
         self.expected_error   = 200
         self.expected_content = MAGIC

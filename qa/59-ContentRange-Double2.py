@@ -1,14 +1,12 @@
 import random
 import string
 from base import *
+from util import *
 
 LENGTH  = 100*1024
 OFFSET1 = 15*1024
 OFFSET2 = 40*1024
 
-MAGIC = ""
-for i in xrange(LENGTH):
-    MAGIC += random.choice(string.letters)
 
 class Test (TestBase):
     def __init__ (self):
@@ -16,10 +14,17 @@ class Test (TestBase):
         self.name = "Content Range 100k, both"
 
         self.request           = "GET /Range100kBoth HTTP/1.0\r\n" +\
-                                 "Content-Range: bytes=%d-%d\r\n" % (OFFSET1, OFFSET2)
+                                 "Range: bytes=%d-%d\r\n" % (OFFSET1, OFFSET2)
         self.expected_error    = 206
-        self.expected_content  = [MAGIC[OFFSET1:OFFSET2], "Content-length: %d" % (OFFSET2-OFFSET1)]
-        self.forbidden_content = [MAGIC[OFFSET1:], MAGIC[:OFFSET2]]
 
     def Prepare (self, www):
-        self.WriteFile (www, "Range100kBoth", 0444, MAGIC)
+        srandom = str_random (LENGTH)
+        self.WriteFile (www, "Range100kBoth", 0444, srandom)
+
+        expected   = self.WriteTemp (srandom[OFFSET1:OFFSET2])
+        forbidden1 = self.WriteTemp (srandom[OFFSET1:])
+        forbidden2 = self.WriteTemp (srandom[:OFFSET2])
+
+        self.expected_content  = ["file:"+expected, "Content-Length: %d" % (OFFSET2-OFFSET1)]
+        self.forbidden_content = ["file:"+forbidden1, "file:"+forbidden2]
+
