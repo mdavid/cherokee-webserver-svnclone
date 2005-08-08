@@ -144,10 +144,10 @@ do_download__init (cherokee_downloader_t *downloader, void *param)
 {
 	cherokee_url_t *url;
 
-	url = downloader->request->url;
+	url = &downloader->request.url;
 	
-	print_tuple_str ("Host",    url->host->buf);
-	print_tuple_str ("Request", url->request->buf);
+	print_tuple_str ("Host",    url->host.buf);
+	print_tuple_str ("Request", url->request.buf);
 	print_tuple_int ("Port",    url->port);
 
 	return ret_ok;
@@ -161,8 +161,8 @@ do_download__has_headers (cherokee_downloader_t *downloader, void *param)
 	cherokee_buffer_t *req;
 	cherokee_header_t *hdr;
 
-	url = downloader->request->url;
-	req = url->request;
+	url = &downloader->request.url;
+	req = &url->request;
 	hdr = downloader->header;
 
 	/* Check the response
@@ -230,9 +230,9 @@ do_download__read_body (cherokee_downloader_t *downloader, void *param)
 
 	/* Write down
 	 */
-	len = write (output_fd, downloader->body->buf, downloader->body->len);
+	len = write (output_fd, downloader->body.buf, downloader->body.len);
 	if (len > 0) {
-		ret = cherokee_buffer_move_to_begin (downloader->body, len);
+		ret = cherokee_buffer_move_to_begin (&downloader->body, len);
 		if (ret != ret_ok) return ret;
 	}
 
@@ -297,12 +297,12 @@ do_download (cherokee_downloader_t *downloader, cherokee_fdpoll_t *fdpoll)
 int
 main (int argc, char **argv)
 {
-	int    re;
-	ret_t  ret;
-	int    val;
-	int    fdlimit;
-	int    param_num;
-	int    long_index;
+	int     re;
+	ret_t   ret;
+	int     val;
+	int     param_num;
+	int     long_index;
+	cuint_t fdlimit;
 	cherokee_fdpoll_t     *fdpoll;
 	cherokee_downloader_t *downloader;
 
@@ -391,18 +391,21 @@ main (int argc, char **argv)
 
 		/* Create the downloader object..
 		 */
-		ret = cherokee_downloader_new (&downloader, fdpoll);
+		ret = cherokee_downloader_new (&downloader);
 		if (ret != ret_ok) return EXIT_ERROR;
 
-		ret = cherokee_downloader_set (downloader, url);
+		ret = cherokee_downloader_set_url (downloader, url);
+		if (ret != ret_ok) return EXIT_ERROR;
+
+		ret = cherokee_downloader_set_fdpoll (downloader, fdpoll);
 		if (ret != ret_ok) return EXIT_ERROR;
 
 		/* Set the callbacks
 		 */
-		cherokee_downloader_connect (downloader, downloader_event_init,        do_download__init,        NULL);
-		cherokee_downloader_connect (downloader, downloader_event_has_headers, do_download__has_headers, NULL);
-		cherokee_downloader_connect (downloader, downloader_event_read_body,   do_download__read_body,   NULL);
-		cherokee_downloader_connect (downloader, downloader_event_finish,      do_download__finish,      NULL);
+		cherokee_downloader_connect_event (downloader, downloader_event_init,        do_download__init,        NULL);
+		cherokee_downloader_connect_event (downloader, downloader_event_has_headers, do_download__has_headers, NULL);
+		cherokee_downloader_connect_event (downloader, downloader_event_read_body,   do_download__read_body,   NULL);
+		cherokee_downloader_connect_event (downloader, downloader_event_finish,      do_download__finish,      NULL);
 
 		/* Download it!
 		 */
