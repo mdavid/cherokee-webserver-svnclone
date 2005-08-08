@@ -46,14 +46,13 @@ cherokee_module_info_t cherokee_nn_info = {
 };
 
 
-static char *
-get_nearest_from_directory (char *directory, char *request)
+static ret_t
+get_nearest_from_directory (char *directory, char *request, cherokee_buffer_t *output)
 {
-	char          *nearest  = NULL;
-	int            min_diff = 9999;
-	DIR           *dir;
-	struct dirent *entry;
-
+	DIR               *dir;
+	struct dirent     *entry;
+	int                min_diff = 9999;
+	cherokee_boolean_t found    = false;
 
 	dir = opendir(directory);
 	if (dir == NULL) goto go_out;
@@ -68,61 +67,53 @@ get_nearest_from_directory (char *directory, char *request)
 		dis = distance ((char *)request, entry->d_name);
 		if (dis < min_diff) {
 			min_diff = dis;
-
-			if (nearest != NULL) {
-				free (nearest);
-			}
-
-			nearest = strdup(entry->d_name);
+			found    = true;
+			
+			cherokee_buffer_clean (output);
+			cherokee_buffer_add (output, entry->d_name, strlen(entry->d_name));
 		}
 			 
 	}
 	closedir (dir);
 
 go_out:
-	return nearest;
+	return (found) ? ret_ok : ret_error;
 }
 
 
-static char *
-get_nearest (cherokee_buffer_t *local,
-	     cherokee_buffer_t *request)
+ret_t
+get_nearest (cherokee_buffer_t *local_dir,
+	     cherokee_buffer_t *request,
+	     cherokee_buffer_t *output)
 {
-	char              *tmp, *rest;
-	char              *ret = NULL;
-	cherokee_buffer_t *req;       /* Request w/o last word */
-	cherokee_buffer_t *dir_srch;  /* Directory to search in */
-
-	cherokee_buffer_new (&req);
-	cherokee_buffer_new (&dir_srch);
+	char              *rest;
+	ret_t              ret = ret_ok;
+	cherokee_buffer_t  req = CHEROKEE_BUF_INIT;       /* Request w/o last word */
 
 	/* Build the local request path
 	 */
 	rest = strrchr (request->buf, '/');
-	if (rest == NULL) goto go_out;
+	if (rest == NULL) {
+		return ret_error;
+	}
 	rest++;
 
-	cherokee_buffer_add (req, local->buf, local->len);
-	cherokee_buffer_add (req, request->buf, rest - request->buf);
-
-	tmp = get_nearest_from_directory (req->buf, rest);
-	if (tmp == NULL) goto go_out;
-
-
-	/* Build new web request
+	cherokee_buffer_add_buffer (&req, local_dir);
+	cherokee_buffer_add (&req, request->buf, rest - request->buf);
+	
+	/* Copy the new filename to the output buffer
 	 */
-	cherokee_buffer_make_empty (req);
-	cherokee_buffer_add (req, request->buf, rest - request->buf);
-	cherokee_buffer_add (req, tmp, strlen(tmp));
+	ret = get_nearest_from_directory (req.buf, rest, output);
+	cherokee_buffer_mrproper (&req);
 
-	ret = strdup (req->buf);
-	free (tmp);
+	if (unlikely (ret != ret_ok)) {
+		return ret_error;
+	}
 
-go_out:
-	cherokee_buffer_free (req);
-	cherokee_buffer_free (dir_srch);
-
-	return ret;
+	/* Prepend the rest of the old request to the new filename
+	 */
+	cherokee_buffer_prepend (output, request->buf, rest - request->buf);
+	return ret_ok;
 }
 
 
@@ -160,21 +151,21 @@ cherokee_handler_nn_new (cherokee_handler_t **hdl, void *cnt, cherokee_table_t *
 ret_t 
 cherokee_handler_nn_init (cherokee_handler_t *hdl)
 {
-	char                  *new_request;
+	ret_t                  ret;
 	cherokee_connection_t *conn;
 	conn = CONN(HANDLER(hdl)->connection);
 	
-	/* Look for the `nearest neighbor'
+	/* Look for the `nearest neighbor' and redirect to it
 	 */
-	new_request = get_nearest (conn->local_directory, conn->request);
-	if (new_request == NULL) {
+	cherokee_buffer_clean (conn->redirect);
+
+	ret = get_nearest (conn->local_directory, conn->request, conn->redirect);
+	if (unlikely (ret != ret_ok)) {
 		CONN(hdl->connection)->error_code = http_not_found;
 		return ret_error;
 	}
 
-	cherokee_buffer_add (conn->redirect, new_request, strlen(new_request));
-	CONN(hdl->connection)->error_code = http_moved_permanently;
-	
+	CONN(hdl->connection)->error_code = http_moved_permanently;	
 	return ret_ok;
 }
 
@@ -185,7 +176,7 @@ cherokee_handler_nn_init (cherokee_handler_t *hdl)
 static int _nn_is_init = 0;
 
 void
-nn_init (cherokee_module_loader_t *loader)
+MODULE_INIT(nn) (cherokee_module_loader_t *loader)
 {
 	/* Is init?
 	 */

@@ -39,18 +39,58 @@ static cherokee_server_t  *srv         = NULL;
 static char               *config_file = NULL;
 static cherokee_boolean_t  daemon_mode = false;
 
+static ret_t common_server_initialization (cherokee_server_t *srv);
 
-static void
-restart_server (int code)
-{	
-	cherokee_server_handle_HUP (srv);
-}
 
 static void
 panic_handler (int code)
 {
 	cherokee_server_handle_panic (srv);
 }
+
+
+static void
+restart_server_cb (cherokee_server_t *new_srv)
+{
+	srv = new_srv;
+	common_server_initialization (srv);
+}
+
+
+static void
+restart_server (int code)
+{	
+	cherokee_server_handle_HUP (srv, restart_server_cb);
+}
+
+
+static ret_t
+common_server_initialization (cherokee_server_t *srv)
+{
+	ret_t ret;
+
+	signal (SIGPIPE, SIG_IGN);
+	signal (SIGHUP,  restart_server);
+	signal (SIGSEGV, panic_handler);
+
+	ret = cherokee_server_read_config_file (srv, config_file);
+	if (ret != ret_ok) {
+		PRINT_MSG_S ("Couldn't read the config file\n");
+		return ret_error;
+	}
+		
+	ret = cherokee_server_init (srv);
+	if (ret != ret_ok) return 3;
+
+	if (daemon_mode) {
+		cherokee_server_daemonize (srv);
+	}
+
+	cherokee_server_unlock_threads (srv);
+
+	return ret_ok;
+}
+
 
 static void
 process_parameters (int argc, char **argv)
@@ -74,7 +114,6 @@ process_parameters (int argc, char **argv)
 	}
 }
 
-
 int
 main (int argc, char **argv)
 {
@@ -85,21 +124,8 @@ main (int argc, char **argv)
 	
 	process_parameters (argc, argv);
 
-	signal (SIGPIPE, SIG_IGN);
-	signal (SIGHUP,  restart_server);
-	signal (SIGSEGV, panic_handler);
-
-	ret = cherokee_server_read_config_file (srv, config_file);
-	if (ret != ret_ok) return 2;
-		
-	ret = cherokee_server_init (srv);
-	if (ret != ret_ok) return 3;
-
-	if (daemon_mode) {
-		cherokee_server_daemonize (srv);
-	}
-
-	cherokee_server_unlock_threads (srv);
+	ret = common_server_initialization (srv);
+	if (ret < ret_ok) return 2;
 
 	for (;;) {
 		cherokee_server_step (srv);

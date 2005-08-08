@@ -26,6 +26,9 @@
 #define CHEROKEE_HEADER_H
 
 #include "common-internal.h"
+
+#include <sys/types.h>
+
 #include "header.h"
 
 

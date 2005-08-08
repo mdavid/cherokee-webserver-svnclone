@@ -18,8 +18,8 @@ x - Finished task
 [x] Add command line parameters
 [x] IP Ranges restrictions
 [x] Improve setenv() calls in cgi handler
+[x] handler_dirlist to implement shorting
 [ ] handler_dirlist to manage content-length
-[ ] handler_dirlist to implement shorting
 [ ] Stat cache
 [ ] Cache for the encoder modules
 [ ] Something like the <DirectoryMatch> Apache's directive

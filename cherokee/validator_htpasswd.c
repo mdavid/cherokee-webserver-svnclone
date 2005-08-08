@@ -29,6 +29,7 @@
 # include <crypt.h>
 #endif
 
+#include "module_loader.h"
 #include "connection.h"
 #include "connection-protected.h"
 
@@ -49,7 +50,7 @@
  * not begin with a dollar sign is very likely a DES password.
  */
 
-cherokee_module_info_t cherokee_htpasswd_info = {
+cherokee_module_info_t MODULE_INFO(htpasswd) = {
 	cherokee_validator,                /* type     */
 	cherokee_validator_htpasswd_new    /* new func */
 };
@@ -62,21 +63,20 @@ cherokee_validator_htpasswd_new (cherokee_validator_htpasswd_t **htpasswd, chero
 	/* Init 	
 	 */
 	cherokee_validator_init_base (VALIDATOR(n));
-	MODULE(n)->free     = (module_func_free_t)     cherokee_validator_htpasswd_free;
-	VALIDATOR(n)->check = (validator_func_check_t) cherokee_validator_htpasswd_check;
+	MODULE(n)->free           = (module_func_free_t)           cherokee_validator_htpasswd_free;
+	VALIDATOR(n)->check       = (validator_func_check_t)       cherokee_validator_htpasswd_check;
+	VALIDATOR(n)->add_headers = (validator_func_add_headers_t) cherokee_validator_htpasswd_add_headers;
 	   
-	n->htpasswd_file_ref = NULL;
+	n->file_ref = NULL;
 
 	/* Get the properties
 	 */
 	if (properties) {
-		ret_t ret;
-			 
-		ret = cherokee_table_get (properties, "file", (void **) &n->htpasswd_file_ref);
-		if (ret < ret_ok) {
-			PRINT_ERROR_S ("htpasswd validator needs a \"File\" property\n");
-			return ret_error;
-		}
+		cherokee_typed_table_get_str (properties, "file", &n->file_ref);
+	}
+
+	if (n->file_ref == NULL) {
+		PRINT_ERROR_S ("htdigest validator needs a \"File\" property\n");
 	}
 
 	*htpasswd = n;
@@ -87,10 +87,9 @@ cherokee_validator_htpasswd_new (cherokee_validator_htpasswd_t **htpasswd, chero
 ret_t 
 cherokee_validator_htpasswd_free (cherokee_validator_htpasswd_t *htpasswd)
 {
-	free (htpasswd);
+	cherokee_validator_free_base (VALIDATOR(htpasswd));
 	return ret_ok;
 }
-
 
 
 
@@ -240,7 +239,7 @@ cherokee_validator_htpasswd_check (cherokee_validator_htpasswd_t *htpasswd, cher
 
 	/* 1.- Check the login/passwd
 	 */	  
-	f = fopen (htpasswd->htpasswd_file_ref, "r");
+	f = fopen (htpasswd->file_ref, "r");
 	if (f == NULL) {
 		return ret_error;
 	}
@@ -308,7 +307,7 @@ cherokee_validator_htpasswd_check (cherokee_validator_htpasswd_t *htpasswd, cher
 	 */
 	cherokee_buffer_add (conn->local_directory, conn->request->buf+1, conn->request->len-1);  /* 1: add    */
 
-	ret = (strncmp (htpasswd->htpasswd_file_ref, 
+	ret = (strncmp (htpasswd->file_ref, 
 			conn->local_directory->buf, 
 			conn->local_directory->len) == 0) ? ret_error : ret_ok;
 
@@ -321,3 +320,23 @@ cherokee_validator_htpasswd_check (cherokee_validator_htpasswd_t *htpasswd, cher
 	return ret;
 }
 
+
+ret_t 
+cherokee_validator_htpasswd_add_headers (cherokee_validator_htpasswd_t *htpasswd, cherokee_connection_t *conn, cherokee_buffer_t *buf)
+{
+	return ret_ok;
+}
+
+
+/* Library init function
+ */
+static cherokee_boolean_t _htpasswd_is_init = false;
+
+void
+MODULE_INIT(htpasswd) (cherokee_module_loader_t *loader)
+{
+	/* Is init?
+	 */
+	if (_htpasswd_is_init) return;
+	_htpasswd_is_init = true;
+}

@@ -3,8 +3,8 @@
 /* Cherokee
  *
  * Authors:
- *      Ayose Cazorla León <setepo@gulic.org>
  *      Alvaro Lopez Ortega <alvaro@alobbs.com>
+ *      Ayose Cazorla León <setepo@gulic.org>
  *
  * Copyright (C) 2001, 2002, 2003, 2004, 2005 Alvaro Lopez Ortega
  *
@@ -53,7 +53,7 @@
 #include "header-protected.h"
 
 
-cherokee_module_info_t cherokee_cgi_info = {
+cherokee_module_info_t MODULE_INFO(cgi)= {
 	cherokee_handler,           /* type     */
 	cherokee_handler_cgi_new    /* new func */
 };
@@ -61,7 +61,6 @@ cherokee_module_info_t cherokee_cgi_info = {
 
 #define dbg PRINT_DEBUG
 
-#define set_env(c,s,l)           cherokee_handler_cgi_add_env(c,s,l) 
 #define set_env_pair(c,n,l,v,l2) cherokee_handler_cgi_add_env_pair(c,n,l,v,l2) 
 
 
@@ -103,18 +102,16 @@ cherokee_handler_cgi_new  (cherokee_handler_t **hdl, void *cnt, cherokee_table_t
 	n->cgi_fd_in_poll    = false;
 	n->script_alias      = NULL;
 	n->extra_param       = NULL;
-
-	/* envp
-	 */
-	n->envp_last         = 0;
-
+	n->init_phase        = hcgi_phase_init;
+	
+	n->envp_last = 0;	
 	for (i=0; i<ENV_VAR_NUM; i++)
 		n->envp[i] = NULL;
 
 	/* Get properties
 	 */
 	if (properties) {
-		n->script_alias = cherokee_table_get_val (properties, "scriptalias");
+		cherokee_typed_table_get_str (properties, "scriptalias", &n->script_alias);
 	}
 
 	/* Return the object
@@ -156,8 +153,6 @@ cherokee_handler_cgi_free (cherokee_handler_cgi_t *cgi)
 {
 	int i;
 
-	dbg("CGI: closing\n\n");
-
 	/* Close the connection with the CGI
 	 */
 	if (cgi->pipeInput >= 0)
@@ -197,10 +192,9 @@ cherokee_handler_cgi_free (cherokee_handler_cgi_t *cgi)
 		cgi->parameter = NULL;
 	}
 
-	/* Free the envp
-	 */
 	for (i=0; i<cgi->envp_last; i++) {
 		free (cgi->envp[i]);
+		cgi->envp[i] = NULL;
 	}
 
 	/* for some reason, we have seen that the SIGCHLD signal does not call to
@@ -224,7 +218,7 @@ cherokee_handler_cgi_add_parameter (cherokee_handler_cgi_t *cgi, char *param)
 
 
 void
-cherokee_handler_cgi_add_env_pair (cherokee_handler_cgi_t *cgi, 
+cherokee_handler_cgi_add_env_pair (cherokee_handler_cgi_t *cgi,
 				   char *name,    int name_len,
 				   char *content, int content_len)
 {
@@ -254,163 +248,19 @@ cherokee_handler_cgi_add_env_pair (cherokee_handler_cgi_t *cgi,
 }
 
 
-void
-cherokee_handler_cgi_add_env (cherokee_handler_cgi_t *cgi, char *string, int string_len)
-{
-	char *entry;
-
-	/* Build the new envp entry
-	 */
-	entry = (char *) malloc (string_len+1); 
-	if (entry == NULL) return;
-
-	memcpy (entry, string, string_len);
-	entry[string_len] = '\0';
-
-	/* Set it in the table
-	 */
-	cgi->envp[cgi->envp_last] = entry;
-	cgi->envp_last++;
-
-	/* Sanity check
-	 */
-	if (cgi->envp_last >= ENV_VAR_NUM) {
-		SHOULDNT_HAPPEN;
-	}
-}
-
-
 static ret_t
 build_envp (cherokee_connection_t *conn, cherokee_handler_cgi_t* cgi)
 {
-	int                r;
 	ret_t              ret;
-	cherokee_buffer_t *tmp;
 	char              *p;
-	const char        *p_const;
-	int                p_len;
+	cherokee_buffer_t  tmp = CHEROKEE_BUF_INIT;
 
-	char remote_ip[CHE_INET_ADDRSTRLEN+1];
-	CHEROKEE_TEMP(temp, 32);
-
-/*                    0         1         2         3         4         5         6         7
-		      01234567890123456789012345678901234567890123456789012345678901234567890 */
-/*                        0         1         2         3         4         5         6         7
-		          01234567890123456789012345678901234567890123456789012345678901234567890 */
-
-	ret = cherokee_buffer_new (&tmp);
-	if (unlikely(ret < ret_ok)) return ret;
-
-	/* Set the basic variables
+	/* Add the basic enviroment variables
 	 */
-	set_env (cgi, "SERVER_SIGNATURE=<address>Cherokee web server</address>", 55);
-	set_env (cgi, "SERVER_SOFTWARE=Cherokee " PACKAGE_VERSION, 25 + PACKAGE_VERSION_LEN);
-	set_env (cgi, "GATEWAY_INTERFACE=CGI/1.1", 25);
-	set_env (cgi, "PATH=/bin:/usr/bin:/sbin:/usr/sbin", 34);
-
-	/* Servers MUST supply this value to scripts. The QUERY_STRING
-	 * value is case-sensitive. If the Script-URI does not include a
-	 * query component, the QUERY_STRING metavariable MUST be defined
-	 * as an empty string ("").
-	 */
-	set_env_pair (cgi, "DOCUMENT_ROOT", 13, conn->local_directory->buf, conn->local_directory->len);
-
-	/* The IP address of the client sending the request to the
-	 * server. This is not necessarily that of the user agent (such
-	 * as if the request came through a proxy).
-	 */
-	memset (remote_ip, 0, sizeof(remote_ip));
-	cherokee_socket_ntop (conn->socket, remote_ip, sizeof(remote_ip)-1);
-	set_env_pair (cgi, "REMOTE_ADDR", 11, remote_ip, strlen(remote_ip));
-
-	/* HTTP_HOST and SERVER_NAME. The difference between them is that
-	 * HTTP_HOST can include the «:PORT» text, and SERVER_NAME only
-	 * the name 
-	 */
-	cherokee_header_copy_known (conn->header, header_host, tmp);
-	if (! cherokee_buffer_is_empty(tmp)) {
-		set_env_pair (cgi, "HTTP_HOST", 9, tmp->buf, tmp->len);
-
-		p = strchr (tmp->buf, ':');
-		if (p != NULL) *p = '\0';
-
-		set_env_pair (cgi, "SERVER_NAME", 11, tmp->buf, tmp->len);
-	}
-
-	/* Cookies :-)
-	 */
-	cherokee_buffer_clean (tmp);
-	ret = cherokee_header_copy_unknown (conn->header, "Cookie", 6, tmp);
-	if (ret == ret_ok) {
-		set_env_pair (cgi, "HTTP_COOKIE", 11, tmp->buf, tmp->len);
-	}
-
-	/* User Agent
-	 */
-	cherokee_buffer_clean (tmp);
-	ret = cherokee_header_copy_known (conn->header, header_user_agent, tmp);
-	if (ret == ret_ok) {
-		set_env_pair (cgi, "HTTP_USER_AGENT", 15, tmp->buf, tmp->len);
-	}
-
-	/* Content-type and Content-lenght (if available) 
-	 */
-	cherokee_buffer_clean (tmp);
-	ret = cherokee_header_copy_unknown (conn->header, "Content-Type", 12, tmp);
-	if (ret == ret_ok)
-		set_env_pair (cgi, "CONTENT_TYPE", 12, tmp->buf, tmp->len);
-
-	cherokee_buffer_clean (tmp); 
-	ret = cherokee_header_copy_known (conn->header, header_content_length, tmp);
-	if (ret == ret_ok)
-		set_env_pair (cgi, "CONTENT_LENGTH", 14, tmp->buf, tmp->len);
-
-	/* If there is a query_string, set the environment variable
-	 */
-	if (conn->query_string->len > 0) 
-		set_env_pair (cgi, "QUERY_STRING", 12, conn->query_string->buf, conn->query_string->len);
-	else
-		set_env_pair (cgi, "QUERY_STRING", 12, "", 0);
-
-	/* Set the server port
-	 */
-	r = snprintf (temp, temp_size, "%d", CONN_SRV(conn)->port);
-	set_env_pair (cgi, "SERVER_PORT", 11, temp, r);
-
-	/* Set the HTTP version
-	 */
-	ret = cherokee_http_version_to_string (conn->header->version, &p_const, &p_len);
-	if (ret >= ret_ok)
-		set_env_pair (cgi, "SERVER_PROTOCOL", 15, (char *)p_const, p_len);
-
-	/* Set the method
-	 */
-	ret = cherokee_http_method_to_string (conn->header->method, &p_const, &p_len);
-	if (ret >= ret_ok)
-		set_env_pair (cgi, "REQUEST_METHOD", 14, (char *)p_const, p_len);
-
-	/* Set the host name
-	 */
-	if (!cherokee_buffer_is_empty (conn->host)) {
-		p = strchr (conn->host->buf, ':');
-		if (p != NULL) *p = '\0';
-		
-		set_env_pair (cgi, "SERVER_NAME", 11, conn->host->buf, conn->host->len);
-
-		if (p != NULL) *p = ':';
-	}
-
-	/* Set PATH_INFO 
-	 */
-	if (! cherokee_buffer_is_empty(conn->pathinfo)) {
-		set_env_pair (cgi, "PATH_INFO", 9, conn->pathinfo->buf, conn->pathinfo->len);
-	}
-
-	/* Set REQUEST_URI 
-	 */
-	cherokee_buffer_clean (tmp);
-	cherokee_header_copy_request_w_args (conn->header, tmp);
-	set_env_pair(cgi, "REQUEST_URI", 11, tmp->buf, tmp->len);
+	ret = cherokee_cgi_build_basic_env (conn, 
+					    (cherokee_cgi_set_env_pair_t) cherokee_handler_cgi_add_env_pair, 
+					    &tmp, cgi);
+	if (unlikely (ret != ret_ok)) return ret;
 
 	/* Set SCRIPT_NAME
 	 */
@@ -418,9 +268,9 @@ build_envp (cherokee_connection_t *conn, cherokee_handler_cgi_t* cgi)
 		p = cgi->parameter->buf + conn->local_directory->len -1;
 		set_env_pair (cgi, "SCRIPT_NAME", 11, p, (cgi->parameter->buf + cgi->parameter->len) - p);
 	} else {	
-		cherokee_buffer_clean (tmp);
-		cherokee_header_copy_request (conn->header, tmp);
-		set_env_pair(cgi, "REQUEST_URI", 11, tmp->buf, tmp->len);
+		cherokee_buffer_clean (&tmp);
+		cherokee_header_copy_request (conn->header, &tmp);
+		set_env_pair(cgi, "REQUEST_URI", 11, tmp.buf, tmp.len);
 	}
 
 	/* SCRIPT_FILENAME
@@ -434,7 +284,7 @@ build_envp (cherokee_connection_t *conn, cherokee_handler_cgi_t* cgi)
 	 * http://hoohoo.ncsa.uiuc.edu/cgi/env.html
 	 * http://cgi-spec.golux.com/cgi-120-00a.html
 	 */
-	cherokee_buffer_free (tmp);
+	cherokee_buffer_mrproper (&tmp);
 	return ret_ok;
 }
 
@@ -593,12 +443,41 @@ cherokee_handler_cgi_init (cherokee_handler_cgi_t *cgi)
 
 	cherokee_connection_t *conn = HANDLER_CONN(cgi);
 
+	/* It could be trying to send the post information to the CGI: 
+	 * In the previus call to this function it could send everything
+	 * so it returned a ret_eagain to continue, and here we are.
+	 */
+	if (cgi->init_phase == hcgi_phase_sent_post) {
+		ret = _send_post_data (cgi);
+		switch (ret) {
+		case ret_ok:
+			close (cgi->pipeOutput);
+			cgi->pipeOutput = -1;
+			return ret_ok;
+		case ret_eagain:
+			return ret_eagain;
+		default:
+			return ret;
+		}
+	}
+
 	/* Extracts PATH_INFO and filename from request uri 
 	 */
 	ret = _extract_path(cgi);
 	if (ret < ret_ok) { 
 		return ret;
 	}
+
+	/* Check is the CGI is accessible
+	 */
+/* 	if (access(cgi->filename->buf, R_OK) != 0) { */
+/* 		if (errno == ENOENT) */
+/* 			conn->error_code = http_not_found; */
+/* 		else */
+/* 			conn->error_code = http_access_denied; */
+		
+/* 		return ret_error; */
+/* 	} */
 
 	/* Creates the pipes ...
 	 */
@@ -609,6 +488,12 @@ cherokee_handler_cgi_init (cherokee_handler_cgi_t *cgi)
 		conn->error_code = http_internal_error;
 		return ret_error;
 	}
+	
+	/* It has to update the timeout of the connection,
+	 * otherwhise the server will drop it for the CGI
+	 * isn't fast enough
+	 */
+	conn->timeout = CONN_THREAD(conn)->bogo_now + CGI_TIMEOUT;
 
 	/* .. and fork the process 
 	 */
@@ -729,26 +614,21 @@ cherokee_handler_cgi_init (cherokee_handler_cgi_t *cgi)
 	/* POST management
 	 */
 	if (conn->post != NULL) {
+		cgi->init_phase = hcgi_phase_sent_post;
 		_fd_set_properties (cgi->pipeOutput, O_NONBLOCK, 0);
 
-		/* Sent POST data 
-		 */
-		if ((conn->post != NULL) && 
-		    (cgi->post_data_sent < conn->post_len)) 
-		{
-			do {
-				ret = _send_post_data (cgi);
-				if (ret == ret_ok)     break;
-				if (ret == ret_eagain) continue;
-				
-				return ret;
-			} while (1);
+		ret = _send_post_data (cgi);
+		switch (ret) {
+		case ret_ok:
+			break;
+		case ret_eagain:
+			return ret_eagain;
+		default:
+			return ret;
 		}
+	}
 
-	} 
-
-	/* We don't need to send anything to the client,
-	 * so we close the pipe
+	/* We won't need to send anything more to the client..
 	 */
 	close (cgi->pipeOutput);
 	cgi->pipeOutput = -1;
@@ -770,18 +650,7 @@ _read_from_cgi (cherokee_handler_cgi_t *cgi, cherokee_buffer_t *buffer)
 
 	switch (ret) {
 	case ret_eagain:
-		if (cgi->cgi_fd_in_poll == false) {
-			/* Add the CGI pipe file descriptor to the thread's poll
-			 */
-			ret = cherokee_fdpoll_add (HANDLER_THREAD(cgi)->fdpoll, cgi->pipeInput, 0);
-			if (unlikely(ret != ret_ok)) return ret;
-	
-			dbg ("CGI: _read_from_cgi - added fd=%d al poll\n", cgi->pipeInput);		
-			cgi->cgi_fd_in_poll = true;
-		}
-
-		ret = cherokee_thread_deactive_to_polling (HANDLER_THREAD(cgi), HANDLER_CONN(cgi), cgi->pipeInput);
-		if (unlikely(ret != ret_ok)) return ret;	
+		cherokee_thread_deactive_to_polling (HANDLER_THREAD(cgi), HANDLER_CONN(cgi), cgi->pipeInput, 0);
 		return ret_eagain;
 
 	case ret_ok:
@@ -931,15 +800,10 @@ child_finished(int sng)
 }
 #endif
 
-
-
 void
-cgi_init ()
+MODULE_INIT(cgi) (cherokee_module_loader_t *loader)
 {
-	if (_cgi_is_init == true) {
-		return;
-	}
-
+	if (_cgi_is_init) return;
 	_cgi_is_init = true;
 
 #if 0

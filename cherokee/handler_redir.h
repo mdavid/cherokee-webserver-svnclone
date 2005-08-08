@@ -28,14 +28,16 @@
 #include "common.h"
 #include "handler.h"
 #include "module_loader.h"
-
+#include "list.h"
 
 typedef struct {
 	cherokee_handler_t  handler;
 
 	char               *target_url;
 	int                 target_url_len;
-	void		   *regex_list;
+	list_t             *regex_list_ref;
+	void               *regex_list_cre;
+	cherokee_boolean_t  is_hidden;
 } cherokee_handler_redir_t;
 
 #define REHANDLER(x)  ((cherokee_handler_redir_t *)(x))

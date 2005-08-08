@@ -22,27 +22,28 @@
  * USA
  */
 
-#ifndef CHEROKEE_HANDLER_TABLE_H
-#define CHEROKEE_HANDLER_TABLE_H
+#ifndef CHEROKEE_DIRS_TABLE_H
+#define CHEROKEE_DIRS_TABLE_H
 
 #include "common.h"
 #include "table.h"
 #include "table-protected.h"
-#include "handler_table_entry.h"
-
-typedef struct {
-	cherokee_table_t table;      /* Web_directory -> Handler_table_entry */
-} cherokee_handler_table_t;
-
-#define PTABLE(x) ((cherokee_handler_table_t *)(x))
+#include "dirs_table_entry.h"
 
 
-ret_t cherokee_handler_table_new  (cherokee_handler_table_t **pt);
-ret_t cherokee_handler_table_free (cherokee_handler_table_t  *pt);
-
-ret_t cherokee_handler_table_get        (cherokee_handler_table_t *pt, cherokee_buffer_t *requested_url, cherokee_handler_table_entry_t **plugin_entry, cherokee_buffer_t *web_directory);
-ret_t cherokee_handler_table_add        (cherokee_handler_table_t *pt, char *dir,           cherokee_handler_table_entry_t  *plugin_entry);
-ret_t cherokee_handler_table_fill_entry (cherokee_handler_table_t *pt, char *handler_name,  cherokee_handler_table_entry_t  *plugin_entry);
+typedef cherokee_table_t cherokee_dirs_table_t;  /* Web_directory -> Dirs_table_entry */
+#define DTABLE(x) ((cherokee_dirs_table_t *)(x))
 
 
-#endif /* CHEROKEE_HANDLER_TABLE_H */
+ret_t cherokee_dirs_table_new      (cherokee_dirs_table_t **pt);
+ret_t cherokee_dirs_table_free     (cherokee_dirs_table_t  *pt);
+
+ret_t cherokee_dirs_table_init     (cherokee_dirs_table_t *pt);
+ret_t cherokee_dirs_table_clean    (cherokee_dirs_table_t *pt);
+ret_t cherokee_dirs_table_mrproper (cherokee_dirs_table_t *pt);
+
+ret_t cherokee_dirs_table_get      (cherokee_dirs_table_t *pt, cherokee_buffer_t *requested_url, cherokee_dirs_table_entry_t *plugin_entry, cherokee_buffer_t *web_directory);
+ret_t cherokee_dirs_table_add      (cherokee_dirs_table_t *pt, char *dir, cherokee_dirs_table_entry_t  *plugin_entry);
+ret_t cherokee_dirs_table_relink   (cherokee_dirs_table_t *pt);
+
+#endif /* CHEROKEE_DIRS_TABLE_H */

@@ -28,6 +28,7 @@
 #include "server.h"
 #include "server-protected.h"
 #include "connection-protected.h"
+#include "header-protected.h"
 
 
 ret_t 
@@ -69,6 +70,8 @@ cherokee_handler_error_free (cherokee_handler_error_t *hdl)
 static ret_t
 build_hardcoded_response_page (cherokee_connection_t *cnt, cherokee_buffer_t *buffer)
 {
+	cuint_t port;
+
 	cherokee_buffer_add (buffer, "<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">" CRLF, 50);
 	   
 	/* Add page title
@@ -89,6 +92,9 @@ build_hardcoded_response_page (cherokee_connection_t *cnt, cherokee_buffer_t *bu
 		if (cnt->request) {
 			cherokee_buffer_t *req_html_ref = NULL;
 			
+			if (!cherokee_buffer_is_empty (&cnt->request_original)) 
+				cherokee_buffer_escape_set_ref (cnt->request_escape, &cnt->request_original);
+
 			cherokee_buffer_escape_get_html (cnt->request_escape, &req_html_ref);
 
 			cherokee_buffer_ensure_size (buffer, 18 + req_html_ref->len + 30);
@@ -100,6 +106,7 @@ build_hardcoded_response_page (cherokee_connection_t *cnt, cherokee_buffer_t *bu
 	case http_bad_request:
 		cherokee_buffer_add (buffer, 
 				     "Your browser sent a request that this server could not understand.", 66);
+		cherokee_buffer_add_va (buffer, "<p><pre>%s</pre>", cnt->header->input_buffer->buf);
 		break;
         case http_access_denied:
 		cherokee_buffer_add(buffer,
@@ -134,10 +141,16 @@ build_hardcoded_response_page (cherokee_connection_t *cnt, cherokee_buffer_t *bu
 	/* Add page foot
 	 */
 	cherokee_buffer_add (buffer, "<p><hr>", 7);	
+
+	if (cnt->socket->is_tls == non_TLS)
+ 		port = CONN_SRV(cnt)->port;
+	else 
+ 		port = CONN_SRV(cnt)->port_tls;
+
 	if (CONN_SRV(cnt)->server_token <= cherokee_version_product) {
-		cherokee_buffer_add_version (buffer, CONN_SRV(cnt)->port, ver_port_html);
+		cherokee_buffer_add_version (buffer, port, ver_port_html);
 	} else {
-		cherokee_buffer_add_version (buffer, CONN_SRV(cnt)->port, ver_full_html);
+		cherokee_buffer_add_version (buffer, port, ver_full_html);
 	}
 	cherokee_buffer_add (buffer, "</body></html>", 14); 
 

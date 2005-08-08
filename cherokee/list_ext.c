@@ -68,17 +68,38 @@ cherokee_list_free (struct list_head *head, void (*free_func) (void *))
 	   list_t *i, *tmp;
 
 	   list_for_each_safe (i, tmp, head) {
-
-		   list_del (i);
-		   
-		   if ((free_func != NULL) && (LIST_ITEM(i)->info)) {
-			   free_func (LIST_ITEM(i)->info);
-		   }
-			 
-		   free (i);
+		   cherokee_list_free_item (i, free_func);
 	   }
 
 	   INIT_LIST_HEAD(head);
 
 	   return ret_ok;
+}
+
+
+ret_t 
+cherokee_list_free_item (struct list_head *head, void (*free_func) (void *))
+{
+	list_del (head);
+	
+	if ((free_func != NULL) && (LIST_ITEM(head)->info)) {
+		free_func (LIST_ITEM(head)->info);
+	}
+	
+	free (head);
+	return ret_ok;
+}
+
+
+ret_t 
+cherokee_list_free_item_simple (struct list_head *head)
+{
+	list_del (head);
+	
+	if (LIST_ITEM(head)->info) {
+		free (LIST_ITEM(head)->info);
+	}
+	
+	free (head);
+	return ret_ok;	
 }

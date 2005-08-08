@@ -26,39 +26,49 @@
 #include "request.h"
 
 ret_t 
-cherokee_request_header_new (cherokee_request_header_t **request)
+cherokee_request_header_init (cherokee_request_header_t *request)
 {
-	   ret_t ret;
-	   CHEROKEE_NEW_STRUCT(n,request_header);
+	ret_t ret;
 
-	   /* Init the node list information
-	    */
-	   INIT_LIST_HEAD((list_t *)&n->list_entry);
+	/* Init the node list information
+	 */
+	INIT_LIST_HEAD((list_t *)&request->list_entry);
+	
+	/* Set default values
+	 */
+	request->method    = http_get;
+	request->version   = http_version_11;
+	request->keepalive = true;
+	request->pipeline  = 1;
+	request->post_len  = 0;
 
-	   ret = cherokee_url_new (&n->url);
-	   if (unlikely(ret < ret_ok)) return ret;
-
-	   /* Set default values
-	    */
-	   n->method    = http_get;
-	   n->version   = http_version_11;
-	   n->keepalive = true;
-	   n->pipeline  = 1;
-
-	   /* Return the object
-	    */
-	   *request = n;
-	   return ret_ok;
+	ret = cherokee_url_init (&request->url);
+	if (unlikely(ret < ret_ok)) return ret;
+	
+	return ret_ok;
 }
 
 
 ret_t 
-cherokee_request_header_free (cherokee_request_header_t *request)
+cherokee_request_header_mrproper (cherokee_request_header_t *request)
 {
-	   cherokee_url_free (request->url);
+	cherokee_url_mrproper (&request->url);
+	return ret_ok;
+}
 
-	   free (request);
-	   return ret_ok;
+
+ret_t 
+cherokee_request_header_clean (cherokee_request_header_t *request)
+{
+	request->method    = http_get;
+	request->version   = http_version_11;
+	request->keepalive = true;
+	request->pipeline  = 1;
+	request->post_len  = 0;
+
+	cherokee_url_clean (&request->url);
+
+	return ret_ok;
 }
 
 
@@ -114,6 +124,13 @@ cherokee_request_header_build_string (cherokee_request_header_t *request, cherok
 		cherokee_buffer_add_buffer (buf, URL_HOST(url));
 		cherokee_buffer_add (buf, CRLF, 2);
 	}
+
+	/* Post information
+	 */
+	if (request->post_len != 0) {
+
+		cherokee_buffer_add_va (buf, "Content-Length: "FMT_OFFSET CRLF, request->post_len);
+	}
 	
 	/* Add "Connection:" header
 	 */
@@ -121,6 +138,21 @@ cherokee_request_header_build_string (cherokee_request_header_t *request, cherok
 		cherokee_buffer_add (buf, "Connection: Keep-alive"CRLF, 24); 
 	} else {
 		cherokee_buffer_add (buf, "Connection: Close"CRLF, 19); 
+	}
+
+	/* Authentication
+	 */
+	if (!cherokee_buffer_is_empty(&url->user) ||
+	    !cherokee_buffer_is_empty(&url->passwd)) 
+	{
+		cherokee_buffer_t tmp = CHEROKEE_BUF_INIT;
+
+		cherokee_buffer_add_va (&tmp, "%s:%s", url->user.buf, url->passwd.buf);
+		cherokee_buffer_encode_base64 (&tmp);
+		
+		cherokee_buffer_add_va (buf, "Authorization: Basic %s"CRLF, tmp.buf);
+
+		cherokee_buffer_mrproper (&tmp);
 	}
 
 	/* Finish the header

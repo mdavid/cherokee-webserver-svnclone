@@ -56,7 +56,7 @@
 #define DEFAULT_PHP_EXECUTABLE "/usr/lib/cgi-bin/php4"
 
 
-cherokee_module_info_t cherokee_phpcgi_info = {
+cherokee_module_info_t MODULE_INFO(phpcgi) = {
 	cherokee_handler,           /* type     */
 	cherokee_handler_phpcgi_new /* new func */
 };
@@ -82,8 +82,9 @@ cherokee_handler_phpcgi_new  (cherokee_handler_t **hdl, void *cnt, cherokee_tabl
 
 	/* Look for the interpreter in the properties
 	 */
-	if (properties)
-		interpreter = cherokee_table_get_val (properties, "interpreter");
+	if (properties) {
+		cherokee_typed_table_get_str (properties, "interpreter", &interpreter);
+	}
 
 	if (interpreter == NULL) 
 		interpreter = DEFAULT_PHP_EXECUTABLE;
@@ -134,12 +135,21 @@ ret_t
 cherokee_handler_phpcgi_init (cherokee_handler_t *hdl)
 {
 	cherokee_connection_t *conn = HANDLER_CONN(hdl);
-		
-	/* Add parameter to CGI handler
+
+	/* Special case:
+	 * The CGI handler could return a ret_eagain value, so the connection
+	 * will keep trying call this funcion.  The right action on this case
+	 * is to call again the CGI handler
 	 */
+	if (CGIHANDLER(hdl)->init_phase != hcgi_phase_init) {
+		return cherokee_handler_cgi_init (CGIHANDLER(hdl));
+	}
+
+	/* Add parameter to CGI handler
+	*/
 	if (CGIHANDLER(hdl)->parameter == NULL) {
 		cherokee_buffer_t *ld = conn->local_directory;
-
+		
 		cherokee_buffer_new (&CGIHANDLER(hdl)->parameter);
 		cherokee_buffer_add (CGIHANDLER(hdl)->parameter, ld->buf, ld->len - 1);
 		cherokee_buffer_add_buffer (CGIHANDLER(hdl)->parameter, conn->request);
@@ -148,8 +158,8 @@ cherokee_handler_phpcgi_init (cherokee_handler_t *hdl)
 						     CGIHANDLER(hdl)->parameter,
 						     ld->len + 1);
 	}
-
-	cherokee_handler_cgi_add_env      (CGIHANDLER(hdl), "REDIRECT_STATUS=200", 19);
+	
+	cherokee_handler_cgi_add_env_pair (CGIHANDLER(hdl), "REDIRECT_STATUS", 15, "200", 3); 
 	cherokee_handler_cgi_add_env_pair (CGIHANDLER(hdl), "SCRIPT_FILENAME", 15,
 					   CGIHANDLER(hdl)->parameter->buf, CGIHANDLER(hdl)->parameter->len);	
 
@@ -162,7 +172,7 @@ cherokee_handler_phpcgi_init (cherokee_handler_t *hdl)
 static cherokee_boolean_t _phpcgi_is_init = false;
 
 void
-phpcgi_init (cherokee_module_loader_t *loader)
+MODULE_INIT(phpcgi) (cherokee_module_loader_t *loader)
 {
 	/* Is init?
 	 */

@@ -30,44 +30,53 @@
 
 
 ret_t 
-cherokee_url_new  (cherokee_url_t **url)
+cherokee_url_init (cherokee_url_t *url)
 {
-	   ret_t ret;
-	   CHEROKEE_NEW_STRUCT(n, url);
+	ret_t ret;
 
-	   /* New buffer objects
-	    */
-	   ret = cherokee_buffer_new (&n->host);
-	   if (unlikely(ret < ret_ok)) return ret;
+	/* New buffer objects
+	 */
+	ret = cherokee_buffer_init (&url->host);
+	if (unlikely(ret < ret_ok)) return ret;
+	
+	ret = cherokee_buffer_init (&url->request);
+ 	if (unlikely(ret < ret_ok)) return ret;
 
-	   ret = cherokee_buffer_new (&n->request);
-	   if (unlikely(ret < ret_ok)) return ret;
+	ret = cherokee_buffer_init (&url->user);
+ 	if (unlikely(ret < ret_ok)) return ret;
 
-	   /* Set default values
-	    */
-	   n->port = 80;
-
-	   /* Return the object
-	    */
-	   *url = n;
-	   return ret_ok;
+	ret = cherokee_buffer_init (&url->passwd);
+ 	if (unlikely(ret < ret_ok)) return ret;
+	
+	/* Set default values
+	 */
+	url->port = 80;
+	return ret_ok;
 }
 
 
 ret_t 
-cherokee_url_free (cherokee_url_t *url)
+cherokee_url_mrproper (cherokee_url_t *url)
 {
-	if (url->host != NULL) {
-		cherokee_buffer_free (url->host);
-		url->host = NULL;
-	}
-	
-	if (url->request != NULL) {
-		cherokee_buffer_free (url->request);
-		url->request = NULL;
-	}
-	
-	free (url);
+	cherokee_buffer_mrproper (&url->host);
+	cherokee_buffer_mrproper (&url->request);
+	cherokee_buffer_mrproper (&url->user);
+	cherokee_buffer_mrproper (&url->passwd);
+
+	return ret_ok;
+}
+
+
+ret_t
+cherokee_url_clean (cherokee_url_t *url)
+{
+	url->port = 80;
+
+	cherokee_buffer_clean (&url->host);
+	cherokee_buffer_clean (&url->request);
+	cherokee_buffer_clean (&url->user);
+	cherokee_buffer_clean (&url->passwd);
+
 	return ret_ok;
 }
 
@@ -81,6 +90,7 @@ parse_protocol (cherokee_url_t *url, char *string, int *len)
 		url->protocol = http;
 		*len          = 7;
 
+		url->port = 80;
 		return ret_ok;
 	}
 
@@ -90,6 +100,7 @@ parse_protocol (cherokee_url_t *url, char *string, int *len)
 		url->protocol = https;
 		*len          = 8;
 
+		url->port = 443;
 		return ret_ok;
 	}
 
@@ -105,29 +116,51 @@ cherokee_url_parse_ptr (cherokee_url_t *url, char *url_string)
 	char  *port;
 	char  *slash;
 	char  *server;
+	char  *arroba;
+	char  *tmp;
 	
 	/* Drop protocol, if exists..
 	 */
 	ret = parse_protocol (url, url_string, &len);
 	if (unlikely(ret != ret_ok)) return ret;
+	
+	tmp = url_string + len;
+
+	/* User (and password)
+	 */
+	arroba = strchr (tmp, '@');
+	if (arroba != NULL) {
+		char *sep;
+
+		sep = strchr (tmp, ':');
+		if (sep == NULL) {
+			cherokee_buffer_add (&url->user, tmp, arroba - tmp);
+		} else {
+			cherokee_buffer_add (&url->user, tmp, sep - tmp);
+			sep++;
+			cherokee_buffer_add (&url->passwd, sep, arroba - sep);
+		}
+
+		tmp = arroba + 1;
+	}
 
 	/* Split the host/request
 	 */
-	server = url_string + len;
+	server = tmp;
 	len    = strlen (server);
 	slash  = strpbrk (server, "/\\");
 	
 	if (slash == NULL) {
-		cherokee_buffer_add (url->request, "/", 1);
-		cherokee_buffer_add (url->host, server, len);
+		cherokee_buffer_add (&url->request, "/", 1);
+		cherokee_buffer_add (&url->host, server, len);
 	} else {
-		cherokee_buffer_add (url->request, slash, len-(slash-server));
-		cherokee_buffer_add (url->host, server, slash-server);
+		cherokee_buffer_add (&url->request, slash, len-(slash-server));
+		cherokee_buffer_add (&url->host, server, slash-server);
 	}
 
 	/* Drop up the port, if exists..
 	 */
-	port = strchr (url->host->buf, ':');
+	port = strchr (url->host.buf, ':');
 	if (port != NULL) {
 
 		/* Read port number
@@ -138,7 +171,7 @@ cherokee_url_parse_ptr (cherokee_url_t *url, char *url_string)
 
 		/* .. and remove it
 		 */
-		ret = cherokee_buffer_drop_endding (url->host, strlen(port));
+		ret = cherokee_buffer_drop_endding (&url->host, strlen(port));
 		if (unlikely(ret < ret_ok)) return ret;
 	}
 	
@@ -164,13 +197,15 @@ cherokee_url_parse (cherokee_url_t *url, cherokee_buffer_t *string)
 ret_t 
 cherokee_url_build_string (cherokee_url_t *url, cherokee_buffer_t *buf)
 {
-	cherokee_buffer_add_buffer (buf, url->host);
+	cherokee_buffer_add_buffer (buf, &url->host);
 
-	if (url->port != 80) {
+	if (((url->protocol == http)  && (url->port != 80)) ||
+	    ((url->protocol == https) && (url->port != 443))) 
+	{
 		cherokee_buffer_add_va (buf, ":%d", url->port);
 	}
 
-	cherokee_buffer_add_buffer (buf, url->request);
+	cherokee_buffer_add_buffer (buf, &url->request);
 
 	return ret_ok;
 }
@@ -179,9 +214,11 @@ cherokee_url_build_string (cherokee_url_t *url, cherokee_buffer_t *buf)
 ret_t 
 cherokee_url_print (cherokee_url_t *url)
 {
-	printf ("Host:    %s\n", url->host->buf);
-	printf ("Request: %s\n", url->request->buf);
+	printf ("Host:    %s\n", url->host.buf);
+	printf ("Request: %s\n", url->request.buf);
 	printf ("Port:    %d\n", url->port);
+	printf ("User:    %s\n", url->user.buf);
+	printf ("Pass:    %s\n", url->passwd.buf);
 
 	return ret_ok;
 }

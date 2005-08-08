@@ -1,6 +1,6 @@
 ## Cherokee: cherokee/Makefile.am  -*- makefile -*-
 
-# SUBDIRS = zlib
+# SUBDIRS = pcre
 
 INCLUDES = \
 $(TLS_CFLAGS) \
@@ -11,7 +11,8 @@ $(GNOMEVFS_CFLAGS) \
 -DCHEROKEE_PLUGINDIR="\"$(plugindir)\"" \
 -DCHEROKEE_DEPSDIR=\""$(cherokeedepsdir)"\" \
 -DCHEROKEE_DATADIR=\""$(cherokeedatadir)"\" \
--DCHEROKEE_CONFDIR=\""$(sysconfdir)/cherokee"\"
+-DCHEROKEE_CONFDIR=\""$(sysconfdir)/cherokee"\" \
+-DCHEROKEE_ICONSDIR=\""$(prefix)/share/cherokee/icons"\"
 
 #
 # Scripts
@@ -23,8 +24,8 @@ bin_SCRIPTS = cherokee-panic
 #
 cherokeedepsdir = "$(datadir)/cherokee/deps"
 cherokeedeps_DATA = \
-common.deps \
 nn.deps \
+common.deps \
 combined.deps \
 error_redir.deps \
 phpcgi.deps
@@ -33,18 +34,7 @@ cherokeedatadir = "$(datadir)/cherokee"
 cherokeedata_DATA = mime_types.txt
 
 #
-# Maybe add the getopt code from GNU C Library
-#
-if !HAVE_GETOPT_LONG
-gnu_getopt =  \
-    getopt/getopt.h  \
-    getopt/getopt.c  \
-    getopt/getopt1.c \
-    getopt/gettext.h
-endif
-
-#
-# Zlib files
+# External sources
 #
 zlib_src =     \
 zlib/deflate.c \
@@ -65,6 +55,44 @@ avl_src = \
 avl/avl.h \
 avl/avl.c
 
+pcre_src = \
+pcre/get.c \
+pcre/pcre.h \
+pcre/pcre.c \
+pcre/internal.h \
+pcre/chartables.c \
+pcre/configuration.h
+
+getopt_src =  \
+getopt/getopt.h  \
+getopt/getopt.c  \
+getopt/getopt1.c \
+getopt/gettext.h
+
+
+if !HAVE_GETOPT_LONG
+internal_getopt_src=$(getopt_src)
+endif
+
+#
+# Config
+#
+module_read_config = \
+read_config_grammar.y \
+read_config_scanner.l \
+module_read_config.h \
+module_read_config.c
+
+libplugin_read_config_la_LDFLAGS = -module -export-dynamic -avoid-version 
+libplugin_read_config_la_SOURCES = $(module_read_config)
+
+if STATIC_MODULE_READ_CONFIG
+static_module_read_config_src = $(module_read_config)
+else
+dynamic_module_read_config_lib = libplugin_read_config.la
+endif
+
+
 #
 # Handler server_info
 #
@@ -72,7 +100,7 @@ handler_server_info = \
 handler_server_info.c \
 handler_server_info.h
 
-libplugin_server_info_la_LDFLAGS = -module -avoid-version -no-undefined 
+libplugin_server_info_la_LDFLAGS = -module -export-dynamic -avoid-version 
 libplugin_server_info_la_SOURCES = $(handler_server_info)
 
 if STATIC_HANDLER_SERVER_INFO
@@ -89,7 +117,7 @@ handler_file = \
 handler_file.c \
 handler_file.h
 
-libplugin_file_la_LDFLAGS = -module -avoid-version -no-undefined  
+libplugin_file_la_LDFLAGS = -module -export-dynamic -avoid-version  
 libplugin_file_la_SOURCES = $(handler_file)
 
 if STATIC_HANDLER_FILE
@@ -106,7 +134,7 @@ handler_dirlist = \
 handler_dirlist.c \
 handler_dirlist.h
 
-libplugin_dirlist_la_LDFLAGS = -module -avoid-version -no-undefined  
+libplugin_dirlist_la_LDFLAGS = -module -export-dynamic -avoid-version  
 libplugin_dirlist_la_SOURCES = $(handler_dirlist)
 
 if STATIC_HANDLER_DIRLIST
@@ -117,23 +145,39 @@ endif
 
 
 #
-# Handler redir
+# Handler fastcgi
 #
-if HAVE_PCRE
-pcrelib_add=-lpcre
+handler_fastcgi = \
+cgi.h \
+cgi.c \
+fastcgi.h \
+handler_fastcgi.c \
+handler_fastcgi.h \
+fcgi_manager.h \
+fcgi_manager.c 
+
+libplugin_fastcgi_la_LDFLAGS = -module -export-dynamic -avoid-version  
+libplugin_fastcgi_la_SOURCES = $(handler_fastcgi)
+
+if STATIC_HANDLER_FASTCGI
+static_handler_fastcgi_src = $(handler_fastcgi)
+else
+dynamic_handler_fastcgi_lib = libplugin_fastcgi.la
 endif
 
+
+#
+# Handler redir
+#
 handler_redir = \
 handler_redir.c \
 handler_redir.h
 
-libplugin_redir_la_LDFLAGS = -module -avoid-version -no-undefined  
+libplugin_redir_la_LDFLAGS = -module -export-dynamic -avoid-version  
 libplugin_redir_la_SOURCES = $(handler_redir)
-libplugin_redir_la_LIBADD  = $(pcrelib_add)
 
 if STATIC_HANDLER_REDIR
 static_handler_redir_src = $(handler_redir)
-static_handler_redir_lib = $(pcrelib_add)
 else
 dynamic_handler_redir_lib = libplugin_redir.la
 endif
@@ -146,7 +190,7 @@ handler_error_redir = \
 handler_error_redir.c \
 handler_error_redir.h
 
-libplugin_error_redir_la_LDFLAGS = -module -avoid-version -no-undefined  
+libplugin_error_redir_la_LDFLAGS = -module -export-dynamic -avoid-version  
 libplugin_error_redir_la_SOURCES = $(handler_error_redir)
 
 if STATIC_HANDLER_ERROR_REDIR
@@ -160,10 +204,12 @@ endif
 # Handler cgi
 #
 handler_cgi = \
+cgi.h \
+cgi.c \
 handler_cgi.c \
 handler_cgi.h
 
-libplugin_cgi_la_LDFLAGS = -module -avoid-version -no-undefined  
+libplugin_cgi_la_LDFLAGS = -module -export-dynamic -avoid-version  
 libplugin_cgi_la_SOURCES = $(handler_cgi)
 
 if STATIC_HANDLER_CGI
@@ -174,30 +220,13 @@ endif
 
 
 #
-# Handler Mono
-#
-#handler_mono = \
-#handler_mono.c \
-#handler_mono.h
-#
-#libplugin_mono_la_LDFLAGS = -module -avoid-version -no-undefined  
-#libplugin_mono_la_SOURCES = $(handler_mono)
-#
-#if STATIC_HANDLER_MONO
-#static_handler_mono_src = $(handler_mono)
-#else
-#dynamic_handler_mono_lib = libplugin_mono.la
-#endif
-
-
-#
 # Handler phpcgi
 #
 handler_phpcgi = \
 handler_phpcgi.c \
 handler_phpcgi.h
 
-libplugin_phpcgi_la_LDFLAGS = -module -avoid-version -no-undefined  
+libplugin_phpcgi_la_LDFLAGS = -module -export-dynamic -avoid-version  
 libplugin_phpcgi_la_SOURCES = $(handler_phpcgi)
 
 if STATIC_HANDLER_PHPCGI
@@ -208,30 +237,13 @@ endif
 
 
 #
-# Handler remote_control
-#
-handler_remote_control = \
-handler_remote_control.c \
-handler_remote_control.h
-
-libplugin_remote_control_la_LDFLAGS = -module -avoid-version -no-undefined  
-libplugin_remote_control_la_SOURCES = $(handler_remote_control)
-
-if STATIC_HANDLER_REMOTE_CONTROL
-static_handler_remote_control_src = $(handler_remote_control)
-else
-dynamic_handler_remote_control_lib = libplugin_remote_control.la
-endif
-
-
-#
 # Handler common
 #
 handler_common = \
 handler_common.c \
 handler_common.h
 
-libplugin_common_la_LDFLAGS = -module -avoid-version -no-undefined 
+libplugin_common_la_LDFLAGS = -module -export-dynamic -avoid-version 
 libplugin_common_la_SOURCES = $(handler_common)
 
 if STATIC_HANDLER_COMMON
@@ -239,9 +251,6 @@ static_handler_common_src = $(handler_common)
 else
 dynamic_handler_common_lib = libplugin_common.la
 endif
-
-
-
 
 
 #
@@ -253,7 +262,7 @@ levenshtein_distance.h \
 handler_nn.c \
 handler_nn.h
 
-libplugin_nn_la_LDFLAGS = -module -avoid-version -no-undefined  
+libplugin_nn_la_LDFLAGS = -module -export-dynamic -avoid-version  
 libplugin_nn_la_SOURCES = $(handler_nn)
 
 if STATIC_HANDLER_NN
@@ -264,9 +273,29 @@ endif
 
 
 #
+# Handler admin
+#
+handler_admin = \
+handler_admin.c \
+handler_admin.h
+
+libplugin_admin_la_LDFLAGS = -module -export-dynamic -avoid-version  
+libplugin_admin_la_SOURCES = $(handler_admin)
+libplugin_admin_la_LIBADD  = -lcherokee-config -lcherokee-client
+
+if STATIC_HANDLER_ADMIN
+static_handler_admin_src = $(handler_admin)
+static_handler_admin_lib = -lcherokee-config
+else
+dynamic_handler_admin_lib = libplugin_admin.la
+endif
+
+
+
+#
 # Handler GNOME VFS
 #
-libplugin_gnomevfs_la_LDFLAGS = -module -avoid-version -no-undefined  
+libplugin_gnomevfs_la_LDFLAGS = -module -export-dynamic -avoid-version  
 libplugin_gnomevfs_la_LIBADD  = $(GNOMEVFS_LIBS) 
 libplugin_gnomevfs_la_SOURCES = \
 handler_gnomevfs.c \
@@ -280,7 +309,7 @@ encoder_gzip = \
 encoder_gzip.h \
 encoder_gzip.c
 
-libplugin_gzip_la_LDFLAGS = -module -avoid-version -no-undefined  
+libplugin_gzip_la_LDFLAGS = -module -export-dynamic -avoid-version  
 libplugin_gzip_la_SOURCES = $(encoder_gzip)
 
 if STATIC_ENCODER_GZIP
@@ -297,7 +326,7 @@ logger_ncsa = \
 logger_ncsa.h \
 logger_ncsa.c
 
-libplugin_ncsa_la_LDFLAGS = -module -avoid-version -no-undefined  
+libplugin_ncsa_la_LDFLAGS = -module -export-dynamic -avoid-version  
 libplugin_ncsa_la_SOURCES = $(logger_ncsa)
 
 if STATIC_LOGGER_NCSA
@@ -314,7 +343,7 @@ logger_combined = \
 logger_combined.h \
 logger_combined.c
 
-libplugin_combined_la_LDFLAGS = -module -avoid-version -no-undefined  
+libplugin_combined_la_LDFLAGS = -module -export-dynamic -avoid-version  
 libplugin_combined_la_SOURCES = $(logger_combined)
 
 if STATIC_LOGGER_COMBINED
@@ -331,7 +360,7 @@ logger_w3c = \
 logger_w3c.h \
 logger_w3c.c
 
-libplugin_w3c_la_LDFLAGS = -module -avoid-version -no-undefined  
+libplugin_w3c_la_LDFLAGS = -module -export-dynamic -avoid-version  
 libplugin_w3c_la_SOURCES = $(logger_w3c)
 
 if STATIC_LOGGER_W3C
@@ -349,7 +378,7 @@ validator_pam = \
 validator_pam.c \
 validator_pam.h
 
-libplugin_pam_la_LDFLAGS = -module -avoid-version -no-undefined 
+libplugin_pam_la_LDFLAGS = -module -export-dynamic -avoid-version 
 libplugin_pam_la_SOURCES = $(validator_pam)
 libplugin_pam_la_LIBADD  = -lpam
 
@@ -369,14 +398,15 @@ validator_htpasswd = \
 validator_htpasswd.c \
 validator_htpasswd.h
 
-libplugin_htpasswd_la_LDFLAGS = -module -avoid-version -no-undefined 
+libplugin_htpasswd_la_LDFLAGS = -module -export-dynamic -avoid-version 
 libplugin_htpasswd_la_SOURCES = $(validator_htpasswd)
 libplugin_htpasswd_la_LIBADD  = $(CRYPT_LIBS)
 libplugin_htpasswd_la_CFLAGS  = $(CRYPT_CFLAGS)
 
 if STATIC_VALIDATOR_HTPASSWD
-static_validator_htpasswd_src = $(validator_htpasswd)
-static_validator_htpasswd_lib = $(CRYPT_LIBS)
+static_validator_htpasswd_src   = $(validator_htpasswd)
+static_validator_htpasswd_lib   = $(CRYPT_LIBS)
+static_validator_htpasswd_flags = $(CRYPT_CFLAGS)
 else
 dynamic_validator_htpasswd_lib = libplugin_htpasswd.la
 endif
@@ -389,13 +419,30 @@ validator_plain = \
 validator_plain.c \
 validator_plain.h
 
-libplugin_plain_la_LDFLAGS = -module -avoid-version -no-undefined 
+libplugin_plain_la_LDFLAGS = -module -export-dynamic -avoid-version 
 libplugin_plain_la_SOURCES = $(validator_plain)
 
 if STATIC_VALIDATOR_PLAIN
 static_validator_plain_src = $(validator_plain)
 else
 dynamic_validator_plain_lib = libplugin_plain.la
+endif
+
+
+#
+# Validator htdigest
+#
+validator_htdigest = \
+validator_htdigest.c \
+validator_htdigest.h
+
+libplugin_htdigest_la_LDFLAGS = -module -export-dynamic -avoid-version 
+libplugin_htdigest_la_SOURCES = $(validator_htdigest)
+
+if STATIC_VALIDATOR_HTDIGEST
+static_validator_htdigest_src = $(validator_htdigest)
+else
+dynamic_validator_htdigest_lib = libplugin_htdigest.la
 endif
 
 
@@ -409,14 +456,21 @@ AM_YFLAGS=-d -l -t
 AM_LFLAGS=-i
 
 
+if USE_INTERNAL_PCRE
+internal_pcre_src=$(pcre_src)
+else
+external_pcre_lib=-lpcre
+endif
+
+
 lib_LTLIBRARIES = \
 libcherokee-base.la \
 libcherokee-client.la \
-libcherokee-server.la 
+libcherokee-server.la \
+libcherokee-config.la
 
 # Common LDFLAGS for libraries
 common_ldflags = \
--no-undefined \
 -export-symbols-regex "^[^_].*"
 
 # the macro puts -pthread into cflags, but we want to link
@@ -426,7 +480,8 @@ libcherokee_base_la_LDFLAGS = $(common_ldflags)
 libcherokee_base_la_LIBADD = \
 $(TLS_LIBS) \
 $(PTHREAD_LIBS) \
-$(PTHREAD_CFLAGS)
+$(PTHREAD_CFLAGS) \
+$(external_pcre_lib)
 
 libcherokee_client_la_LDFLAGS = $(common_ldflags)
 libcherokee_client_la_LIBADD = \
@@ -440,10 +495,16 @@ libcherokee_server_la_LIBADD = \
 $(TLS_LIBS) \
 $(PTHREAD_LIBS) \
 $(PTHREAD_CFLAGS) \
+$(static_handler_admin_lib) \
 $(static_validator_pam_lib) \
-$(static_handler_redir_lib) \
 $(static_validator_htpasswd_lib) \
 libcherokee-base.la
+
+libcherokee_config_la_LDFLAGS = $(common_ldflags)
+libcherokee_config_la_LIBADD = \
+libcherokee-base.la \
+libcherokee-client.la \
+libcherokee-server.la
 
 
 if COMPILE_EPOLL
@@ -471,7 +532,8 @@ libcherokee_base_la_SOURCES = \
 $(avl_src) \
 $(zlib_src) \
 $(dict_src) \
-$(gnu_getopt) \
+$(internal_pcre_src) \
+$(internal_getopt_src) \
 $(poll_poll_src) \
 $(poll_epoll_src) \
 $(poll_kqueue_src) \
@@ -514,8 +576,8 @@ mime-protected.h \
 mime.c \
 matching_list.h \
 matching_list.c \
-mmap2.h \
-mmap2.c \
+iocache.h \
+iocache.c \
 md5.h \
 md5.c \
 sha1.h \
@@ -531,6 +593,12 @@ session_cache.h \
 session_cache.c \
 access.h \
 access.c \
+regex.h \
+regex.c \
+resolv_cache.h \
+resolv_cache.c \
+typed_table.h \
+typed_table.c \
 \
 mime_grammar.y \
 mime_scanner.l
@@ -545,15 +613,18 @@ downloader.h \
 downloader-protected.h \
 downloader.c 
 
+libcherokee_server_la_CFLAGS = \
+$(static_validator_htpasswd_flags)
+
 libcherokee_server_la_SOURCES = \
-read_config_grammar.y \
-read_config_scanner.l \
-\
 icons_grammar.y \
 icons_scanner.l \
 \
+$(static_module_read_config_src) \
 $(static_handler_file_src) \
+$(static_handler_admin_src) \
 $(static_handler_dirlist_src) \
+$(static_handler_fastcgi_src) \
 $(static_handler_redir_src) \
 $(static_handler_error_redir_src) \
 $(static_handler_cgi_src) \
@@ -561,7 +632,6 @@ $(static_handler_phpcgi_src) \
 $(static_handler_common_src) \
 $(static_handler_nn_src) \
 $(static_handler_server_info_src) \
-$(static_handler_remote_control_src) \
 \
 $(static_logger_w3c_src) \
 $(static_logger_ncsa_src) \
@@ -571,6 +641,7 @@ $(static_encoder_gzip_src) \
 \
 $(static_validator_pam_src) \
 $(static_validator_plain_src) \
+$(static_validator_htdigest_src) \
 $(static_validator_htpasswd_src) \
 \
 connection.h \
@@ -578,10 +649,12 @@ connection-protected.h \
 connection.c \
 handler.h \
 handler.c \
-handler_table.h \
-handler_table.c \
-handler_table_entry.h \
-handler_table_entry.c \
+dirs_table.h \
+dirs_table.c \
+exts_table.h \
+exts_table.c \
+dirs_table_entry.h \
+dirs_table_entry.c \
 server-protected.h \
 server.h \
 server.c \
@@ -602,15 +675,19 @@ module.c \
 validator.h \
 validator.c \
 module_loader.h \
-module_loader-protected.h \
 module_loader.c \
 icons.h \
 icons.c \
 handler_error.c \
 handler_error.h
 
-# Temporaly removed
-#$(static_handler_mono_src) 
+libcherokee_config_la_SOURCES = \
+admin_client.h \
+admin_client.c \
+admin_server.h \
+admin_server.c \
+connection_info.h \
+connection_info.c
 
 
 #
@@ -631,6 +708,8 @@ list.h \
 list_merge_sort.h \
 url.h \
 header.h \
+resolv_cache.h \
+typed_table.h \
 \
 server.h \
 module.h \
@@ -640,8 +719,10 @@ encoder.h \
 connection.h \
 module_loader.h \
 \
-downloader.h
-
+downloader.h \
+\
+admin_client.h \
+connection_info.h
 
 
 # automake isn't too clever about "non-standard" use of lex and yacc
@@ -651,7 +732,7 @@ icons_scanner.c : icons_scanner.l
 
 icons_grammar.h : icons_grammar.c
 icons_grammar.c : icons_grammar.y
-	$(YACC) -p yy_icons_ -v -d $< -o $@
+	$(YACC) -dv -p yy_icons_ $< -o $@
 
 # Mime:
 mime_scanner.c : mime_scanner.l
@@ -659,7 +740,7 @@ mime_scanner.c : mime_scanner.l
 
 mime_grammar.h : mime_grammar.c
 mime_grammar.c : mime_grammar.y
-	$(YACC) -p yy_mime_ -v -d $< -o $@
+	$(YACC) -dv -p yy_mime_ $< -o $@
 
 
 #
@@ -673,14 +754,16 @@ endif
 plugindir = "$(libdir)/cherokee"
 plugin_LTLIBRARIES = \
 $(gnomevfs_lib) \
+$(dynamic_module_read_config_lib) \
 $(dynamic_handler_cgi_lib) \
 $(dynamic_handler_phpcgi_lib) \
 $(dynamic_handler_server_info_lib) \
 $(dynamic_handler_file_lib) \
+$(dynamic_handler_admin_lib) \
 $(dynamic_handler_dirlist_lib) \
+$(dynamic_handler_fastcgi_lib) \
 $(dynamic_handler_redir_lib) \
 $(dynamic_handler_error_redir_lib) \
-$(dynamic_handler_remote_control_lib) \
 $(dynamic_handler_common_lib) \
 $(dynamic_handler_nn_lib) \
 $(dynamic_encoder_gzip_lib) \
@@ -689,29 +772,39 @@ $(dynamic_logger_combined_lib) \
 $(dynamic_logger_w3c_lib) \
 $(dynamic_validator_pam_lib) \
 $(dynamic_validator_plain_lib) \
+$(dynamic_validator_htdigest_lib) \
 $(dynamic_validator_htpasswd_lib)
 
-# Temporaly removed
-#$(dynamic_handler_mono_lib) 
 
 #
 # Main binary: Cherokee server
 #
+sbin_PROGRAMS = cherokee
+
 cherokee_SOURCES = main.c
 cherokee_LDADD   = \
 $(PTHREAD_LIBS) \
 $(PTHREAD_CFLAGS) \
 libcherokee-base.la \
 libcherokee-server.la
+cherokee_LDFLAGS = -export-dynamic
 
-sbin_PROGRAMS = cherokee
+#
+# Log rotate utility
+#
+bin_PROGRAMS = cherokee_logrotate
 
+cherokee_logrotate_SOURCES = cherokee_logrotate.c
+cherokee_logrotate_LDADD = libcherokee-config.la libcherokee-base.la libcherokee-client.la 
 
 
 #
 # Test programs
 #
-#noinst_PROGRAMS = cherokee_ip
+noinst_PROGRAMS = cherokee_admin
+
+cherokee_admin_SOURCES = cherokee_admin.c 
+cherokee_admin_LDADD = libcherokee-config.la libcherokee-base.la libcherokee-client.la 
 
 ##cherokee_table_test_SOURCES = cherokee_table_test.c
 ##cherokee_table_test_LDADD = libcherokee.la
@@ -744,7 +837,7 @@ icons_grammar.c \
 icons_scanner.c \
 mime_grammar.h \
 mime_grammar.c \
-mime_scanner.c
+mime_scanner.c 
 
 WINDOWS_PORT_FILES = \
 Makefile.mingw \
@@ -753,9 +846,13 @@ unix4win32.h \
 unix4win32.c
 
 EMBEDDED_VERSION_FILES = \
-Makefile.embedded
+Makefile.embedded \
+read_config_embedded.h \
+read_config_embedded.c
 
 EXTRA_DIST = \
+$(pcre_src) \
+$(getopt_src) \
 $(bin_SCRIPTS) \
 $(cherokeedeps_DATA) \
 $(cherokeedata_DATA) \

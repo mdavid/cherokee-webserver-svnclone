@@ -35,15 +35,17 @@ CHEROKEE_BEGIN_DECLS
 
 
 typedef enum {
-	cherokee_logger    = 1,
-	cherokee_handler   = 1<<1,
-	cherokee_encoder   = 1<<2,
-	cherokee_validator = 1<<3
+	cherokee_generic   = 1,
+	cherokee_logger    = 1<<1,
+	cherokee_handler   = 1<<2,
+	cherokee_encoder   = 1<<3,
+	cherokee_validator = 1<<4
 } cherokee_module_type_t;
 
 
-typedef ret_t (* module_func_new_t)  (void *);
-typedef ret_t (* module_func_free_t) (void *);
+typedef ret_t (* module_func_new_t)      (void *);
+typedef ret_t (* module_func_free_t)     (void *);
+typedef void  (* module_func_get_name_t) (void  *, const char **name);
 
 
 typedef struct {
@@ -52,15 +54,21 @@ typedef struct {
 } cherokee_module_info_t;
 
 typedef struct {
-	module_func_new_t   new;  /* constructor step begging */
-	module_func_free_t  free; /* destructor               */
-	void               *init; /* constructor step endding */
+	module_func_new_t       new;      /* constructor step begging */
+	module_func_free_t      free;     /* destructor               */
+	module_func_get_name_t  get_name;
+	void                   *init;     /* constructor step endding */
 } cherokee_module_t;
+
 
 #define MODULE(x) ((cherokee_module_t *) (x))
 
+#define MODULE_INFO(name) (cherokee_ ## name ## _info)
+#define MODULE_INIT(name) (cherokee_module_ ## name ## _init)
+
 
 ret_t cherokee_module_init_base (cherokee_module_t *module);
+void  cherokee_module_get_name  (cherokee_module_t *module, const char **name);
 
 CHEROKEE_END_DECLS
 

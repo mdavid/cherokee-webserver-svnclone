@@ -38,18 +38,22 @@ CHEROKEE_BEGIN_DECLS
 typedef enum {
 	downloader_phase_init,
 	downloader_phase_send_headers,
+	downloader_phase_send_post,
 	downloader_phase_read_headers,
 	downloader_phase_step
 } cherokee_downloader_phase_t;
 
 
 struct cherokee_downloader {
-	cherokee_request_header_t   *request;
-	cherokee_buffer_t           *request_header;
-
-	cherokee_buffer_t           *reply_header;
-	cherokee_buffer_t           *body;
 	cherokee_header_t           *header;
+ 	cherokee_request_header_t    request;
+
+	cherokee_buffer_t            request_header;
+	cherokee_buffer_t            reply_header;
+	cherokee_buffer_t            body;
+
+	cherokee_buffer_t           *post_ref;
+	off_t                        post_sent;
 
 	cherokee_fdpoll_t           *fdpoll;
 	cherokee_socket_t           *socket;
@@ -80,6 +84,10 @@ struct cherokee_downloader {
 
 };
 
+
+
+ret_t cherokee_downloader_init     (cherokee_downloader_t  *downloader);
+ret_t cherokee_downloader_mrproper (cherokee_downloader_t  *downloader);
 
 CHEROKEE_END_DECLS
 

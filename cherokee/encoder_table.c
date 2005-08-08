@@ -49,14 +49,6 @@ for_each_func_free_encoder (const char *key, void *encoder)
 
 
 ret_t 
-cherokee_encoder_table_clean (cherokee_encoder_table_t *et)
-{
-	cherokee_table_foreach (&et->table, for_each_func_free_encoder);
-	return cherokee_table_clean (&et->table);
-}
-
-
-ret_t 
 cherokee_encoder_table_free (cherokee_encoder_table_t *et)
 {
 	cherokee_table_foreach (&et->table, for_each_func_free_encoder);

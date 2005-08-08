@@ -52,13 +52,13 @@
 
 
 
-const struct {
+static struct {
 	char *name;
 	int   len;
 } 
-known_headers_names [] = {
+known_header_names [] = {
 	{"Connection",      10},
-	{"Content-Range",   13},
+	{"Range",            5},
 	{"Keep-Alive",      10},
 	{"Accept",           6},
 	{"Host",             4},
@@ -367,11 +367,19 @@ get_new_line (char *string)
 {
 	char *end1;
 	char *end2;
+	char *farest;
 
-	end1 = strchr (string, '\r');
-	end2 = strchr (string, '\n');
+	do {
+		end1 = strchr (string, '\r');
+		end2 = strchr (string, '\n');
 
-	return cherokee_min_str (end1, end2);
+		farest = cherokee_min_str (end1, end2);
+		if (farest == NULL) return NULL;
+
+		string = farest+1;
+	} while (farest[1] == ' ');
+
+	return farest;
 }
 
 ret_t 
@@ -465,7 +473,7 @@ cherokee_header_parse (cherokee_header_t *hdr, cherokee_buffer_t *buffer,  chero
 			ret = add_known_header (hdr, header_host, (points+2)-buffer->buf, end-points-2);
 		} 
 		else if ((hdr->header[header_range].info_off == 0) && 
-			 (strncasecmp(begin, "Content-Range", 13) == 0))
+			 (strncasecmp(begin, "Range", 5) == 0))
 		{
 			ret = add_known_header (hdr, header_range, (points+2)-buffer->buf, end-points-2);
 		} 
@@ -530,7 +538,7 @@ cherokee_header_parse (cherokee_header_t *hdr, cherokee_buffer_t *buffer,  chero
 
 
 ret_t 
-cherokee_header_get_length (cherokee_header_t *hdr, uint32_t *len)
+cherokee_header_get_length (cherokee_header_t *hdr, cuint_t *len)
 {
 	*len = hdr->input_header_len;
 	return ret_ok;
@@ -666,6 +674,7 @@ cherokee_header_get_arguments (cherokee_header_t *hdr, cherokee_buffer_t *qstrin
 	if (unlikely(ret < ret_ok)) return ret;
 
 	string = qstring->buf;
+
 	while ((token = (char *) strsep(&string, "&")) != NULL)
 	{
 		char *equ, *key, *val;
@@ -766,11 +775,11 @@ cherokee_header_foreach (cherokee_header_t *hdr, cherokee_header_foreach_func_t 
 	for (i=0; i<HEADER_LENGTH; i++)
 	{
 		if (hdr->header[i].info_off != 0) {
-			header_name = known_headers_names[i].name;
-			header_len  = known_headers_names[i].len;
+			header_name = known_header_names[i].name;
+			header_len  = known_header_names[i].len;
 
-			cherokee_buffer_make_empty (name);
-			cherokee_buffer_make_empty (cont);
+			cherokee_buffer_clean (name);
+			cherokee_buffer_clean (cont);
 
 			cherokee_buffer_add (name, header_name, header_len);
 			cherokee_header_copy_known (hdr, i, cont);
@@ -787,8 +796,8 @@ cherokee_header_foreach (cherokee_header_t *hdr, cherokee_header_foreach_func_t 
 		header_name = hdr->unknowns[i].header_off + hdr->input_buffer->buf;
 		header_len = strchr (header_name, ':') - header_name;
 
-		cherokee_buffer_make_empty (name);
-		cherokee_buffer_make_empty (cont);
+		cherokee_buffer_clean (name);
+		cherokee_buffer_clean (cont);
 
 		cherokee_buffer_add(name, header_name, header_len);
 		cherokee_buffer_add(cont, 

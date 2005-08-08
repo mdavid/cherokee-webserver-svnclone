@@ -29,8 +29,9 @@
 #include "connection-protected.h"
 #include "util.h"
 #include "server.h"
+#include "module_loader.h"
 
-cherokee_module_info_t cherokee_remote_control_info = {
+cherokee_module_info_t MODULE_INFO(remote_control) = {
 	cherokee_handler,                   /* type     */
 	cherokee_handler_remote_control_new /* new func */
 };
@@ -154,12 +155,10 @@ cherokee_handler_remote_control_add_headers (cherokee_handler_remote_control_t *
 static cherokee_boolean_t _remote_control_is_init = false;
 
 void
-remote_control_init ()
+MODULE_INIT(remote_control) (cherokee_module_loader_t *loader)
 {
 	/* Init flag
 	 */
-	if (_remote_control_is_init) {
-		return;
-	}
+	if (_remote_control_is_init) return;
 	_remote_control_is_init = true;
 }

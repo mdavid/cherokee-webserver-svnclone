@@ -65,7 +65,7 @@ static char *month[]   = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
 #define IN_ADDR(c) ((struct in_addr) (c).sin_addr)
 
 
-cherokee_module_info_t cherokee_w3c_info = {
+cherokee_module_info_t MODULE_INFO(w3c) = {
 	cherokee_logger,            /* type     */
 	cherokee_logger_w3c_new     /* new func */
 };
@@ -97,15 +97,15 @@ cherokee_logger_w3c_new  (cherokee_logger_t **logger, cherokee_table_t *properti
 	n->file         = NULL;
 	
 	if (properties != NULL) {
-		n->filename = cherokee_table_get_val (properties, "LogFile");
+		cherokee_typed_table_get_str (properties, "LogFile", &n->filename);
 	}
 	
 	return ret_ok;
 }
 
 
-ret_t 
-cherokee_logger_w3c_init (cherokee_logger_w3c_t *logger)
+static ret_t
+open_output (cherokee_logger_w3c_t *logger)
 {
 	/* Syslog
 	 */
@@ -128,20 +128,46 @@ cherokee_logger_w3c_init (cherokee_logger_w3c_t *logger)
 }
 
 
+static ret_t
+close_output (cherokee_logger_w3c_t *logger)
+{
+	if (logger->file != NULL) {
+		if (fclose(logger->file) != 0) {
+			return ret_error;
+		}
+
+		logger->file = NULL;
+		return ret_ok;
+	} 
+
+	closelog();		
+	return ret_ok;
+}
+
+
+ret_t 
+cherokee_logger_w3c_init (cherokee_logger_w3c_t *logger)
+{
+	return open_output (logger);
+}
+
+
 ret_t
 cherokee_logger_w3c_free (cherokee_logger_w3c_t *logger)
 {
-	ret_t ret = ret_ok;
+	return close_output (logger);
+}
 
-	if (logger->file != NULL) {
-		if (fclose(logger->file) != 0) {
-			ret = ret_error;
-		}
-	} else {
-		closelog();		
-	}
-	
-	return ret;
+
+ret_t 
+cherokee_logger_w3c_reopen (cherokee_logger_w3c_t *logger)
+{
+	ret_t ret;
+
+	ret = close_output (logger);
+	if (unlikely (ret != ret_ok)) return ret_ok;
+
+	return open_output (logger);
 }
 
 
@@ -174,9 +200,10 @@ cherokee_logger_w3c_flush (cherokee_logger_w3c_t *logger)
 ret_t 
 cherokee_logger_w3c_write_error  (cherokee_logger_w3c_t *logger, cherokee_connection_t *cnt)
 {
-	long int   z;
-	int        len;
-	struct tm *conn_time;
+	long int           z;
+	int                len;
+	struct tm         *conn_time;
+	cherokee_buffer_t *request;
 	CHEROKEE_TEMP (tmp, 200);
 
 	/* Read the bogonow value from the server
@@ -190,13 +217,16 @@ cherokee_logger_w3c_write_error  (cherokee_logger_w3c_t *logger, cherokee_connec
 	z = 0;
 #endif
 
+	request = cherokee_buffer_is_empty(&cnt->request_original) ? 
+		cnt->request : &cnt->request_original;
+
 	len = snprintf (tmp, tmp_size-1,
 			"%02d:%02d:%02d [error] %s %s\n",
 			conn_time->tm_hour, 
 			conn_time->tm_min, 
 			conn_time->tm_sec,
 			method[cnt->header->method],
-			cnt->request->buf);
+			request->buf);
 
 	if ((len > tmp_size-1) || (len == -1)) {
 		len = tmp_size;
@@ -223,9 +253,10 @@ cherokee_logger_w3c_write_string (cherokee_logger_w3c_t *logger, const char *str
 ret_t
 cherokee_logger_w3c_write_access (cherokee_logger_w3c_t *logger, cherokee_connection_t *cnt)
 {
-	long int   z;
-	int        len;
-	struct tm *conn_time;
+	long int           z;
+	int                len;
+	struct tm         *conn_time;
+	cherokee_buffer_t *request;
 	CHEROKEE_TEMP (tmp, 200);
 
 	/* Read the bogonow value from the server
@@ -258,13 +289,16 @@ cherokee_logger_w3c_write_access (cherokee_logger_w3c_t *logger, cherokee_connec
 	   z = 0;
 #endif
 
+	   request = cherokee_buffer_is_empty(&cnt->request_original) ? 
+		   cnt->request : &cnt->request_original;
+
 	   len = snprintf (tmp, tmp_size-1,
 			   "%02d:%02d:%02d %s %s\n",
 			   conn_time->tm_hour, 
 			   conn_time->tm_min, 
 			   conn_time->tm_sec,
 			   method[cnt->header->method],
-			   cnt->request->buf);
+			   request->buf);
 
 	   
 	   if ((len > tmp_size-1) || (len == -1)) {
@@ -272,31 +306,28 @@ cherokee_logger_w3c_write_access (cherokee_logger_w3c_t *logger, cherokee_connec
 		   tmp[tmp_size-1] = '\n';
 	   }
 
-
 	   CHEROKEE_MUTEX_LOCK(&buffer_lock);
 	   cherokee_buffer_add (LOGGER_BUFFER(logger), tmp, len);
 	   CHEROKEE_MUTEX_UNLOCK(&buffer_lock);
 
-	   return(ret_ok);
+	   return ret_ok;
 }
 
 
 
 
-/*   Library init function
+/* Library init function
  */
 
-static int _w3c_is_init = 0;
+static cherokee_boolean_t _w3c_is_init = false;
 
 void
-w3c_init ()
+MODULE_INIT(w3c) (cherokee_module_loader_t *loader)
 {
 	/* Init flag
 	 */
-	if (_w3c_is_init) {
-		return;
-	}
-	_w3c_is_init = 1;
+	if (_w3c_is_init) return;
+	_w3c_is_init = true;
 }
 
 

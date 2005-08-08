@@ -103,8 +103,8 @@ cherokee_session_cache_free (cherokee_session_cache_t *tab)
 
 ret_t 
 cherokee_session_cache_add (cherokee_session_cache_t *tab,
-			    char *key,   int key_len,
-			    char *value, int value_len)
+			    unsigned char *key,   unsigned int key_len,
+			    unsigned char *value, unsigned int value_len)
 {
 	item_t *node;
 
@@ -114,8 +114,8 @@ cherokee_session_cache_add (cherokee_session_cache_t *tab,
 
 	/* Copy the info to the buffers
 	 */
-	cherokee_buffer_add (node->key, key, key_len);
-	cherokee_buffer_add (node->value, value, value_len);
+	cherokee_buffer_add (node->key, (char *)key, key_len);
+	cherokee_buffer_add (node->value, (char *)value, value_len);
 
 	/* Add the node to the tree
 	 */
@@ -127,15 +127,15 @@ cherokee_session_cache_add (cherokee_session_cache_t *tab,
 
 ret_t 
 cherokee_session_cache_retrieve  (cherokee_session_cache_t *tab,
-				  char  *key, int  key_len,
-				  void **buf, int *buf_len)
+				  unsigned char *key, int  key_len,
+				  void **buf, unsigned int *buf_len)
 {
 	item_t n, *found;
 	CHEROKEE_NEW(k,buffer);
 
 	/* Add the key
 	 */
-	cherokee_buffer_add (k, key, key_len);
+	cherokee_buffer_add (k, (char *)key, key_len);
 
 	/* Search the key in the tree
 	 */
@@ -168,12 +168,13 @@ cherokee_session_cache_retrieve  (cherokee_session_cache_t *tab,
 
 
 ret_t 
-cherokee_session_cache_del (cherokee_session_cache_t *tab, char *key, int key_len)
+cherokee_session_cache_del (cherokee_session_cache_t *tab, 
+			    unsigned char *key, int key_len)
 {
 	item_t n, *found;
 	CHEROKEE_NEW(k,buffer);
 	
-	cherokee_buffer_add (k, key, key_len);
+	cherokee_buffer_add (k, (char *)key, key_len);
 	n.key = k;
 	
 	found = avl_delete (tab->tree, &n);

@@ -37,8 +37,11 @@ typedef struct {
 #define LIST_ITEM_INFO(i) (LIST_ITEM(i)->info)
 
 
-ret_t cherokee_list_add      (struct list_head *head, void *item);
-ret_t cherokee_list_add_tail (struct list_head *head, void *item);
-ret_t cherokee_list_free     (struct list_head *head, void (*free_func) (void *));
+ret_t cherokee_list_add              (struct list_head *head, void *item);
+ret_t cherokee_list_add_tail         (struct list_head *head, void *item);
+
+ret_t cherokee_list_free             (struct list_head *head, void (*free_func) (void *));
+ret_t cherokee_list_free_item        (struct list_head *head, void (*free_func) (void *));
+ret_t cherokee_list_free_item_simple (struct list_head *head);
 
 #endif /* CHEROKEE_LIST_EXT_H */

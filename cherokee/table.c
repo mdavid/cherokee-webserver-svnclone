@@ -93,38 +93,28 @@ cherokee_table_free (cherokee_table_t *tab)
 ret_t 
 cherokee_table_free2 (cherokee_table_t  *tab, cherokee_table_free_item_t free_func)
 {
-	cherokee_table_clean2 (tab, free_func);
+	cherokee_table_mrproper2 (tab, free_func);
 
 	free (tab);
 	return ret_ok;	
 }
 
-ret_t
-cherokee_table_clean (cherokee_table_t *tab)
-{
-	ret_t ret;
 
+ret_t
+cherokee_table_mrproper (cherokee_table_t *tab) {
 	if (tab->tree) {
 		avl_destroy (tab->tree, del_item);
-
-		ret = cherokee_table_init (tab);
-		if (unlikely(ret < ret_ok)) return ret;
+		tab->tree = NULL;
 	}
-	
 	return ret_ok;
 }
 
 
-ret_t 
-cherokee_table_clean2 (cherokee_table_t  *tab, cherokee_table_free_item_t free_func)
+ret_t
+cherokee_table_mrproper2 (cherokee_table_t *tab, cherokee_table_free_item_t free_func) 
 {
 	struct avl_traverser  trav;
 	item_t               *item;
-
-	if (tab->tree == NULL) {
-		return ret_error;
-	}
-
 
 	/* We've to visit all the nodes of the tree
 	 * to free all the 'value' entries
@@ -139,7 +129,30 @@ cherokee_table_clean2 (cherokee_table_t  *tab, cherokee_table_free_item_t free_f
 		free_func (item->value);
 	}
 
-	return cherokee_table_clean(tab);
+	avl_destroy (tab->tree, del_item);
+	tab->tree = NULL;
+
+	return ret_ok;
+}
+
+
+ret_t
+cherokee_table_clean (cherokee_table_t *tab)
+{
+	cherokee_table_mrproper (tab);
+	return cherokee_table_init (tab);
+}
+
+
+ret_t 
+cherokee_table_clean2 (cherokee_table_t  *tab, cherokee_table_free_item_t free_func)
+{
+	if (tab->tree == NULL) {
+		return ret_error;
+	}
+
+	cherokee_table_mrproper2 (tab, free_func);
+	return cherokee_table_init(tab);
 }
 
 

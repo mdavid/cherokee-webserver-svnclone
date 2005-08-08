@@ -37,6 +37,15 @@ cherokee_validator_init_base (cherokee_validator_t *validator)
 	return ret_ok;
 }
 
+
+ret_t 
+cherokee_validator_free_base (cherokee_validator_t *validator)
+{
+	free (validator);
+	return ret_ok;
+}
+
+
 ret_t 
 cherokee_validator_free (cherokee_validator_t *validator)
 {
@@ -65,3 +74,12 @@ cherokee_validator_check (cherokee_validator_t *validator, void *conn)
 }
 
 
+ret_t 
+cherokee_validator_add_headers (cherokee_validator_t *validator, void *conn, cherokee_buffer_t *buf)
+{
+	if (validator->add_headers == NULL) {
+		return ret_error;
+	}
+	
+	return validator->add_headers (validator, CONN(conn), buf);	
+}

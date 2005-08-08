@@ -32,6 +32,7 @@
 #include <cherokee/common.h>
 #include <cherokee/fdpoll.h>
 #include <cherokee/buffer.h>
+#include <cherokee/http.h>
 
 
 CHEROKEE_BEGIN_DECLS
@@ -50,14 +51,24 @@ typedef ret_t (* cherokee_downloader_read_body_t)   (void *downloader, void *par
 typedef ret_t (* cherokee_downloader_finish_t)      (void *downloader, void *param);
 
 typedef struct cherokee_downloader cherokee_downloader_t;
+#define DOWNLOADER(d) ((cherokee_downloader_t *)(d))
 
 
-ret_t cherokee_downloader_new     (cherokee_downloader_t **downloader, cherokee_fdpoll_t *fdpoll);
-ret_t cherokee_downloader_free    (cherokee_downloader_t  *downloader);
+ret_t cherokee_downloader_new           (cherokee_downloader_t **downloader);
+ret_t cherokee_downloader_free          (cherokee_downloader_t  *downloader);
 
-ret_t cherokee_downloader_set     (cherokee_downloader_t *downloader, cherokee_buffer_t *url);
-ret_t cherokee_downloader_step    (cherokee_downloader_t *downloader);
-ret_t cherokee_downloader_connect (cherokee_downloader_t *downloader, cherokee_downloader_event_t event, void *func, void *param);
+ret_t cherokee_downloader_set_fdpoll     (cherokee_downloader_t *downloader, cherokee_fdpoll_t *fdpoll);
+ret_t cherokee_downloader_set_url        (cherokee_downloader_t *downloader, cherokee_buffer_t *url);
+ret_t cherokee_downloader_set_keepalive  (cherokee_downloader_t *downloader, cherokee_boolean_t active);
+ret_t cherokee_downloader_get_reply_code (cherokee_downloader_t *downloader, cherokee_http_t *code);
+
+ret_t cherokee_downloader_post_set      (cherokee_downloader_t *downloader, cherokee_buffer_t *post);
+ret_t cherokee_downloader_post_reset    (cherokee_downloader_t *downloader);
+
+ret_t cherokee_downloader_step          (cherokee_downloader_t *downloader);
+ret_t cherokee_downloader_reuse         (cherokee_downloader_t *downloader);
+ret_t cherokee_downloader_connect       (cherokee_downloader_t *downloader);
+ret_t cherokee_downloader_connect_event (cherokee_downloader_t *downloader, cherokee_downloader_event_t event, void *func, void *param);
 
 
 CHEROKEE_END_DECLS

@@ -43,24 +43,25 @@ typedef struct cherokee_table cherokee_table_t;
 #define TABLE(x) ((cherokee_table_t *)(x))
 
 
-ret_t cherokee_table_new    (cherokee_table_t **tab);
-ret_t cherokee_table_init   (cherokee_table_t  *tab);
+ret_t cherokee_table_new       (cherokee_table_t **tab);
+ret_t cherokee_table_init      (cherokee_table_t  *tab);
 
-ret_t cherokee_table_free   (cherokee_table_t  *tab);
-ret_t cherokee_table_free2  (cherokee_table_t  *tab, cherokee_table_free_item_t func);
+ret_t cherokee_table_free      (cherokee_table_t  *tab);
+ret_t cherokee_table_free2     (cherokee_table_t  *tab, cherokee_table_free_item_t func);
+ret_t cherokee_table_clean     (cherokee_table_t  *tab);
+ret_t cherokee_table_clean2    (cherokee_table_t  *tab, cherokee_table_free_item_t func);
+ret_t cherokee_table_mrproper  (cherokee_table_t  *tab);
+ret_t cherokee_table_mrproper2 (cherokee_table_t  *tab, cherokee_table_free_item_t func);
 
-ret_t cherokee_table_clean  (cherokee_table_t  *tab);
-ret_t cherokee_table_clean2 (cherokee_table_t  *tab, cherokee_table_free_item_t func);
+ret_t cherokee_table_add       (cherokee_table_t *tab, char *key, void *value);
+void* cherokee_table_get_val   (cherokee_table_t *tab, char *key);
+ret_t cherokee_table_get       (cherokee_table_t *tab, char *key, void **val);
+ret_t cherokee_table_del       (cherokee_table_t *tab, char *key, void **val);
+ret_t cherokee_table_len       (cherokee_table_t *tab, size_t *len);
 
-ret_t cherokee_table_add     (cherokee_table_t *tab, char *key, void *value);
-void* cherokee_table_get_val (cherokee_table_t *tab, char *key);
-ret_t cherokee_table_get     (cherokee_table_t *tab, char *key, void **val);
-ret_t cherokee_table_del     (cherokee_table_t *tab, char *key, void **val);
-ret_t cherokee_table_len     (cherokee_table_t *tab, size_t *len);
-
-ret_t cherokee_table_foreach  (cherokee_table_t *tab, cherokee_table_foreach_func_t func);
-ret_t cherokee_table_while    (cherokee_table_t *tab, cherokee_table_while_func_t func, void *param, char **key, void **value);
-ret_t cherokee_table_clean_up (cherokee_table_t *tab, cherokee_table_while_func_t func, void *param);
+ret_t cherokee_table_foreach   (cherokee_table_t *tab, cherokee_table_foreach_func_t func);
+ret_t cherokee_table_while     (cherokee_table_t *tab, cherokee_table_while_func_t func, void *param, char **key, void **value);
+ret_t cherokee_table_clean_up  (cherokee_table_t *tab, cherokee_table_while_func_t func, void *param);
 
 CHEROKEE_END_DECLS
 

@@ -58,6 +58,7 @@ typedef struct {
 	/* State
 	 */
 	cherokee_boolean_t  page_header;
+	cuint_t             longest_filename;
 	list_t             *dir_ptr;
 	list_t             *file_ptr;
 
@@ -70,10 +71,10 @@ typedef struct {
 	char *alink;       /* color for active hypertext links */
 	char *background;  /* URL for an image to be used to tile the background */
 
-	int show_size;
-	int show_date;
-	int show_owner;
-	int show_group;
+	cuint_t show_size;
+	cuint_t show_date;
+	cuint_t show_owner;
+	cuint_t show_group;
 	
 	cherokee_buffer_t *header;       /* Header content */
 	cherokee_buffer_t *header_file;  /* Header filename */
@@ -92,6 +93,7 @@ ret_t cherokee_handler_dirlist_new (cherokee_handler_t **hdl, void *cnt, cheroke
  */
 ret_t cherokee_handler_dirlist_init        (cherokee_handler_dirlist_t *dhdl);
 ret_t cherokee_handler_dirlist_free        (cherokee_handler_dirlist_t *dhdl);
+void  cherokee_handler_dirlist_get_name    (cherokee_handler_dirlist_t *dhdl, char **name);
 ret_t cherokee_handler_dirlist_step        (cherokee_handler_dirlist_t *dhdl, cherokee_buffer_t *buffer);
 ret_t cherokee_handler_dirlist_add_headers (cherokee_handler_dirlist_t *dhdl, cherokee_buffer_t *buffer);
 

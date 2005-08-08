@@ -23,10 +23,11 @@
  */
 
 #include "logger_combined.h"
+#include "logger_ncsa.h"
 #include "module_loader.h"
 
 
-cherokee_module_info_t cherokee_combined_info = {
+cherokee_module_info_t MODULE_INFO(combined) = {
 	cherokee_logger,              /* type     */
 	cherokee_logger_combined_new  /* new func */
 };
@@ -45,6 +46,7 @@ cherokee_logger_combined_new (cherokee_logger_t **logger, cherokee_table_t *prop
 	MODULE(n)->init         = (logger_func_init_t) cherokee_logger_ncsa_init;
 	MODULE(n)->free         = (logger_func_free_t) cherokee_logger_ncsa_free;
 	LOGGER(n)->flush        = (logger_func_flush_t) cherokee_logger_ncsa_flush;
+	LOGGER(n)->reopen       = (logger_func_flush_t) cherokee_logger_ncsa_reopen;
 	LOGGER(n)->write_error  = (logger_func_write_error_t)  cherokee_logger_ncsa_write_error;
 	LOGGER(n)->write_access = (logger_func_write_access_t) cherokee_logger_ncsa_write_access;
 	LOGGER(n)->write_string = (logger_func_write_string_t) cherokee_logger_ncsa_write_string;
@@ -69,23 +71,17 @@ cherokee_logger_combined_new (cherokee_logger_t **logger, cherokee_table_t *prop
 /* Library init function
  */
 
-static int _combined_is_init = 0;
+static cherokee_boolean_t _combined_is_init = false;
 
 void
-combined_init (cherokee_module_loader_t *loader)
+MODULE_INIT(combined) (cherokee_module_loader_t *loader)
 {
-	extern void ncsa_init (void);
-
 	/* Init flag
 	 */
-	if (_combined_is_init) 
-		return;
+	if (_combined_is_init) return;
+	_combined_is_init = true;
 
 	/* Load the dependences
 	 */
-	cherokee_module_loader_load (loader, "ncsa");
-
-	_combined_is_init = 1;
+//	cherokee_module_loader_load (loader, "ncsa");
 }
-
-

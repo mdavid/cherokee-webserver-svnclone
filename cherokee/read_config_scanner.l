@@ -22,7 +22,6 @@
  */
 
 #include "read_config_grammar.h"
-#include "handler_table_entry.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -48,13 +47,15 @@ domain_name     [\.\-_a-zA-Z0-9]*
 
 hex_255         [0-9a-fA-F]{1,4}
 ip6_part        {hex_255}":"?
-ip6_form1       {ip6_part}{0,16}"::"{ip6_part}{0,16}
+ip6_part2       {hex_255}[\:\.]?
+ip6_form1       {ip6_part}{0,16}"::"{ip6_part2}{0,16}
 ip6_form2       ({hex_255}":"){16}{hex_255}
 ip6_addr        {ip6_form1}|{ip6_form2}
 ip6_mask        [\/\\]("1"?[0-9]{1,2}|{ip6_addr})
 ip6             {ip6_addr}{ip6_mask}?
 
 ip              {ip4}|{ip6}
+address_port    ({domain_name}|{ip})":"{integer}
 nl              [\n\r]
 
 %%
@@ -67,6 +68,7 @@ nl              [\n\r]
 "Timeout"               { return T_TIMEOUT; }
 "MimeFile"              { return T_MIME_FILE; }
 "Directory"             { return T_DIRECTORY; }
+"Extension"             { return T_EXTENSION; }
 "KeepAlive"             { return T_KEEPALIVE; }
 "MaxKeepAliveRequests"  { return T_KEEPALIVE_MAX_REQUESTS; }
 "ErrorHandler"          { return T_ERROR_HANDLER; }
@@ -114,10 +116,12 @@ nl              [\n\r]
 "MaxSize"               { return T_MAXSIZE; }
 "ListenQueueSize"       { return T_LISTEN_QUEUE_SIZE; }
 "MaxFds"                { return T_MAX_FDS; }
+"PollMethod"            { return T_POLL_METHOD; }
 "policy"                { return T_POLICY; }
 "Include"               { return T_INCLUDE; }
 "OnlySecure"            { return T_ONLY_SECURE; }
 "MaxConnectionReuse"    { return T_MAX_CONNECTION_REUSE; }
+"IOCache"               { return T_IO_CACHE; }
 "On"                    { yylval.number = 1; return T_NUMBER; }
 "Off"                   { yylval.number = 0; return T_NUMBER; }
 
@@ -135,6 +139,7 @@ nl              [\n\r]
 
 {integer}        { yylval.number = atoi(yytext); return T_NUMBER; }
 {domain_name}    { yylval.string = strdup(yytext); return T_DOMAIN_NAME; }
+{address_port}   { yylval.string = strdup(yytext); return T_ADDRESS_PORT; }
 
 {comment}        ;
 {nl}             ;

@@ -279,17 +279,25 @@ fdpoll_epoll_new (cherokee_fdpoll_t **fdp, int sys_limit, int limit)
 	n->epoll_rs2idx = (int *) malloc (sizeof(int) * nfd->system_nfiles);
 	n->epoll_idx2rs = (int *) malloc (sizeof(int) * nfd->system_nfiles);
 
+	/* If anyone fails free all and return ret_nomem 
+	 */
+	if ((!n->ep_events ) || (!n->epoll_rs2idx) || (!n->epoll_idx2rs)) {
+		_free (n);
+		return ret_nomem;
+	}
+
 	memset (n->epoll_rs2idx, -1, nfd->system_nfiles);
 	memset (n->epoll_idx2rs, -1, nfd->system_nfiles);
 
-	return_if_fail (n->ep_events,    ret_nomem);
-	return_if_fail (n->epoll_rs2idx, ret_nomem);
-	return_if_fail (n->epoll_idx2rs, ret_nomem);
-
 	n->ep_fd = epoll_create (nfd->nfiles + 1);
 	if (n->ep_fd < 0) {
+		/* It might fail here if the glibc library supports epoll, but the kernel doesn't.
+		 */
+#if 0
 		PRINT_ERROR ("ERROR: Couldn't get epoll descriptor: epoll_create(%d): %s\n", 
 			     nfd->nfiles+1, strerror(errno));
+#endif
+		_free (n);
 		return ret_error;
 	}
 	
@@ -297,8 +305,7 @@ fdpoll_epoll_new (cherokee_fdpoll_t **fdp, int sys_limit, int limit)
 	if (re < 0) {
 		PRINT_ERROR ("ERROR: Couldn't set CloseExec to the epoll descriptor: fcntl: %s\n", 
 			     strerror(errno));
-		close (n->ep_fd);
-		n->ep_fd = -1;
+		_free (n);
 		return ret_error;		
 	}
 

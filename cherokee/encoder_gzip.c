@@ -24,6 +24,7 @@
 
 #include "encoder_gzip.h"
 #include "common-internal.h"
+#include "module_loader.h"
 
 /* Specs:
  * GZIP file format specification version 4.3:
@@ -80,7 +81,7 @@ static char gzip_header[gzip_header_len] = {0x1F, 0x8B,   /* 16 bits: IDentifica
  *
  */
 
-cherokee_module_info_t cherokee_gzip_info = {
+cherokee_module_info_t MODULE_INFO(gzip) = {
 	cherokee_encoder,            /* type     */
 	cherokee_encoder_gzip_new    /* new func */
 };
@@ -147,19 +148,15 @@ init_gzip_stream (z_stream *stream)
 {
 	int err;
 
-	stream->zalloc = (alloc_func) NULL;
-	stream->zfree  = (free_func) NULL;
-	stream->opaque = (voidpf) NULL;
-
 	/* Comment from the PHP source code:
 	 * windowBits is passed < 0 to suppress zlib header & trailer 
 	 */
-	err = deflateInit2 (stream, 
-			    Z_BEST_SPEED, 
-			    Z_DEFLATED, 
-			    -MAX_WBITS, 
-			    MAX_MEM_LEVEL, 
-			    Z_DEFAULT_STRATEGY);
+	err = zlib_deflateInit2 (stream, 
+				 Z_BEST_SPEED, 
+				 Z_DEFLATED, 
+				 -MAX_WBITS, 
+				 MAX_MEM_LEVEL, 
+				 Z_DEFAULT_STRATEGY);
 
 	if (err != Z_OK) {
 		PRINT_ERROR("Error in deflateInit2() = %s\n", get_gzip_error_string(err));
@@ -213,15 +210,15 @@ cherokee_encoder_gzip_encode (cherokee_encoder_gzip_t *encoder,
 	ret = cherokee_buffer_ensure_size (out, the_size);
 	if (unlikely(ret < ret_ok)) return ret;
 	
-	encoder->stream.next_in   = in->buf;
+	encoder->stream.next_in   = (void *)in->buf;
 	encoder->stream.avail_in  = in->len;
-	encoder->stream.next_out  = out->buf;
+	encoder->stream.next_out  = (void *)out->buf;
 	encoder->stream.avail_out = out->size;
 
 	/* Compress it
 	 */
-	err = deflate (&encoder->stream, Z_FINISH);
-	deflateEnd (&encoder->stream);
+	err = zlib_deflate (&encoder->stream, Z_FINISH);
+	zlib_deflateEnd (&encoder->stream);
 	
 	if (err != Z_STREAM_END) {
 		PRINT_ERROR("Error in deflate(): err=%s avail=%d\n", 
@@ -274,15 +271,13 @@ cherokee_encoder_gzip_encode (cherokee_encoder_gzip_t *encoder,
 /*   Library init function
  */
 
-static int _gzip_is_init = 0;
+static cherokee_boolean_t _gzip_is_init = false;
 
 void
-gzip_init ()
+MODULE_INIT(gzip) (cherokee_module_loader_t *loader)
 {
 	/* Init flag
 	 */
-	if (_gzip_is_init) {
-		return;
-	}
-	_gzip_is_init = 1;
+	if (_gzip_is_init) return;
+	_gzip_is_init = true;
 }

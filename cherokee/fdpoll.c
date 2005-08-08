@@ -33,35 +33,35 @@ cherokee_fdpoll_new (cherokee_fdpoll_t **fdp, cherokee_poll_type_t type, int sys
 #if HAVE_EPOLL	
 		return fdpoll_epoll_new (fdp, sys_limit, limit);
 #else			
-		return ret_error;
+		return ret_no_sys;
 #endif
 
 	case cherokee_poll_kqueue:
 #if HAVE_KQUEUE	
 		return fdpoll_kqueue_new (fdp, sys_limit, limit);
 #else			
-		return ret_error;
+		return ret_no_sys;
 #endif	
 		
 	case cherokee_poll_port:
 #if HAVE_PORT
 		return fdpoll_port_new (fdp, sys_limit, limit);
 #else			
-		return ret_error;
+		return ret_no_sys;
 #endif	
 		
 	case cherokee_poll_poll:
 #if HAVE_POLL		
 		return fdpoll_poll_new (fdp, sys_limit, limit);
 #else			
-		return ret_error;
+		return ret_no_sys;
 #endif	
 		
 	case cherokee_poll_select:
 #if HAVE_SELECT	
 		return fdpoll_select_new (fdp, sys_limit, limit);
 #else			
-		return ret_error;
+		return ret_no_sys;
 #endif	
 	default:
 		SHOULDNT_HAPPEN;
@@ -116,7 +116,7 @@ cherokee_fdpoll_get_method_str (cherokee_fdpoll_t *fdp, char **str)
 		*str = "kqueue";
 		break;
 	case cherokee_poll_port:
-		*str = "port";
+		*str = "ports";
 		break;
 	case cherokee_poll_poll:
 		*str = "poll";

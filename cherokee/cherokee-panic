@@ -53,8 +53,8 @@ action=mail
 	fi
 
 	# Check the debugger
-	gdb=`type gdb | grep -v "not found" | cut -f3 -d " "`
-	dbx=`type dbx | grep -v "not found" | cut -f3 -d " "`
+	gdb=`type gdb 2>/dev/null | grep -v "not found" | cut -f3 -d " "`
+	dbx=`type dbx 2>/dev/null | grep -v "not found" | cut -f3 -d " "`
 
 	if [ x$gdb != x ]; then
 	     debugger=$gdb
@@ -75,6 +75,7 @@ action=mail
 	echo "bug traq system:  http://bugs.0x50.org"
 	echo
 	echo "Operating System: `uname -a`"
+	echo "Debugger: $debugger"
 	echo
 
 	# Get the backtrace

@@ -29,7 +29,7 @@
 #include "connection-protected.h"
 #include "module_loader.h"
 
-cherokee_module_info_t cherokee_plain_info = {
+cherokee_module_info_t MODULE_INFO(plain) = {
 	cherokee_validator,             /* type     */
 	cherokee_validator_plain_new    /* new func */
 };
@@ -37,26 +37,27 @@ cherokee_module_info_t cherokee_plain_info = {
 
 ret_t 
 cherokee_validator_plain_new (cherokee_validator_plain_t **plain, cherokee_table_t *properties)
-{
+{	
+	ret_t ret;
 	CHEROKEE_NEW_STRUCT(n,validator_plain);
 
 	/* Init 		
 	 */
 	cherokee_validator_init_base (VALIDATOR(n));
+	VALIDATOR(n)->support = http_auth_basic | http_auth_digest;
 
-	MODULE(n)->free     = (module_func_free_t)     cherokee_validator_plain_free;
-	VALIDATOR(n)->check = (validator_func_check_t) cherokee_validator_plain_check;
+	MODULE(n)->free           = (module_func_free_t)           cherokee_validator_plain_free;
+	VALIDATOR(n)->check       = (validator_func_check_t)       cherokee_validator_plain_check;
+	VALIDATOR(n)->add_headers = (validator_func_add_headers_t) cherokee_validator_plain_add_headers;
 	   
-	n->plain_file_ref = NULL;
+	n->file_ref = NULL;
 
 	/* Get the properties
 	 */
 	if (properties) {
-		ret_t ret;
-			 
-		ret = cherokee_table_get (properties, "file", (void **) &n->plain_file_ref);
+		ret = cherokee_typed_table_get_str (properties, "file", (char **)&n->file_ref);
 		if (ret < ret_ok) {
-			PRINT_ERROR_S ("plain validator needs a \"File\" property\n");
+			PRINT_MSG_S ("plain validator needs a \"File\" property\n");
 			return ret_error;
 		}
 	}
@@ -69,7 +70,7 @@ cherokee_validator_plain_new (cherokee_validator_plain_t **plain, cherokee_table
 ret_t 
 cherokee_validator_plain_free (cherokee_validator_plain_t *plain)
 {
-	free (plain);
+	cherokee_validator_free_base (VALIDATOR(plain));
 	return ret_ok;
 }
 
@@ -81,13 +82,13 @@ cherokee_validator_plain_check (cherokee_validator_plain_t *plain, cherokee_conn
 	ret_t  ret;
 	int    len;
 	char  *pass;
-	CHEROKEE_TEMP(line, 128);
+	CHEROKEE_TEMP(line, 256);
 
         if (cherokee_buffer_is_empty(conn->user)) {
                 return ret_error;
         }
 
-	f = fopen (plain->plain_file_ref, "r");
+	f = fopen (plain->file_ref, "r");
 	if (f == NULL) {
 		return ret_error;
 	}
@@ -134,12 +135,19 @@ cherokee_validator_plain_check (cherokee_validator_plain_t *plain, cherokee_conn
 }
 
 
+ret_t 
+cherokee_validator_plain_add_headers (cherokee_validator_plain_t *plain, cherokee_connection_t *conn, cherokee_buffer_t *buf)
+{
+	return ret_ok;
+}
+
+
 /*   Library init function
  */
 static cherokee_boolean_t _plain_is_init = false;
 
 void
-plain_init (cherokee_module_loader_t *loader)
+MODULE_INIT(plain) (cherokee_module_loader_t *loader)
 {
 	/* Init flag
 	 */
@@ -149,3 +157,4 @@ plain_init (cherokee_module_loader_t *loader)
 	/* Other stuff
 	 */
 }
+

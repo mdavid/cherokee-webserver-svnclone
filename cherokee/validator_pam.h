@@ -22,8 +22,8 @@
  * USA
  */
 
-#ifndef __CHEROKEE_VALIDATOR_PAM_H__
-#define __CHEROKEE_VALIDATOR_PAM_H__
+#ifndef CHEROKEE_VALIDATOR_PAM_H
+#define CHEROKEE_VALIDATOR_PAM_H
 
 #include "validator.h"
 #include "connection.h"
@@ -36,8 +36,10 @@ typedef struct {
 #define PAM(x) ((cherokee_validator_pam_t *)(x))
 
 
-ret_t cherokee_validator_pam_new   (cherokee_validator_pam_t **pam, cherokee_table_t *properties);
-ret_t cherokee_validator_pam_free  (cherokee_validator_pam_t  *pam);
-ret_t cherokee_validator_pam_check (cherokee_validator_pam_t  *pam, cherokee_connection_t *conn);
+ret_t cherokee_validator_pam_new  (cherokee_validator_pam_t **pam, cherokee_table_t *properties);
+ret_t cherokee_validator_pam_free (cherokee_validator_pam_t  *pam);
 
-#endif /* __CHEROKEE_VALIDATOR_PAM_H__ */
+ret_t cherokee_validator_pam_check       (cherokee_validator_pam_t  *pam, cherokee_connection_t *conn);
+ret_t cherokee_validator_pam_add_headers (cherokee_validator_pam_t  *pam, cherokee_connection_t *conn, cherokee_buffer_t *buf);
+
+#endif /* CHEROKEE_VALIDATOR_PAM_H */

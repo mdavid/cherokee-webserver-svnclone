@@ -28,9 +28,9 @@
 #include <poll.h>
 #include <errno.h>
 
-#define POLL_READ   (POLLIN | POLLPRI | POLL_ERROR)
+#define POLL_READ   (POLLIN  | POLL_ERROR)
 #define POLL_WRITE  (POLLOUT | POLL_ERROR)
-#define POLL_ERROR  (POLLHUP | POLLERR)
+#define POLL_ERROR  (POLLHUP | POLLERR | POLLNVAL)
 
 
 /***********************************************************************/
@@ -86,15 +86,18 @@ _add (cherokee_fdpoll_poll_t *fdp, int fd, int rw)
                 return ret_error;
         }
 
+        fdp->pollfds[nfd->npollfds].fd      = fd;
+	fdp->pollfds[nfd->npollfds].revents = 0; 
 
-        fdp->pollfds[nfd->npollfds].fd = fd;
         switch (rw) {
         case 0:  
-                fdp->pollfds[nfd->npollfds].events = POLL_READ; 
+                fdp->pollfds[nfd->npollfds].events = POLLIN; 
                 break;
         case 1: 
-                fdp->pollfds[nfd->npollfds].events = POLL_WRITE;
+                fdp->pollfds[nfd->npollfds].events = POLLOUT;
                 break;
+	default:
+		SHOULDNT_HAPPEN;
         }
         fdp->fdidx[fd] = nfd->npollfds;
         nfd->npollfds++;
@@ -106,9 +109,8 @@ _add (cherokee_fdpoll_poll_t *fdp, int fd, int rw)
 static void 
 _set_mode (cherokee_fdpoll_poll_t *fdp, int fd, int rw)
 {
-        fdp->pollfds[fdp->fdidx[fd]].events = rw ? POLL_WRITE : POLL_READ;
+        fdp->pollfds[fdp->fdidx[fd]].events = rw ? POLLOUT : POLLIN;
 }
-
 
 static ret_t
 _del (cherokee_fdpoll_poll_t *fdp, int fd)
@@ -116,17 +118,28 @@ _del (cherokee_fdpoll_poll_t *fdp, int fd)
         int                idx = fdp->fdidx[fd];
 	cherokee_fdpoll_t *nfd = FDPOLL(fdp);
 
-        if (idx < 0 || idx >= FDPOLL(fdp)->nfiles) {
+        if (idx < 0 || idx >= nfd->nfiles) {
                 PRINT_ERROR ("Error droping socket '%d' from fdpoll\n", idx);
                 return ret_error;
         }
 
+	/* Decrease the total number of descriptors
+	 */
         nfd->npollfds--;
-        fdp->pollfds[idx] = fdp->pollfds[nfd->npollfds];
-        fdp->fdidx[fdp->pollfds[idx].fd] = idx;
 
-        fdp->pollfds[nfd->npollfds].fd = -1;
-        fdp->fdidx[fd] = -1;
+	/* Move the last one to the empty space
+	 */
+	if (nfd->npollfds > 0) {
+		memcpy (&fdp->pollfds[idx], &fdp->pollfds[nfd->npollfds], sizeof(struct pollfd));
+		fdp->fdidx[fdp->pollfds[idx].fd] = idx;
+	}
+
+	/* Clean the new empty entry
+	 */
+        fdp->fdidx[fd]                      = -1;
+        fdp->pollfds[nfd->npollfds].fd      = -1;
+	fdp->pollfds[nfd->npollfds].events  = 0; 
+	fdp->pollfds[nfd->npollfds].revents = 0; 
 
         return ret_ok;
 }
@@ -135,6 +148,10 @@ _del (cherokee_fdpoll_poll_t *fdp, int fd)
 static int
 _watch (cherokee_fdpoll_poll_t *fdp, int timeout_msecs)
 {
+	if (FDPOLL(fdp)->npollfds < 0) {
+		SHOULDNT_HAPPEN;
+	}
+		
         return poll (fdp->pollfds, FDPOLL(fdp)->npollfds, timeout_msecs);
 }
 
@@ -142,11 +159,17 @@ _watch (cherokee_fdpoll_poll_t *fdp, int timeout_msecs)
 static int
 _check (cherokee_fdpoll_poll_t *fdp, int fd, int rw)
 {
+	short revents = fdp->pollfds[fdp->fdidx[fd]].revents;
+
+	if (revents & POLLNVAL) {
+		_del (fdp, fd);
+	}
+
         switch (rw) {
         case 0: 
-                return fdp->pollfds[fdp->fdidx[fd]].revents & (POLLIN | POLLHUP | POLLNVAL);
+                return revents & POLL_READ;
         case 1: 
-                return fdp->pollfds[fdp->fdidx[fd]].revents & (POLLOUT | POLLHUP | POLLNVAL);
+                return revents & POLL_WRITE;
         default: 
                 SHOULDNT_HAPPEN;
                 return -1;
@@ -159,7 +182,6 @@ _reset (cherokee_fdpoll_poll_t *fdp, int fd)
 {
 	return ret_ok;
 }
-
 
 
 ret_t
@@ -180,13 +202,13 @@ fdpoll_poll_new (cherokee_fdpoll_t **fdp, int system_fd_limit, int fd_limit)
         
 	/* Init base class virtual methods
 	 */
-	nfd->free          = (fdpoll_func_free_t) _free;
-	nfd->add           = (fdpoll_func_add_t) _add;
-	nfd->del           = (fdpoll_func_del_t) _del;
-	nfd->reset         = (fdpoll_func_reset_t) _reset;
-	nfd->set_mode      = (fdpoll_func_set_mode_t) _set_mode;
-	nfd->check         = (fdpoll_func_check_t) _check;
-	nfd->watch         = (fdpoll_func_watch_t) _watch;	
+	nfd->free      = (fdpoll_func_free_t) _free;
+	nfd->add       = (fdpoll_func_add_t) _add;
+	nfd->del       = (fdpoll_func_del_t) _del;
+	nfd->reset     = (fdpoll_func_reset_t) _reset;
+	nfd->set_mode  = (fdpoll_func_set_mode_t) _set_mode;
+	nfd->check     = (fdpoll_func_check_t) _check;
+	nfd->watch     = (fdpoll_func_watch_t) _watch;	
 
         /* Get memory: pollfds structs
          */
@@ -194,7 +216,9 @@ fdpoll_poll_new (cherokee_fdpoll_t **fdp, int system_fd_limit, int fd_limit)
         return_if_fail (n->pollfds, ret_nomem);
         
         for (i=0; i < nfd->nfiles; i++) {
-                n->pollfds[i].fd = -1;
+                n->pollfds[i].fd      = -1;
+		n->pollfds[i].events  =  0;
+		n->pollfds[i].revents =  0;
         }
 
         /* Get memory: reverse fd index
