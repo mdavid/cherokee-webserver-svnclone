@@ -33,8 +33,10 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <syslog.h>
 
+#ifdef HAVE_SYSLOG_H
+# include <syslog.h>
+#endif
 
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
@@ -129,15 +131,18 @@ open_output (cherokee_logger_ncsa_t *logger)
 		PRINT_ERROR("cherokee_logger_ncsa: error opening %s for append\n", logger->accesslog_filename); 
 		return ret_error;
 	}
+#ifndef _WIN32
 	fcntl (fileno (logger->accesslog_fd), F_SETFD, 1);
-	
+#endif	
 
         logger->errorlog_fd  = fopen (logger->errorlog_filename, "a+");
 	if (logger->errorlog_fd == NULL) {
 		PRINT_ERROR("cherokee_logger_ncsa: error opening %s for append\n", logger->errorlog_filename); 
 		return ret_error;
 	}
+#ifndef _WIN32
 	fcntl (fileno (logger->errorlog_fd), F_SETFD, 1);
+#endif
 
 	return ret_ok;
 }
@@ -241,8 +246,8 @@ build_log_string (cherokee_logger_ncsa_t *logger, cherokee_connection_t *cnt, ch
 
 	/* Look for the user
 	 */
-	if (!cherokee_buffer_is_empty (cnt->user)) {
-		username = cnt->user->buf;
+	if (!cherokee_buffer_is_empty (&cnt->user)) {
+		username = cnt->user.buf;
 	} else {
 		username = "-";
 	}

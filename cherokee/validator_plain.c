@@ -84,7 +84,7 @@ cherokee_validator_plain_check (cherokee_validator_plain_t *plain, cherokee_conn
 	char  *pass;
 	CHEROKEE_TEMP(line, 256);
 
-        if (cherokee_buffer_is_empty(conn->user)) {
+        if (cherokee_buffer_is_empty(&conn->user)) {
                 return ret_error;
         }
 
@@ -117,13 +117,13 @@ cherokee_validator_plain_check (cherokee_validator_plain_t *plain, cherokee_conn
 			 
 		/* Is this the right user? 
 		 */
-		if (strcmp (conn->user->buf, line) != 0) {
+		if (strcmp (conn->user.buf, line) != 0) {
 			continue;
 		}
 		
 		/* Check the password
 		 */
-		if (strcmp (conn->passwd->buf, pass) == 0) {
+		if (strcmp (conn->passwd.buf, pass) == 0) {
 			ret = ret_ok;
 			break;
 		}

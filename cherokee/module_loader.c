@@ -27,7 +27,10 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <dlfcn.h>
+
+#ifndef CHEROKEE_EMBEDDED
+# include <dlfcn.h>
+#endif
 
 #include "table.h"
 #include "buffer.h"

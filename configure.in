@@ -28,12 +28,6 @@ m4_define([cherokee_micro_version], [25])
 m4_define([cherokee_patch_version], [])
 m4_define([cherokee_version], m4_format('%s.%s.%s%s', cherokee_major_version, cherokee_minor_version, cherokee_micro_version, cherokee_patch_version))
 
-m4_define([cherokee_major_version_len], m4_len(cherokee_major_version))
-m4_define([cherokee_minor_version_len], m4_len(cherokee_minor_version))
-m4_define([cherokee_micro_version_len], m4_len(cherokee_micro_version))
-m4_define([cherokee_patch_version_len], m4_len(cherokee_patch_version))
-m4_define([cherokee_version_len], m4_eval(m4_len(cherokee_version) -2))
-
 dnl Init autoconf and automake
 AC_INIT([cherokee], [cherokee_version], [http://bugs.0x50.org], [cherokee])
 AC_CONFIG_SRCDIR([cherokee/server.c])
@@ -45,12 +39,15 @@ AC_DEFINE(PACKAGE_MINOR_VERSION, "cherokee_minor_version", [Version string])
 AC_DEFINE(PACKAGE_MICRO_VERSION, "cherokee_micro_version", [Version string])
 AC_DEFINE(PACKAGE_PATCH_VERSION, "cherokee_patch_version", [Version string])
 
-AC_DEFINE_UNQUOTED(PACKAGE_VERSION_LEN, cherokee_version_len, [Version string length])
-AC_DEFINE_UNQUOTED(PACKAGE_MAJOR_VERSION_LEN, cherokee_major_version_len, [Version string length])
-AC_DEFINE_UNQUOTED(PACKAGE_MINOR_VERSION_LEN, cherokee_minor_version_len, [Version string length])
-AC_DEFINE_UNQUOTED(PACKAGE_MICRO_VERSION_LEN, cherokee_micro_version_len, [Version string length])
-AC_DEFINE_UNQUOTED(PACKAGE_PATCH_VERSION_LEN, cherokee_patch_version_len, [Version string length])
-
+dnl Substitution variables
+PACKAGE_MAJOR_VERSION="cherokee_major_version"
+PACKAGE_MINOR_VERSION="cherokee_minor_version"
+PACKAGE_MICRO_VERSION="cherokee_micro_version"
+PACKAGE_PATCH_VERSION="cherokee_patch_version"
+AC_SUBST(PACKAGE_MAJOR_VERSION)
+AC_SUBST(PACKAGE_MINOR_VERSION)
+AC_SUBST(PACKAGE_MICRO_VERSION)
+AC_SUBST(PACKAGE_PATCH_VERSION)
 
 dnl Check for CPU / vendor / OS
 os_string="UNIX"
@@ -900,7 +897,7 @@ AM_CONDITIONAL(STATIC_VALIDATOR_HTPASSWD,     grep htpasswd       $conf_h >/dev/
 AM_CONDITIONAL(STATIC_VALIDATOR_PLAIN,        grep plain          $conf_h >/dev/null)
 AM_CONDITIONAL(STATIC_VALIDATOR_HTDIGEST,     grep htdigest       $conf_h >/dev/null)
 
-AC_OUTPUT(Makefile m4/Makefile cherokee/Makefile cget/Makefile icons/Makefile www/Makefile doc/Makefile doc/develop/Makefile doc/develop/doxygen.cfg contrib/Makefile qa/Makefile cherokee-config build_solaris.sh cherokee.spec cherokee.pc)
+AC_OUTPUT(Makefile cherokee/Makefile.MingW m4/Makefile cherokee/Makefile cget/Makefile icons/Makefile www/Makefile doc/Makefile doc/develop/Makefile doc/develop/doxygen.cfg contrib/Makefile qa/Makefile cherokee-config build_solaris.sh cherokee.spec cherokee.pc)
 
 
 methods=""

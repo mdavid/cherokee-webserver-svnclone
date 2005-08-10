@@ -679,7 +679,9 @@ module_loader.c \
 icons.h \
 icons.c \
 handler_error.c \
-handler_error.h
+handler_error.h \
+nonce.c \
+nonce.h
 
 libcherokee_config_la_SOURCES = \
 admin_client.h \
@@ -718,6 +720,7 @@ handler.h \
 encoder.h \
 connection.h \
 module_loader.h \
+nonce.h \
 \
 downloader.h \
 \
@@ -840,10 +843,12 @@ mime_grammar.c \
 mime_scanner.c 
 
 WINDOWS_PORT_FILES = \
-Makefile.mingw \
-unix4win32_errno.h \
+Makefile.MingW \
+Makefile.MingW.in \
 unix4win32.h \
-unix4win32.c
+unix4win32.c \
+win32_misc.h \
+win32_misc.c
 
 EMBEDDED_VERSION_FILES = \
 Makefile.embedded \

@@ -72,7 +72,7 @@ cherokee_validator_htpasswd_new (cherokee_validator_htpasswd_t **htpasswd, chero
 	/* Get the properties
 	 */
 	if (properties) {
-		cherokee_typed_table_get_str (properties, "file", &n->file_ref);
+		cherokee_typed_table_get_str (properties, "file", (char **)&n->file_ref);
 	}
 
 	if (n->file_ref == NULL) {
@@ -122,8 +122,8 @@ validate_crypt (cherokee_connection_t *conn, const char *crypted)
 	char *tmp;
 	char *passwd = "";
 
-	if (! cherokee_buffer_is_empty (conn->passwd)) {
-		passwd = conn->passwd->buf;
+	if (! cherokee_buffer_is_empty (&conn->passwd)) {
+		passwd = conn->passwd.buf;
 	}
 
 #if defined(HAVE_CRYPT_R) && defined(HAVE_PTHREAD)
@@ -169,7 +169,7 @@ validate_md5_digest (cherokee_connection_t *conn, char *crypted)
 	cherokee_buffer_t *tmp;
 	
 	cherokee_buffer_new (&tmp);
-	cherokee_buffer_add_buffer (tmp, conn->passwd);
+	cherokee_buffer_add_buffer (tmp, &conn->passwd);
 	cherokee_buffer_encode_md5_digest (tmp);
 
 	ret = (strcmp(crypted, tmp->buf)) ? ret_error : ret_ok;
@@ -187,9 +187,9 @@ validate_md5 (cherokee_connection_t *conn, char *crypted)
 	
 	cherokee_buffer_new (&tmp);
 
-	cherokee_buffer_add_buffer (tmp, conn->user);
+	cherokee_buffer_add_buffer (tmp, &conn->user);
 	cherokee_buffer_add (tmp, ":", 1);
-	cherokee_buffer_add_buffer (tmp, conn->passwd);
+	cherokee_buffer_add_buffer (tmp, &conn->passwd);
 	printf ("1->'%s'\n", tmp->buf);
 
 	cherokee_buffer_encode_md5_digest (tmp);
@@ -233,7 +233,7 @@ cherokee_validator_htpasswd_check (cherokee_validator_htpasswd_t *htpasswd, cher
 	ret_t ret_auth;
 	CHEROKEE_TEMP(line, 128);
 
-	if (cherokee_buffer_is_empty (conn->user)) {
+	if (cherokee_buffer_is_empty (&conn->user)) {
 		return ret_error;
 	}
 
@@ -266,11 +266,10 @@ cherokee_validator_htpasswd_check (cherokee_validator_htpasswd_t *htpasswd, cher
 		if (cryp == NULL) continue;
 		*cryp++ = '\0';
 		cryp_len = strlen(cryp);
-		
 
 		/* Is this the right user? 
 		 */
-		if (strcmp (conn->user->buf, line) != 0) {
+		if (strcmp (conn->user.buf, line) != 0) {
 			continue;
 		}
 

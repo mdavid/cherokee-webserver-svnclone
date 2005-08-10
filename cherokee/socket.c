@@ -229,9 +229,8 @@ db_store (void *ptr, gnutls_datum key, gnutls_datum data)
 static ret_t
 initialize_tls_session (cherokee_socket_t *socket, cherokee_virtual_server_t *vserver)
 {
-	int re;
-
 #ifdef HAVE_TLS
+	int re;
 
 	/* Set the virtual server object reference
 	 */
@@ -409,7 +408,11 @@ cherokee_socket_close (cherokee_socket_t *socket)
 #endif
 	}
 
+#ifdef _WIN32
+	re = closesocket (socket->socket);
+#else	
 	re = close (socket->socket);
+#endif
 
 	socket->socket = -1;
 	socket->status = socket_closed;
@@ -559,27 +562,23 @@ cherokee_socket_accept_fd (int server_socket, int *new_fd, cherokee_sockaddr_t *
 		return ret_error;
 	}		
 
-	/* <EXPERIMENTAL>
+	/* Close-on-exec
 	 */
-#ifdef _WIN32
-        WSAResetEvent (socket->hSelectEvent);
-        WSAEventSelect (new_socket, socket->hSelectEvent, FD_READ | FD_CLOSE);
-#else
-	fcntl (new_socket, F_SETFD, FD_CLOEXEC);  /* close-on-exec */
-#endif
+	CLOSE_ON_EXEC (new_socket);
 	
 	/* Disable Nagle's algorithm for this connection.
 	 * Written data to the network is not buffered pending
 	 * acknowledgement of previously written data.
 	 */
  	setsockopt (new_socket, IPPROTO_TCP, TCP_NODELAY, (const void *)&tmp, sizeof(tmp));
-
-	/*  </EXPERIMENTAL>
-	 */
 	
 	/* Enables nonblocking I/O.
 	 */
+#ifdef _WIN32
+	tmp = ioctlsocket (new_socket, FIONBIO, (u_long)&tmp);
+#else	
 	tmp = ioctl (new_socket, FIONBIO, &tmp);
+#endif
 	if (tmp < 0) {
 		PRINT_ERROR ("ERROR: Setting 'FIONBIO' in socked fd=%d\n", new_socket);
 		return ret_error;
@@ -598,7 +597,7 @@ cherokee_socket_set_client (cherokee_socket_t *sock, int type)
 		return ret_error;
 	}
 	
-	SOCKET_AF(sock) = AF_INET;
+	SOCKET_AF(sock) = type;
 
 	return ret_ok;
 }
@@ -676,15 +675,14 @@ cherokee_write (cherokee_socket_t *socket, const char *buf, int buf_len, size_t 
 		goto out;
 	}
 
-
-#ifdef _WIN32
 	len = send (SOCKET_FD(socket), buf, buf_len, 0);
-#else 	
-	len = write (SOCKET_FD(socket), buf, buf_len);
-#endif
-
 	if (len < 0) {
-		switch (errno) {
+		int err = SOCK_ERRNO();
+
+		switch (err) {
+#if defined(EWOULDBLOCK) && (EWOULDBLOCK != EAGAIN)
+		case EWOULDBLOCK:
+#endif	
 		case EAGAIN:      
 		case EINTR:       
 			return ret_eagain;
@@ -695,7 +693,7 @@ cherokee_write (cherokee_socket_t *socket, const char *buf, int buf_len, size_t 
 		}
 	
 		PRINT_ERROR ("ERROR: write(%d, ..) -> errno=%d '%s'\n", 
-			     SOCKET_FD(socket), errno, strerror(errno));
+			     SOCKET_FD(socket), errno, strerror(err));
 
 		*written = 0;
 		return ret_error;
@@ -783,13 +781,18 @@ cherokee_read (cherokee_socket_t *socket, char *buf, int buf_size, size_t *done)
 
 		if (unlikely (buf == NULL)) {
 			char tmp[buf_size+1];
-			len = read (SOCKET_FD(socket), tmp, buf_size);
+			len = recv (SOCKET_FD(socket), tmp, buf_size, 0);
 		} else {
-			len = read (SOCKET_FD(socket), buf, buf_size);
+			len = recv (SOCKET_FD(socket), buf, buf_size, 0);
 		}
 
 	if (len < 0) {
-		switch (errno) {
+		int err = SOCK_ERRNO();
+
+		switch (err) {
+#if defined(EWOULDBLOCK) && (EWOULDBLOCK != EAGAIN)
+		case EWOULDBLOCK:
+#endif
 		case EINTR:      
 		case EAGAIN:    
 			return ret_eagain;
@@ -822,16 +825,31 @@ out:
 ret_t 
 cherokee_writev (cherokee_socket_t *socket, const struct iovec *vector, uint16_t vector_len, size_t *written)
 {
-#ifdef _WIN32
-	DWORD re;
-	WSASend (SOCKET_FD(socket), (LPWSABUF)vector, vector_len, &re, 0, NULL, NULL);
-#else
 	int re;
+
+#ifdef _WIN32
+	int i;
+	size_t total;
+	
+	for (i = 0, re = 0, total = 0; i < vector_len; i++, vector++) {
+		re = send (SOCKET_FD(socket), vector->iov_base, vector->iov_len, 0);
+		if (re < 0)
+			break;
+		total += re;
+	}
+	if (re >= 0)
+		re = total;
+#else
 	re = writev (SOCKET_FD(socket), vector, vector_len);
 #endif
 
 	if (re <= 0) {
-		switch (errno) {
+		int err = SOCK_ERRNO();
+		
+		switch (err) {
+#if defined(EWOULDBLOCK) && (EWOULDBLOCK != EAGAIN)
+		case EWOULDBLOCK:
+#endif
 		case EAGAIN:
 		case EINTR: 
 			return ret_eagain;
@@ -840,14 +858,15 @@ cherokee_writev (cherokee_socket_t *socket, const struct iovec *vector, uint16_t
 		case ECONNRESET:
 			return ret_eof;
 		}
-		
+	       
 		PRINT_ERROR ("ERROR: writev(%d, ..) -> errno=%d '%s'\n", 
-			     SOCKET_FD(socket), errno, strerror(errno));
+			     SOCKET_FD(socket), err, strerror(err));
 
+		
 		*written = 0;
 		return ret_error;
 	}
-
+	
 	*written = re;
 	return ret_ok;
 }
@@ -1033,12 +1052,19 @@ cherokee_socket_connect (cherokee_socket_t *socket)
 
 	r = connect (SOCKET_FD(socket), (struct sockaddr *) &SOCKET_ADDR(socket), sizeof(cherokee_sockaddr_t));
 	if (r < 0) {
-		switch (r) {
-		case ECONNREFUSED: return ret_deny;
-		case EAGAIN:       return ret_eagain;
+		int err = SOCK_ERRNO();
+		
+		switch (err) {
+		case ECONNREFUSED:
+			return ret_deny;
+		case EAGAIN:
+#if defined(EWOULDBLOCK) && (EWOULDBLOCK != EAGAIN)
+		case EWOULDBLOCK:
+#endif
+			return ret_eagain;
 		default:           
 #if 1
-			PRINT_ERROR ("ERROR: Can not connect: %s\n", strerror(errno));
+			PRINT_ERROR ("ERROR: Can not connect: %s\n", strerror(err));
 #endif
 			return ret_error;
 		}
@@ -1094,9 +1120,7 @@ cherokee_socket_init_client_tls (cherokee_socket_t *socket)
 	} while ((re == GNUTLS_E_AGAIN) ||
 		 (re == GNUTLS_E_INTERRUPTED));
 
-# endif
-
-# ifdef HAVE_OPENSSL
+# elif defined(HAVE_OPENSSL)
 
 	/* New context
 	 */
@@ -1161,7 +1185,11 @@ cherokee_socket_set_timeout (cherokee_socket_t *socket, cuint_t timeout)
 	/* Set the socket to blocking
 	 */
 	block = 0;
+#ifdef _WIN32
+	if (ioctlsocket (socket->socket, FIONBIO, &block) == SOCKET_ERROR)
+#else	
 	if (ioctl (socket->socket, FIONBIO, &block) < 0)
+#endif
 		return ret_error;
 
 	/* Set the send / receive timeouts

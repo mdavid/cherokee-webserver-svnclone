@@ -130,8 +130,10 @@ cherokee_connection_new  (cherokee_connection_t **cnt)
 	cherokee_buffer_new (&n->redirect);
 	cherokee_buffer_new (&n->host);
 	cherokee_buffer_new (&n->query_string);
-	cherokee_buffer_new (&n->user);
-	cherokee_buffer_new (&n->passwd);
+
+	cherokee_buffer_init (&n->user);
+	cherokee_buffer_init (&n->passwd);
+	cherokee_buffer_init (&n->nonce);
 
 	cherokee_buffer_init (&n->request_original);
 
@@ -177,8 +179,6 @@ cherokee_connection_free (cherokee_connection_t  *cnt)
 	cherokee_buffer_mrproper (&cnt->request_original);
 
 	cherokee_buffer_free (cnt->pathinfo);
-	cherokee_buffer_free (cnt->user);
-	cherokee_buffer_free (cnt->passwd);
 	cherokee_buffer_free (cnt->buffer);
 	cherokee_buffer_free (cnt->header_buffer);
 	cherokee_buffer_free (cnt->incoming_header);
@@ -190,6 +190,10 @@ cherokee_connection_free (cherokee_connection_t  *cnt)
 	cherokee_buffer_free (cnt->userdir);
 	cherokee_buffer_free (cnt->redirect);
 	cherokee_buffer_free (cnt->host);
+
+	cherokee_buffer_mrproper (&cnt->user);
+	cherokee_buffer_mrproper (&cnt->passwd);
+	cherokee_buffer_mrproper (&cnt->nonce);
 
 	if (cnt->arguments != NULL) {
 		cherokee_table_free2 (cnt->arguments, free);
@@ -259,8 +263,6 @@ cherokee_connection_clean (cherokee_connection_t *cnt)
 	cherokee_buffer_mrproper (&cnt->request_original);
 
 	cherokee_buffer_clean (cnt->pathinfo);
-	cherokee_buffer_clean (cnt->user);
-	cherokee_buffer_clean (cnt->passwd);
 	cherokee_buffer_clean (cnt->local_directory);
 	cherokee_buffer_clean (cnt->web_directory);
 	cherokee_buffer_clean (cnt->effective_directory);
@@ -268,6 +270,10 @@ cherokee_connection_clean (cherokee_connection_t *cnt)
 	cherokee_buffer_clean (cnt->redirect);
 	cherokee_buffer_clean (cnt->host);
 	cherokee_buffer_clean (cnt->query_string);
+
+	cherokee_buffer_clean (&cnt->user);
+	cherokee_buffer_clean (&cnt->passwd);
+	cherokee_buffer_clean (&cnt->nonce);
 	
 	if (cnt->arguments != NULL) {
 		cherokee_table_free2 (cnt->arguments, free);
@@ -458,34 +464,21 @@ build_response_header__authenticate (cherokee_connection_t *cnt, cherokee_buffer
 	 * Eg: WWW-Authenticate: Digest realm="", qop="auth,auth-int", nonce="", opaque=""
 	 */
 	if (cnt->auth_type & http_auth_digest) {
-		int                i;
-		cherokee_buffer_t *nonce;
-		
+		/* Realm
+		 */
 		cherokee_buffer_ensure_size (buffer, 32 + cnt->realm_ref->len + 4);
 		cherokee_buffer_add (buffer, "WWW-Authenticate: Digest realm=\"", 32);
 		cherokee_buffer_add_buffer (buffer, cnt->realm_ref);
-		cherokee_buffer_add (buffer, "\", ", 3);
+		cherokee_buffer_add_str (buffer, "\", ");
 
-		/* Nonce: Randomized data, at least 64 bits
+		/* Nonce
 		 */
-		cherokee_buffer_new (&nonce);
-		cherokee_buffer_ensure_size (nonce, 16);
-		for (i=0; i<8; i++) {
-			long int rand;
-			char     tmp[2];
-
-			rand = random();
-			tmp[0] = rand & 0xFF;
-			tmp[1] = (rand >> 8) & 0xFF;
-			cherokee_buffer_add (nonce, tmp, 2);
-		}
-		cherokee_buffer_encode_hex (nonce);
-		cherokee_buffer_add_va (buffer, "nonce=\"%s\", ", nonce->buf);
-		cherokee_buffer_free (nonce);
-		
+		cherokee_nonce_table_generate (&CONN_VSRV(cnt)->nonces, cnt, &cnt->nonce);
+		cherokee_buffer_add_va (buffer, "nonce=\"%s\", ", cnt->nonce.buf);
+				
 		/* Qop: auth, auth-int, auth-conf
 		 */
-		cherokee_buffer_add (buffer, "qop=\"auth\""CRLF, 12);
+		cherokee_buffer_add_str (buffer, "qop=\"auth\""CRLF);
 	}
 }
 
@@ -1055,8 +1048,8 @@ get_authorization (cherokee_connection_t *cnt,
 {
 	cherokee_buffer_t auth = CHEROKEE_BUF_INIT;
 
-	cherokee_buffer_clean (cnt->user);
-	cherokee_buffer_clean (cnt->passwd);
+	cherokee_buffer_clean (&cnt->user);
+	cherokee_buffer_clean (&cnt->passwd);
 
 	if (strncasecmp(ptr, "Basic ", 6) == 0) {
 		char *end;
@@ -1084,8 +1077,8 @@ get_authorization (cherokee_connection_t *cnt,
 			goto error;
 		}
 		
-		cherokee_buffer_add (cnt->user, auth.buf, end - auth.buf);
-		cherokee_buffer_add (cnt->passwd, end+1, auth.len  - (end - auth.buf));		
+		cherokee_buffer_add (&cnt->user, auth.buf, end - auth.buf);
+		cherokee_buffer_add (&cnt->passwd, end+1, auth.len  - (end - auth.buf));		
 
 	} else if (strncasecmp(ptr, "Digest ", 7) == 0) {
 
@@ -1581,11 +1574,11 @@ cherokee_connection_check_authentication (cherokee_connection_t *cnt, cherokee_d
 	{
 		void *foo;
 
-		if (cherokee_buffer_is_empty (cnt->user)) {
+		if (cherokee_buffer_is_empty (&cnt->user)) {
 			goto unauthorized;			
 		}
 
-		ret = cherokee_table_get (plugin_entry->users, cnt->user->buf, &foo);
+		ret = cherokee_table_get (plugin_entry->users, cnt->user.buf, &foo);
 		if (ret != ret_ok) {
 			goto unauthorized;
 		}

@@ -31,9 +31,13 @@
 
 #include <cherokee/common.h>
 #include <cherokee/buffer.h>
+
 #include <time.h>
 #include <dirent.h>
-#include <netinet/in.h>
+
+#ifdef HAVE_NETINET_IN_H
+# include <netinet/in.h>
+#endif
 
 
 CHEROKEE_BEGIN_DECLS

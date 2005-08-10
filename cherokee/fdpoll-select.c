@@ -26,7 +26,10 @@
 #include "fdpoll-protected.h"
 
 #include <errno.h>
-#include <sys/select.h>
+
+#ifdef HAVE_SYS_SELECT_H
+# include <sys/select.h>
+#endif
 
 #ifndef INFTIM
 # define INFTIM -1

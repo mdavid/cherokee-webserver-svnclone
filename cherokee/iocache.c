@@ -32,7 +32,14 @@
 #include "list_merge_sort.h"
 #include "server-protected.h"
 
-#include <sys/mman.h>
+#ifdef HAVE_SYS_MMAN_H
+# include <sys/mman.h>
+#endif
+
+#ifdef HAVE_FCNTL_H
+# include <fcntl.h>
+#endif
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -43,6 +50,9 @@
 #define FRESHNESS_TIME 600
 #define CACHE_SIZE      10
 
+#ifndef O_BINARY
+# define O_BINARY 0
+#endif
 
 #ifdef MAP_FILE
 # define MAP_OPTIONS MAP_SHARED | MAP_FILE
@@ -261,7 +271,7 @@ iocache_entry_update_mmap (cherokee_iocache_entry_t *entry, char *filename, int 
 	/* Maybe open
 	 */
 	if (fd < 0) {
-		fd = open (filename, O_RDONLY);
+		fd = open (filename, O_RDONLY|O_BINARY);
 		if (unlikely (fd < 0)) return ret_error;
 
 		do_close = true;

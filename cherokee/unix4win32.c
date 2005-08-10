@@ -22,64 +22,61 @@
  * USA
  */
 
-#include "unix4win32.h"
+#include <windows.h>
 #include <conio.h>
 #include <sys/timeb.h>
 #include <tchar.h>
 #include <assert.h>
+#include "common-internal.h"
 
 
 static HANDLE hEventSource    = NULL;
 static char   szServiceName[] = "Cherokee";
 
-
-void 
+void
 openlog (const char *ident, int logopt, int facility)
 {
         hEventSource = RegisterEventSource(NULL, TEXT(szServiceName));
 }
 
-void 
+void
+vsyslog (int priority, const char *fmt, va_list args)
+{
+        TCHAR szMsg[1024];
+
+        if (!hEventSource)
+        	return;
+
+	_vsntprintf (szMsg, sizeof(szMsg)/sizeof(szMsg[0]), fmt, args);
+	ReportEvent(hEventSource,    /* handle of event source */
+		    (WORD)priority,  /* event type */
+		    0,               /* event category */
+		    0,               /* event ID */
+		    NULL,            /* current user's SID */
+		    1,               /* strings in szMsg */
+		    0,               /* no bytes of raw data */
+		    (LPCTSTR)szMsg,  /* array of error strings */
+		    NULL);           /* no raw data */
+}
+
+void
 syslog (int priority, const char *message, ...)
 {
-        TCHAR    szMsg[1024];
-	LPCSTR  *pmsg;
         va_list  args;
-	
-	/* Initialize variable arguments. 
-	 */
-        va_start (args, message);     
-        vsprintf (szMsg, message, args);
-        errno = GetLastError();
-	
-        *pmsg = (LPCSTR)szMsg;
 
-        if (hEventSource != NULL) {
-		ReportEvent(hEventSource,    /* handle of event source */
-			    (WORD)priority,  /* event type */
-			    0,               /* event category */
-			    0,               /* event ID */
-			    NULL,            /* current user's SID */
-			    1,               /* strings in lpszStrings */
-			    0,               /* no bytes of raw data */
-			    pmsg,            /* array of error strings */
-			    NULL);           /* no raw data */
-        }
+	/* Initialize variable arguments.
+	 */
+        va_start (args, message);
+        vsyslog (priority, message, args);
+	va_end (args);
 }
 
-void 
+void
 closelog (void)
 {
-        DeregisterEventSource(hEventSource);
-}
-
-
-
-
-int 
-getdtablesize (void)
-{
-        return OPEN_MAX;
+	if (hEventSource)
+        	DeregisterEventSource(hEventSource);
+	hEventSource = NULL;
 }
 
 
@@ -90,9 +87,9 @@ static char          *login_shell     = "not command.com!";
 static char          *home_dir        = ".";
 static char          *login           = NULL;
 static char          *group           = NULL;
+
 static struct passwd  __pw;
 static struct group   __gr;
-
 
 static char *
 lookup_env (char *table[])
@@ -100,10 +97,10 @@ lookup_env (char *table[])
 	char *ptr;
 	char *entry;
 	size_t len;
-	
-	/* scan table 
+
+	/* scan table
 	 */
-	while (*table && !(ptr = getenv (*table++))) ;        
+	while (*table && !(ptr = getenv (*table++))) ;
 	if (ptr == NULL) return NULL;
 
 	len = strcspn (ptr, " \n\t\n\r");
@@ -111,15 +108,14 @@ lookup_env (char *table[])
 	if (!(entry = malloc (len + 1))) {
 		PRINT_ERROR ("Out of memory.\n");
 	}
-	
+
 	strncpy (entry, ptr, len);
 	entry[len] = '\0';
 
 	return entry;
 }
 
-
-static char * 
+static char *
 win32getlogin ()
 {
         static char name[256];
@@ -129,7 +125,7 @@ win32getlogin ()
 }
 
 
-/* return something like a username. 
+/* return something like a username.
 */
 char *
 getlogin (void)
@@ -150,8 +146,7 @@ getlogin (void)
 }
 
 
-
-/* return something like a username in a (butchered!) passwd structure. 
+/* return something like a username in a (butchered!) passwd structure.
  */
 struct passwd *
 getpwuid (int uid)
@@ -160,11 +155,11 @@ getpwuid (int uid)
 	__pw.pw_dir   = home_dir;
 	__pw.pw_shell = login_shell;
 	__pw.pw_uid   = 0;
-	
+
 	return &__pw;
 }
 
-/* everyone is root on WIN32 
+/* everyone is root on WIN32
  */
 struct passwd *
 getpwnam (char *name)

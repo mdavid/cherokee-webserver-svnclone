@@ -43,7 +43,7 @@
 #include "exts_table.h"
 #include "dirs_table_entry.h"
 #include "logger.h"
-
+#include "nonce.h"
 
 typedef struct {
 	struct list_head list_entry;
@@ -61,6 +61,7 @@ typedef struct {
 	cherokee_dirs_table_t       *userdir_dirs;   /* Eg: (/public, common)       */
 
 	list_t                       index_list;     /* Eg: index.html, index.php */
+	cherokee_nonce_table_t       nonces;         /* Active nonces */
 
 	struct {                                     /* Number of bytes {up,down}loaded */
 		size_t tx;

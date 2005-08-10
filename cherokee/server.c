@@ -28,8 +28,14 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <pwd.h>
-#include <grp.h>
+
+#ifdef HAVE_PWD_H
+# include <pwd.h>
+#endif
+
+#ifdef HAVE_GRP_H
+# include <grp.h>
+#endif
 
 #ifdef HAVE_SYS_SOCKET_H
 # include <sys/socket.h>
@@ -416,7 +422,7 @@ set_server_socket_opts (int socket)
 
 	/* Set 'close-on-exec'
 	 */
-	fcntl (socket, F_SETFD, FD_CLOEXEC);
+	CLOSE_ON_EXEC(socket);
 		
 	/* To re-bind without wait to TIME_WAIT
 	 */
@@ -437,10 +443,12 @@ set_server_socket_opts (int socket)
 	 * listening socket. This option takes an int value, with a range of 0 to
 	 * 65535.
 	 */
+#ifdef TCP_MAXSEG
 	on = 64000;
 	re = setsockopt (socket, SOL_SOCKET, TCP_MAXSEG, &on, sizeof(on));
 	if (re != 0) return ret_error;
-	
+#endif	
+
 	/* SO_LINGER
 	 * kernels that map pages for IO end up failing if the pipe is full
          * at exit and we take away the final buffer.  this is really a kernel
@@ -614,12 +622,14 @@ print_banner (cherokee_server_t *srv)
 		cherokee_buffer_add_va (n, ", %d fds in each", srv->system_fd_limit / (srv->thread_num));	
 
 		switch (srv->thread_policy) {
+#ifdef HAVE_PTHREAD
 		case SCHED_FIFO:
 			cherokee_buffer_add (n, ", FIFO scheduling policy", 24);
 			break;
 		case SCHED_RR:
 			cherokee_buffer_add (n, ", RR scheduling policy", 22);
 			break;
+#endif
 		default:
 			cherokee_buffer_add (n, ", standard scheduling policy", 28);
 			break;
@@ -669,12 +679,17 @@ initialize_server_socket (cherokee_server_t *srv, unsigned short port, int *srv_
 
 	/* Set no-delay mode
 	 */
+#ifdef _WIN32
+	flags = 1;
+	ret = ioctlsocket (srv_socket, FIONBIO, (u_long)&flags);
+#else
 	flags = fcntl (srv_socket, F_GETFL, 0);
 	return_if_fail (flags != -1, ret_error);
 	
 	ret = fcntl (srv_socket, F_SETFL, flags | O_NDELAY);
 	return_if_fail (ret >= 0, ret_error);
-	
+#endif	
+
 	/* Listen
 	 */
 	ret = listen (srv_socket, srv->listen_queue);
@@ -832,17 +847,13 @@ build_server_string (cherokee_server_t *srv)
 
 	/* Cherokee/x.y
 	 */
-	cherokee_buffer_add (srv->server_string, 
-			     "/"PACKAGE_MAJOR_VERSION"."PACKAGE_MINOR_VERSION,
-			     2 + PACKAGE_MAJOR_VERSION_LEN + PACKAGE_MINOR_VERSION_LEN);
+	cherokee_buffer_add_va (srv->server_string, "/%s.%s", PACKAGE_MAJOR_VERSION, PACKAGE_MINOR_VERSION);
 	if (srv->server_token <= cherokee_version_minor) 
 		return;
 
 	/* Cherokee/x.y.z-betaXX
 	 */
-	cherokee_buffer_add (srv->server_string, 
-			     "."PACKAGE_MICRO_VERSION PACKAGE_PATCH_VERSION,
-			     1 + PACKAGE_MICRO_VERSION_LEN + PACKAGE_PATCH_VERSION_LEN);
+	cherokee_buffer_add_va (srv->server_string, ".%s%s", PACKAGE_MICRO_VERSION PACKAGE_PATCH_VERSION);
 	if (srv->server_token <= cherokee_version_minimal) 
 		return;
 
@@ -1198,6 +1209,7 @@ cherokee_server_read_config_string (cherokee_server_t *srv, char *config_string)
 ret_t 
 cherokee_server_daemonize (cherokee_server_t *srv)
 {
+#ifndef _WIN32
         pid_t child_pid;
 
         switch (child_pid = fork()) {
@@ -1215,6 +1227,7 @@ cherokee_server_daemonize (cherokee_server_t *srv)
 	default:
 		exit(0);
         }
+#endif
 
 	return ret_ok;
 }

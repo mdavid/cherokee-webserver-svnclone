@@ -112,10 +112,10 @@ auth_pam_talker (int                        num_msg,
 		 */
 		switch (msg[i]->msg_style) {
 		case PAM_PROMPT_ECHO_ON:
-			response[i].resp = strdup(conn->user->buf);
+			response[i].resp = strdup(conn->user.buf);
 			break;
 		case PAM_PROMPT_ECHO_OFF:
-			response[i].resp = strdup(conn->passwd->buf);
+			response[i].resp = strdup(conn->passwd.buf);
 			break;
 		default:
 			if (response)
@@ -142,7 +142,7 @@ cherokee_validator_pam_check (cherokee_validator_pam_t  *pam, cherokee_connectio
 
 	/* Start the PAM query
 	 */
-	ret = pam_start (CHEROKEE_AUTH_SERVICE, conn->user->buf, &pamconv, &pamhandle);
+	ret = pam_start (CHEROKEE_AUTH_SERVICE, conn->user.buf, &pamconv, &pamhandle);
 	if (ret != PAM_SUCCESS) {
 		conn->error_code = http_internal_error;
 		return ret_error;
@@ -174,7 +174,7 @@ cherokee_validator_pam_check (cherokee_validator_pam_t  *pam, cherokee_connectio
 		CHEROKEE_NEW(msg, buffer);
 
 		cherokee_buffer_add (msg, "PAM: user '", 11);
-		cherokee_buffer_add_buffer (msg, conn->user);
+		cherokee_buffer_add_buffer (msg, &conn->user);
 		cherokee_buffer_add_va (msg, "' - not authenticated: %s", pam_strerror(pamhandle, ret));
 
 		cherokee_logger_write_string (CONN_VSRV(conn)->logger, "%s", msg->buf);
@@ -190,7 +190,7 @@ cherokee_validator_pam_check (cherokee_validator_pam_t  *pam, cherokee_connectio
 		CHEROKEE_NEW(msg, buffer);
 
 		cherokee_buffer_add (msg, "PAM: user '", 11);
-		cherokee_buffer_add_buffer (msg, conn->user);
+		cherokee_buffer_add_buffer (msg, &conn->user);
 		cherokee_buffer_add_va (msg, "'  - invalid account: %s", pam_strerror(pamhandle, ret));
 
 		cherokee_logger_write_string (CONN_VSRV(conn)->logger, "%s", msg->buf);

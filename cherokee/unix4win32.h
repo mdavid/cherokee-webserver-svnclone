@@ -26,8 +26,8 @@
  * Copyright (C)1999 by James Ewing <jim@ewingdata.com>
  */
 
-#ifndef __CHEROKEE_UNIX_4_WIN32__
-#define __CHEROKEE_UNIX_4_WIN32__
+#ifndef CHEROKEE_UNIX_4_WIN32
+#define CHEROKEE_UNIX_4_WIN32
 
 #include <windows.h>
 #include <stdlib.h>
@@ -35,6 +35,7 @@
 #include <string.h>
 #include <malloc.h>
 #include <winsock2.h>
+#include <ws2tcpip.h>
 #include <process.h>
 #include <io.h>
 #include <direct.h>
@@ -46,20 +47,21 @@
 #include <sys/stat.h>
 #include <time.h>
 
-#include "unix4win32_errno.h"
-
-
-#ifndef OPEN_MAX
-# define OPEN_MAX 32
-#endif
-
+/* Don't need unix4win32_errno.h anymore. Only these errors
+ * are needed.
+ */
+#define EWOULDBLOCK   WSAEWOULDBLOCK
+#define EAFNOSUPPORT  WSAEAFNOSUPPORT
+#define ETIMEDOUT     WSAETIMEDOUT
+#define ECONNRESET    WSAECONNRESET
+#define ECONNREFUSED  WSAECONNREFUSED
 
 /* syslog.h
  */
 #define LOG_NOTICE      EVENTLOG_INFORMATION_TYPE
 #define LOG_NDELAY      EVENTLOG_WARNING_TYPE
 #define LOG_PID         EVENTLOG_WARNING_TYPE
-#define LOG_EMERG       EVENTLOG_ERROR_TYPE    
+#define LOG_EMERG       EVENTLOG_ERROR_TYPE
 #define LOG_ALERT       EVENTLOG_WARNING_TYPE
 #define LOG_CRIT        EVENTLOG_ERROR_TYPE
 #define LOG_ERR         EVENTLOG_ERROR_TYPE
@@ -80,6 +82,7 @@
 #define LOG_LOCAL2      EVENTLOG_INFORMATION_TYPE
 #define LOG_LOCAL3      EVENTLOG_INFORMATION_TYPE
 #define LOG_LOCAL4      EVENTLOG_INFORMATION_TYPE
+#define LOG_CONS        0x1000
 
 void openlog  (const char *ident, int logopt, int facility);
 void syslog   (int priority, const char *message, ...);
@@ -113,7 +116,7 @@ struct passwd *getpwuid (int uid);
 struct passwd *getpwnam (char *name);
 
 
-/* Structure for scatter/gather I/O.  
+/* Structure for scatter/gather I/O.
  */
 struct iovec {
 	void *iov_base;     /* Pointer to data.  */
@@ -121,7 +124,59 @@ struct iovec {
 };
 
 
-typedef unsigned long int in_addr_t;
+typedef unsigned long in_addr_t;
 int  getdtablesize (void);
+int  setenv (const char *name, const char *value, int overwrite);
 
-#endif /* __CHEROKEE_UNIX_4_WIN32__ */
+/* POSIX stuff we don't have
+ */
+#define setuid(x)   (0)
+#define setsid(x)   (0)
+#define setgid(x)   (0)
+#define getuid(x)   (0)
+#define getgid(x)   (0)
+#define getgrgid(x) (0)
+#define chroot(x)   (-1)
+#define initgroups(usr,grp)  (0)
+
+const char *inet_ntop (int af, const void *addr, char *buf, size_t size);
+int         inet_pton (int af, const char *src, void *dst);
+
+
+#if !defined(CHEROKEE_EMBEDDED)
+
+/* <dlfcn.h> emulation
+ */
+#define RTLD_NOW  0
+#define RTLD_LAZY 1
+
+#define dlopen(dll,flg)  win_dlopen (dll, flg)
+#define dlsym(hnd,func)  win_dlsym (hnd, func)
+#define dlclose(hnd)     win_dlclose (hnd)
+#define dlerror()        win_dlerror()
+
+void       *win_dlopen  (const char *dll_name, int flags);
+void       *win_dlsym   (const void *dll_handle, const char *func_name);
+int         win_dlclose (const void *dll_handle);
+const char *win_dlerror (void);
+
+#endif  /* CHEROKEE_EMBEDDED */
+
+
+/* Unix mmap() emulation
+ */
+#define PROT_READ    0x1            /* page can be read */
+#define PROT_WRITE   0x2            /* page can be written */
+#define PROT_EXEC    0x4            /* page can be executed (not supported) */
+#define PROT_NONE    0x0            /* page can not be accessed (not supported) */
+#define MAP_SHARED   0x01           /* share changes (ot supported) */
+#define MAP_PRIVATE  0x02           /* make mapping private (not supportd) */
+#define MAP_FAILED   NULL
+
+#define mmap(xx1,size,prot,xx2,fd,xx3)  win_mmap (fd,size,prot)
+#define munmap(handle,size)             win_munmap ((const void*)(handle), size)
+
+void *win_mmap (int fd, size_t size, int prot);
+int   win_munmap (const void *handle, size_t size);
+
+#endif /* CHEROKEE_UNIX_4_WIN32 */

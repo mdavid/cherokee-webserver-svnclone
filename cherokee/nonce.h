@@ -22,33 +22,29 @@
  * USA
  */
 
-#include "read_config_embedded.h"
+#if !defined (CHEROKEE_INSIDE_CHEROKEE_H) && !defined (CHEROKEE_COMPILATION)
+# error "Only <cherokee/cherokee.h> can be included directly, this file may disappear or change contents."
+#endif
 
-#include "module.h"
-#include "dirs_table.h"
-#include "server-protected.h"
-#include "virtual_server.h"
+#ifndef CHEROKEE_NONCE_TABLE_H
+#define CHEROKEE_NONCE_TABLE_H
 
-ret_t
-cherokee_embedded_read_config (cherokee_server_t *srv)
-{
-	   ret_t                        ret;
-	   cherokee_module_info_t      *info;
-	   cherokee_dirs_table_entry_t *entry;
-	   cherokee_virtual_server_t   *vserver;
+#include <cherokee/common.h>
+#include <cherokee/table.h>
+#include <cherokee/connection.h>
 
-	   vserver = srv->vserver_default;
 
-	   /* Add root directory
-	    */
-	   cherokee_module_loader_load (&srv->loader, "common");
-	   cherokee_module_loader_get_info (&srv->loader, "common", &info);
-	   
-	   cherokee_dirs_table_entry_new (&entry);
-	   cherokee_dirs_table_entry_set_handler (entry, info);
-	   cherokee_dirs_table_add (&vserver->dirs, "/", entry);
-	   cherokee_dirs_table_relink (&vserver->dirs);
+CHEROKEE_BEGIN_DECLS
 
-	   
-	   return ret_ok;
-}
+typedef struct cherokee_table cherokee_nonce_table_t;
+
+ret_t cherokee_nonce_table_init     (cherokee_nonce_table_t *nonces);
+ret_t cherokee_nonce_table_mrproper (cherokee_nonce_table_t *nonces);
+
+ret_t cherokee_nonce_table_check    (cherokee_nonce_table_t *nonces, cherokee_buffer_t *nonce);
+ret_t cherokee_nonce_table_generate (cherokee_nonce_table_t *nonces, cherokee_connection_t *conn, cherokee_buffer_t *nonce);
+
+
+CHEROKEE_END_DECLS
+
+#endif /* CHEROKEE_NONCE_TABLE_H */
