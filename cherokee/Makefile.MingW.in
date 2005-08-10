@@ -37,19 +37,16 @@ CHEROKEE_EMBEDDED = 1
 
 #
 # Change to suite.
-# OpenSSL/pThreads are optional. zlib/Tidy are required.
+# OpenSSL/pThreads are optional. zlib is required.
 #
 PTHREAD_ROOT = ../../../pthreads-2004-11-03
 OPENSSL_ROOT = ../../OpenSSL-0.9.8
 ZLIB_ROOT    = ../../../zlib-1.2.3
-TIDY_ROOT    = ../../../tidy-HTML
-
-TIDY_LIB = $(TIDY_ROOT)/src/libtidy.a
 
 OBJ_DIR = MingW_obj
 
 CC      = gcc
-CFLAGS += -g -O2 -mtune=pentium -Wall -I. -I.. -I$(ZLIB_ROOT) -I$(TIDY_ROOT)/include \
+CFLAGS += -g -O2 -mtune=pentium -Wall -I. -I.. -I$(ZLIB_ROOT) \
           -D_WIN32 -DSO_SUFFIX=\"dll\" -DPCRE_STATIC
 
 #
@@ -57,7 +54,7 @@ CFLAGS += -g -O2 -mtune=pentium -Wall -I. -I.. -I$(ZLIB_ROOT) -I$(TIDY_ROOT)/inc
 #
 CFLAGS += -DCHEROKEE_CONFDIR=\".\" -DCHEROKEE_PLUGINDIR=\".\" -DCHEROKEE_DEPSDIR=\"./data/deps\"
 
-LIBS = $(ZLIB_ROOT)/libz.a $(TIDY_LIB)
+LIBS = $(ZLIB_ROOT)/libz.a
 
 ifeq ($(USE_OPENSSL),1)
   CFLAGS += -I$(OPENSSL_ROOT)/outinc -DOPENSSL_NO_KRB5=1 -DHAVE_OPENSSL -DHAVE_TLS
