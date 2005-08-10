@@ -31,8 +31,11 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/socket.h>
 #include <unistd.h>
+
+#ifdef HAVE_SYS_SOCKET_H
+# include <sys/socket.h>
+#endif
 
 #ifdef HAVE_SYS_TIME_H
 # include <sys/time.h>
@@ -177,6 +180,7 @@ cherokee_sys_fdlimit_get (cuint_t *limit)
 ret_t
 cherokee_sys_fdlimit_set (cuint_t limit)
 {
+#ifndef _WIN32
 	int           re;
 	struct rlimit rl;
 
@@ -187,6 +191,7 @@ cherokee_sys_fdlimit_set (cuint_t limit)
 	if (re != 0) {
 		return ret_error;
 	}
+#endif
 
 	return ret_ok;
 }
@@ -319,7 +324,7 @@ cherokee_readdir (DIR *dirstream, struct dirent *entry, struct dirent **result)
 	CHEROKEE_MUTEX_LOCK (&readdir_mutex);
         
         errno = 0;        
-        ptr = readdir(dirp);
+        ptr = readdir(dirstream);
         
         if (!ptr && errno != 0)
                 ret = errno;

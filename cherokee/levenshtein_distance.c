@@ -12,7 +12,7 @@
 
 
 static int  _prefix_distance(char *A, char *B, int lA, int lB);
-static int  min(int a, int b, int c);
+static int  _min(int a, int b, int c);
 static void score(int *pD, char *A, char *B, int lA, int lB);
 
 #define D(r,c) pD[(r)*lB1+(c)]
@@ -88,12 +88,12 @@ static void score(int *pD, char *A, char *B, int lA, int lB)
 	    int l    = D(r  ,c-1);
 	    int ul   = D(r-1,c-1);
 	    int cost = A[r-1]==B[c-1] ? 0 : 1;
-	    D(r,c)   = min(u+1, l+1, ul+cost);
+	    D(r,c)   = _min(u+1, l+1, ul+cost);
 	}
     }
 }
 
-static int min(int a, int b, int c)
+static int _min (int a, int b, int c)
 {
     int min = a;
     if (min>b) min = b;

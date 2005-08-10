@@ -69,9 +69,15 @@ common_server_initialization (cherokee_server_t *srv)
 {
 	ret_t ret;
 
-	signal (SIGPIPE, SIG_IGN);
-	signal (SIGHUP,  restart_server);
-	signal (SIGSEGV, panic_handler);
+#ifdef SIGPIPE
+        signal (SIGPIPE, SIG_IGN);
+#endif
+#ifdef SIGHUP
+        signal (SIGHUP,  restart_server);
+#endif
+#ifdef SIGSEGV
+        signal (SIGSEGV, panic_handler);
+#endif
 
 	ret = cherokee_server_read_config_file (srv, config_file);
 	if (ret != ret_ok) {
@@ -80,7 +86,7 @@ common_server_initialization (cherokee_server_t *srv)
 	}
 		
 	ret = cherokee_server_init (srv);
-	if (ret != ret_ok) return 3;
+	if (ret != ret_ok) return ret_error;
 
 	if (daemon_mode) {
 		cherokee_server_daemonize (srv);

@@ -589,10 +589,10 @@ cherokee_buffer_add_version (cherokee_buffer_t *buf, int port, cherokee_version_
 
 	switch (ver) {
 	case ver_full_html:
-		cherokee_buffer_ensure_size (buf, buf->len + 29 + PACKAGE_VERSION_LEN + 6 + port_len + 10);
+		cherokee_buffer_ensure_size (buf, buf->len + 29 + sizeof(PACKAGE_VERSION) + 6 + port_len + 10);
 
 		cherokee_buffer_add (buf, "<address>Cherokee web server ", 29);
-		cherokee_buffer_add (buf, PACKAGE_VERSION, PACKAGE_VERSION_LEN);
+		cherokee_buffer_add_str (buf, PACKAGE_VERSION);
 		cherokee_buffer_add (buf, " Port ", 6);
 		cherokee_buffer_add (buf, port_str, port_len);
 		cherokee_buffer_add (buf, "</address>", 10);
@@ -699,8 +699,6 @@ cherokee_buffer_decode_base64 (cherokee_buffer_t *buf)
 }
 
 
-#ifndef CHEROKEE_EMBEDDED
-
 ret_t 
 cherokee_buffer_encode_base64 (cherokee_buffer_t *buf)
 {
@@ -772,7 +770,6 @@ cherokee_buffer_encode_base64 (cherokee_buffer_t *buf)
 	return ret_ok;
 }
 
-#endif 
 
 ret_t 
 cherokee_buffer_escape_html (cherokee_buffer_t *buf, cherokee_buffer_t **maybe_new)

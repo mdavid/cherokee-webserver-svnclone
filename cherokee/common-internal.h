@@ -25,13 +25,15 @@
 #ifndef CHEROKEE_COMMON_INTERNAL_H
 #define CHEROKEE_COMMON_INTERNAL_H
 
-#include <config.h>
-#include "common.h"
-
 #ifdef _WIN32
-# include "config.h.mingw"
+# include <config.h.win32>
 # include "unix4win32.h"
+# include "win32_misc.h"
+#else
+# include <config.h>
 #endif
+
+#include "common.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -49,7 +51,7 @@
 # include <sys/endian.h>
 #elif defined HAVE_SYS_ISA_DEFS_H
 # include <sys/isa_defs.h>
-#else
+#elif !defined(_WIN32)
 # error "Can not include endian.h"
 #endif
 
@@ -99,5 +101,15 @@
 # define CHEROKEE_RWLOCK_UNLOCK(m)
 # define CHEROKEE_RWLOCK_DESTROY(m)
 #endif
+
+
+#ifdef _WIN32
+# define SOCK_ERRNO()      WSAGetLastError()
+# define CLOSE_ON_EXEC(h)  ((void)0)
+#else
+# define SOCK_ERRNO()      errno
+# define CLOSE_ON_EXEC(h)  fcntl (h, F_SETFD, FD_CLOEXEC, 1)
+#endif
+
 
 #endif /* CHEROKEE_COMMON_INTERNAL_H */

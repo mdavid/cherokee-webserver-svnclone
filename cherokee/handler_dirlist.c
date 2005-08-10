@@ -29,9 +29,15 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <dirent.h>
-#include <pwd.h>
-#include <grp.h>
 #include <sys/types.h>
+
+#ifdef HAVE_PWD_H
+#  include <pwd.h>
+#endif
+
+#ifdef HAVE_GRP_H
+#  include <grp.h>
+#endif
 
 #include "list.h"
 #include "list_merge_sort.h"

@@ -22,33 +22,19 @@
  * USA
  */
 
-#include "read_config_embedded.h"
+#ifndef CHEROKEE_WIN32_MISC_H
+#define CHEROKEE_WIN32_MISC_H
 
-#include "module.h"
-#include "dirs_table.h"
-#include "server-protected.h"
-#include "virtual_server.h"
+#include "common-internal.h"
 
-ret_t
-cherokee_embedded_read_config (cherokee_server_t *srv)
-{
-	   ret_t                        ret;
-	   cherokee_module_info_t      *info;
-	   cherokee_dirs_table_entry_t *entry;
-	   cherokee_virtual_server_t   *vserver;
 
-	   vserver = srv->vserver_default;
+#undef  localtime_r       /* in <pthread.h> */
+#define SHUT_WR           SD_SEND
+#define strerror(e)       win_strerror(e)
+#define pipe(h)           _pipe(h,0,0)
 
-	   /* Add root directory
-	    */
-	   cherokee_module_loader_load (&srv->loader, "common");
-	   cherokee_module_loader_get_info (&srv->loader, "common", &info);
-	   
-	   cherokee_dirs_table_entry_new (&entry);
-	   cherokee_dirs_table_entry_set_handler (entry, info);
-	   cherokee_dirs_table_add (&vserver->dirs, "/", entry);
-	   cherokee_dirs_table_relink (&vserver->dirs);
 
-	   
-	   return ret_ok;
-}
+char      *win_strerror (int err);
+struct tm *localtime_r (const time_t *time, struct tm *tm);
+
+#endif /* CHEROKEE_WIN32_MISC_H */

@@ -54,7 +54,7 @@ cherokee_cgi_build_basic_env (cherokee_connection_t       *conn,
 	/* Set the basic variables
 	 */
 	set_env_pair (param, "SERVER_SIGNATURE",  16, "<address>Cherokee web server</address>", 38);
-	set_env_pair (param, "SERVER_SOFTWARE",   15, "Cherokee " PACKAGE_VERSION, 9 + PACKAGE_VERSION_LEN);
+	set_env_pair (param, "SERVER_SOFTWARE",   15, "Cherokee " PACKAGE_VERSION, 9 + sizeof(PACKAGE_VERSION));
 	set_env_pair (param, "GATEWAY_INTERFACE", 17, "CGI/1.1", 7);
 	set_env_pair (param, "PATH",               4, "/bin:/usr/bin:/sbin:/usr/sbin", 29);
 
@@ -141,8 +141,8 @@ cherokee_cgi_build_basic_env (cherokee_connection_t       *conn,
 
 	/* Remote user
 	 */
-	if (!cherokee_buffer_is_empty (conn->user)) {
-		set_env_pair (param, "REMOTE_USER", 11, conn->user->buf, conn->user->len);
+	if (!cherokee_buffer_is_empty (&conn->user)) {
+		set_env_pair (param, "REMOTE_USER", 11, conn->user.buf, conn->user.len);
 	}
 
 	/* Set the host name

@@ -38,10 +38,13 @@
 #include <unistd.h>
 #include <errno.h>
 #include <sys/types.h>
-#include <sys/wait.h>
 #include <ctype.h>
 #include <fcntl.h>
 #include <signal.h>
+
+#ifdef HAVE_SYS_WAIT_H
+# include <sys/wait.h>
+#endif
 
 #include "module.h"
 #include "connection.h"
@@ -125,8 +128,10 @@ static int
 do_reap (void)
 {
 	pid_t pid;
-	int   child_count;
 	int   status;
+	int   child_count = 0;
+
+#ifndef _WIN32
 
 	/* Reap defunct children until there aren't any more. 
 	 */
@@ -143,6 +148,7 @@ do_reap (void)
 			break;
 		}
         }
+#endif
 
 	return child_count;
 }
@@ -163,6 +169,7 @@ cherokee_handler_cgi_free (cherokee_handler_cgi_t *cgi)
 
         /* Maybe kill the CGI
 	 */
+#ifndef _WIN32
 	if (cgi->pid > 0) {
 		pid_t pid;
 
@@ -174,6 +181,7 @@ cherokee_handler_cgi_free (cherokee_handler_cgi_t *cgi)
 			kill (cgi->pid, SIGTERM);
 		}
 	}
+#endif
 
 	/* Free the rest of the handler CGI memory
 	 */
@@ -413,6 +421,7 @@ _send_post_data (cherokee_handler_cgi_t *cgi)
 static ret_t
 _fd_set_properties (int fd, int add_flags, int remove_flags)
 {
+#ifndef _WIN32
 	int flags;
 
 	flags = fcntl (fd, F_GETFL, 0);
@@ -424,6 +433,7 @@ _fd_set_properties (int fd, int add_flags, int remove_flags)
 		PRINT_ERROR ("ERROR: Setting pipe properties fd=%d: %s\n", fd, strerror(errno));
 		return ret_error;
 	}	
+#endif
 
 	return ret_ok;
 }
@@ -497,6 +507,7 @@ cherokee_handler_cgi_init (cherokee_handler_cgi_t *cgi)
 
 	/* .. and fork the process 
 	 */
+#ifndef _WIN32
 	pid = fork();
 	if (pid == 0) 
 	{
@@ -519,12 +530,12 @@ cherokee_handler_cgi_init (cherokee_handler_cgi_t *cgi)
 		dup2 (pipes.cgi[1], STDOUT_FILENO);
 		close (pipes.cgi[1]);
 
-#if 0
+# if 0
 		/* Set unbuffered
 		 */
 		setvbuf (stdin,  NULL, _IONBF, 0);
 		setvbuf (stdout, NULL, _IONBF, 0);
-#endif
+# endif
 
 		/* Enable blocking mode
 		 */
@@ -592,7 +603,10 @@ cherokee_handler_cgi_init (cherokee_handler_cgi_t *cgi)
 		conn->error_code = http_internal_error;
 		return ret_error;
 	}
-
+#else
+	/* Win32: TODO
+	 */
+#endif
 	dbg("CGI: pid %d\n", pid);
 
 	close (pipes.server[0]);
@@ -604,7 +618,9 @@ cherokee_handler_cgi_init (cherokee_handler_cgi_t *cgi)
 
 	/* Set to Input to NON-BLOCKING
 	 */
+#ifndef _WIN32
 	_fd_set_properties (cgi->pipeInput, O_NDELAY|O_NONBLOCK, 0);
+#endif
 
 	/* TODO: Yeah, I know, this is not a perfect solution
 	 */
@@ -615,7 +631,9 @@ cherokee_handler_cgi_init (cherokee_handler_cgi_t *cgi)
 	 */
 	if (conn->post != NULL) {
 		cgi->init_phase = hcgi_phase_sent_post;
+#ifndef _WIN32
 		_fd_set_properties (cgi->pipeOutput, O_NONBLOCK, 0);
+#endif
 
 		ret = _send_post_data (cgi);
 		switch (ret) {

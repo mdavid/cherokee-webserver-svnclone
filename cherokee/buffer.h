@@ -52,6 +52,7 @@ typedef struct {
 
 #define CHEROKEE_BUF_INIT  {NULL, 0, 0}
 
+
 ret_t cherokee_buffer_new                (cherokee_buffer_t **buf);
 ret_t cherokee_buffer_free               (cherokee_buffer_t  *buf);
 ret_t cherokee_buffer_clean              (cherokee_buffer_t  *buf);

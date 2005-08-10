@@ -1,3 +1,50 @@
+2005-08-09  Gisle Vanem  <giva@bgnett.no>
+
+	* cherokee/util.h: #ifdef for Win32 compilation.
+
+	* cherokee/util.c (cherokee_readdir): typo fixed.
+
+	* cherokee/util.c: #ifdef for Win32 compilation.
+
+	* cherokee/url.c (cherokee_url_init): #ifdef for Win32 compilation.
+
+	* cherokee/server.c: #ifdef for Win32 compilation.
+
+	* cherokee/resolv_cache.c: #ifdef for Win32 compilation.
+
+	* cherokee/module_loader.c: Only load dlfcn.h if it is not the
+	embedded version.
+
+	* cherokee/logger_ncsa.c: Added #ifdef for syslog.h.
+	(open_output): ifdef for fcntl().
+
+	* cherokee/levenshtein_distance.c (min): Renamed to _min().
+
+	* cherokee/iocache.c: Added a couple of #ifdefs for header
+	files.
+
+	* cherokee/handler_dirlist.c: Added a couple of #ifdefs for header
+	files.
+
+	* cherokee/handler_cgi.c: Win32 compilation fixes.
+
+	* cherokee/fdpoll-select.c: Added #ifdef for sys/select.h.
+
+	* cherokee/buffer.c (cherokee_buffer_encode_base64): Removed
+	#ifdefs to inhibit embedded version.
+
+2005-08-09  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+	
+	* configure.in (cherokee_*_version_len): removed.
+
+	* cherokee/cgi.c (cherokee_cgi_build_basic_env): It doesn't use
+	PACKAGE_VERSION_LEN from automake any longer.
+
+	* cherokee/server.c (build_server_string): It doesn't use *_LEN
+	variables from automake any longer.
+
+	* cherokee/nonce.c, cherokee/nonce.h: Added new class.
+
 2005-08-08  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cherokee/server.c (cherokee_server_clean): Removed.

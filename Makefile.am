@@ -44,23 +44,27 @@ mods-admin.sample
 CONFS = \
 $(CONFS_PRE:.sample.pre=.sample)
 
+WINDOWS_PORT_FILES = \
+config.h.win32
+
 DISTCLEANFILES = \
 cherokee.pc      \
 $(CONFS)
 
-EXTRA_DIST =        \
-TODO                \
-config.h.mingw      \
-cherokee.spec       \
-cherokee.spec.in    \
-build_solaris.sh.in \
-build_solaris.sh    \
-pam.d_cherokee      \
-cherokee.pc.in      \
-$(m4data_DATA)      \
-$(CONFS_DONE)       \
-$(CONFS_PRE)        \
-$(man_MANS)
+EXTRA_DIST =          \
+TODO                  \
+config.h.mingw        \
+cherokee.spec         \
+cherokee.spec.in      \
+build_solaris.sh.in   \
+build_solaris.sh      \
+pam.d_cherokee        \
+cherokee.pc.in        \
+$(m4data_DATA)        \
+$(CONFS_DONE)         \
+$(CONFS_PRE)          \
+$(man_MANS)           \
+$(WINDOWS_PORT_FILES)
 
 
 install-data-local-config:
