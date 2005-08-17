@@ -149,14 +149,6 @@ int dcc_ncpus (int *ncpus)
   return (ret_ok);
 }
 
-/* server.c */
-ret_t cherokee_server_daemonize (cherokee_server_t *srv)
-{
-  SHOULDNT_HAPPEN;
-  (void) srv;
-  return ret_error;
-}
-
 #if defined(CHEROKEE_EMBEDDED) && 0
 #include "handler_phpcgi.h"
 

@@ -693,7 +693,7 @@ cherokee_write (cherokee_socket_t *socket, const char *buf, int buf_len, size_t 
 		}
 	
 		PRINT_ERROR ("ERROR: write(%d, ..) -> errno=%d '%s'\n", 
-			     SOCKET_FD(socket), errno, strerror(err));
+			     SOCKET_FD(socket), err, strerror(err));
 
 		*written = 0;
 		return ret_error;
@@ -803,7 +803,7 @@ cherokee_read (cherokee_socket_t *socket, char *buf, int buf_size, size_t *done)
 		}
 
 		PRINT_ERROR ("ERROR: read(%d, ..) -> errno=%d '%s'\n", 
-			     SOCKET_FD(socket), errno, strerror(errno));
+			     SOCKET_FD(socket), err, strerror(err));
 		
 		*done = 0;
 		return ret_error;
