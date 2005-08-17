@@ -37,24 +37,21 @@ CHEROKEE_EMBEDDED = 1
 
 #
 # Change to suite.
-# OpenSSL/pThreads are optional. zlib is required.
+# OpenSSL/pThreads are optional. 
 #
 PTHREAD_ROOT = ../../../pthreads-2004-11-03
 OPENSSL_ROOT = ../../OpenSSL-0.9.8
-ZLIB_ROOT    = ../../../zlib-1.2.3
 
 OBJ_DIR = MingW_obj
 
 CC      = gcc
-CFLAGS += -g -O2 -mtune=pentium -Wall -I. -I.. -I$(ZLIB_ROOT) \
+CFLAGS += -g -O2 -mtune=pentium -Wall -I. -I.. \
           -D_WIN32 -DSO_SUFFIX=\"dll\" -DPCRE_STATIC
 
 #
 # Must run cherokee from directory of .conf files!
 #
 CFLAGS += -DCHEROKEE_CONFDIR=\".\" -DCHEROKEE_PLUGINDIR=\".\" -DCHEROKEE_DEPSDIR=\"./data/deps\"
-
-LIBS = $(ZLIB_ROOT)/libz.a
 
 ifeq ($(USE_OPENSSL),1)
   CFLAGS += -I$(OPENSSL_ROOT)/outinc -DOPENSSL_NO_KRB5=1 -DHAVE_OPENSSL -DHAVE_TLS
@@ -85,7 +82,7 @@ DLL_SOURCE = access.c buffer.c buffer_escape.c cgi.c connection.c crc32.c dirs_t
              tdate_parse.c thread.c typed_table.c unix4win32.c util.c validator.c \
              validator_htpasswd.c validator_plain.c virtual_server.c win32_misc.c \
              avl/avl.c pcre/get.c pcre/pcre.c pcre/chartables.c zlib/deflate.c \
-             zlib/deftree.c
+             zlib/deftree.c nonce.c
 
 #
 # Module source (build as DLLs or statics)
@@ -196,7 +193,7 @@ vclean: clean
 	@echo
 
 ../libcherokee_gzip.dll: encoder_gzip.c $(IMPORT_LIB)
-	$(CC) -shared $(CFLAGS) -o $@ $^ $(ZLIB_ROOT)/libz.a
+	$(CC) -shared $(CFLAGS) -o $@ $^ 
 	@echo
 
 ../libcherokee_ncsa.dll libcherokee_ncsa.dll.a: logger_ncsa.c $(IMPORT_LIB)
