@@ -1,3 +1,27 @@
+2005-08-18  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* qa/61-PAM.py (Test.Prepare), qa/61-PAM.py (Test.Prepare): Pam
+	module detection fixed.
+
+	* cherokee/connection-protected.h: netinet/in.h has to be defined
+	before arpa/inet.h
+
+	* cherokee/read_config_scanner.l, cherokee/read_config_scanner.y:
+	Removed some tokens: T_BGCOLOR, T_TEXT, T_LINK, T_VLINK, T_ALINK,
+	T_BACKGROUND, T_HEADER_FILE, T_INTERPRETER, T_URL and T_FILEDIR.
+
+	* configure.in: Added AC_CHECK_HEADERS for pwd.h, sys/select.h and
+	sys/mman.h
+
+	* cherokee/Makefile.am (CLEANFILES): Added clean.h
+
+2005-08-10  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/win32_misc.c (cherokee_server_daemonize): Removed.
+
+	* cherokee/Makefile.MingW.in (vclean): Remove dependency on
+	libtidy.
+
 2005-08-09  Gisle Vanem  <giva@bgnett.no>
 
 	* cherokee/util.h: #ifdef for Win32 compilation.

@@ -35,24 +35,26 @@
 
 #include "common.h"
 
+#ifndef _WIN32
+# if defined HAVE_ENDIAN_H
+#  include <endian.h>
+# elif defined HAVE_MACHINE_ENDIAN_H
+#  include <machine/endian.h>
+# elif defined HAVE_SYS_ENDIAN_H
+#  include <sys/endian.h>
+# elif defined HAVE_SYS_ISA_DEFS_H
+#  include <sys/isa_defs.h>
+# else
+#  error "Can not include endian.h"
+# endif
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #ifdef HAVE_DLFCN_H
 # include <dlfcn.h>
-#endif
-
-#if defined HAVE_ENDIAN_H
-# include <endian.h>
-#elif defined HAVE_MACHINE_ENDIAN_H
-# include <machine/endian.h>
-#elif defined HAVE_SYS_ENDIAN_H
-# include <sys/endian.h>
-#elif defined HAVE_SYS_ISA_DEFS_H
-# include <sys/isa_defs.h>
-#elif !defined(_WIN32)
-# error "Can not include endian.h"
 #endif
 
 #ifdef HAVE_INTTYPES_H

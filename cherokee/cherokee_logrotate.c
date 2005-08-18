@@ -22,13 +22,12 @@
  * USA
  */
 
+#include <cherokee/cherokee.h>
+
 #include <string.h>
 #include <sys/types.h>
 #include <dirent.h>
 #include <errno.h>
-
-#include <cherokee/cherokee.h>
-
 
 #define ERROR       1
 #define WATCH_SLEEP 1000

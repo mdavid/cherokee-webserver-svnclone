@@ -840,7 +840,8 @@ icons_grammar.c \
 icons_scanner.c \
 mime_grammar.h \
 mime_grammar.c \
-mime_scanner.c 
+mime_scanner.c \
+config.h
 
 WINDOWS_PORT_FILES = \
 Makefile.MingW \
