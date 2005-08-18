@@ -19,6 +19,9 @@ class Test (TestBase):
         self.expected_error   = 401
 
     def Prepare (self, www):
+        if not self.Precondition():
+            return
+
         directory = self.Mkdir (www, "privpam2")
         self.conf = """Directory /privpam2 {
                          Handler common

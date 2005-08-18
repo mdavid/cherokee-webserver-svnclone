@@ -75,8 +75,7 @@ nl              [\n\r]
 "User"                  { return T_USER; }
 "Group"                 { return T_GROUP; }
 "Server"                { return T_SERVER; }
-"UserDir"               { return T_USERDIR; }
-"FileDir"               { return T_FILEDIR; }
+"Userdir"               { return T_USERDIR; }
 "PidFile"               { return T_PIDFILE; }
 "Listen"                { return T_LISTEN; }
 "Chroot"                { return T_CHROOT; }
@@ -85,7 +84,6 @@ nl              [\n\r]
 "Encoder"               { return T_ENCODER; }
 "ThreadNumber"          { return T_THREAD_NUM; }
 "DirectoryIndex"        { return T_DIRECTORYINDEX; }
-"HeaderFile"            { return T_HEADER_FILE; }
 "IPv6"                  { return T_IPV6; }
 "Icons"                 { return T_ICONS; }
 "Auth"                  { return T_AUTH; }
@@ -93,16 +91,7 @@ nl              [\n\r]
 "Method"                { return T_METHOD; }
 "PasswdFile"            { return T_PASSWDFILE; }
 "Show"                  { return T_SHOW; }
-"url"                   { return T_URL; }
 "Rewrite"               { return T_REWRITE; }
-"bgcolor"               { return T_BGCOLOR; }
-"text"                  { return T_TEXT; }
-"link"                  { return T_LINK; }
-"vlink"                 { return T_VLINK; }
-"alink"                 { return T_ALINK; }
-"background"            { return T_BACKGROUND; }
-"interpreter"           { return T_INTERPRETER; }
-"ScriptAlias"           { return T_SCRIPT_ALIAS; }
 "Allow"                 { return T_ALLOW; }
 "Deny"                  { return T_DENY; }
 "From"                  { return T_FROM; }

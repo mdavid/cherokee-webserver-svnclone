@@ -278,17 +278,16 @@ yyerror (char* msg)
 
 %token T_QUOTE T_DENY T_THREAD_NUM T_SSL_CERT_KEY_FILE T_SSL_CERT_FILE T_KEEPALIVE_MAX_REQUESTS T_ERROR_HANDLER
 %token T_TIMEOUT T_KEEPALIVE T_DOCUMENT_ROOT T_LOG T_MIME_FILE T_DIRECTORY T_HANDLER T_USER T_GROUP T_POLICY
-%token T_SERVER T_USERDIR T_URL T_PIDFILE T_LISTEN T_FILEDIR T_SERVER_TOKENS T_ENCODER T_ALLOW T_IO_CACHE
-%token T_BGCOLOR T_TEXT T_LINK T_ALINK T_VLINK T_BACKGROUND T_DIRECTORYINDEX T_IPV6 T_SHOW T_CHROOT T_HEADER_FILE
+%token T_SERVER T_USERDIR T_PIDFILE T_LISTEN T_SERVER_TOKENS T_ENCODER T_ALLOW T_IO_CACHE T_DIRECTORYINDEX 
 %token T_ICONS T_AUTH T_NAME T_METHOD T_PASSWDFILE T_SSL_CA_LIST_FILE T_FROM T_SOCKET T_LOG_FLUSH_INTERVAL
 %token T_INCLUDE T_PANIC_ACTION T_JUST_ABOUT T_LISTEN_QUEUE_SIZE T_SENDFILE T_MINSIZE T_MAXSIZE T_MAX_FDS
-%token T_INTERPRETER T_SCRIPT_ALIAS T_ONLY_SECURE T_MAX_CONNECTION_REUSE T_REWRITE T_POLL_METHOD T_EXTENSION
+%token T_SHOW T_CHROOT T_ONLY_SECURE T_MAX_CONNECTION_REUSE T_REWRITE T_POLL_METHOD T_EXTENSION T_IPV6 
 
 %token <number> T_NUMBER T_PORT 
 %token <string> T_QSTRING T_FULLDIR T_ID T_HTTP_URL T_HTTPS_URL T_HOSTNAME T_IP T_DOMAIN_NAME T_ADDRESS_PORT
 
 %type <name_ptr> directory_option handler
-%type <string> host_name http_generic id_or_path ip_or_domain
+%type <string> host_name http_generic id_or_path ip_or_domain handler_option_2nd_str
 %type <list> id_list ip_list domain_list id_path_list
 
 %%
@@ -883,13 +882,13 @@ handler : T_HANDLER T_ID
 	   $$.ptr = current_dirs_table_entry;
 };
 
-http_generic : T_HTTP_URL  { $$ = $1; } 
+http_generic : T_HTTP_URL  { $$ = $1; }
              | T_HTTPS_URL { $$ = $1; };
 
-handler_option : T_URL http_generic
-{
-	   dirs_table_set_prop (current_dirs_table_entry, "url", $2);
-};
+/* handler_option : T_URL http_generic */
+/* { */
+/* 	   dirs_table_set_prop (current_dirs_table_entry, "url", $2); */
+/* }; */
 
 handler_option : T_SHOW T_REWRITE T_QSTRING T_QSTRING
 {
@@ -901,51 +900,93 @@ handler_option : T_REWRITE T_QSTRING T_QSTRING
 	   handler_redir_add_property (current_dirs_table_entry, $2, $3, 0);
 };
 
-handler_option : T_URL T_FULLDIR
-{
-	   dirs_table_set_prop (current_dirs_table_entry, "url", $2);
+/* handler_option : T_URL T_FULLDIR */
+/* { */
+/* 	   dirs_table_set_prop (current_dirs_table_entry, "url", $2); */
+/* }; */
+
+/* handler_option : T_FILEDIR T_FULLDIR */
+/* { */
+/* 	   dirs_table_set_prop (current_dirs_table_entry, "filedir", $2); */
+/* }; */
+
+
+handler_option_2nd_str : T_ID
+                       | T_FULLDIR
+                       | T_ADDRESS_PORT
+                       | T_QSTRING
+                       | T_HTTP_URL
+                       | T_HTTPS_URL
+{ 
+	   $$ = $1; 
 };
 
-handler_option : T_FILEDIR T_FULLDIR
+
+handler_option : T_ID handler_option_2nd_str
 {
-	   dirs_table_set_prop (current_dirs_table_entry, "filedir", $2);
+	   if (!strcasecmp ($1, "bgcolor")) {
+			 dirs_table_set_prop (current_dirs_table_entry, "bgcolor", $2);
+	   } else if (!strcasecmp ($1, "background")) {
+			 dirs_table_set_prop (current_dirs_table_entry, "background", $2);
+	   } else if (!strcasecmp ($1, "text")) {
+			 dirs_table_set_prop (current_dirs_table_entry, "text", $2);
+	   } else if (!strcasecmp ($1, "link")) {
+			 dirs_table_set_prop (current_dirs_table_entry, "link", $2);
+	   } else if (!strcasecmp ($1, "vlink")) {
+			 dirs_table_set_prop (current_dirs_table_entry, "vlink", $2);
+	   } else if (!strcasecmp ($1, "alink")) {
+			 dirs_table_set_prop (current_dirs_table_entry, "alink", $2);
+	   } else if (!strcasecmp ($1, "headerfile")) {
+			 dirs_table_set_prop (current_dirs_table_entry, "headerfile", $2);
+	   } else if (!strcasecmp ($1, "interpreter")) {
+			 dirs_table_set_prop (current_dirs_table_entry, "interpreter", $2);
+	   } else if (!strcasecmp ($1, "scriptalias")) {
+			 dirs_table_set_prop (current_dirs_table_entry, "scriptalias", $2);
+	   } else if (!strcasecmp ($1, "url")) {
+			 dirs_table_set_prop (current_dirs_table_entry, "url", $2);
+	   } else if (!strcasecmp ($1, "filedir")) {
+			 dirs_table_set_prop (current_dirs_table_entry, "filedir", $2);
+	   } else {
+			 return 1;
+	   }
 };
 
-handler_option : T_BGCOLOR T_ID
-{ dirs_table_set_prop (current_dirs_table_entry, "bgcolor", $2); };
 
-handler_option : T_TEXT T_ID
-{ dirs_table_set_prop (current_dirs_table_entry, "text", $2); };
+/* handler_option : T_BGCOLOR T_ID */
+/* { dirs_table_set_prop (current_dirs_table_entry, "bgcolor", $2); }; */
 
-handler_option : T_LINK T_ID
-{ dirs_table_set_prop (current_dirs_table_entry, "link", $2); };
+/* handler_option : T_TEXT T_ID */
+/* { dirs_table_set_prop (current_dirs_table_entry, "text", $2); }; */
 
-handler_option : T_VLINK T_ID
-{ dirs_table_set_prop (current_dirs_table_entry, "vlink", $2); };
+/* handler_option : T_LINK T_ID */
+/* { dirs_table_set_prop (current_dirs_table_entry, "link", $2); }; */
 
-handler_option : T_ALINK T_ID
-{ dirs_table_set_prop (current_dirs_table_entry, "alink", $2); };
+/* handler_option : T_VLINK T_ID */
+/* { dirs_table_set_prop (current_dirs_table_entry, "vlink", $2); }; */
 
-handler_option : T_HEADER_FILE T_ID
-{ dirs_table_set_prop (current_dirs_table_entry, "headerfile", $2); };
+/* handler_option : T_ALINK T_ID */
+/* { dirs_table_set_prop (current_dirs_table_entry, "alink", $2); }; */
+
+/* handler_option : T_HEADER_FILE T_ID */
+/* { dirs_table_set_prop (current_dirs_table_entry, "headerfile", $2); }; */
 
 handler_option : T_SOCKET T_FULLDIR
 { dirs_table_set_prop (current_dirs_table_entry, "socket", $2); };
 
-handler_option : T_INTERPRETER T_FULLDIR
-{ dirs_table_set_prop (current_dirs_table_entry, "interpreter", $2); };
+/* handler_option : T_INTERPRETER T_FULLDIR */
+/* { dirs_table_set_prop (current_dirs_table_entry, "interpreter", $2); }; */
 
 handler_option : T_JUST_ABOUT
 { cherokee_dirs_table_entry_set_prop (current_dirs_table_entry, "about", typed_int, INT_TO_POINTER(1), NULL); };
 
-handler_option : T_SCRIPT_ALIAS T_FULLDIR
-{ dirs_table_set_prop (current_dirs_table_entry, "scriptalias", $2); };
+/* handler_option : T_SCRIPT_ALIAS T_FULLDIR */
+/* { dirs_table_set_prop (current_dirs_table_entry, "scriptalias", $2); }; */
 
 handler_option : T_SERVER T_ADDRESS_PORT
 { dirs_table_set_prop (current_dirs_table_entry, "server", $2); };
 
-handler_option : T_INTERPRETER T_QSTRING
-{ dirs_table_set_prop (current_dirs_table_entry, "interpreter", $2); };
+/* handler_option : T_INTERPRETER T_QSTRING */
+/* { dirs_table_set_prop (current_dirs_table_entry, "interpreter", $2); }; */
 
 handler_option : T_IO_CACHE T_NUMBER
 { cherokee_dirs_table_entry_set_prop (current_dirs_table_entry, "cache", typed_int, INT_TO_POINTER($2), NULL); };

@@ -19,14 +19,17 @@ class Test (TestBase):
         self.expected_error   = 200
 
     def Prepare (self, www):
+        if not self.Precondition():
+            return
+
         directory = self.Mkdir (www, "privpam")
         self.conf = """Directory /privpam {
                          Handler common
-                         Auth Basic {
-                           Name "Test PAM"
-                           Method pam
+                             Auth Basic {
+                             Name "Test PAM"
+                             Method pam
                          }
-                       }"""
+                    }"""
 
     def Precondition (self):
         # It will only work it the server runs like root
