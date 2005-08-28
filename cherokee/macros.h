@@ -226,9 +226,9 @@
 
 
 #ifdef O_NOATIME
-# define CHE_O_READ O_RDONLY | O_NOATIME
+# define CHE_O_READ O_RDONLY | O_BINARY | O_NOATIME
 #else
-# define CHE_O_READ O_RDONLY
+# define CHE_O_READ O_RDONLY | O_BINARY
 #endif
 
 

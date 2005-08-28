@@ -54,6 +54,7 @@
 #include "server-protected.h"
 #include "header.h"
 #include "header-protected.h"
+#include "list_ext.h"
 
 
 cherokee_module_info_t MODULE_INFO(cgi)= {
@@ -106,6 +107,7 @@ cherokee_handler_cgi_new  (cherokee_handler_t **hdl, void *cnt, cherokee_table_t
 	n->script_alias      = NULL;
 	n->extra_param       = NULL;
 	n->init_phase        = hcgi_phase_init;
+	n->system_env        = NULL;
 	
 	n->envp_last = 0;	
 	for (i=0; i<ENV_VAR_NUM; i++)
@@ -115,6 +117,7 @@ cherokee_handler_cgi_new  (cherokee_handler_t **hdl, void *cnt, cherokee_table_t
 	 */
 	if (properties) {
 		cherokee_typed_table_get_str (properties, "scriptalias", &n->script_alias);
+		cherokee_typed_table_get_list (properties, "env", &n->system_env);
 	}
 
 	/* Return the object
@@ -260,6 +263,7 @@ static ret_t
 build_envp (cherokee_connection_t *conn, cherokee_handler_cgi_t* cgi)
 {
 	ret_t              ret;
+	list_t            *i;
 	char              *p;
 	cherokee_buffer_t  tmp = CHEROKEE_BUF_INIT;
 
@@ -285,6 +289,22 @@ build_envp (cherokee_connection_t *conn, cherokee_handler_cgi_t* cgi)
 	 */
 	if (cgi->filename) {
 		set_env_pair (cgi, "SCRIPT_FILENAME", 16, cgi->filename->buf, cgi->filename->len);
+	}
+
+	/* Finally, add user defined variables
+	 */
+	if (cgi->system_env != NULL) {
+		list_for_each (i, cgi->system_env) {
+			char    *name;
+			cuint_t  name_len;
+			char    *value;
+			
+			name     = LIST_ITEM_INFO(i);
+			name_len = strlen(name);
+			value    = name + name_len + 1;
+			
+			cherokee_handler_cgi_add_env_pair (cgi, name, name_len, value, strlen(value));
+		}
 	}
 
 	/* TODO: Fill the others CGI environment variables
@@ -513,9 +533,9 @@ cherokee_handler_cgi_init (cherokee_handler_cgi_t *cgi)
 	{
 		/* Child process
 		 */
-		int   re;
-		char *absolute_path = cgi->filename->buf;
-		char *argv[4]       = { NULL, NULL, NULL };
+		int     re;
+		char   *absolute_path = cgi->filename->buf;
+		char   *argv[4]       = { NULL, NULL, NULL };
 
 		/* Close useless sides
 		 */

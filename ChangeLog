@@ -1,3 +1,21 @@
+2005-08-31  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/read_config_grammar.y, cherokee/read_config_scanner.l,
+	cherokee/handler_cgi.c (cherokee_handler_cgi_new): Added "ENV"
+	configuration entry to allow to define custon environment
+	variables for the CGI.
+
+2005-08-25  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/win32_misc.h: Added fcntl.h header file. (by Gisle
+	Vanem, giva@bgnett.no)
+
+	* cherokee/handler_file.c (open_local_directory): It now use
+	CHE_O_READ (by Gisle Vanem, giva@bgnett.no)
+
+	* cherokee/macros.h (CHE_O_READ): Added O_BINARY to CHE_O_READ (by
+	Gisle Vanem, giva@bgnett.no)
+
 2005-08-18  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* qa/61-PAM.py (Test.Prepare), qa/61-PAM.py (Test.Prepare): Pam

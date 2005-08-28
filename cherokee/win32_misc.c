@@ -125,6 +125,7 @@ char *crypt (const char *buf, const char *salt)
 #endif
 }
 
+#undef localtime_r
 struct tm *localtime_r (const time_t *time, struct tm *tm)
 {
   struct tm *ret;

@@ -281,13 +281,13 @@ yyerror (char* msg)
 %token T_SERVER T_USERDIR T_PIDFILE T_LISTEN T_SERVER_TOKENS T_ENCODER T_ALLOW T_IO_CACHE T_DIRECTORYINDEX 
 %token T_ICONS T_AUTH T_NAME T_METHOD T_PASSWDFILE T_SSL_CA_LIST_FILE T_FROM T_SOCKET T_LOG_FLUSH_INTERVAL
 %token T_INCLUDE T_PANIC_ACTION T_JUST_ABOUT T_LISTEN_QUEUE_SIZE T_SENDFILE T_MINSIZE T_MAXSIZE T_MAX_FDS
-%token T_SHOW T_CHROOT T_ONLY_SECURE T_MAX_CONNECTION_REUSE T_REWRITE T_POLL_METHOD T_EXTENSION T_IPV6 
+%token T_SHOW T_CHROOT T_ONLY_SECURE T_MAX_CONNECTION_REUSE T_REWRITE T_POLL_METHOD T_EXTENSION T_IPV6 T_ENV
 
 %token <number> T_NUMBER T_PORT 
 %token <string> T_QSTRING T_FULLDIR T_ID T_HTTP_URL T_HTTPS_URL T_HOSTNAME T_IP T_DOMAIN_NAME T_ADDRESS_PORT
 
 %type <name_ptr> directory_option handler
-%type <string> host_name http_generic id_or_path ip_or_domain handler_option_2nd_str
+%type <string> host_name http_generic id_or_path ip_or_domain str_type
 %type <list> id_list ip_list domain_list id_path_list
 
 %%
@@ -885,11 +885,6 @@ handler : T_HANDLER T_ID
 http_generic : T_HTTP_URL  { $$ = $1; }
              | T_HTTPS_URL { $$ = $1; };
 
-/* handler_option : T_URL http_generic */
-/* { */
-/* 	   dirs_table_set_prop (current_dirs_table_entry, "url", $2); */
-/* }; */
-
 handler_option : T_SHOW T_REWRITE T_QSTRING T_QSTRING
 {
 	   handler_redir_add_property (current_dirs_table_entry, $3, $4, 1);
@@ -900,29 +895,17 @@ handler_option : T_REWRITE T_QSTRING T_QSTRING
 	   handler_redir_add_property (current_dirs_table_entry, $2, $3, 0);
 };
 
-/* handler_option : T_URL T_FULLDIR */
-/* { */
-/* 	   dirs_table_set_prop (current_dirs_table_entry, "url", $2); */
-/* }; */
-
-/* handler_option : T_FILEDIR T_FULLDIR */
-/* { */
-/* 	   dirs_table_set_prop (current_dirs_table_entry, "filedir", $2); */
-/* }; */
-
-
-handler_option_2nd_str : T_ID
-                       | T_FULLDIR
-                       | T_ADDRESS_PORT
-                       | T_QSTRING
-                       | T_HTTP_URL
-                       | T_HTTPS_URL
+str_type : T_ID
+         | T_FULLDIR
+         | T_ADDRESS_PORT
+         | T_QSTRING
+         | T_HTTP_URL
+         | T_HTTPS_URL
 { 
 	   $$ = $1; 
 };
 
-
-handler_option : T_ID handler_option_2nd_str
+handler_option : T_ID str_type
 {
 	   if (!strcasecmp ($1, "bgcolor")) {
 			 dirs_table_set_prop (current_dirs_table_entry, "bgcolor", $2);
@@ -951,42 +934,50 @@ handler_option : T_ID handler_option_2nd_str
 	   }
 };
 
+handler_option : T_ENV T_ID str_type
+{
+	   cuint_t           new_len;
+	   char             *new_str;
+	   cherokee_table_t *properties;
+	   list_t           *plist       = NULL;
+	   list_t            nlist       = LIST_HEAD_INIT(nlist);
+	   
+	   /* Build the string:
+	    * VAR \0 VAL \0
+	    */
+	   new_len = strlen($2) + strlen($3) + 2;
+	   new_str = malloc (new_len);
+	   if (new_str == NULL) return 1;
+	   
+	   memset (new_str, 0, new_len);
+	   memcpy (new_str, $2, strlen($2));
+	   memcpy (new_str + strlen($2) + 1, $3, strlen($3));
 
-/* handler_option : T_BGCOLOR T_ID */
-/* { dirs_table_set_prop (current_dirs_table_entry, "bgcolor", $2); }; */
+	   /* Add it to the list
+	    */
+	   properties = current_dirs_table_entry->properties;
 
-/* handler_option : T_TEXT T_ID */
-/* { dirs_table_set_prop (current_dirs_table_entry, "text", $2); }; */
+	   if (properties != NULL) {
+			 cherokee_typed_table_get_list (properties, "env", &plist);
+	   }
 
-/* handler_option : T_LINK T_ID */
-/* { dirs_table_set_prop (current_dirs_table_entry, "link", $2); }; */
-
-/* handler_option : T_VLINK T_ID */
-/* { dirs_table_set_prop (current_dirs_table_entry, "vlink", $2); }; */
-
-/* handler_option : T_ALINK T_ID */
-/* { dirs_table_set_prop (current_dirs_table_entry, "alink", $2); }; */
-
-/* handler_option : T_HEADER_FILE T_ID */
-/* { dirs_table_set_prop (current_dirs_table_entry, "headerfile", $2); }; */
+	   if (plist == NULL) {
+			 cherokee_list_add (&nlist, new_str);
+			 cherokee_dirs_table_entry_set_prop (current_dirs_table_entry, "env", typed_list, &nlist, 
+										  (cherokee_typed_free_func_t) cherokee_list_free_item_simple);
+	   } else {
+			 cherokee_list_add_tail (plist, new_str);			 
+	   }
+}
 
 handler_option : T_SOCKET T_FULLDIR
 { dirs_table_set_prop (current_dirs_table_entry, "socket", $2); };
 
-/* handler_option : T_INTERPRETER T_FULLDIR */
-/* { dirs_table_set_prop (current_dirs_table_entry, "interpreter", $2); }; */
-
 handler_option : T_JUST_ABOUT
 { cherokee_dirs_table_entry_set_prop (current_dirs_table_entry, "about", typed_int, INT_TO_POINTER(1), NULL); };
 
-/* handler_option : T_SCRIPT_ALIAS T_FULLDIR */
-/* { dirs_table_set_prop (current_dirs_table_entry, "scriptalias", $2); }; */
-
 handler_option : T_SERVER T_ADDRESS_PORT
 { dirs_table_set_prop (current_dirs_table_entry, "server", $2); };
-
-/* handler_option : T_INTERPRETER T_QSTRING */
-/* { dirs_table_set_prop (current_dirs_table_entry, "interpreter", $2); }; */
 
 handler_option : T_IO_CACHE T_NUMBER
 { cherokee_dirs_table_entry_set_prop (current_dirs_table_entry, "cache", typed_int, INT_TO_POINTER($2), NULL); };

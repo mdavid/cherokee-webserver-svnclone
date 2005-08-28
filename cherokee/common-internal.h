@@ -74,6 +74,10 @@
 # define INLINE inline
 #endif
 
+#ifndef O_BINARY
+# define O_BINARY 0
+#endif
+
 #ifdef HAVE_PTHREAD
 # define CHEROKEE_MUTEX_LOCK(m)       pthread_mutex_lock(m)
 # define CHEROKEE_MUTEX_UNLOCK(m)     pthread_mutex_unlock(m)

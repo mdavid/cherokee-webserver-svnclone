@@ -468,7 +468,7 @@ cherokee_buffer_read_file (cherokee_buffer_t *buf, char *filename)
 	
 	/* Open the file
 	 */
-	f = open (filename, O_RDONLY);
+	f = open (filename, CHE_O_READ);
 	if (f < 0) return ret_error;
 
 	/* Read the content
