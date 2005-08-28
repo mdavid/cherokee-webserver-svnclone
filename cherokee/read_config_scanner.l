@@ -111,6 +111,7 @@ nl              [\n\r]
 "OnlySecure"            { return T_ONLY_SECURE; }
 "MaxConnectionReuse"    { return T_MAX_CONNECTION_REUSE; }
 "IOCache"               { return T_IO_CACHE; }
+"Env"                   { return T_ENV; }
 "On"                    { yylval.number = 1; return T_NUMBER; }
 "Off"                   { yylval.number = 0; return T_NUMBER; }
 

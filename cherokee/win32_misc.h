@@ -25,6 +25,7 @@
 #ifndef CHEROKEE_WIN32_MISC_H
 #define CHEROKEE_WIN32_MISC_H
 
+#include <fcntl.h>
 #include "common-internal.h"
 
 

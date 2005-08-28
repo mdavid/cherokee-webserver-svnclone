@@ -35,6 +35,7 @@
 #include "buffer.h"
 #include "handler.h"
 #include "cgi.h"
+#include "list.h"
 
 #define ENV_VAR_NUM 30
 
@@ -48,12 +49,13 @@ typedef enum {
 typedef struct {
 	cherokee_handler_t handler;
 
-	int   pipeInput;         /* read from the CGI */
-	int   pipeOutput;        /* write to the CGI */
-	int   post_data_sent;    /* amount POSTed to the CGI */
-	pid_t pid;               /* CGI pid */
-	char *script_alias;
-	char *extra_param;
+	int     pipeInput;         /* read from the CGI */
+	int     pipeOutput;        /* write to the CGI */
+	int     post_data_sent;    /* amount POSTed to the CGI */
+	pid_t   pid;               /* CGI pid */
+	char   *script_alias;
+	char   *extra_param;
+	list_t *system_env;
 
 	char *envp[ENV_VAR_NUM]; /* Environ variables for execve() */
 	int   envp_last;
