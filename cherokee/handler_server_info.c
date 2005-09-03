@@ -34,7 +34,7 @@
 #include "connection-protected.h"
 #include "server.h"
 #include "server-protected.h"
-#include "module_loader-protected.h"
+#include "module_loader.h"
 
 cherokee_module_info_t MODULE_INFO(server_info) = {
 	cherokee_handler,                /* type     */
