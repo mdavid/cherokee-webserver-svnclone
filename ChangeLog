@@ -1,5 +1,8 @@
 2005-09-06  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* cherokee/handler_redir.c (cherokee_handler_redir_new): "url"
+	property read fixed.
+
 	* cherokee/handler_server_info.c: Fixed little compilation
 	problem. It was including a deprecated header.
 

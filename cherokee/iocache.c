@@ -209,8 +209,6 @@ iocache_entry_new (cherokee_iocache_entry_t **entry)
 static ret_t
 iocache_entry_free (cherokee_iocache_entry_t *entry)
 {
-	printf ("iocache_entry_free %p\n", entry);
-
 	if (entry->mmaped != NULL) {
 		munmap (entry->mmaped, entry->mmaped_len);
 

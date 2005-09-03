@@ -222,7 +222,7 @@ cherokee_handler_redir_new (cherokee_handler_t **hdl, void *cnt, cherokee_table_
 	if (cherokee_buffer_is_empty (CONN(cnt)->redirect) && properties) {
 		/* Get the URL property, if needed
 		 */
-		n->target_url     = cherokee_table_get_val (properties, "url");
+		cherokee_typed_table_get_str (properties, "url", &n->target_url);
 		n->target_url_len = (n->target_url == NULL ? 0 : strlen(n->target_url));
 	}
 
@@ -285,7 +285,6 @@ cherokee_handler_redir_init (cherokee_handler_redir_t *n)
 	request_endding = conn->request->buf + conn->web_directory->len;
 	
 	cherokee_buffer_ensure_size (conn->redirect, request_end + n->target_url_len +1);
-	
 	cherokee_buffer_add (conn->redirect, n->target_url, n->target_url_len);
 	cherokee_buffer_add (conn->redirect, request_endding, request_end);
 
