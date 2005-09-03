@@ -1,5 +1,9 @@
 2005-09-06  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* build_solaris.sh.in: Rewritten. Now, it builds a package for
+	blastwave instead of a package for Sunfreeware.  Tested on
+	OpenSolaris (Nevada b20).
+
 	* cherokee/handler_redir.c (cherokee_handler_redir_new): "url"
 	property read fixed.
 
