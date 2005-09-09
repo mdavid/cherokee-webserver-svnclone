@@ -401,6 +401,7 @@ cherokee_socket_close (cherokee_socket_t *socket)
 #ifdef HAVE_GNUTLS
 		gnutls_bye (socket->session, GNUTLS_SHUT_WR);
 		gnutls_deinit (socket->session);
+		socket->session = NULL;
 #endif
 
 #ifdef HAVE_OPENSSL
@@ -774,17 +775,17 @@ cherokee_read (cherokee_socket_t *socket, char *buf, int buf_size, size_t *done)
 			return ret_eof;
 		}
 #endif
-		
 		goto out;
 	}
 
-
-		if (unlikely (buf == NULL)) {
-			char tmp[buf_size+1];
-			len = recv (SOCKET_FD(socket), tmp, buf_size, 0);
-		} else {
-			len = recv (SOCKET_FD(socket), buf, buf_size, 0);
-		}
+	/* Plain read
+	 */
+	if (unlikely (buf == NULL)) {
+		char tmp[buf_size+1];
+		len = recv (SOCKET_FD(socket), tmp, buf_size, 0);
+	} else {
+		len = recv (SOCKET_FD(socket), buf, buf_size, 0);
+	}
 
 	if (len < 0) {
 		int err = SOCK_ERRNO();

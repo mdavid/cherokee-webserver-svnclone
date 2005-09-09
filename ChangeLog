@@ -1,3 +1,16 @@
+2005-09-11  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+ 
+        * m4/etr_socket_nsl.m4: Detection implemented for Win32
+
+2005-09-10  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/connection.c (cherokee_connection_pre_lingering_close):
+	Fixed a potential memory corruption bug.  It may try to write an
+	int in to a NULL pointer.
+	
+	* cherokee/socket.c (cherokee_socket_close): Fixed a little which
+	might cause a segment fault if a TLS connection get a CGI timeout.
+
 2005-09-06  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* build_solaris.sh.in: Rewritten. Now, it builds a package for
