@@ -853,8 +853,9 @@ cherokee_connection_send (cherokee_connection_t *cnt)
 ret_t 
 cherokee_connection_pre_lingering_close (cherokee_connection_t *cnt)
 {
-	ret_t ret;
-
+	ret_t  ret;
+	size_t readed;
+	
 	/* At this point, we don't want to follow the TLS protocol
 	 * any longer.
 	 */
@@ -871,7 +872,7 @@ cherokee_connection_pre_lingering_close (cherokee_connection_t *cnt)
 
 	/* Read from the socket to nowhere
 	 */
-	ret = cherokee_socket_read (cnt->socket, NULL, DEFAULT_RECV_SIZE, NULL);
+	ret = cherokee_socket_read (cnt->socket, NULL, DEFAULT_RECV_SIZE, &readed);
 	switch (ret) {
 	case ret_eof:
 	case ret_error:

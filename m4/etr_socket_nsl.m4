@@ -60,6 +60,29 @@ ac_cv_socket_libs, [
                         ac_cv_socket_libs="-lsocket -lnsl", ac_cv_socket_libs=no)
         fi
 
+        if test x"$ac_cv_socket_libs" = "xno"
+        then
+                CFLAGS="$oCFLAGS -lws2_32"
+                AC_TRY_LINK([
+						  #include <windows.h>
+						  #include <stdlib.h>
+						  #include <stdio.h>
+						  #include <string.h>
+						  #include <malloc.h>
+						  #include <winsock2.h>
+						  #include <ws2tcpip.h>
+						  #include <process.h>
+						  #include <io.h>
+						  #include <direct.h>
+                        ],
+                        [
+                                struct in_addr add;
+                                int sd = socket(AF_INET, SOCK_STREAM, 0);
+                                inet_ntoa(add);
+                        ],
+                        ac_cv_socket_libs="-lws2_32", ac_cv_socket_libs=no)
+        fi
+
         CFLAGS=$oCFLAGS
 ])
 

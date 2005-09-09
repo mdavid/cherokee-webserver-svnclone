@@ -380,7 +380,7 @@ process_polling_connections (cherokee_thread_t *thd)
 	list_for_each_safe (i, tmp, (list_t*)&thd->polling_list) {
 		conn = CONN(i);
 
-		/* May the connection was too much time w/o any work
+		/* Has it been too much without any work?
 		 */
 		if (conn->timeout < thd->bogo_now) {
 			purge_closed_polling_connection (thd, conn);
