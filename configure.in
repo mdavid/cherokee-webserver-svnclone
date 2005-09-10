@@ -51,39 +51,78 @@ AC_SUBST(PACKAGE_PATCH_VERSION)
 
 dnl Check for CPU / vendor / OS
 os_string="UNIX"
+so_suffix=so
 AC_MSG_CHECKING([host platform characteristics])
 	case "$host" in
 	*-*-mingw*|*-*-cygwin*)
+		so_suffix=DLL
 	     os_string="Win32"
+          libdl=
           ;;
 	*-*-*netbsd*)
 		thread_ldflags="-pthread"	
+          libdl=
           ;;
 	*-*-*freebsd*|*-*-*openbsd*)
 		thread_ldflags="-pthread"
+          libdl=
           ;;
 	*-*-linux*)
 		thread_ldflags="-lpthread"
+          libdl="-ldl"
           ;;
 	*-*-hpux*)
 		thread_ldflags="-lpthread"
+          libdl="-ldl"
           ;;
 	*-*-solaris*)
 	     AC_DEFINE(SOLARIS, 1, [It is Solaris])	     
 		setenv_is_threadsafe="yes"
+          libdl="-ldl"
           ;;
 	*-*-darwin*)
+		so_suffix=dylib
 		thread_ldflags="-pthread"
+          libdl="-ldl"
           ;;
 	*)
 		AC_MSG_WARN([*** Please add $host to configure.in checks!])
+          libdl="-ldl"
           ;;
 esac
 AC_MSG_RESULT(ok)
 
+dnl
+dnl OS string
+dnl
 AC_ARG_ENABLE(os_string, AC_HELP_STRING([--enable-os-string=STR], [Set a customized OS type string]), [os_string="$enableval"])
 AC_DEFINE_UNQUOTED(OS_TYPE, "${os_string}", [OS type])
-AM_CONDITIONAL(FOR_WINDOWS, test x"$os_string" = "xWin32")
+
+dnl
+dnl Dynamic library loading library
+dnl
+LIBS="$LIBS $libdl"
+AC_DEFINE_UNQUOTED(SO_SUFFIX, "${so_suffix}", [Dynamic loading libraries extension])
+
+dnl
+dnl Platforms
+dnl
+AM_CONDITIONAL(PLATFORM_WIN32, test x"$os_string" = "xWin32")
+
+dnl
+dnl Libtool options
+dnl
+if test "$os_string" != "Win32"; then
+    # libtool option to control which symbols are exported
+    # right now, symbols starting with _ are not exported
+    LIBTOOL_EXPORT_OPTIONS='-export-symbols-regex "^[[^_]].*"'
+else
+    LIBTOOL_EXPORT_OPTIONS=
+fi
+
+AC_SUBST(LIBTOOL_EXPORT_OPTIONS)
+
+
 
 AM_INIT_AUTOMAKE(cherokee, $VERSION)
 AM_MAINTAINER_MODE
@@ -95,6 +134,10 @@ AC_PATH_PROG(cherokeepath, cherokee)
 
 AC_PROG_CC
 AC_PROG_INSTALL
+
+AC_LIBTOOL_DLOPEN
+AC_LIBTOOL_WIN32_DLL
+AM_PROG_LIBTOOL
 
 AC_FUNC_CLOSEDIR_VOID
 AC_FUNC_MALLOC
@@ -453,45 +496,6 @@ AC_TRY_LINK([#include <time.h>],
 [AC_MSG_RESULT(yes)
 AC_DEFINE(HAVE_INT_TIMEZONE,, [Set to 1 if you have the global variable timezone])],
 AC_MSG_RESULT(no))
-
-
-dnl
-dnl Dynamic linker library
-dnl
-AC_ENABLE_SHARED
-AC_LIBTOOL_DLOPEN
-AC_LIBTOOL_WIN32_DLL
-AM_PROG_LIBTOOL
-
-AC_MSG_CHECKING([host platform characteristics])
-case "$host" in
-        *-*-mingw*|*-*-cygwin*)
-			 so_suffix=DLL
-                libdl=
-                ;;
-        *-*-*bsd*)
-			 so_suffix=so
-                libdl=
-                ;;
-        *-*-linux*)
-			 so_suffix=so
-                libdl="-ldl"
-                ;;
-        *-*-solaris*)
-			 so_suffix=so
-                libdl="-ldl"
-                ;;
-	   *-*-darwin*) 
-			 so_suffix=dylib
-                libdl="-ldl"	
-			 ;;
-        *)
-                AC_MSG_WARN([*** Please add $host to configure.in checks!])
-                libdl="-ldl"
-                ;;
-esac
-LIBS="$LIBS $libdl"
-AC_DEFINE_UNQUOTED(SO_SUFFIX, "${so_suffix}", [Dynamic loading libraries extension])
 
 
 dnl

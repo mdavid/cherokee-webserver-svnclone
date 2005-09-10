@@ -74,11 +74,29 @@ if !HAVE_GETOPT_LONG
 internal_getopt_src=$(getopt_src)
 endif
 
-module_ldflags = \
--module -export-dynamic -avoid-version
+#
+# LDFLAGS for libraries
+#
+if PLATFORM_WIN32
+no_undefined = -no-undefined
+endif
+
+common_ldflags = \
+$(LIBTOOL_EXPORT_OPTIONS) \
+$(no_undefined)
 
 #
-# Config
+# LDFLAGS for modules = flags for libraries + more
+#
+module_ldflags = \
+$(common_ldflags) \
+-module \
+-avoid-version \
+-export-dynamic 
+
+
+#
+# Config stuff
 #
 module_read_config = \
 read_config_grammar.y \
@@ -472,12 +490,6 @@ libcherokee-client.la \
 libcherokee-server.la \
 libcherokee-config.la
 
-# Common LDFLAGS for libraries
-common_ldflags = \
--export-symbols-regex "^[^_].*" \
--no-undefined \
--version-info 0:0:0
-
 
 # the macro puts -pthread into cflags, but we want to link
 # with this flag too, so stick it into the ldflags if it's there...
@@ -533,7 +545,7 @@ if COMPILE_SELECT
 poll_select_src = fdpoll-select.c
 endif
 
-if FOR_WINDOWS
+if PLATFORM_WIN32
 win32_src = \
 unix4win32.h \
 unix4win32.c \
