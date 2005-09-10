@@ -1,11 +1,12 @@
 SUBDIRS = develop
 
 update:
-	wget -O - http://0x50.org/doc/cherokee_doc.tar.gz | tar xfvz -
+	wget -O cherokee_doc.tar.gz http://0x50.org/doc/cherokee_doc.tar.gz; \
+	gunzip -dc cherokee_doc.tar.gz | tar xfv - ;\
+	rm -f cherokee_doc.tar.gz
 
 docdir = $(datadir)/doc/cherokee/
 doc_DATA = \
-index.html \
 Behavior_configuration.html \
 CGI_executing.html \
 Cget.html \
@@ -19,10 +20,11 @@ Directory_listing.html \
 Extension_configuration.html \
 FastCGI.html \
 File_sending.html \
+Frequently_asked_questions.html \
 How_to_generate_SSL_keys.html \
+How_to_manage_Virtual_Host.html \
 Icons_configuration.html \
 Logging_system.html \
-Main_Page.html \
 Mime_types_configuration.html \
 NCSA_logger.html \
 PHP_execution.html \
@@ -33,7 +35,10 @@ Validators.html \
 W3C_logger.html \
 WebApplications.html \
 cherokee.png \
-images/Server-conf-small.png 
+images/Server-conf-small.png \
+index.html 
+
+index.html: update
 
 EXTRA_DIST=\
 $(doc_DATA)
