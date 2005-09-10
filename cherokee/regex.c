@@ -57,7 +57,7 @@ ret_t
 cherokee_regex_table_free (cherokee_regex_table_t *table)
 {
 	CHEROKEE_RWLOCK_DESTROY (&table->rwlock);
-	cherokee_table_free2 (table->cache, pcre_free);
+	cherokee_table_free2 (table->cache, free);
 	
 	free (table);
 	return ret_ok;

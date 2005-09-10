@@ -139,9 +139,13 @@ int  setenv (const char *name, const char *value, int overwrite);
 #define chroot(x)   (-1)
 #define initgroups(usr,grp)  (0)
 
+#ifndef INADDR_NONE
+#define INADDR_NONE 0xffffffff
+#endif
+
 const char *inet_ntop (int af, const void *addr, char *buf, size_t size);
 int         inet_pton (int af, const char *src, void *dst);
-
+int         inet_aton (const char *cp, struct in_addr *addr);
 
 #if !defined(CHEROKEE_EMBEDDED)
 

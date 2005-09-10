@@ -42,13 +42,18 @@
 #include <errno.h>	
 #include <string.h>	
 #include <sys/types.h>
-#include <sys/socket.h>	
-#include <sys/un.h>	
 
+#ifdef HAVE_SYS_SOCKET_H
+# include <sys/socket.h>	
+#endif
+
+#ifdef HAVE_SYS_UN_H
+# include <sys/un.h>	
+#endif
 
 typedef union {
 	cherokee_sockaddr_t tcp;
-	struct sockaddr_un  local;
+//	struct sockaddr_un  local;
 } cherokee_fcgi_sockaddr_t;
 
 

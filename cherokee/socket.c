@@ -496,10 +496,11 @@ cherokee_socket_pton (cherokee_socket_t *socket, cherokee_buffer_t *host)
 		r = inet_pton (AF_INET6, host->buf, &SOCKET_SIN_ADDR(socket));
 	} else 
 #endif
-#ifdef HAVE_INET_PTON
+
+#if defined(HAVE_INET_PTON)
 		r = inet_pton (AF_INET, host->buf, &SOCKET_SIN_ADDR(socket));
 #else		
-	        r = inet_aton (host->buf, &SOCKET_SIN_ADDR(socket));
+  	        r = inet_aton (host->buf, &SOCKET_SIN_ADDR(socket));
 #endif
 
 	return (r > 0) ? ret_ok : ret_error;
@@ -547,7 +548,6 @@ cherokee_socket_set_sockaddr (cherokee_socket_t *socket, int fd, cherokee_sockad
 	return ret_ok;
 }
 
-
 ret_t
 cherokee_socket_accept_fd (int server_socket, int *new_fd, cherokee_sockaddr_t *sa)
 {
@@ -575,16 +575,8 @@ cherokee_socket_accept_fd (int server_socket, int *new_fd, cherokee_sockaddr_t *
 	
 	/* Enables nonblocking I/O.
 	 */
-#ifdef _WIN32
-	tmp = ioctlsocket (new_socket, FIONBIO, (u_long)&tmp);
-#else	
-	tmp = ioctl (new_socket, FIONBIO, &tmp);
-#endif
-	if (tmp < 0) {
-		PRINT_ERROR ("ERROR: Setting 'FIONBIO' in socked fd=%d\n", new_socket);
-		return ret_error;
-	}
-
+	cherokee_fd_set_nonblocking (new_socket);
+	
 	*new_fd = new_socket;
 	return ret_ok;
 }
@@ -640,7 +632,7 @@ cherokee_write (cherokee_socket_t *socket, const char *buf, int buf_len, size_t 
 			}
 
 			PRINT_ERROR ("ERROR: GNUTLS: gnutls_record_send(%d, ..) -> err=%d '%s'\n", 
-				     SOCKET_FD(socket), len, gnutls_strerror(len));
+				     SOCKET_FD(socket), (int)len, gnutls_strerror(len));
 
 			*written = 0;
 			return ret_error;
@@ -737,7 +729,7 @@ cherokee_read (cherokee_socket_t *socket, char *buf, int buf_size, size_t *done)
 			}
 			
 			PRINT_ERROR ("ERROR: GNUTLS: gnutls_record_recv(%d, ..) -> err=%d '%s'\n", 
-				     SOCKET_FD(socket), len, gnutls_strerror(len));
+				     SOCKET_FD(socket), (int)len, gnutls_strerror(len));
 
 			*done = 0;
 			return ret_error;

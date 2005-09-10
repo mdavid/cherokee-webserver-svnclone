@@ -30,8 +30,11 @@
 #include <stdarg.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <syslog.h>
 #include <fcntl.h>
+
+#ifdef HAVE_SYSLOG_H
+# include <syslog.h>
+#endif
 
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
@@ -122,8 +125,12 @@ open_output (cherokee_logger_w3c_t *logger)
 		PRINT_ERROR("cherokee_logger_w3c: error opening %s for append\n", logger->filename); 
 		return ret_error;
 	}
-	fcntl (fileno (logger->file), F_SETFD, 1);
 
+	/* Set close-on-exec if possible
+	 */
+#ifdef F_SETFD
+	fcntl (fileno (logger->file), F_SETFD, 1);
+#endif
 	return ret_ok;
 }
 
@@ -189,7 +196,11 @@ cherokee_logger_w3c_flush (cherokee_logger_w3c_t *logger)
 		return (wrote > 0) ? ret_ok : ret_error;
 	}
 
+#ifdef HAVE_SYSLOG
 	syslog (LOG_ERR, "%s", LOGGER_BUFFER(logger)->buf);
+#else
+	fprintf (stderr, "%s", LOGGER_BUFFER(logger)->buf);
+#endif
 
 	CHEROKEE_MUTEX_UNLOCK(&buffer_lock);
 
@@ -245,7 +256,11 @@ cherokee_logger_w3c_write_error  (cherokee_logger_w3c_t *logger, cherokee_connec
 ret_t 
 cherokee_logger_w3c_write_string (cherokee_logger_w3c_t *logger, const char *string)
 {
+#ifdef HAVE_SYSLOG
 	   syslog (LOG_INFO, "%s", string);
+#else
+	   fprintf (stderr, "%s", string);
+#endif
 	   return ret_ok;
 }
 

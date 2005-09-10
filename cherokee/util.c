@@ -614,3 +614,22 @@ cherokee_tls_init (void)
 
 	return ret_ok;
 }
+
+
+ret_t 
+cherokee_fd_set_nonblocking (int fd)
+{
+	int tmp = 1;
+
+#ifdef _WIN32
+	tmp = ioctlsocket (fd, FIONBIO, (u_long)&tmp);
+#else	
+	tmp = ioctl (fd, FIONBIO, &tmp);
+#endif
+	if (tmp < 0) {
+		PRINT_ERROR ("ERROR: Setting 'FIONBIO' in socked fd=%d\n", fd);
+		return ret_error;
+	}
+
+	return ret_ok;
+}

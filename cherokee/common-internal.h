@@ -25,12 +25,11 @@
 #ifndef CHEROKEE_COMMON_INTERNAL_H
 #define CHEROKEE_COMMON_INTERNAL_H
 
+#include <config.h>
+
 #ifdef _WIN32
-# include <config.h.win32>
 # include "unix4win32.h"
 # include "win32_misc.h"
-#else
-# include <config.h>
 #endif
 
 #include "common.h"

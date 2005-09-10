@@ -74,6 +74,9 @@ if !HAVE_GETOPT_LONG
 internal_getopt_src=$(getopt_src)
 endif
 
+module_ldflags = \
+-module -export-dynamic -avoid-version
+
 #
 # Config
 #
@@ -83,7 +86,7 @@ read_config_scanner.l \
 module_read_config.h \
 module_read_config.c
 
-libplugin_read_config_la_LDFLAGS = -module -export-dynamic -avoid-version 
+libplugin_read_config_la_LDFLAGS = $(module_ldflags)
 libplugin_read_config_la_SOURCES = $(module_read_config)
 
 if STATIC_MODULE_READ_CONFIG
@@ -100,7 +103,7 @@ handler_server_info = \
 handler_server_info.c \
 handler_server_info.h
 
-libplugin_server_info_la_LDFLAGS = -module -export-dynamic -avoid-version 
+libplugin_server_info_la_LDFLAGS = $(module_ldflags) 
 libplugin_server_info_la_SOURCES = $(handler_server_info)
 
 if STATIC_HANDLER_SERVER_INFO
@@ -117,7 +120,7 @@ handler_file = \
 handler_file.c \
 handler_file.h
 
-libplugin_file_la_LDFLAGS = -module -export-dynamic -avoid-version  
+libplugin_file_la_LDFLAGS = $(module_ldflags)  
 libplugin_file_la_SOURCES = $(handler_file)
 
 if STATIC_HANDLER_FILE
@@ -134,7 +137,7 @@ handler_dirlist = \
 handler_dirlist.c \
 handler_dirlist.h
 
-libplugin_dirlist_la_LDFLAGS = -module -export-dynamic -avoid-version  
+libplugin_dirlist_la_LDFLAGS = $(module_ldflags)  
 libplugin_dirlist_la_SOURCES = $(handler_dirlist)
 
 if STATIC_HANDLER_DIRLIST
@@ -156,7 +159,7 @@ handler_fastcgi.h \
 fcgi_manager.h \
 fcgi_manager.c 
 
-libplugin_fastcgi_la_LDFLAGS = -module -export-dynamic -avoid-version  
+libplugin_fastcgi_la_LDFLAGS = $(module_ldflags)  
 libplugin_fastcgi_la_SOURCES = $(handler_fastcgi)
 
 if STATIC_HANDLER_FASTCGI
@@ -173,7 +176,7 @@ handler_redir = \
 handler_redir.c \
 handler_redir.h
 
-libplugin_redir_la_LDFLAGS = -module -export-dynamic -avoid-version  
+libplugin_redir_la_LDFLAGS = $(module_ldflags)  
 libplugin_redir_la_SOURCES = $(handler_redir)
 
 if STATIC_HANDLER_REDIR
@@ -190,7 +193,7 @@ handler_error_redir = \
 handler_error_redir.c \
 handler_error_redir.h
 
-libplugin_error_redir_la_LDFLAGS = -module -export-dynamic -avoid-version  
+libplugin_error_redir_la_LDFLAGS = $(module_ldflags)  
 libplugin_error_redir_la_SOURCES = $(handler_error_redir)
 
 if STATIC_HANDLER_ERROR_REDIR
@@ -209,7 +212,7 @@ cgi.c \
 handler_cgi.c \
 handler_cgi.h
 
-libplugin_cgi_la_LDFLAGS = -module -export-dynamic -avoid-version  
+libplugin_cgi_la_LDFLAGS = $(module_ldflags)  
 libplugin_cgi_la_SOURCES = $(handler_cgi)
 
 if STATIC_HANDLER_CGI
@@ -226,7 +229,7 @@ handler_phpcgi = \
 handler_phpcgi.c \
 handler_phpcgi.h
 
-libplugin_phpcgi_la_LDFLAGS = -module -export-dynamic -avoid-version  
+libplugin_phpcgi_la_LDFLAGS = $(module_ldflags)  
 libplugin_phpcgi_la_SOURCES = $(handler_phpcgi)
 
 if STATIC_HANDLER_PHPCGI
@@ -243,7 +246,7 @@ handler_common = \
 handler_common.c \
 handler_common.h
 
-libplugin_common_la_LDFLAGS = -module -export-dynamic -avoid-version 
+libplugin_common_la_LDFLAGS = $(module_ldflags) 
 libplugin_common_la_SOURCES = $(handler_common)
 
 if STATIC_HANDLER_COMMON
@@ -262,7 +265,7 @@ levenshtein_distance.h \
 handler_nn.c \
 handler_nn.h
 
-libplugin_nn_la_LDFLAGS = -module -export-dynamic -avoid-version  
+libplugin_nn_la_LDFLAGS = $(module_ldflags)  
 libplugin_nn_la_SOURCES = $(handler_nn)
 
 if STATIC_HANDLER_NN
@@ -279,7 +282,7 @@ handler_admin = \
 handler_admin.c \
 handler_admin.h
 
-libplugin_admin_la_LDFLAGS = -module -export-dynamic -avoid-version  
+libplugin_admin_la_LDFLAGS = $(module_ldflags)  
 libplugin_admin_la_SOURCES = $(handler_admin)
 libplugin_admin_la_LIBADD  = -lcherokee-config -lcherokee-client
 
@@ -295,7 +298,7 @@ endif
 #
 # Handler GNOME VFS
 #
-libplugin_gnomevfs_la_LDFLAGS = -module -export-dynamic -avoid-version  
+libplugin_gnomevfs_la_LDFLAGS = $(module_ldflags)  
 libplugin_gnomevfs_la_LIBADD  = $(GNOMEVFS_LIBS) 
 libplugin_gnomevfs_la_SOURCES = \
 handler_gnomevfs.c \
@@ -309,7 +312,7 @@ encoder_gzip = \
 encoder_gzip.h \
 encoder_gzip.c
 
-libplugin_gzip_la_LDFLAGS = -module -export-dynamic -avoid-version  
+libplugin_gzip_la_LDFLAGS = $(module_ldflags)  
 libplugin_gzip_la_SOURCES = $(encoder_gzip)
 
 if STATIC_ENCODER_GZIP
@@ -326,7 +329,7 @@ logger_ncsa = \
 logger_ncsa.h \
 logger_ncsa.c
 
-libplugin_ncsa_la_LDFLAGS = -module -export-dynamic -avoid-version  
+libplugin_ncsa_la_LDFLAGS = $(module_ldflags)  
 libplugin_ncsa_la_SOURCES = $(logger_ncsa)
 
 if STATIC_LOGGER_NCSA
@@ -343,7 +346,7 @@ logger_combined = \
 logger_combined.h \
 logger_combined.c
 
-libplugin_combined_la_LDFLAGS = -module -export-dynamic -avoid-version  
+libplugin_combined_la_LDFLAGS = $(module_ldflags)  
 libplugin_combined_la_SOURCES = $(logger_combined)
 
 if STATIC_LOGGER_COMBINED
@@ -360,7 +363,7 @@ logger_w3c = \
 logger_w3c.h \
 logger_w3c.c
 
-libplugin_w3c_la_LDFLAGS = -module -export-dynamic -avoid-version  
+libplugin_w3c_la_LDFLAGS = $(module_ldflags)  
 libplugin_w3c_la_SOURCES = $(logger_w3c)
 
 if STATIC_LOGGER_W3C
@@ -378,7 +381,7 @@ validator_pam = \
 validator_pam.c \
 validator_pam.h
 
-libplugin_pam_la_LDFLAGS = -module -export-dynamic -avoid-version 
+libplugin_pam_la_LDFLAGS = $(module_ldflags) 
 libplugin_pam_la_SOURCES = $(validator_pam)
 libplugin_pam_la_LIBADD  = -lpam
 
@@ -398,7 +401,7 @@ validator_htpasswd = \
 validator_htpasswd.c \
 validator_htpasswd.h
 
-libplugin_htpasswd_la_LDFLAGS = -module -export-dynamic -avoid-version 
+libplugin_htpasswd_la_LDFLAGS = $(module_ldflags) 
 libplugin_htpasswd_la_SOURCES = $(validator_htpasswd)
 libplugin_htpasswd_la_LIBADD  = $(CRYPT_LIBS)
 libplugin_htpasswd_la_CFLAGS  = $(CRYPT_CFLAGS)
@@ -419,7 +422,7 @@ validator_plain = \
 validator_plain.c \
 validator_plain.h
 
-libplugin_plain_la_LDFLAGS = -module -export-dynamic -avoid-version 
+libplugin_plain_la_LDFLAGS = $(module_ldflags) 
 libplugin_plain_la_SOURCES = $(validator_plain)
 
 if STATIC_VALIDATOR_PLAIN
@@ -436,7 +439,7 @@ validator_htdigest = \
 validator_htdigest.c \
 validator_htdigest.h
 
-libplugin_htdigest_la_LDFLAGS = -module -export-dynamic -avoid-version 
+libplugin_htdigest_la_LDFLAGS = $(module_ldflags) 
 libplugin_htdigest_la_SOURCES = $(validator_htdigest)
 
 if STATIC_VALIDATOR_HTDIGEST
@@ -471,7 +474,10 @@ libcherokee-config.la
 
 # Common LDFLAGS for libraries
 common_ldflags = \
--export-symbols-regex "^[^_].*"
+-export-symbols-regex "^[^_].*" \
+-no-undefined \
+-version-info 0:0:0
+
 
 # the macro puts -pthread into cflags, but we want to link
 # with this flag too, so stick it into the ldflags if it's there...
@@ -527,6 +533,13 @@ if COMPILE_SELECT
 poll_select_src = fdpoll-select.c
 endif
 
+if FOR_WINDOWS
+win32_src = \
+unix4win32.h \
+unix4win32.c \
+win32_misc.h \
+win32_misc.c
+endif
 
 libcherokee_base_la_SOURCES = \
 $(avl_src) \
@@ -539,6 +552,7 @@ $(poll_epoll_src) \
 $(poll_kqueue_src) \
 $(poll_port_src) \
 $(poll_select_src) \
+$(win32_src) \
 \
 cherokee.h \
 http.h \
@@ -858,6 +872,7 @@ read_config_embedded.c
 
 EXTRA_DIST = \
 $(pcre_src) \
+$(win32_src) \
 $(getopt_src) \
 $(bin_SCRIPTS) \
 $(cherokeedeps_DATA) \

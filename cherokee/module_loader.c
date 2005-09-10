@@ -29,7 +29,9 @@
 #include <string.h>
 
 #ifndef CHEROKEE_EMBEDDED
-# include <dlfcn.h>
+# ifdef HAVE_DLFCN_H
+#  include <dlfcn.h>
+# endif
 #endif
 
 #include "table.h"

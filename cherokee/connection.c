@@ -1281,7 +1281,7 @@ post_init (cherokee_connection_t *cnt)
 
 	/* Read the number
 	 */
-	r = sscanf (cnt->post->buf, "%d", &cnt->post_len);
+	r = sscanf (cnt->post->buf, "%l", &cnt->post_len);
 	if (r <= 0) {
 		return ret_error;
 	}

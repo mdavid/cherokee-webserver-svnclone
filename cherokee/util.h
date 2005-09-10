@@ -67,6 +67,8 @@ ret_t      cherokee_gethostbyname (const char *hostname, struct in_addr *addr);
 
 /* Misc
  */
+ret_t cherokee_fd_set_nonblocking (int fd);
+
 ret_t cherokee_sys_fdlimit_get (cuint_t *limit);
 ret_t cherokee_sys_fdlimit_set (cuint_t  limit);
 

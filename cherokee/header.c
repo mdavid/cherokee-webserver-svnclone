@@ -313,7 +313,7 @@ parse_request_first_line (cherokee_header_t *hdr, cherokee_buffer_t *buf, char *
 	if ((ptr) && (ptr < end)) {
 		end = ptr;
 		hdr->query_string_off = ++ptr - buf->buf;
-		hdr->query_string_len = (unsigned int) strchr(ptr, ' ') - (unsigned int) ptr;
+		hdr->query_string_len = (unsigned long) strchr(ptr, ' ') - (unsigned long) ptr;
 	} else {
 		hdr->query_string_len = 0;
 	}

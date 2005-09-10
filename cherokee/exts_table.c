@@ -79,7 +79,6 @@ cherokee_exts_table_get (cherokee_exts_table_t *et, cherokee_buffer_t *requested
 ret_t 
 cherokee_exts_table_add  (cherokee_exts_table_t *et, char *ext, cherokee_dirs_table_entry_t *plugin_entry)
 {
-	ret_t              ret;
 	list_t            *i;
 	cherokee_boolean_t found = false;
 
