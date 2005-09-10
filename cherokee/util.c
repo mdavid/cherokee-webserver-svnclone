@@ -41,6 +41,10 @@
 # include <sys/time.h>
 #endif
 
+#ifdef HAVE_SYS_IOCTL_H
+# include <sys/ioctl.h>
+#endif
+
 #if defined (HAVE_SYS_RESOURCE_H)
 # include <sys/resource.h>
 #elif defined (HAVE_RESOURCE_H)
