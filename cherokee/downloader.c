@@ -232,8 +232,7 @@ cherokee_downloader_connect (cherokee_downloader_t *downloader)
 
 	/* Enables nonblocking I/O.
 	 */
-	r = 1;
-	ioctl (SOCKET_FD(sock), FIONBIO, &r);
+	cherokee_fd_set_nonblocking (SOCKET_FD(sock));
 
 	/* Add the socket to the file descriptors poll
 	 */

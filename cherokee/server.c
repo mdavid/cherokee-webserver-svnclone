@@ -1323,7 +1323,12 @@ cherokee_server_handle_panic (cherokee_server_t *srv)
 
 	re = system (cmd->buf);
 	if (re < 0) {
-		PRINT_ERROR ("PANIC: re-panic: '%s', status %d\n", cmd->buf, WEXITSTATUS(re));
+#ifdef WEXITSTATUS		
+		int val = WEXITSTATUS(re);
+#else
+		int val = re;			
+#endif
+		PRINT_ERROR ("PANIC: re-panic: '%s', status %d\n", cmd->buf, val);
 	}
 
 	cherokee_buffer_free (cmd);

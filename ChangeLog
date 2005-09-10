@@ -1,5 +1,13 @@
 2005-09-11  Alvaro Lopez Ortega  <alvaro@alobbs.com>
  
+	* cherokee/regex.c (cherokee_regex_table_free): Call free rather
+	than pcre_free.  It was failing to compile, and it is just a
+	pointer to free.
+
+	* cherokee/unix4win32.c (inet_aton): Added new function
+
+	* cherokee/util.c (cherokee_fd_set_nonblocking): Added new function.
+
         * m4/etr_socket_nsl.m4: Detection implemented for Win32
 
 2005-09-10  Alvaro Lopez Ortega  <alvaro@alobbs.com>

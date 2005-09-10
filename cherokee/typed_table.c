@@ -89,7 +89,7 @@ free_item (item_t *n)
 		}
 		break;
 
-	typed_list:
+	case typed_list:
 		list_for_each_safe (i, tmp, &n->data.list) {
 			list_del (i);
 

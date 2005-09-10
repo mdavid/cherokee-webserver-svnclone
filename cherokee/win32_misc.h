@@ -26,6 +26,7 @@
 #define CHEROKEE_WIN32_MISC_H
 
 #include <fcntl.h>
+#include <winsock2.h>
 #include "common-internal.h"
 
 

@@ -165,7 +165,8 @@ cherokee_buffer_add_va_list (cherokee_buffer_t *buf, char *format, va_list args)
 	
 #if 1
 	if (estimated_length < len)
-		PRINT_ERROR ("  -> '%s' -> '%s', esti=%d real=%d\n", format, buf->buf, estimated_length, len);
+		PRINT_ERROR ("  -> '%s' -> '%s', esti=%d real=%d\n", 
+			     format, buf->buf + buf->len, estimated_length, len);
 #endif
 
 	if (len < 0) return ret_error;
@@ -507,7 +508,7 @@ cherokee_buffer_read_from_fd (cherokee_buffer_t *buf, int fd, size_t size, size_
 		case EIO:        return ret_error;
 		}
 
-		PRINT_ERROR ("ERROR: read(%d, %d,..) -> errno=%d '%s'\n", fd, size, errno, strerror(errno));
+		PRINT_ERROR ("ERROR: read(%d, %lu,..) -> errno=%d '%s'\n", fd, size, errno, strerror(errno));
 		return ret_error;
 	}
 	else if (len == 0) {
