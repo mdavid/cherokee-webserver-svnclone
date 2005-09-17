@@ -542,7 +542,7 @@ cherokee_gethostbyname (const char *hostname, struct in_addr *addr)
         char   tmp[GETHOSTBYNAME_R_BUF_LEN];
         
 
-#ifdef SOLARIS
+# ifdef SOLARIS
         /* Solaris 10:
          * struct hostent *gethostbyname_r
          *        (const char *, struct hostent *, char *, int, int *h_errnop);
@@ -552,7 +552,7 @@ cherokee_gethostbyname (const char *hostname, struct in_addr *addr)
         if (hp == NULL) {
                 return ret_error;
         }       
-#else
+# else
         /* Linux glibc2:
          *  int gethostbyname_r (const char *name,
          *         struct hostent *ret, char *buf, size_t buflen,
@@ -564,7 +564,7 @@ cherokee_gethostbyname (const char *hostname, struct in_addr *addr)
         if (r != 0) {
                 return ret_error;
         }
-#endif  
+# endif  
 
         /* Copy the address
          */

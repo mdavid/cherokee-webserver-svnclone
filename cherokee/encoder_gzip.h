@@ -33,8 +33,13 @@
 
 
 typedef struct {
-	cherokee_encoder_t base;
-	z_stream stream;
+	cherokee_encoder_t  base;
+	z_stream            stream;
+	void               *workspace;
+	cherokee_boolean_t  add_header;
+
+	uLong               crc32;
+	uLong               size;
 } cherokee_encoder_gzip_t;
 
 #define ENC_GZIP(x) ((cherokee_encoder_gzip_t *)(x))
@@ -45,5 +50,6 @@ ret_t cherokee_encoder_gzip_free        (cherokee_encoder_gzip_t  *encoder);
 ret_t cherokee_encoder_gzip_add_headers (cherokee_encoder_gzip_t  *encoder, cherokee_buffer_t *buf);
 ret_t cherokee_encoder_gzip_init        (cherokee_encoder_gzip_t  *encoder);
 ret_t cherokee_encoder_gzip_encode      (cherokee_encoder_gzip_t  *encoder, cherokee_buffer_t *in, cherokee_buffer_t *out);
+ret_t cherokee_encoder_gzip_flush       (cherokee_encoder_gzip_t  *encoder, cherokee_buffer_t *in, cherokee_buffer_t *out);
 
 #endif /* CHEROKEE_ENCODE_GZIP_H */

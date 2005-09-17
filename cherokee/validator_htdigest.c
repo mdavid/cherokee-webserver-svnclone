@@ -123,6 +123,8 @@ validate_basic (cherokee_validator_htdigest_t *htdigest, cherokee_connection_t *
 		ret = read_data_from_line (line, conn->user.buf, &user, &realm, &passwd);
 		if (ret != ret_ok) continue;
 
+		printf ("user: '%s', realm: '%s', passwd: '%s'\n", user, realm, passwd);
+
                 /* This is the right line
 		 */
 		cherokee_buffer_new (&ha1);

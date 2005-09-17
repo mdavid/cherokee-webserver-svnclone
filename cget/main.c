@@ -400,6 +400,9 @@ main (int argc, char **argv)
 		ret = cherokee_downloader_set_fdpoll (downloader, fdpoll);
 		if (ret != ret_ok) return EXIT_ERROR;
 
+		ret = cherokee_downloader_connect (downloader);
+		if (ret != ret_ok) return EXIT_ERROR;
+
 		/* Set the callbacks
 		 */
 		cherokee_downloader_connect_event (downloader, downloader_event_init,        do_download__init,        NULL);

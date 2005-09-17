@@ -22,6 +22,7 @@
  * USA
  */
 
+#include "crc32.h"
 #include "encoder_gzip.h"
 #include "common-internal.h"
 #include "module_loader.h"
@@ -34,27 +35,6 @@
 /* Links:
  * http://leknor.com/code/php/class.gzip_encode.php.txt
  */
-
-/* Flags
- */
-enum {
-	GZ_ASCII_FLAG   = 0x01,
-	GZ_HEAD_CRC     = 0x02,
-	GZ_EXTRA_FIELD  = 0x04,
-	GZ_ORIG_NAME    = 0x08,
-	GZ_COMMENT      = 0x10,
-	GZ_RESERVED     = 0xE0
-};
-
-
-/* Extra flags
- */
-enum {
-	GZ_SLOWEST = 2,
-	GZ_FASTEST = 4
-};
-
-
 /* Some operating systems
  */
 enum {
@@ -72,8 +52,8 @@ static char gzip_header[gzip_header_len] = {0x1F, 0x8B,   /* 16 bits: IDentifica
 					    Z_DEFLATED,   /*  b bits: Compression Method */
 					    0,            /*  8 bits: FLags              */
 					    0, 0, 0, 0,   /* 32 bits: Modification TIME  */
-					    GZ_FASTEST,   /*  8 bits: Extra Flags        */
-					    OS_UNKNOWN};  /*  8 bits: Operating System   */  
+					    0,            /*  8 bits: Extra Flags        */
+					    OS_UNIX};     /*  8 bits: Operating System   */  
 
 /* GZIP
  * ====
@@ -99,6 +79,16 @@ cherokee_encoder_gzip_new (cherokee_encoder_gzip_t **encoder)
 	MODULE(n)->init         = (encoder_func_encode_t) cherokee_encoder_gzip_init;
 	ENCODER(n)->add_headers = (encoder_func_add_headers_t) cherokee_encoder_gzip_add_headers;
 	ENCODER(n)->encode      = (encoder_func_encode_t) cherokee_encoder_gzip_encode;
+	ENCODER(n)->flush       = (encoder_func_flush_t) cherokee_encoder_gzip_flush;
+
+	/* More stuff
+	 */
+	n->size       = 0;
+	n->crc32      = 0;
+	n->add_header = true;
+
+	n->workspace = malloc (zlib_deflate_workspacesize());
+	if (unlikely (n->workspace == NULL)) return ret_nomem;
 
 	/* Return the object
 	 */
@@ -110,6 +100,10 @@ cherokee_encoder_gzip_new (cherokee_encoder_gzip_t **encoder)
 ret_t 
 cherokee_encoder_gzip_free (cherokee_encoder_gzip_t *encoder)
 {
+	if (encoder->workspace != NULL) {
+		free (encoder->workspace);
+	}
+
 	free (encoder);
 	return ret_ok;
 }
@@ -119,7 +113,7 @@ ret_t
 cherokee_encoder_gzip_add_headers (cherokee_encoder_gzip_t *encoder,
 				   cherokee_buffer_t       *buf)
 {
-	cherokee_buffer_add (buf, "Content-Encoding: gzip"CRLF, 24);
+	cherokee_buffer_add_str (buf, "Content-Encoding: gzip"CRLF);
 	return ret_ok;
 }
 
@@ -143,35 +137,36 @@ get_gzip_error_string (int err)
 }
 
 
-static ret_t
-init_gzip_stream (z_stream *stream)
+ret_t 
+cherokee_encoder_gzip_init (cherokee_encoder_gzip_t *encoder)
 {
-	int err;
+	int       err;
+	z_stream *z = &encoder->stream;
 
+	/* Set the workspace
+	 */
+	z->workspace = encoder->workspace;
+	
 	/* Comment from the PHP source code:
 	 * windowBits is passed < 0 to suppress zlib header & trailer 
 	 */
-	err = zlib_deflateInit2 (stream, 
-				 Z_BEST_SPEED, 
+	err = zlib_deflateInit2 (z, 
+				 Z_DEFAULT_COMPRESSION, 
 				 Z_DEFLATED, 
 				 -MAX_WBITS, 
-				 MAX_MEM_LEVEL, 
+				 MAX_MEM_LEVEL,
 				 Z_DEFAULT_STRATEGY);
 
 	if (err != Z_OK) {
-		PRINT_ERROR("Error in deflateInit2() = %s\n", get_gzip_error_string(err));
+		PRINT_ERROR("Error in deflateInit2() = %s\n", 
+			    get_gzip_error_string(err));
+
 		return ret_error;
 	}
 
 	return ret_ok;
 }
 
-
-ret_t 
-cherokee_encoder_gzip_init (cherokee_encoder_gzip_t *encoder)
-{
-	return ret_ok;
-}
 
 
 /* "A gzip file consists of a series of "members" (compressed data
@@ -182,82 +177,125 @@ cherokee_encoder_gzip_init (cherokee_encoder_gzip_t *encoder)
  * The step() method build a "member":
  */
 
-/* Pseudo-code with PHP:
- *
- * $t = "\x1f\x8b\x08\x00\x00\x00\x00\x00" . substr(gzcompress($t,$l),0,-4) . \
- *  pack('V',crc32($t)) . pack('V',strlen($t));
+/* From OpenSSH:
+ * Compresses the contents of input_buffer into output_buffer.  All packets
+ * compressed using this function will form a single compressed data stream;
+ * however, data will be flushed at the end of every call so that each
+ * output_buffer can be decompressed independently (but in the appropriate
+ * order since they together form a single compression stream) by the
+ * receiver.  This appends the compressed data to the output buffer.
  */
-
-ret_t 
-cherokee_encoder_gzip_encode (cherokee_encoder_gzip_t *encoder, 
-			      cherokee_buffer_t       *in, 
-			      cherokee_buffer_t       *out)
+static ret_t
+do_encode (cherokee_encoder_gzip_t *encoder, 
+	   cherokee_buffer_t       *in, 
+	   cherokee_buffer_t       *out,
+	   int                      flush)
 {
-	ret_t ret;
-	int   err;
-	uLong the_crc;
-	uLong the_size;
-	char  footer[8];
-
-	/* Init the GZip stream
-	 */
-	ret = init_gzip_stream (&encoder->stream);
-	if (unlikely(ret < ret_ok)) return ret;
-
-	/* Set the data to be compress
-	 */
-	the_size = 10 + in->len + (in->len * .1) + 22; 
-	ret = cherokee_buffer_ensure_size (out, the_size);
-	if (unlikely(ret < ret_ok)) return ret;
+	int       err;
+	cchar_t   buf[DEFAULT_READ_SIZE];
+	z_stream *z = &encoder->stream;
 	
-	encoder->stream.next_in   = (void *)in->buf;
-	encoder->stream.avail_in  = in->len;
-	encoder->stream.next_out  = (void *)out->buf;
-	encoder->stream.avail_out = out->size;
-
-	/* Compress it
+	/* Update crc32 and size if needed
 	 */
-	err = zlib_deflate (&encoder->stream, Z_FINISH);
-	zlib_deflateEnd (&encoder->stream);
+	if (in->len <= 0) {
+		if (flush != Z_FINISH)
+			return ret_ok;
+
+		z->avail_in = 0;
+		z->next_in  = NULL;
+	} else {
+		z->avail_in = in->len;
+		z->next_in  = (void *)in->buf;
 	
-	if (err != Z_STREAM_END) {
-		PRINT_ERROR("Error in deflate(): err=%s avail=%d\n", 
-			    get_gzip_error_string(err), encoder->stream.avail_in);
-		return ret_error;		
+		encoder->size += in->len;
+		encoder->crc32 = crc32_partial_sz (encoder->crc32, in->buf, in->len);
 	}
-
-	out->len = encoder->stream.total_out;
-
 
 	/* Add the GZip header:
 	 * +---+---+---+---+---+---+---+---+---+---+
          * |ID1|ID2|CM |FLG|     MTIME     |XFL|OS |
          * +---+---+---+---+---+---+---+---+---+---+
 	 */
-        cherokee_buffer_prepend (out, gzip_header, gzip_header_len);
+	if (encoder->add_header) {
+		cherokee_buffer_add (out, gzip_header, gzip_header_len);
+		encoder->add_header = false;
+	}
+
+	/* Compress it
+	 */
+	do {
+		/* Set up fixed-size output buffer. 
+		 */
+		z->next_out  = (Byte *)buf;
+		z->avail_out = sizeof(buf);
+
+		err = zlib_deflate (z, flush);
+
+		switch (err) {
+		case Z_OK:
+			cherokee_buffer_add (out, buf, sizeof(buf) - z->avail_out);
+			break;
+		case Z_STREAM_END:
+			err = zlib_deflateEnd (z);
+			if (err != Z_OK) {
+				PRINT_ERROR("Error in deflateEnd(): err=%s\n", 
+					    get_gzip_error_string(err));
+				return ret_error;
+			}
+
+			cherokee_buffer_add (out, buf, sizeof(buf) - z->avail_out);			
+			break;
+		default:
+			PRINT_ERROR("Error in deflate(): err=%s avail=%d\n", 
+				    get_gzip_error_string(err), 
+				    z->avail_in);
+			
+			zlib_deflateEnd (z);
+			return ret_error;		
+		}
+
+	} while (z->avail_out == 0);
+
+	return ret_ok;
+}
+
+
+
+ret_t 
+cherokee_encoder_gzip_encode (cherokee_encoder_gzip_t *encoder, 
+			      cherokee_buffer_t       *in, 
+			      cherokee_buffer_t       *out)
+{
+	return do_encode (encoder, in, out, Z_PARTIAL_FLUSH);
+}
+
+ret_t 
+cherokee_encoder_gzip_flush (cherokee_encoder_gzip_t *encoder, cherokee_buffer_t *in, cherokee_buffer_t *out)
+{
+	ret_t ret;
+	char  footer[8];
+
+ 	ret = do_encode (encoder, in, out, Z_FINISH); 
+ 	if (unlikely (ret != ret_ok)) { 
+ 		return ret; 
+ 	} 
 
 	/* Add the endding:
 	 * +---+---+---+---+---+---+---+---+
 	 * |     CRC32     |     ISIZE     |
          * +---+---+---+---+---+---+---+---+
 	 */
-	the_crc  = cherokee_buffer_crc32 (in);
-	the_size = in->len;
+	footer[0] = (char)  encoder->crc32        & 0xFF;
+	footer[1] = (char) (encoder->crc32 >> 8)  & 0xFF;
+	footer[2] = (char) (encoder->crc32 >> 16) & 0xFF;
+	footer[3] = (char) (encoder->crc32 >> 24) & 0xFF;
 
-	/* Build the GZip footer
-	 */
-	footer[0] =  the_crc         & 0xFF;
-	footer[1] = (the_crc >> 8)   & 0xFF;
-	footer[2] = (the_crc >> 16)  & 0xFF;
-	footer[3] = (the_crc >> 24)  & 0xFF;
-	footer[4] =  the_size        & 0xFF;
-	footer[5] = (the_size >> 8)  & 0xFF;
-	footer[6] = (the_size >> 16) & 0xFF;
-	footer[7] = (the_size >> 24) & 0xFF;
+	footer[4] = (char)  encoder->size         & 0xFF;
+	footer[5] = (char) (encoder->size >> 8)   & 0xFF;
+	footer[6] = (char) (encoder->size >> 16)  & 0xFF;
+	footer[7] = (char) (encoder->size >> 24)  & 0xFF;
 
 	cherokee_buffer_add (out, footer, 8);
-//	cherokee_buffer_add (out, (char *)&the_crc, 4);
-//	cherokee_buffer_add (out, (char *)&the_size, 4);
 
 #if 0
  	cherokee_buffer_print_debug (out, -1); 
