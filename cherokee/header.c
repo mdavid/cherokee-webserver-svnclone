@@ -462,7 +462,12 @@ cherokee_header_parse (cherokee_header_t *hdr, cherokee_buffer_t *buffer,  chero
 			goto next;
 		}
 
-		if ((hdr->header[header_accept].info_off == 0) && 
+		if ((hdr->header[header_accept_encoding].info_off == 0) && 
+		    (strncasecmp(begin, "Accept-Encoding", 15) == 0))
+		{
+			ret = add_known_header (hdr, header_accept_encoding, (points+2)-buffer->buf, end-points-2);
+		} 
+		else if ((hdr->header[header_accept].info_off == 0) && 
 		    (strncasecmp(begin, "Accept", 6) == 0)) 
 		{
 			ret = add_known_header (hdr, header_accept, (points+2)-buffer->buf, end-points-2);
@@ -476,11 +481,6 @@ cherokee_header_parse (cherokee_header_t *hdr, cherokee_buffer_t *buffer,  chero
 			 (strncasecmp(begin, "Range", 5) == 0))
 		{
 			ret = add_known_header (hdr, header_range, (points+2)-buffer->buf, end-points-2);
-		} 
-		else if ((hdr->header[header_accept_encoding].info_off == 0) && 
-			 (strncasecmp(begin, "Accept-Encoding", 15) == 0))
-		{
-			ret = add_known_header (hdr, header_accept_encoding, (points+2)-buffer->buf, end-points-2);
 		} 
 		else if ((hdr->header[header_connection].info_off == 0) && 
 			 (strncasecmp(begin, "Connection", 10) == 0))

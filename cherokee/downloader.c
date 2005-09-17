@@ -478,7 +478,7 @@ cherokee_downloader_step (cherokee_downloader_t *downloader)
 			ret = cherokee_downloader_connect (downloader);
 			if (ret < ret_ok) return ret;
 		}
-		
+
 		/* Everything is ok, go ahead!
 		 */
 		downloader->phase = downloader_phase_send_headers;

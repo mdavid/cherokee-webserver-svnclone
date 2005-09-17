@@ -476,9 +476,10 @@ build_response_header__authenticate (cherokee_connection_t *cnt, cherokee_buffer
 		cherokee_nonce_table_generate (&CONN_VSRV(cnt)->nonces, cnt, &cnt->nonce);
 		cherokee_buffer_add_va (buffer, "nonce=\"%s\", ", cnt->nonce.buf);
 				
-		/* Qop: auth, auth-int, auth-conf
+		/* Quality of protection: auth, auth-int, auth-conf
+		 * Algorithm: MD5
 		 */
-		cherokee_buffer_add_str (buffer, "qop=\"auth\""CRLF);
+		cherokee_buffer_add_str (buffer, "qop=\"auth\", algorithm=\"MD5\""CRLF);
 	}
 }
 
@@ -891,7 +892,7 @@ cherokee_connection_pre_lingering_close (cherokee_connection_t *cnt)
 ret_t
 cherokee_connection_step (cherokee_connection_t *cnt)
 {
-	ret_t ret = ret_ok;
+	ret_t step_ret = ret_ok;
 
 	return_if_fail (cnt->handler != NULL, ret_error);
 
@@ -903,41 +904,52 @@ cherokee_connection_step (cherokee_connection_t *cnt)
 
 	/* Do a step in the handler
 	 */
-	ret = cherokee_handler_step (cnt->handler, cnt->buffer);
-	switch (ret) {
+	step_ret = cherokee_handler_step (cnt->handler, cnt->buffer);
+	switch (step_ret) {
 	case ret_ok:
+	case ret_eof:
 	case ret_eof_have_data:
 		break;
 
-	case ret_eof:
 	case ret_error:
 	case ret_eagain:
 	case ret_ok_and_sent:
-		return ret;
+		return step_ret;
 
 	default:
-		RET_UNKNOWN(ret);
+		RET_UNKNOWN(step_ret);
 	}
 
 	/* May be encode..
 	 */
 	if (cnt->encoder != NULL) {
-		ret_t ret2;
+		ret_t              ret;
 		cherokee_buffer_t *tmp;
 
 		/* Encode
 		 */
-		ret2 = cherokee_encoder_encode (cnt->encoder, cnt->buffer, cnt->encoder_buffer);
-		if (ret2 < ret_ok) return ret2;
+		switch (step_ret) {
+		case ret_eof:
+		case ret_eof_have_data:
+			ret = cherokee_encoder_flush (cnt->encoder, cnt->buffer, cnt->encoder_buffer);			
+			step_ret = (cnt->encoder_buffer->len == 0)? ret_eof : ret_eof_have_data;
+			break;
+		default:
+			ret = cherokee_encoder_encode (cnt->encoder, cnt->buffer, cnt->encoder_buffer);
+			break;
+		}
+		if (ret < ret_ok) return ret;
 
 		/* Swap buffers	
 		 */
 		tmp = cnt->buffer;
 		cnt->buffer = cnt->encoder_buffer;
 		cnt->encoder_buffer = tmp;
+		
+		cherokee_buffer_clean (cnt->encoder_buffer);
 	}
 	
-	return ret;
+	return step_ret;
 }
 
 
@@ -987,7 +999,7 @@ get_encoding (cherokee_connection_t    *cnt,
 	char *ext;
 	ret_t ret;
 
-	/* ptr = Header at the "Accept-Encoding position 
+	/* ptr = Header at the "Accept-Encoding" position 
 	 */
 	end = strchr (ptr, '\r');
 	if (end == NULL) {
@@ -1256,7 +1268,6 @@ get_range (cherokee_connection_t *cnt, char *ptr, int ptr_len)
 static ret_t
 post_init (cherokee_connection_t *cnt)
 {
-	int   r;
 	ret_t ret;
 
 	if (cnt->post != NULL) {
@@ -1281,8 +1292,10 @@ post_init (cherokee_connection_t *cnt)
 
 	/* Read the number
 	 */
-	r = sscanf (cnt->post->buf, "%l", &cnt->post_len);
-	if (r <= 0) {
+	cnt->post_len = -1;
+	cnt->post_len = atol(cnt->post->buf);
+	if (cnt->post_len < 0) {
+		cnt->post_len = 0;
 		return ret_error;
 	}
 

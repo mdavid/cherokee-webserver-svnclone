@@ -168,9 +168,17 @@ endif
 #
 # Handler fastcgi
 #
+if STATIC_HANDLER_CGI
+if STATIC_HANDLER_FASTCGI
+    common_cgi =
+else
+    common_cgi = cgi.h \
+			  cgi.c
+endif
+endif
+
 handler_fastcgi = \
-cgi.h \
-cgi.c \
+$(common_cgi) \
 fastcgi.h \
 handler_fastcgi.c \
 handler_fastcgi.h \

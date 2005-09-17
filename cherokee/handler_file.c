@@ -384,7 +384,7 @@ cherokee_handler_file_init (cherokee_handler_file_t *n)
 		cherokee_mime_t *m;
 
 		ret = cherokee_mime_get_default (&m);
-		if (ret >= ret_ok) {
+		if (ret == ret_ok) {
 			ret = cherokee_mime_get (m, ext+1, &n->mime);
 		}
 	}

@@ -1,3 +1,32 @@
+2005-09-21  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* qa/66-DirectoryIndex3.py (Test.JustBefore): It was failing
+	executing more than one time in a row. Fixed.
+
+	* cherokee/encoder_gzip.c: Almost rewrotten. 
+
+2005-09-20  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/crc32.c (crc32_partial_sz): Added new.
+	(crc32_sz): It now uses crc32_partial_sz().
+
+2005-09-19  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/encoder.h, cherokee/encoder.c (cherokee_encoder_flush):
+	Added new virtual method.
+
+	* cherokee/encoder_gzip.h, cherokee/encoder_gzip.c
+	(cherokee_encoder_gzip_new, cherokee_encoder_gzip_free): It was a
+	memory problem here. Added workspace.
+
+2005-09-18  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/header.c (cherokee_header_parse): "Accept-Encoding"
+	must be before "Accept". Fixed.
+
+	* cherokee/connection.c (post_init): It uses atol() instead of
+	sscanf().
+
 2005-09-11  Alvaro Lopez Ortega  <alvaro@alobbs.com>
  
 	* cherokee/regex.c (cherokee_regex_table_free): Call free rather

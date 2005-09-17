@@ -159,7 +159,10 @@ class TestBase:
                     if r == -1: return -1
             else:
                 raise Exception("Syntax error")
-                
+
+        r = self.CustomTest()
+        if r == -1: return -1
+	                   
         return 0
 
     def Clean (self):
@@ -176,6 +179,9 @@ class TestBase:
 
     def JustAfter (self, www):
         None
+
+    def CustomTest (self):
+	   return 0
 
     def Run (self, port, ssl):
         self._do_request(port, ssl)

@@ -71,6 +71,7 @@ CONF_BASE = """# Cherokee QA tests
                Directory / { Handler common }
                DirectoryIndex test_index.html, test_index.php, /super_test_index.php
                Extension php { Handler phpcgi }
+               Encoder gzip { allow txt }
             """ % (PORT, www)
 
 if ssl:

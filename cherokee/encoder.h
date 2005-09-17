@@ -43,6 +43,7 @@ typedef ret_t (* encoder_func_free_t)        (void  *encoder);
 typedef ret_t (* encoder_func_add_headers_t) (void  *encoder, cherokee_buffer_t *buf);
 typedef ret_t (* encoder_func_init_t)        (void  *encoder);
 typedef ret_t (* encoder_func_encode_t)      (void  *encoder, cherokee_buffer_t *in, cherokee_buffer_t *out);
+typedef ret_t (* encoder_func_flush_t)       (void  *encoder, cherokee_buffer_t *in, cherokee_buffer_t *out);
 
 typedef struct {
 	cherokee_module_t module;
@@ -51,6 +52,7 @@ typedef struct {
 	 */
 	encoder_func_add_headers_t add_headers;
 	encoder_func_encode_t      encode;
+	encoder_func_flush_t       flush;
 	
 	/* Properties
 	 */
@@ -67,6 +69,7 @@ ret_t cherokee_encoder_free        (cherokee_encoder_t *enc);
 ret_t cherokee_encoder_add_headers (cherokee_encoder_t *enc, cherokee_buffer_t *buf);
 ret_t cherokee_encoder_init        (cherokee_encoder_t *enc, void *conn);
 ret_t cherokee_encoder_encode      (cherokee_encoder_t *enc, cherokee_buffer_t *in, cherokee_buffer_t *out);
+ret_t cherokee_encoder_flush       (cherokee_encoder_t *enc, cherokee_buffer_t *in, cherokee_buffer_t *out);
 
 
 CHEROKEE_END_DECLS

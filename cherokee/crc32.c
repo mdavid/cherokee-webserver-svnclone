@@ -91,11 +91,16 @@ static const unsigned int crc32tab[256] = {
 crc_t
 crc32_sz(char *buf, int size)
 {
-	unsigned int crc = ~0;
+	   return crc32_partial_sz (0, buf, size);
+}
+
+crc_t
+crc32_partial_sz (crc_t crc_in, char *buf, int size)
+{
+	unsigned int crc = ~crc_in;
 	char	   *p;
 	int			len,
 				nr;
-
 	len = 0;
 	nr = size;
 	for (len += nr, p = buf; nr--; ++p)
