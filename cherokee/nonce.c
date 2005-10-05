@@ -27,54 +27,94 @@
 #include "connection-protected.h"
 #include "server-protected.h"
 
+struct cherokee_nonce_table {
+	cherokee_table_t table;
+
+#ifdef HAVE_PTHREAD
+	pthread_mutex_t access;
+#endif
+};
+
 
 ret_t 
-cherokee_nonce_table_init (cherokee_nonce_table_t *nonces)
+cherokee_nonce_table_new (cherokee_nonce_table_t **nonces)
 {
-	   return cherokee_table_init (TABLE(nonces));
+	CHEROKEE_NEW_STRUCT(n, nonce_table);
+
+	cherokee_table_init (TABLE(n));
+	CHEROKEE_MUTEX_INIT (&n->access, NULL);
+
+	*nonces = n;
+	return ret_ok;
 }
 
 
 ret_t 
-cherokee_nonce_table_mrproper (cherokee_nonce_table_t *nonces)
+cherokee_nonce_table_free (cherokee_nonce_table_t *nonces)
 {
-	   return cherokee_table_mrproper2 (TABLE(nonces), free);
+	CHEROKEE_MUTEX_DESTROY (&nonces->access);
+	cherokee_table_free2 (TABLE(nonces), free);
+
+	return ret_ok;
+}
+
+
+ret_t 
+cherokee_nonce_table_remove (cherokee_nonce_table_t *nonces, cherokee_buffer_t *nonce)
+{
+	ret_t  ret;
+	void  *non = NULL;
+
+	CHEROKEE_MUTEX_LOCK (&nonces->access);
+	ret = cherokee_table_get (TABLE(nonces), nonce->buf, &non);
+	if (ret == ret_ok) {
+		cherokee_table_del (TABLE(nonces), nonce->buf, NULL);
+	}
+	CHEROKEE_MUTEX_UNLOCK (&nonces->access);
+
+	if (ret != ret_ok) return ret_not_found;
+	return ret_ok;
 }
 
 
 ret_t 
 cherokee_nonce_table_check (cherokee_nonce_table_t *nonces, cherokee_buffer_t *nonce)
 {
-	   ret_t  ret;
-	   void  *non = NULL;
+	ret_t  ret;
+	void  *non = NULL;
 
-	   ret = cherokee_table_get (TABLE(nonces), nonce->buf, &non);
-	   if (ret != ret_ok) return ret_not_found;
+	CHEROKEE_MUTEX_LOCK (&nonces->access);
+	ret = cherokee_table_get (TABLE(nonces), nonce->buf, &non);
+	CHEROKEE_MUTEX_UNLOCK (&nonces->access);
 
-	   return ret_ok;
+	if (ret != ret_ok) return ret_not_found;
+
+	return ret_ok;
 }
 
 
 ret_t 
 cherokee_nonce_table_generate (cherokee_nonce_table_t *nonces, cherokee_connection_t *conn, cherokee_buffer_t *nonce)
 {
-	   cherokee_buffer_t crc = CHEROKEE_BUF_INIT;
+	cherokee_buffer_t crc = CHEROKEE_BUF_INIT;
 
-	   /* Generate nonce string
-	    */
-	   cherokee_buffer_add (&crc, "%x", POINTER_TO_INT(conn));
-	   cherokee_buffer_crc32 (&crc);
+	/* Generate nonce string
+	 */
+	cherokee_buffer_add_va (&crc, "%x", POINTER_TO_INT(conn));
+	cherokee_buffer_crc32 (&crc);
 
-	   cherokee_buffer_add_va (nonce, "%x%x%s", CONN_SRV(conn)->bogo_now, rand(), crc.buf);
-	   cherokee_buffer_encode_md5_digest (nonce);
+	cherokee_buffer_add_va (nonce, "%x%x%s", CONN_SRV(conn)->bogo_now, rand(), crc.buf);
+	cherokee_buffer_encode_md5_digest (nonce);
 
-	   /* Copy the nonce and add to the table
-	    */
-	   cherokee_table_add (TABLE(nonces), nonce->buf, NULL);
+	/* Copy the nonce and add to the table
+	 */
+	CHEROKEE_MUTEX_LOCK (&nonces->access);
+	cherokee_table_add (TABLE(nonces), nonce->buf, NULL);
+	CHEROKEE_MUTEX_UNLOCK (&nonces->access);
 
-	   /* Clean up
-	    */
-	   cherokee_buffer_mrproper (&crc);
-	   return ret_ok;
+	/* Clean up
+	 */
+	cherokee_buffer_mrproper (&crc);
+	return ret_ok;
 }
 

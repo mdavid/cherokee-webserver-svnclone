@@ -30,6 +30,7 @@
 #include "module.h"
 #include "table.h"
 #include "http.h"
+#include "connection.h"
 
 
 /* Callback function definitions
@@ -52,6 +53,19 @@ typedef struct {
 	/* Properties
 	 */
 	cherokee_http_auth_t support;
+
+	/* Authentication info
+	 */
+	cherokee_buffer_t user;
+	cherokee_buffer_t passwd;
+	cherokee_buffer_t realm;
+	cherokee_buffer_t response;
+	cherokee_buffer_t uri;
+	cherokee_buffer_t qop;
+	cherokee_buffer_t nonce;
+	cherokee_buffer_t cnonce;
+	cherokee_buffer_t algorithm;
+	cherokee_buffer_t nc;
 	
 } cherokee_validator_t;
 
@@ -61,8 +75,13 @@ typedef struct {
 ret_t cherokee_validator_init_base (cherokee_validator_t *validator);
 ret_t cherokee_validator_free_base (cherokee_validator_t *validator);   
 
-ret_t cherokee_validator_free        (cherokee_validator_t *validator);
-ret_t cherokee_validator_check       (cherokee_validator_t *validator, void *conn);
-ret_t cherokee_validator_add_headers (cherokee_validator_t *validator, void *conn, cherokee_buffer_t *buf);
+ret_t cherokee_validator_free         (cherokee_validator_t *validator);
+ret_t cherokee_validator_check        (cherokee_validator_t *validator, void *conn);
+ret_t cherokee_validator_add_headers  (cherokee_validator_t *validator, void *conn, cherokee_buffer_t *buf);
+
+ret_t cherokee_validator_parse_basic  (cherokee_validator_t *validator, char *str, cuint_t str_len);
+ret_t cherokee_validator_parse_digest (cherokee_validator_t *validator, char *str, cuint_t str_len);
+
+ret_t cherokee_validator_digest_response (cherokee_validator_t *validator, char *passwd, cherokee_buffer_t *buf, cherokee_connection_t *conn);
 
 #endif /* CHEROKEE_VALIDATOR_H */

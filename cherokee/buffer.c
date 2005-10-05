@@ -1094,3 +1094,38 @@ cherokee_buffer_add_comma_marks (cherokee_buffer_t  *buf)
 	buf->buf[buf->len] = '\0';
 	return ret_ok;
 }
+
+
+ret_t 
+cherokee_buffer_cmp (cherokee_buffer_t *buf, char *txt, cuint_t txt_len)
+{
+	if (buf->len != txt_len)
+		return ret_deny;
+
+	return (strcmp (buf->buf, txt) == 0) ? ret_ok : ret_deny;
+}
+
+
+ret_t
+cherokee_buffer_cmp_buf (cherokee_buffer_t *buf, cherokee_buffer_t *buf2)
+{
+	return cherokee_buffer_cmp (buf, buf2->buf, buf2->len);
+}
+
+
+ret_t 
+cherokee_buffer_case_cmp (cherokee_buffer_t *buf, char *txt, cuint_t txt_len)
+{
+	if (buf->len != txt_len)
+		return ret_deny;
+
+	return (strcasecmp (buf->buf, txt) == 0) ? ret_ok : ret_deny;
+}
+
+
+ret_t
+cherokee_buffer_case_cmp_buf (cherokee_buffer_t *buf, cherokee_buffer_t *buf2)
+{
+	return cherokee_buffer_case_cmp (buf, buf2->buf, buf2->len);
+}
+

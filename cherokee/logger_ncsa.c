@@ -246,8 +246,8 @@ build_log_string (cherokee_logger_ncsa_t *logger, cherokee_connection_t *cnt, ch
 
 	/* Look for the user
 	 */
-	if (!cherokee_buffer_is_empty (&cnt->user)) {
-		username = cnt->user.buf;
+	if (cnt->validator && !cherokee_buffer_is_empty (&cnt->validator->user)) {
+		username = cnt->validator->user.buf;
 	} else {
 		username = "-";
 	}

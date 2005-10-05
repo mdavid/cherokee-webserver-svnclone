@@ -53,7 +53,20 @@
 #include "connection.h"
 #include "connection-protected.h"
 
-#define DEFAULT_PHP_EXECUTABLE "/usr/lib/cgi-bin/php4"
+
+static char *php_paths[] = {
+	"/usr/lib/cgi-bin/",
+	"/usr/local/bin/",
+	NULL
+};
+
+static char *php_names[] = {
+	"php", 
+	"php5", 
+	"php4", 
+	"php3",
+	NULL
+};
 
 
 cherokee_module_info_t MODULE_INFO(phpcgi) = {
@@ -63,6 +76,56 @@ cherokee_module_info_t MODULE_INFO(phpcgi) = {
 
 
 static ret_t check_interpreter (char *path);
+
+
+static ret_t
+search_php_executable (char **ret_path)
+{
+	cuint_t            npath;
+	cuint_t            nname;
+	cherokee_buffer_t  tmppath = CHEROKEE_BUF_INIT;
+
+	for (npath = 0; php_paths[npath]; npath++) {
+		for (nname = 0; php_names[nname]; nname++) {
+			int re;
+
+			cherokee_buffer_add_va (&tmppath, "%s%s", php_paths[npath], php_names[nname]);
+			re = access (tmppath.buf, R_OK | X_OK);
+			
+			if (re == 0) {
+				*ret_path = strdup (tmppath.buf);
+				goto out;
+			}
+
+			cherokee_buffer_clean (&tmppath);
+		}
+	}
+
+out:
+	cherokee_buffer_mrproper (&tmppath);
+	return ret_ok;
+}
+
+
+static ret_t
+check_interpreter (char *path)
+{
+	int re;
+	
+	/* Sanity check
+	 */
+	if (path == NULL)
+		return ret_not_found;
+
+	/* Check for the PHP executable 
+	 */
+	re = access (path, R_OK | X_OK);
+	if (re != 0) {
+		return ret_not_found;
+	}
+
+	return ret_ok;
+}
 
 
 ret_t 
@@ -87,7 +150,7 @@ cherokee_handler_phpcgi_new  (cherokee_handler_t **hdl, void *cnt, cherokee_tabl
 	}
 
 	if (interpreter == NULL) 
-		interpreter = DEFAULT_PHP_EXECUTABLE;
+		search_php_executable (&interpreter);
 
 	/* Check the interpreter
 	 */
@@ -108,23 +171,6 @@ cherokee_handler_phpcgi_new  (cherokee_handler_t **hdl, void *cnt, cherokee_tabl
 	 */
 	if (!cherokee_buffer_is_empty(CONN(cnt)->effective_directory)) {
 		cherokee_handler_cgi_add_parameter (CGIHANDLER(*hdl), "-C");
-	}
-
-	return ret_ok;
-}
-
-
-static ret_t
-check_interpreter (char *path)
-{
-	int re;
-	struct stat buf;
-	
-	/* Check for the PHP executable 
-	 */
-	re = stat (path, &buf);
-	if ((re != 0) || (!S_ISREG(buf.st_mode))) {
-		return ret_not_found;
 	}
 
 	return ret_ok;

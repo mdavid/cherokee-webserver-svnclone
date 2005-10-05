@@ -86,8 +86,16 @@ run-tests.py \
 81-DocumentRoot-Common-index.py \
 82-Auth-header.py \
 83-RedirParam.py \
-84-RedirParamShow.py
-
+84-RedirParamShow.py \
+85-AuthUsers.py \
+86-AuthUsers2.py \
+87-Location.py \
+88-CGI-envs.py \
+89-gzip-encoding.py \
+90-Digest.py \
+91-Digest2.py \
+92-Digest3.py \
+93-InvalidLinks.py
 
 test:
 	./run-tests.py

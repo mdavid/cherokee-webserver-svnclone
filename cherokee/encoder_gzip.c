@@ -69,6 +69,7 @@ cherokee_module_info_t MODULE_INFO(gzip) = {
 ret_t 
 cherokee_encoder_gzip_new (cherokee_encoder_gzip_t **encoder)
 {
+	cuint_t workspacesize;
 	CHEROKEE_NEW_STRUCT (n, encoder_gzip);
 
 	/* Init 	
@@ -87,8 +88,12 @@ cherokee_encoder_gzip_new (cherokee_encoder_gzip_t **encoder)
 	n->crc32      = 0;
 	n->add_header = true;
 
-	n->workspace = malloc (zlib_deflate_workspacesize());
+	workspacesize = zlib_deflate_workspacesize();
+	n->workspace = malloc (workspacesize);
 	if (unlikely (n->workspace == NULL)) return ret_nomem;
+
+	memset (n->workspace, 0, workspacesize);
+	memset (&n->stream, 0, sizeof(z_stream));
 
 	/* Return the object
 	 */

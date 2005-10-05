@@ -78,9 +78,6 @@ cherokee_virtual_server_new (cherokee_virtual_server_t **vserver)
 	ret = cherokee_dirs_table_init (&vsrv->dirs);
 	if (unlikely(ret < ret_ok)) return ret;
 
-	ret = cherokee_nonce_table_init (&vsrv->nonces);
-	if (unlikely(ret < ret_ok)) return ret;	
-
         /* User dir
          */
 	ret = cherokee_buffer_new (&vsrv->userdir);
@@ -167,10 +164,6 @@ cherokee_virtual_server_free (cherokee_virtual_server_t *vserver)
 	/* Index list
 	 */
 	cherokee_list_free (&vserver->index_list, free);
-
-	/* Nonces
-	 */
-	cherokee_nonce_table_mrproper (&vserver->nonces);
 
 	free (vserver);	
 	return ret_ok;

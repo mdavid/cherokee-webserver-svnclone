@@ -53,6 +53,8 @@
 #include "icons.h"
 #include "iocache.h"
 #include "regex.h"
+#include "nonce.h"
+
 
 struct cherokee_server {
 	/* Current time
@@ -94,6 +96,7 @@ struct cherokee_server {
 	 */
 	cherokee_icons_t          *icons;
 	cherokee_regex_table_t    *regexs;
+	cherokee_nonce_table_t    *nonces;
 	cherokee_iocache_t        *iocache;
 	time_t                     iocache_clean_next;
 
