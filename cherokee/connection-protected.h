@@ -143,9 +143,7 @@ struct cherokee_connection {
 
 	/* Authentication
 	 */
-	cherokee_buffer_t             user;                /* alo    */
-	cherokee_buffer_t             passwd;              /* secret */
-	cherokee_buffer_t             nonce;               /* "nonce" for Digest */
+	cherokee_validator_t         *validator;           /* Validator object */
 	cherokee_buffer_t            *realm_ref;           /* "My private data" */
 
 	cherokee_http_auth_t          auth_type;           /* Auth type of the resource */

@@ -84,6 +84,7 @@
 #include "regex.h"
 #include "fcgi_manager.h"
 #include "connection-protected.h"
+#include "nonce.h"
 
 
 ret_t
@@ -200,6 +201,11 @@ cherokee_server_new  (cherokee_server_t **srv)
 	 */
 	cherokee_regex_table_new (&n->regexs);
 	return_if_fail (n->regexs != NULL, ret_nomem);	
+
+	/* Active nonces
+	 */
+	ret = cherokee_nonce_table_new (&n->nonces);
+	if (unlikely(ret < ret_ok)) return ret;	
 #endif
 
 	/* Module loader
@@ -291,6 +297,11 @@ cherokee_server_free (cherokee_server_t *srv)
 	CHEROKEE_MUTEX_DESTROY (&srv->accept_mutex);
 
 #ifndef CHEROKEE_EMBEDDED
+	/* Nonces
+	 */
+	cherokee_nonce_table_free (srv->nonces);
+	srv->nonces = NULL;
+
 	/* Icons 
 	 */
 	cherokee_icons_free (srv->icons);
@@ -853,7 +864,7 @@ build_server_string (cherokee_server_t *srv)
 
 	/* Cherokee/x.y.z-betaXX
 	 */
-	cherokee_buffer_add_va (srv->server_string, ".%s%s", PACKAGE_MICRO_VERSION PACKAGE_PATCH_VERSION);
+	cherokee_buffer_add_va (srv->server_string, ".%s", PACKAGE_MICRO_VERSION PACKAGE_PATCH_VERSION);
 	if (srv->server_token <= cherokee_version_minimal) 
 		return;
 

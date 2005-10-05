@@ -28,9 +28,7 @@
 #include "common-internal.h"
 #include "socket.h"
 
-#ifdef HAVE_SYS_TYPES_H
-# include <sys/types.h>
-#endif
+#include <sys/types.h>
 
 #ifdef HAVE_NETINET_TCP_H
 # include <netinet/tcp.h>
@@ -789,6 +787,7 @@ cherokee_read (cherokee_socket_t *socket, char *buf, int buf_size, size_t *done)
 		case EINTR:      
 		case EAGAIN:    
 			return ret_eagain;
+		case EBADF:
 		case EPIPE: 
 		case ETIMEDOUT:
 		case ECONNRESET:

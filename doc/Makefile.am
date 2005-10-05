@@ -1,10 +1,5 @@
 SUBDIRS = develop
 
-update:
-	wget -O cherokee_doc.tar.gz http://0x50.org/doc/cherokee_doc.tar.gz; \
-	gunzip -dc cherokee_doc.tar.gz | tar xfv - ;\
-	rm -f cherokee_doc.tar.gz
-
 docdir = $(datadir)/doc/cherokee/
 doc_DATA = \
 Behavior_configuration.html \
@@ -38,8 +33,11 @@ cherokee.png \
 images/Server-conf-small.png \
 index.html 
 
-index.html: update
-
 EXTRA_DIST=\
 $(doc_DATA)
+
+index.html:
+	wget -O cherokee_doc.tar.gz http://0x50.org/doc/cherokee_doc.tar.gz; \
+	gunzip -dc cherokee_doc.tar.gz | tar xfv - ;\
+	rm -f cherokee_doc.tar.gz
 

@@ -76,7 +76,7 @@ cherokee_validator_htdigest_free (cherokee_validator_htdigest_t *htdigest)
 static ret_t
 build_HA1 (cherokee_connection_t *conn, cherokee_buffer_t *buf)
 {
-	cherokee_buffer_add_va (buf, "%s:%s:%s", conn->user.buf, conn->realm_ref->buf, conn->passwd.buf);
+	cherokee_buffer_add_va (buf, "%s:%s:%s", conn->validator->user.buf, conn->realm_ref->buf, conn->validator->passwd.buf);
 	cherokee_buffer_encode_md5_digest (buf);
 	return ret_ok;
 }
@@ -120,7 +120,7 @@ validate_basic (cherokee_validator_htdigest_t *htdigest, cherokee_connection_t *
 	do {
 		cherokee_boolean_t equal;
 
-		ret = read_data_from_line (line, conn->user.buf, &user, &realm, &passwd);
+		ret = read_data_from_line (line, conn->validator->user.buf, &user, &realm, &passwd);
 		if (ret != ret_ok) continue;
 
 		printf ("user: '%s', realm: '%s', passwd: '%s'\n", user, realm, passwd);
@@ -156,7 +156,7 @@ cherokee_validator_htdigest_check (cherokee_validator_htdigest_t *htdigest, cher
 
 	/* Ensure that we have all what we need
 	 */
-	if (cherokee_buffer_is_empty (&conn->user)) 
+	if ((conn->validator == NULL) || cherokee_buffer_is_empty (&conn->validator->user)) 
 		return ret_error;
 
 	if (htdigest->file_ref == NULL)

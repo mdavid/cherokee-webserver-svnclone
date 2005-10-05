@@ -48,9 +48,11 @@ typedef struct {
 } cherokee_buffer_t;
 
 #define BUF(x) ((cherokee_buffer_t *)(x))
-#define cherokee_buffer_add_str(b,s)  cherokee_buffer_add (b, s, sizeof(s)-1)
-
 #define CHEROKEE_BUF_INIT  {NULL, 0, 0}
+
+#define cherokee_buffer_add_str(b,s)       cherokee_buffer_add (b, s, sizeof(s)-1)
+#define cherokee_buffer_cmp_str(b,s)       cherokee_buffer_cmp (b, s, sizeof(s))
+#define cherokee_buffer_case_cmp_str(b,s)  cherokee_buffer_case_cmp (b, s, sizeof(s))
 
 
 ret_t cherokee_buffer_new                (cherokee_buffer_t **buf);
@@ -67,6 +69,11 @@ ret_t cherokee_buffer_add_va_list        (cherokee_buffer_t  *buf, char *format,
 ret_t cherokee_buffer_add_char_n         (cherokee_buffer_t  *buf, char c, int n);
 ret_t cherokee_buffer_add_buffer         (cherokee_buffer_t  *buf, cherokee_buffer_t *buf2);
 ret_t cherokee_buffer_prepend            (cherokee_buffer_t  *buf, char *txt, size_t size);
+
+ret_t cherokee_buffer_cmp                (cherokee_buffer_t  *buf, char *txt, cuint_t txt_len);
+ret_t cherokee_buffer_cmp_buf            (cherokee_buffer_t  *buf, cherokee_buffer_t *buf2);
+ret_t cherokee_buffer_case_cmp           (cherokee_buffer_t  *buf, char *txt, cuint_t txt_len);
+ret_t cherokee_buffer_case_cmp_buf       (cherokee_buffer_t  *buf, cherokee_buffer_t *buf2);
 
 ret_t cherokee_buffer_read_file          (cherokee_buffer_t  *buf, char *filename);
 ret_t cherokee_buffer_read_from_fd       (cherokee_buffer_t  *buf, int fd, size_t size, size_t *ret_size);

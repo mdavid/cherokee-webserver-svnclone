@@ -31,12 +31,12 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <time.h>
+#include <sys/types.h>
 
 #ifdef HAVE_PWD_H
 # include <pwd.h>
 #endif
 
-#include <sys/types.h>
 #ifdef HAVE_SYS_UIO_H
 # include <sys/uio.h>
 #endif
@@ -61,6 +61,7 @@
 # include <strings.h>
 #endif
 
+#include "util.h"
 #include "list.h"
 #include "http.h"
 #include "handler.h"
@@ -78,7 +79,6 @@
 #include "header.h"
 #include "header-protected.h"
 #include "iocache.h"
-
 
 ret_t
 cherokee_connection_new  (cherokee_connection_t **cnt)
@@ -116,6 +116,7 @@ cherokee_connection_new  (cherokee_connection_t **cnt)
 	n->rx_partial        = 0;
 	n->tx_partial        = 0;
 	n->traffic_next      = 0;
+	n->validator         = NULL;
 
 	cherokee_buffer_new (&n->buffer);
 	cherokee_buffer_new (&n->header_buffer);
@@ -130,10 +131,6 @@ cherokee_connection_new  (cherokee_connection_t **cnt)
 	cherokee_buffer_new (&n->redirect);
 	cherokee_buffer_new (&n->host);
 	cherokee_buffer_new (&n->query_string);
-
-	cherokee_buffer_init (&n->user);
-	cherokee_buffer_init (&n->passwd);
-	cherokee_buffer_init (&n->nonce);
 
 	cherokee_buffer_init (&n->request_original);
 
@@ -191,9 +188,10 @@ cherokee_connection_free (cherokee_connection_t  *cnt)
 	cherokee_buffer_free (cnt->redirect);
 	cherokee_buffer_free (cnt->host);
 
-	cherokee_buffer_mrproper (&cnt->user);
-	cherokee_buffer_mrproper (&cnt->passwd);
-	cherokee_buffer_mrproper (&cnt->nonce);
+	if (cnt->validator != NULL) {
+		cherokee_validator_free (cnt->validator);
+		cnt->validator = NULL;
+	}
 
 	if (cnt->arguments != NULL) {
 		cherokee_table_free2 (cnt->arguments, free);
@@ -270,11 +268,12 @@ cherokee_connection_clean (cherokee_connection_t *cnt)
 	cherokee_buffer_clean (cnt->redirect);
 	cherokee_buffer_clean (cnt->host);
 	cherokee_buffer_clean (cnt->query_string);
-
-	cherokee_buffer_clean (&cnt->user);
-	cherokee_buffer_clean (&cnt->passwd);
-	cherokee_buffer_clean (&cnt->nonce);
 	
+	if (cnt->validator != NULL) {
+		cherokee_validator_free (cnt->validator);
+		cnt->validator = NULL;
+	}
+
 	if (cnt->arguments != NULL) {
 		cherokee_table_free2 (cnt->arguments, free);
 		cnt->arguments = NULL;
@@ -464,6 +463,7 @@ build_response_header__authenticate (cherokee_connection_t *cnt, cherokee_buffer
 	 * Eg: WWW-Authenticate: Digest realm="", qop="auth,auth-int", nonce="", opaque=""
 	 */
 	if (cnt->auth_type & http_auth_digest) {
+		cherokee_buffer_t new_nonce = CHEROKEE_BUF_INIT;
 		/* Realm
 		 */
 		cherokee_buffer_ensure_size (buffer, 32 + cnt->realm_ref->len + 4);
@@ -473,13 +473,15 @@ build_response_header__authenticate (cherokee_connection_t *cnt, cherokee_buffer
 
 		/* Nonce
 		 */
-		cherokee_nonce_table_generate (&CONN_VSRV(cnt)->nonces, cnt, &cnt->nonce);
-		cherokee_buffer_add_va (buffer, "nonce=\"%s\", ", cnt->nonce.buf);
+		cherokee_nonce_table_generate (CONN_SRV(cnt)->nonces, cnt, &new_nonce);
+		cherokee_buffer_add_va (buffer, "nonce=\"%s\", ", new_nonce.buf);
 				
 		/* Quality of protection: auth, auth-int, auth-conf
 		 * Algorithm: MD5
 		 */
 		cherokee_buffer_add_str (buffer, "qop=\"auth\", algorithm=\"MD5\""CRLF);
+
+		cherokee_buffer_mrproper (&new_nonce);
 	}
 }
 
@@ -984,6 +986,11 @@ get_host (cherokee_connection_t *cnt,
 	if ((cnt->host->len >= 1) && (*cnt->host->buf == '.')) {
 		return ret_error;
 	}
+
+	/* RFC-1034: Dot ending host names
+	 */
+	if (cherokee_buffer_end_char(cnt->host) == '.')
+		cherokee_buffer_drop_endding (cnt->host, 1);
 	
 	return ret_ok;
 }
@@ -1056,16 +1063,15 @@ error:
 static ret_t
 get_authorization (cherokee_connection_t *cnt,
 		   cherokee_http_auth_t   type,
+		   cherokee_validator_t  *validator,
 		   char                  *ptr,
 	           int                    ptr_len)
 {
-	cherokee_buffer_t auth = CHEROKEE_BUF_INIT;
-
-	cherokee_buffer_clean (&cnt->user);
-	cherokee_buffer_clean (&cnt->passwd);
+	ret_t    ret;
+	char    *end, *end2;
+	cuint_t  pre_len;
 
 	if (strncasecmp(ptr, "Basic ", 6) == 0) {
-		char *end;
 
 		/* Check the authentication type
  		 */
@@ -1073,25 +1079,7 @@ get_authorization (cherokee_connection_t *cnt,
 			return ret_error;
 
 		cnt->req_auth_type = http_auth_basic;
-
-		/* Get the rest of the data
-		 */
-		ptr += 6;
-		end = strchr (ptr, '\r');
-		if (end == NULL) {
-			goto error;
-		}
-
-		cherokee_buffer_add (&auth, ptr, end-ptr+1);
-		cherokee_buffer_decode_base64 (&auth);
-
-		end = strchr (auth.buf, ':');
-		if (end == NULL) {
-			goto error;
-		}
-		
-		cherokee_buffer_add (&cnt->user, auth.buf, end - auth.buf);
-		cherokee_buffer_add (&cnt->passwd, end+1, auth.len  - (end - auth.buf));		
+		pre_len = 6;
 
 	} else if (strncasecmp(ptr, "Digest ", 7) == 0) {
 
@@ -1101,21 +1089,56 @@ get_authorization (cherokee_connection_t *cnt,
 			return ret_error;
 
 		cnt->req_auth_type = http_auth_digest;
+		pre_len = 7;
+	}
 
-		PRINT_ERROR_S ("TODO: To be unimplemented..\n");
+	/* Skip end of line
+	 */
+	end  = strchr (ptr, '\r');
+	end2 = strchr (ptr, '\n');
+
+	end = cherokee_min_str (end, end2);
+	if (end == NULL) 
 		return ret_error;
+	
+	ptr_len -= (ptr + ptr_len) - end;
 
-	} else {
+	/* Skip "Basic " or "Digest "
+	 */
+	ptr += pre_len;
+	ptr_len -= pre_len;
+
+	/* Parse the request
+	 */
+	switch (cnt->req_auth_type) {
+	case http_auth_basic:
+		ret = cherokee_validator_parse_basic (validator, ptr, ptr_len);
+		if (ret != ret_ok) return ret;
+		break;
+
+	case http_auth_digest:
+		ret = cherokee_validator_parse_digest (validator, ptr, ptr_len);
+		if (ret != ret_ok) return ret;
+
+		/* Check nonce value
+		 */
+		if (cherokee_buffer_is_empty(&validator->nonce))
+			return ret_error;
+
+		/* If it returns ret_ok, it means that the nonce was on the table,
+		 * and it removed it successfuly, otherwhise ret_not_found is returned.
+		 */
+		ret = cherokee_nonce_table_remove (CONN_SRV(cnt)->nonces, &validator->nonce);
+		if (ret != ret_ok) return ret;
+		
+		break;
+
+	default:
 		PRINT_ERROR_S ("Unknown authentication method\n");
 		return ret_error;
 	}
 	
-	cherokee_buffer_mrproper (&auth);
 	return ret_ok;
-
-error:
-	cherokee_buffer_mrproper (&auth);
-	return ret_error;
 }
 
 
@@ -1562,7 +1585,7 @@ cherokee_connection_check_authentication (cherokee_connection_t *cnt, cherokee_d
 	ret_t ret;
 	char *ptr;
 	int   len;
-	cherokee_validator_t *validator = NULL;
+//	cherokee_validator_t *validator = NULL;
 
 	/* Return, there is nothing to do here
 	 */
@@ -1577,7 +1600,18 @@ cherokee_connection_check_authentication (cherokee_connection_t *cnt, cherokee_d
 		goto unauthorized;
 	}
 	
-	ret = get_authorization (cnt, plugin_entry->authentication, ptr, len);
+	/* Create the validator object
+	 */
+	ret = plugin_entry->validator_new_func ((void **) &cnt->validator, 
+						plugin_entry->properties);
+	if (ret != ret_ok) {
+		cnt->error_code = http_internal_error;
+		return ret_error;	
+	}
+
+	/* Read the header information
+	 */
+	ret = get_authorization (cnt, plugin_entry->authentication, cnt->validator, ptr, len);
 	if (ret != ret_ok) {
 		goto unauthorized;
 	}
@@ -1588,29 +1622,20 @@ cherokee_connection_check_authentication (cherokee_connection_t *cnt, cherokee_d
 	{
 		void *foo;
 
-		if (cherokee_buffer_is_empty (&cnt->user)) {
+		if (cherokee_buffer_is_empty (&cnt->validator->user)) {
 			goto unauthorized;			
 		}
 
-		ret = cherokee_table_get (plugin_entry->users, cnt->user.buf, &foo);
+		ret = cherokee_table_get (plugin_entry->users, cnt->validator->user.buf, &foo);
 		if (ret != ret_ok) {
 			goto unauthorized;
 		}
 	}
 	
-	/* Create the validator object
-	 */
-	ret = plugin_entry->validator_new_func ((void **) &validator, 
-						plugin_entry->properties);
-	if (ret != ret_ok) {
-		cnt->error_code = http_internal_error;
-		return ret_error;	
-	}
 	
 	/* Check the login/password
 	 */
-	ret = cherokee_validator_check (validator, cnt);
-	cherokee_validator_free (validator);
+	ret = cherokee_validator_check (cnt->validator, cnt);
 	
 	if (ret != ret_ok) {
 		goto unauthorized;

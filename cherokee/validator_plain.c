@@ -78,13 +78,11 @@ cherokee_validator_plain_free (cherokee_validator_plain_t *plain)
 ret_t 
 cherokee_validator_plain_check (cherokee_validator_plain_t *plain, cherokee_connection_t *conn)
 {
-	FILE  *f;
-	ret_t  ret;
-	int    len;
-	char  *pass;
-	CHEROKEE_TEMP(line, 256);
+	FILE              *f;
+	ret_t              ret;
+	cherokee_buffer_t  buf = CHEROKEE_BUF_INIT;
 
-        if (cherokee_buffer_is_empty(&conn->user)) {
+        if ((conn->validator == NULL) || cherokee_buffer_is_empty(&conn->validator->user)) {
                 return ret_error;
         }
 
@@ -95,6 +93,10 @@ cherokee_validator_plain_check (cherokee_validator_plain_t *plain, cherokee_conn
 
 	ret = ret_error;
 	while (!feof(f)) {
+		int   len;
+		char *pass;
+		CHEROKEE_TEMP(line, 256);
+
 		if (fgets (line, line_size, f) == NULL)
 			continue;
 
@@ -117,19 +119,46 @@ cherokee_validator_plain_check (cherokee_validator_plain_t *plain, cherokee_conn
 			 
 		/* Is this the right user? 
 		 */
-		if (strcmp (conn->user.buf, line) != 0) {
+		if (strcmp (conn->validator->user.buf, line) != 0) {
 			continue;
 		}
-		
-		/* Check the password
+
+		/* Validate it
 		 */
-		if (strcmp (conn->passwd.buf, pass) == 0) {
-			ret = ret_ok;
+		switch (conn->req_auth_type) {
+		case http_auth_basic:
+			if (strcmp (conn->validator->passwd.buf, pass) == 0) {
+				ret = ret_ok;
+				goto go_out;
+			}
 			break;
+
+		case http_auth_digest:
+			/* Build a possible response
+			 */
+			cherokee_validator_digest_response (VALIDATOR(plain), pass, &buf, conn);
+
+			/* Check the response
+			 */
+			if (cherokee_buffer_is_empty (&conn->validator->response))
+				continue;
+
+			if (strcmp (conn->validator->response.buf, buf.buf) == 0) {
+				ret = ret_ok;
+				goto go_out;
+			}
+
+			cherokee_buffer_clean (&buf);
+			break;
+
+		default:
+			SHOULDNT_HAPPEN;
 		}
 	}
 
+go_out:
 	fclose(f);
+	cherokee_buffer_mrproper (&buf);
 
 	return ret;
 }

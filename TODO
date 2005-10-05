@@ -19,6 +19,7 @@ x - Finished task
 [x] IP Ranges restrictions
 [x] Improve setenv() calls in cgi handler
 [x] handler_dirlist to implement shorting
+[ ] regex'ed list to Deny
 [ ] handler_dirlist to manage content-length
 [ ] Stat cache
 [ ] Cache for the encoder modules

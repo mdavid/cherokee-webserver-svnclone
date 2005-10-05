@@ -378,7 +378,13 @@ downloader_header_read (cherokee_downloader_t *downloader)
 		if (downloader->callback.has_headers != NULL) {
 			ret = (* downloader->callback.has_headers) (downloader, downloader->callback.param[downloader_event_has_headers]);
 		}
-		
+
+		/* Check if it was a successful connection
+		 */
+		if (!http_type_200(downloader->header->response)) {
+			return ret_error;
+		}
+
 		return ret_ok;
 	}
 

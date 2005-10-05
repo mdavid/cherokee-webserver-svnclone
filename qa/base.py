@@ -261,3 +261,55 @@ class TestBase:
         f.write (content)
         f.close()
         return name
+
+    class Digest:
+        def __init__ (self):
+            self.response = None
+            self.vals     = {}
+
+        def ParseHeader (self, reply):
+            ret = {"cnonce":"",
+                   "nonce":"",
+                   "qop":"",
+                   "nc":""}
+
+            pos1 = reply.find ("WWW-Authenticate: Digest ") + 25
+            pos2 = reply.find ("\r", pos1)
+            line = reply[pos1:pos2]
+
+            for item in line.split(", "):
+                pos   = item.find("=")
+                name  = item[:pos]
+                value = item[pos+1:]
+
+                if value[0] == '"':
+                    value = value[1:]
+                if value[-1] == '"':
+                    value = value[:-1]
+
+                ret[name] = value
+            return ret
+
+        def CalculateResponse (self, user, realm, passwd, method, url, nonce, qop, cnonce, nc):
+            from md5 import md5
+
+            md5obj = md5()
+            md5obj.update("%s:%s:%s" % (user, realm, passwd))
+            a1 = md5obj.hexdigest()
+
+            md5obj = md5()
+            md5obj.update("%s:%s" % (method, url))
+            ha2 = md5obj.hexdigest()
+            
+            md5obj = md5()
+            md5obj.update("%s:%s:" % (a1, nonce))
+            
+            if qop != None:
+                md5obj.update("%s:" %(nc))
+                md5obj.update("%s:" %(cnonce))
+                md5obj.update("%s:" %(qop))
+            
+            md5obj.update(ha2)
+            final = md5obj.hexdigest()
+
+            return final

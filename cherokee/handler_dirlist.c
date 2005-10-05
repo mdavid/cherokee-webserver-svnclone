@@ -86,7 +86,7 @@ generate_file_entry (DIR *dir, cherokee_buffer_t *path, cherokee_handler_dirlist
 	entry_length = MAX(sizeof(struct dirent), offsetof(struct dirent, d_name) + strlen (entry->d_name) + 1);
 
 	n = malloc (sizeof(file_entry_t) + entry_length);
-	if (unlikely(n == NULL)) return ret_error;
+	if (unlikely(n == NULL)) return ret_nomem;
 
 	/* Initialization
 	 */
@@ -393,6 +393,7 @@ build_file_list (cherokee_handler_dirlist_t *dhdl)
 		
 		ret = generate_file_entry (dir, conn->local_directory, dhdl, &item);
 		if (ret == ret_eof) break;
+		if (ret == ret_error) continue;
 
 		if (S_ISDIR(item->stat.st_mode)) {
 			list_add ((list_t *)item, &dhdl->dirs);

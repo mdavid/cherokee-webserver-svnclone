@@ -26,6 +26,9 @@
 #define CHEROKEE_REQUEST_H
 
 #include "common.h"
+
+#include <sys/types.h>
+
 #include "url.h"
 #include "http.h"
 

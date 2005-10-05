@@ -1,4 +1,58 @@
+2005-10-05  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/handler_phpcgi.c (search_php_executable): Fixed to
+	search the interpreter if it is not defined with the "Interpreter"
+	configuration entry.  It will look for it on a couple of
+	directories for it..
+
+	* qa/93-InvalidLinks.py, qa/Makefile.am: Added a new QA to test
+	the prevoius problem.
+
+	* cherokee/handler_dirlist.c (generate_file_entry): Listing was
+	failing if there was an invalid link inside the
+	directory. Reported by Mark Nipper <nipsy@bitgnome.net>
+
+2005-09-28  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/validator.c (cherokee_validator_digest_response):
+	Digest authentication fixed.  (In 4to Festival de Software Libre,
+	Puerto Vallarta, Mexico)
+
+	* qa/90-Digest.py, qa/91-Digest2.py, qa/92-Digest3.py,
+	qa/Makefile.am (EXTRA_DIST): Added new QA tests for Digest
+	authentication.
+	
+2005-09-22  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/socket.c (cherokee_read): Added EBADF case.
+
+	* cherokee/request.h: Included sys/types.h. It was not compiling
+	on MacOS X. Patch by Tito Ciuro <tciuro@mac.com>
+
 2005-09-21  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/connection.c, cherokee/connection.h,
+	cherokee/connection-protected.h: Removed user, passwd and nonce
+	buffers.
+
+2005-09-20  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/buffer.h, cherokee/buffer.c (cherokee_buffer_cmp,
+	cherokee_buffer_cmp_buf, cherokee_buffer_cmp_str,
+	cherokee_buffer_case_cmp, cherokee_buffer_case_cmp_buf,
+	cherokee_buffer_case_cmp_str): Added new methods.
+
+	* cherokee/connection.c (get_host): Remove final dot in the host
+	name if found.
+
+2005-09-19  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* 0.4.26 released
+
+2005-09-21  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/server.c (build_server_string): It was reading an out
+	of memory possition. Fixed.
 
 	* qa/66-DirectoryIndex3.py (Test.JustBefore): It was failing
 	executing more than one time in a row. Fixed.

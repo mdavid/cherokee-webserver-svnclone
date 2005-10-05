@@ -122,8 +122,8 @@ validate_crypt (cherokee_connection_t *conn, const char *crypted)
 	char *tmp;
 	char *passwd = "";
 
-	if (! cherokee_buffer_is_empty (&conn->passwd)) {
-		passwd = conn->passwd.buf;
+	if (conn->validator && (! cherokee_buffer_is_empty (&conn->validator->passwd))) {
+		passwd = conn->validator->passwd.buf;
 	}
 
 #if defined(HAVE_CRYPT_R) && defined(HAVE_PTHREAD)
@@ -169,7 +169,7 @@ validate_md5_digest (cherokee_connection_t *conn, char *crypted)
 	cherokee_buffer_t *tmp;
 	
 	cherokee_buffer_new (&tmp);
-	cherokee_buffer_add_buffer (tmp, &conn->passwd);
+	cherokee_buffer_add_buffer (tmp, &conn->validator->passwd);
 	cherokee_buffer_encode_md5_digest (tmp);
 
 	ret = (strcmp(crypted, tmp->buf)) ? ret_error : ret_ok;
@@ -187,9 +187,9 @@ validate_md5 (cherokee_connection_t *conn, char *crypted)
 	
 	cherokee_buffer_new (&tmp);
 
-	cherokee_buffer_add_buffer (tmp, &conn->user);
+	cherokee_buffer_add_buffer (tmp, &conn->validator->user);
 	cherokee_buffer_add (tmp, ":", 1);
-	cherokee_buffer_add_buffer (tmp, &conn->passwd);
+	cherokee_buffer_add_buffer (tmp, &conn->validator->passwd);
 	printf ("1->'%s'\n", tmp->buf);
 
 	cherokee_buffer_encode_md5_digest (tmp);
@@ -233,7 +233,7 @@ cherokee_validator_htpasswd_check (cherokee_validator_htpasswd_t *htpasswd, cher
 	ret_t ret_auth;
 	CHEROKEE_TEMP(line, 128);
 
-	if (cherokee_buffer_is_empty (&conn->user)) {
+	if ((conn->validator == NULL) || cherokee_buffer_is_empty (&conn->validator->user)) {
 		return ret_error;
 	}
 
@@ -269,7 +269,7 @@ cherokee_validator_htpasswd_check (cherokee_validator_htpasswd_t *htpasswd, cher
 
 		/* Is this the right user? 
 		 */
-		if (strcmp (conn->user.buf, line) != 0) {
+		if (strcmp (conn->validator->user.buf, line) != 0) {
 			continue;
 		}
 
