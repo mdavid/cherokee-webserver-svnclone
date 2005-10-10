@@ -838,7 +838,7 @@ cherokee_logrotate_LDADD = libcherokee-config.la libcherokee-base.la libcherokee
 #
 # Test programs
 #
-noinst_PROGRAMS = cherokee_admin
+noinst_PROGRAMS = cherokee_admin 
 
 cherokee_admin_SOURCES = cherokee_admin.c 
 cherokee_admin_LDADD = libcherokee-config.la libcherokee-base.la libcherokee-client.la 
@@ -863,6 +863,9 @@ cherokee_admin_LDADD = libcherokee-config.la libcherokee-base.la libcherokee-cli
 
 #cherokee_ip_SOURCES = cherokee_ip.c
 #cherokee_ip_LDADD = libcherokee.la
+
+#cherokee_hex_SOURCES = cherokee_hex.c
+#cherokee_hex_LDADD = libcherokee-base.la
 
 
 CLEANFILES = \

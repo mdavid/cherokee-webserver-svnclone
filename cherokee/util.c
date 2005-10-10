@@ -637,3 +637,26 @@ cherokee_fd_set_nonblocking (int fd)
 
 	return ret_ok;
 }
+
+
+/* Return 1 if big-endian (Motorola and Sparc), not little-endian
+ * (Intel and Vax).  We do this work at run-time, rather than at
+ * configuration time so cross-compilation and general embedded system
+ * support is simpler.
+ */
+
+int
+cherokee_isbigendian (void)
+{
+	/* From Harbison & Steele.  
+	 */
+	union {                                 
+                long l;
+                char c[sizeof(long)];
+        } u;
+
+        u.l = 1;
+        return (u.c[sizeof(long) - 1] == 1);
+}
+
+

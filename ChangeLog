@@ -1,3 +1,61 @@
+2005-10-10  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* qa/94-URL-request.py: Added a new test case to test the proxy
+	like requests.
+
+	* cherokee/header.c (parse_request_first_line): Now, it accepts
+	proxy like requests.
+
+	* cherokee/util.h, cherokee/util.c (cherokee_crypt): Added new
+	function.
+
+	* cherokee/validator_htpasswd.c (validate_plain): Added support
+	for plain text passwords inside htpasswd files.
+
+	* cherokee/validator.c (cherokee_validator_parse_basic):
+	Fixed. There was an error here which caused an incorret password
+	length.
+
+	* cherokee/util.c (cherokee_isbigendian): Added new function.
+
+	* cherokee/buffer.c (cherokee_buffer_encode_base64): Rewritten.
+
+2005-10-09  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/buffer.c (cherokee_buffer_encode_base64): in and out
+	are not unsigned. Fixed.
+
+	* cherokee/connection.c (cherokee_connection_recv): Added switch
+	case to manage ret_error value.
+
+	* cherokee/socket.c (cherokee_read, cherokee_write): Added case
+	for EHOSTUNREACH: No route to host
+
+2005-10-08  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/socket.c, cherokee/socket.h, cherokee/virtual_server.c:
+	Igor Sysoev <is@rambler-co.ru> has sent me a mail warning about an
+	error on the OpenSSL management code.  He was right. I have added
+	a new macro OPENSSL_LAST_ERROR in order to get the newer error
+	instead of the older as we were doing.
+
+	* cherokee/buffer.c (cherokee_buffer_decode_hex): Added new
+	method.
+
+	* cherokee/util.h: Added arpa/inet.h header.
+
+2005-10-06  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/buffer.c (BUFFER_VA_LEN): removed. It is not longer
+	needed.
+
+	* cherokee/buffer.c (cherokee_buffer_encode_sha1_digest,
+	cherokee_buffer_encode_sha1): Added a SHA1 encoding interface.
+
+	* cherokee/connection.c
+	(cherokee_connection_check_authentication): Added check to ensure
+	the validator supports the authorization type.
+
 2005-10-05  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cherokee/handler_phpcgi.c (search_php_executable): Fixed to

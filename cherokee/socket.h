@@ -151,6 +151,14 @@ typedef struct {
 #define SOCKET_ADDRESS_IPv6(s) (SOCKET_ADDR_IPv6(s)->sin6_addr.s6_addr)
 
 
+#ifdef HAVE_OPENSSL
+# define OPENSSL_LAST_ERROR(error)  do { int n;                        \
+                                         while ((n = ERR_get_error())) \
+                                          error = ERR_error_string(n); \
+                                    } while (0)
+#endif
+
+
 ret_t cherokee_socket_new           (cherokee_socket_t **socket);
 ret_t cherokee_socket_free          (cherokee_socket_t  *socket);
 ret_t cherokee_socket_clean         (cherokee_socket_t  *socket);

@@ -32,11 +32,10 @@
 #include "module_loader.h"
 #include "connection.h"
 #include "connection-protected.h"
+#include "sha1.h"
 
 
-#if !defined(HAVE_CRYPT_R) && defined(HAVE_PTHREAD)
-# define USE_CRYPT_R_EMU
-#endif
+#define CRYPT_SALT_LENGTH 2
 
 
 /* How to recognizing the Crypt Mechanism: 
@@ -63,6 +62,8 @@ cherokee_validator_htpasswd_new (cherokee_validator_htpasswd_t **htpasswd, chero
 	/* Init 	
 	 */
 	cherokee_validator_init_base (VALIDATOR(n));
+	VALIDATOR(n)->support = http_auth_basic;
+
 	MODULE(n)->free           = (module_func_free_t)           cherokee_validator_htpasswd_free;
 	VALIDATOR(n)->check       = (validator_func_check_t)       cherokee_validator_htpasswd_check;
 	VALIDATOR(n)->add_headers = (validator_func_add_headers_t) cherokee_validator_htpasswd_add_headers;
@@ -93,91 +94,152 @@ cherokee_validator_htpasswd_free (cherokee_validator_htpasswd_t *htpasswd)
 
 
 
-
-#ifdef USE_CRYPT_R_EMU
+#if !defined(HAVE_CRYPT_R) && defined(HAVE_PTHREAD)
+# define USE_CRYPT_R_EMU
 static pthread_mutex_t __global_crypt_r_emu_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-static char *
-crypt_r_emu (const char *key, const char *salt)
+static ret_t
+crypt_r_emu (const char *key, const char *salt, char *compared)
 {
-	char *ret;
-	char *tmp_crypt;
+	ret_t  ret;
+	char  *tmp;
 
 	CHEROKEE_MUTEX_LOCK(&__global_crypt_r_emu_mutex);
-	tmp_crypt = crypt (key, salt);
-	ret = strdup (tmp_crypt);
+	tmp = crypt (key, salt);
+	ret = (strcmp (tmp, compared) == 0) ? ret_ok : ret_deny;
 	CHEROKEE_MUTEX_UNLOCK(&__global_crypt_r_emu_mutex);	
 
 	return ret;
 }
+
 #endif
 
 
+ret_t
+check_crypt (char *passwd, char *salt, const char *compared)
+{
+	ret_t  ret;
+	char  *tmp;
+
+#ifndef HAVE_PTHREAD
+	tmp = crypt (passwd, salt);
+	ret = (strcmp (tmp, compared) == 0) ? ret_ok : ret_deny;
+#else
+# ifdef HAVE_CRYPT_R
+	struct crypt_data data;
+
+	memset (&data, 0, sizeof(data));
+	tmp = crypt_r (passwd, salt, &data);
+	ret = (strcmp (tmp, compared) == 0) ? ret_ok : ret_deny;
+
+# elif defined(USE_CRYPT_R_EMU)
+	ret = crypt_r_emu (passwd, salt, compared);
+# else
+# error "No crypt() implementation found"
+# endif
+#endif
+
+	return ret;
+}
+
+
+
+static ret_t
+validate_plain (cherokee_connection_t *conn, const char *crypted)
+{
+	if (cherokee_buffer_is_empty (&conn->validator->passwd))
+		return ret_error;
+
+	return (strcmp (conn->validator->passwd.buf, crypted) == 0) ? ret_ok : ret_error;
+}
 
 
 static ret_t
 validate_crypt (cherokee_connection_t *conn, const char *crypted)
 {
 	ret_t ret;
-	char *tmp;
-	char *passwd = "";
+	char  salt[CRYPT_SALT_LENGTH];
 
-	if (conn->validator && (! cherokee_buffer_is_empty (&conn->validator->passwd))) {
-		passwd = conn->validator->passwd.buf;
-	}
+	if (cherokee_buffer_is_empty (&conn->validator->passwd))
+		return ret_error;
 
-#if defined(HAVE_CRYPT_R) && defined(HAVE_PTHREAD)
-	{
-		struct crypt_data data;
+	memcpy (salt, crypted, CRYPT_SALT_LENGTH);
 
-		memset (&data, 0, sizeof(data));
-		tmp = crypt_r (passwd, crypted, &data);
-		ret = (strcmp(tmp, crypted) == 0) ? ret_ok : ret_error;
-	}
-
-#elif defined(USE_CRYPT_R_EMU)
-	tmp = crypt_r_emu (passwd, crypted);
-	ret = (strcmp(tmp, crypted) == 0) ? ret_ok : ret_error;
-	free (tmp);
-
-#elif defined(HAVE_CRYPT)
-	tmp = crypt (passwd, crypted);
-	ret = (strcmp(tmp, crypted) == 0) ? ret_ok : ret_error;
-#else
-# error "No crypt() implementation found"
-#endif
+	ret = check_crypt (conn->validator->passwd.buf, salt, crypted);
 
 	return ret;
 }
 
+
 static ret_t
 validate_md5_apache (cherokee_connection_t *conn, const char *crypted)
 {
+	char              *p;
+	cherokee_buffer_t  salt = CHEROKEE_BUF_INIT;
+	cherokee_buffer_t  md5  = CHEROKEE_BUF_INIT;
+
 	/* Format:
 	 * "$apr1$..salt..$.......md5hash..........\0" 
+	 *  <-6 -><-  9  ->
 	 */
-	// char out_buf[6 + 9 + 24 + 2]; 
 
+	/* Test the beginning
+	 */
+	if (strncmp (crypted, "$apr1$", 6) == 0)
+		return ret_error;
+
+	/* Look for the salt
+	 */
+	p = strchr (crypted + 6, '$');
+	if (p != crypted + 6 + 9)
+		return ret_error;
+
+	cherokee_buffer_add (&salt, (char *)crypted + 6, p - (crypted + 6));
+	p++;
+
+	/* Copy the hash
+	 */
+	cherokee_buffer_add (&md5, p, strlen(p));
+
+	/* Validate it!
+	 */
+	// TODO
 	PRINT_ERROR_S ("Apache special MD5 is still not supported\n");
+	
+	/* Clean up
+	 */
+ 	cherokee_buffer_mrproper (&md5);
+	cherokee_buffer_mrproper (&salt);
+
 	return ret_error;
 }
 
 
 static ret_t
-validate_md5_digest (cherokee_connection_t *conn, char *crypted)
-{	ret_t ret;
-	cherokee_buffer_t *tmp;
-	
-	cherokee_buffer_new (&tmp);
-	cherokee_buffer_add_buffer (tmp, &conn->validator->passwd);
-	cherokee_buffer_encode_md5_digest (tmp);
+validate_non_salted_sha (cherokee_connection_t *conn, char *crypted)
+{	
+	cherokee_buffer_t sha1_client = CHEROKEE_BUF_INIT;
+	cuint_t           c_len       = strlen (crypted);
 
-	ret = (strcmp(crypted, tmp->buf)) ? ret_error : ret_ok;
+	/* Check the size. It should be: "{SHA1}" + Base64(SHA1(info))
+	 */
+	if (c_len != 28)
+		return ret_error;
 
-	cherokee_buffer_free (tmp);
+	if (cherokee_buffer_is_empty (&conn->validator->passwd))
+		return ret_error;
+ 
+	/* Decode user
+	 */ 
+	cherokee_buffer_add_buffer (&sha1_client, &conn->validator->passwd);
+	cherokee_buffer_encode_sha1_base64 (&sha1_client);
 
-	return ret;
+	if (strcmp (sha1_client.buf, crypted) == 0)
+		return ret_ok;
+
+	return ret_error;
 }
+
 
 static ret_t
 validate_md5 (cherokee_connection_t *conn, char *crypted)
@@ -273,22 +335,31 @@ cherokee_validator_htpasswd_check (cherokee_validator_htpasswd_t *htpasswd, cher
 			continue;
 		}
 
-		/* Check the crypted password
+		/* Check the type of the crypted password
+		 * It recognizes: Apache MD5, MD5, SHA and standard crypt
 		 */
-		if (strncmp (cryp, "$apr1$", 6) == 0)  
-		{    
-			/* Apache MD5 variant
-			 */
+		if (strncmp (cryp, "$apr1$", 6) == 0) {
 			ret_auth = validate_md5_apache (conn, cryp);
 		} 
-		else if (cryp_len == 32) 
-		{   
-			ret_auth = validate_md5_digest (conn, cryp);
+		
+		else if (cryp_len == 32) {
+			ret_auth = validate_md5 (conn, cryp);
+		} 
+		
+		if (strncmp (cryp, "{SHA}", 5) == 0) {
+			ret_auth = validate_non_salted_sha (conn, cryp + 5);
+		} 
+
+		else if (cryp_len == 13) {
+			ret_auth = validate_crypt (conn, cryp);
+
+			if (ret_auth != ret_ok)
+				ret_auth = validate_plain (conn, cryp);
 		} 
 		else {
-			ret_auth = validate_crypt (conn, cryp);
+			ret_auth = validate_plain (conn, cryp);
 		}
-
+		
 		break;
 	}
 

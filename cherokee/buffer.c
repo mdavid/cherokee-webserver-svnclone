@@ -26,6 +26,7 @@
 #include "buffer.h"
 
 #include <string.h>
+#include <strings.h>
 #include <ctype.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -37,8 +38,8 @@
 #include "md5.h"
 #include "util.h"
 #include "crc32.h"
+#include "sha1.h"
 
-#define BUFFER_VA_LEN 200
 
 #define TO_HEX(c) (c>9? c+'a'-10 : c+'0')
 
@@ -508,7 +509,7 @@ cherokee_buffer_read_from_fd (cherokee_buffer_t *buf, int fd, size_t size, size_
 		case EIO:        return ret_error;
 		}
 
-		PRINT_ERROR ("ERROR: read(%d, %lu,..) -> errno=%d '%s'\n", fd, size, errno, strerror(errno));
+		PRINT_ERROR ("ERROR: read(%d, %u,..) -> errno=%d '%s'\n", fd, size, errno, strerror(errno));
 		return ret_error;
 	}
 	else if (len == 0) {
@@ -703,62 +704,51 @@ cherokee_buffer_decode_base64 (cherokee_buffer_t *buf)
 ret_t 
 cherokee_buffer_encode_base64 (cherokee_buffer_t *buf)
 {
-	char             *in;
-	char             *out;
+	cuchar_t         *in;
+	cuchar_t         *out;
 	ret_t             ret;
+	int               i, j;
 	cuint_t           inlen = buf->len;
 	cherokee_buffer_t new   = CHEROKEE_BUF_INIT;
-
-	const static cuchar_t b64_encode_table[] = {
-		(cuchar_t)'A', (cuchar_t)'B', (cuchar_t)'C', (cuchar_t)'D',   /*  0- 3 */
-		(cuchar_t)'E', (cuchar_t)'F', (cuchar_t)'G', (cuchar_t)'H',   /*  4- 7 */
-		(cuchar_t)'I', (cuchar_t)'J', (cuchar_t)'K', (cuchar_t)'L',   /*  8-11 */
-		(cuchar_t)'M', (cuchar_t)'N', (cuchar_t)'O', (cuchar_t)'P',   /* 12-15 */
-		(cuchar_t)'Q', (cuchar_t)'R', (cuchar_t)'S', (cuchar_t)'T',   /* 16-19 */
-		(cuchar_t)'U', (cuchar_t)'V', (cuchar_t)'W', (cuchar_t)'X',   /* 20-23 */
-		(cuchar_t)'Y', (cuchar_t)'Z', (cuchar_t)'a', (cuchar_t)'b',   /* 24-27 */
-		(cuchar_t)'c', (cuchar_t)'d', (cuchar_t)'e', (cuchar_t)'f',   /* 28-31 */
-		(cuchar_t)'g', (cuchar_t)'h', (cuchar_t)'i', (cuchar_t)'j',   /* 32-35 */
-		(cuchar_t)'k', (cuchar_t)'l', (cuchar_t)'m', (cuchar_t)'n',   /* 36-39 */
-		(cuchar_t)'o', (cuchar_t)'p', (cuchar_t)'q', (cuchar_t)'r',   /* 40-43 */
-		(cuchar_t)'s', (cuchar_t)'t', (cuchar_t)'u', (cuchar_t)'v',   /* 44-47 */
-		(cuchar_t)'w', (cuchar_t)'x', (cuchar_t)'y', (cuchar_t)'z',   /* 48-51 */
-		(cuchar_t)'0', (cuchar_t)'1', (cuchar_t)'2', (cuchar_t)'3',   /* 52-55 */
-		(cuchar_t)'4', (cuchar_t)'5', (cuchar_t)'6', (cuchar_t)'7',   /* 56-59 */
-		(cuchar_t)'8', (cuchar_t)'9', (cuchar_t)'+', (cuchar_t)'/',   /* 60-63 */
-		(cuchar_t)'='						      /* 64 */
-	};
+		
+	static const char base64tab[]=
+		"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 	/* Get memory
 	 */
-	ret = cherokee_buffer_ensure_size (&new, buf->len*4/3+4);
+	ret = cherokee_buffer_ensure_size (&new, (buf->len+4)*4/3);
 	if (unlikely (ret != ret_ok)) return ret;
 
 	/* Encode
 	 */
-	in  = buf->buf;
-	out = new.buf;
+	in  = (cuchar_t *) buf->buf;
+	out = (cuchar_t *) new.buf;
 
-	for (; inlen >= 3; inlen -= 3) {
-		*out++ = b64_encode_table[in[0] >> 2];
-		*out++ = b64_encode_table[((in[0] << 4) & 0x30) | (in[1] >> 4)];
-		*out++ = b64_encode_table[((in[1] << 2) & 0x3c) | (in[2] >> 6)];
-		*out++ = b64_encode_table[in[2] & 0x3f];
-		in += 3;		
-	}
+        for (i=0, j=0; i < inlen; i += 3) {
+		int     a=0,b=0,c=0;
+		int     d, e, f, g;
 
-	if (inlen > 0) {
-		unsigned char fragment;
+                a=in[i];
+                b= i+1 < inlen ? in[i+1]:0;
+                c= i+2 < inlen ? in[i+2]:0;
 
-		*out++ = b64_encode_table[in[0] >> 2];
-		fragment = (in[0] << 4) & 0x30;
-		if (inlen > 1)
-			fragment |= in[1] >> 4;
-		*out++ = b64_encode_table[fragment];
-		*out++ = (inlen < 2) ? '=' : b64_encode_table[(in[1] << 2) & 0x3c];
-		*out++ = '=';
-	}
-	*out = '\0';
+                d = base64tab [a >> 2 ];
+                e = base64tab [((a & 3 ) << 4) | (b >> 4)];
+                f = base64tab [((b & 15) << 2) | (c >> 6)];
+                g = base64tab [c & 63 ];
+
+                if (i + 1 >= inlen) f='=';
+                if (i + 2 >= inlen) g='=';
+
+                out[j++] = d;
+                out[j++] = e;
+                out[j++] = f;
+                out[j++] = g;
+        }
+	
+
+	out[j]  = '\0';
+	new.len = j;
 
 	/* Set the encoded string
 	 */
@@ -911,10 +901,58 @@ cherokee_buffer_encode_md5 (cherokee_buffer_t *buf, cherokee_buffer_t *salt, che
 }
 
 
-/* Documentation:
- * RFC 2617, HTTP Authentication: Basic and Digest Access Authentication
- * http://www.alobbs.com/modules.php?op=modload&name=rfc&file=index&content_file=rfc2617.php
- */
+
+ret_t 
+cherokee_buffer_encode_sha1 (cherokee_buffer_t *buf, cherokee_buffer_t *encoded)
+{
+	SHA_INFO sha1;
+
+	sha_init (&sha1);
+	sha_update (&sha1, (const unsigned char*) buf->buf, buf->len);
+
+	cherokee_buffer_ensure_size (encoded, SHA1_DIGEST_SIZE + 1);
+	sha_final (&sha1, (unsigned char *)encoded->buf);
+
+	encoded->len = SHA1_DIGEST_SIZE;
+	encoded->buf[encoded->len] = '\0';
+
+	return ret_ok;
+}
+
+
+ret_t 
+cherokee_buffer_encode_sha1_base64 (cherokee_buffer_t *buf) 
+{
+	cuint_t           ntmp;
+	char             *ctmp;
+	cherokee_buffer_t encoded = CHEROKEE_BUF_INIT;
+
+	cherokee_buffer_ensure_size (&encoded, (SHA1_DIGEST_SIZE *2) + 1);	
+
+	cherokee_buffer_encode_sha1 (buf, &encoded);
+	cherokee_buffer_encode_base64 (&encoded);
+
+	/* Swap buffers
+	 */
+	ctmp = buf->buf;
+	buf->buf = encoded.buf;
+	encoded.buf = ctmp;
+
+	ntmp = buf->len;
+	buf->len = encoded.len;
+	encoded.len = ntmp;
+
+	ntmp = buf->size;
+	buf->size = encoded.size;
+	encoded.size = ntmp;
+
+	/* Clean and return
+	 */
+	cherokee_buffer_mrproper (&encoded);
+
+	return ret_ok;
+}
+
 
 ret_t 
 cherokee_buffer_encode_hex (cherokee_buffer_t *buf)
@@ -949,6 +987,44 @@ cherokee_buffer_encode_hex (cherokee_buffer_t *buf)
 	buf->len *= 2;
 	buf->size = buf->len + 1;
 	buf->buf  = new_buf;
+
+	return ret_ok;
+}
+
+
+ret_t 
+cherokee_buffer_decode_hex (cherokee_buffer_t *buf)
+{
+	int i;
+
+	static char hex_to_bin [128] = {
+		-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,    /*            */
+		-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,    /*            */
+		-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,    /*            */
+		 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,-1,-1,-1,-1,-1,-1,    /*   0..9     */
+		-1,10,11,12,13,14,15,-1,-1,-1,-1,-1,-1,-1,-1,-1,    /*   A..F     */
+		-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,    /*            */
+		-1,10,11,12,13,14,15,-1,-1,-1,-1,-1,-1,-1,-1,-1,    /*   a..f     */
+		-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1 };  /*            */
+
+
+	for (i=0; i<buf->len/2; i++) {
+		/* It uses << 1 rather than * 2
+		 */
+		cuint_t  b1 = buf->buf[(i << 1)] & 127;
+		cuint_t  b2 = buf->buf[(i << 1) + 1] & 127;
+
+ 		b1 = hex_to_bin[b1];
+ 		b2 = hex_to_bin[b2];
+
+		if ((b1 == -1) || (b2 == -1))
+			break;
+
+		buf->buf[i] = (((b1 << 4) & 0xF0) | (b2 & 0x0F));
+	}
+
+	buf->len /= 2;
+	buf->buf[buf->len] = '\0';
 
 	return ret_ok;
 }
