@@ -128,7 +128,7 @@ cherokee_validator_parse_basic (cherokee_validator_t *validator, char *str, cuin
 	/* Copy user and password
 	 */
 	cherokee_buffer_add (&validator->user, auth.buf, colon - auth.buf);
-	cherokee_buffer_add (&validator->passwd, colon+1, auth.len  - (colon - auth.buf));		
+	cherokee_buffer_add (&validator->passwd, colon+1, auth.len  - ((colon+1) - auth.buf));		
 
 	/* Clean up and exit
 	 */

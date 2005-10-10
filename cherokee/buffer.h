@@ -99,9 +99,12 @@ crc_t cherokee_buffer_crc32              (cherokee_buffer_t  *buf);
 ret_t cherokee_buffer_decode             (cherokee_buffer_t  *buf);
 ret_t cherokee_buffer_encode_base64      (cherokee_buffer_t  *buf);
 ret_t cherokee_buffer_decode_base64      (cherokee_buffer_t  *buf);
-ret_t cherokee_buffer_encode_md5_digest  (cherokee_buffer_t  *buf);
 ret_t cherokee_buffer_encode_md5         (cherokee_buffer_t  *buf, cherokee_buffer_t *salt, cherokee_buffer_t *encoded);
+ret_t cherokee_buffer_encode_md5_digest  (cherokee_buffer_t  *buf);
+ret_t cherokee_buffer_encode_sha1        (cherokee_buffer_t  *buf, cherokee_buffer_t *encoded);
+ret_t cherokee_buffer_encode_sha1_base64 (cherokee_buffer_t  *buf);
 ret_t cherokee_buffer_encode_hex         (cherokee_buffer_t  *buf);
+ret_t cherokee_buffer_decode_hex         (cherokee_buffer_t  *buf);
 ret_t cherokee_buffer_escape_html        (cherokee_buffer_t  *buf, cherokee_buffer_t **maybe_new);
 ret_t cherokee_buffer_add_comma_marks    (cherokee_buffer_t  *buf);
 

@@ -35,6 +35,10 @@
 # include <netinet/in.h>
 #endif
 
+#ifdef HAVE_ARPA_INET_H
+# include <arpa/inet.h>
+#endif 
+
 #include <time.h>
 #include <dirent.h>
 
@@ -55,6 +59,7 @@ ret_t cherokee_tls_init (void);
 /* String management functions
  */
 int   cherokee_hexit              (char c);
+int   cherokee_isbigendian        (void);
 char *cherokee_min_str            (char *s1, char *s2);
 char *cherokee_strfsize           (unsigned long long size, char *buf);
 int   cherokee_estimate_va_length (char *format, va_list ap);

@@ -1,23 +1,22 @@
-/*
-SHA-1 in C
-By Steve Reid <steve@edmweb.com>
-100% Public Domain
-*/
+#ifndef CHEROKEE_SHA1
+#define CHEROKEE_SHA1
 
-#ifndef __SHA1_H__
-#define __SHA1_H__
+#include "common.h"
 
-#include "common-internal.h"
+#define SHA_BLOCKSIZE		64
+#define SHA_DIGESTSIZE		20
+#define SHA1_DIGEST_SIZE		20
 
 typedef struct {
-    uint32_t state[5];
-    uint32_t count[2];
-    unsigned char buffer[64];
-} SHA1_CTX;
+    unsigned long digest[5];		     /* message digest */
+    unsigned long count_lo, count_hi;	/* 64-bit bit count */
+    unsigned char data[SHA_BLOCKSIZE];	/* SHA data buffer */
+    int local;	   		               /* unprocessed amount in data */
+} SHA_INFO;
 
-void SHA1Transform(uint32_t state[5], const unsigned char buffer[64]);
-void SHA1Init(SHA1_CTX* context);
-void SHA1Update(SHA1_CTX* context, const unsigned char* data, uint32_t len);
-void SHA1Final(unsigned char digest[20], SHA1_CTX* context);
 
-#endif /* __SHA1_H__ */
+void sha_init   (SHA_INFO *sha_info);
+void sha_update (SHA_INFO *sha_info, unsigned char *buffer, int count);
+void sha_final  (SHA_INFO *sha_info, unsigned char digest[20]);
+
+#endif /* CHEROKEE_SHA1 */

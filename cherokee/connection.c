@@ -735,11 +735,10 @@ cherokee_connection_recv (cherokee_connection_t *cnt, cherokee_buffer_t *buffer,
 		*len = readed;
 		return ret_ok;
 
-	case ret_eagain:
-		return ret_eagain;
-
 	case ret_eof:
-		return ret_eof;
+	case ret_error:
+	case ret_eagain:
+		return ret;
 
 	default:
 		RET_UNKNOWN(ret);		
@@ -1071,6 +1070,10 @@ get_authorization (cherokee_connection_t *cnt,
 	char    *end, *end2;
 	cuint_t  pre_len;
 
+	/* It checks that the authentication send by the client is compliant
+	 * with the configuration of the server.  It does not check if the 
+	 * kind of validator is suitable in this case.
+	 */
 	if (strncasecmp(ptr, "Basic ", 6) == 0) {
 
 		/* Check the authentication type
@@ -1585,7 +1588,6 @@ cherokee_connection_check_authentication (cherokee_connection_t *cnt, cherokee_d
 	ret_t ret;
 	char *ptr;
 	int   len;
-//	cherokee_validator_t *validator = NULL;
 
 	/* Return, there is nothing to do here
 	 */
@@ -1605,8 +1607,7 @@ cherokee_connection_check_authentication (cherokee_connection_t *cnt, cherokee_d
 	ret = plugin_entry->validator_new_func ((void **) &cnt->validator, 
 						plugin_entry->properties);
 	if (ret != ret_ok) {
-		cnt->error_code = http_internal_error;
-		return ret_error;	
+		goto error;
 	}
 
 	/* Read the header information
@@ -1632,6 +1633,11 @@ cherokee_connection_check_authentication (cherokee_connection_t *cnt, cherokee_d
 		}
 	}
 	
+	/* Check if the validator is suitable
+	 */
+	if ((cnt->validator->support & cnt->req_auth_type) == 0) {
+		goto error;
+	}	
 	
 	/* Check the login/password
 	 */
@@ -1646,6 +1652,11 @@ cherokee_connection_check_authentication (cherokee_connection_t *cnt, cherokee_d
 unauthorized:
 	cnt->keepalive = 0;
 	cnt->error_code = http_unauthorized;
+	return ret_error;
+
+error:
+	cnt->keepalive = 0;
+	cnt->error_code = http_internal_error;
 	return ret_error;
 }
 

@@ -284,8 +284,11 @@ cherokee_virtual_server_init_tls (cherokee_virtual_server_t *vsrv)
 	 */
 	rc = SSL_CTX_use_certificate_file (vsrv->context, vsrv->server_cert, SSL_FILETYPE_PEM);
 	if (rc < 0) {
+		char *error;
+
+		OPENSSL_LAST_ERROR(error);
 		PRINT_ERROR("ERROR: OpenSSL: Can not use certificate file '%s':  %s\n", 
-			    vsrv->server_cert, ERR_error_string(ERR_get_error(), NULL));
+			    vsrv->server_cert, error);
 		return ret_error;
 	}
 
@@ -293,8 +296,11 @@ cherokee_virtual_server_init_tls (cherokee_virtual_server_t *vsrv)
 	 */
 	rc = SSL_CTX_use_PrivateKey_file (vsrv->context, vsrv->server_key, SSL_FILETYPE_PEM);
 	if (rc < 0) {
+		char *error;
+
+		OPENSSL_LAST_ERROR(error);
 		PRINT_ERROR("ERROR: OpenSSL: Can not use private key file '%s': %s\n", 
-			    vsrv->server_key, ERR_error_string(ERR_get_error(), NULL));
+			    vsrv->server_key, error);
 		return ret_error;
 	}
 

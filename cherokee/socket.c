@@ -285,8 +285,11 @@ initialize_tls_session (cherokee_socket_t *socket, cherokee_virtual_server_t *vs
 	 */
 	socket->session = SSL_new (vserver->context);
 	if (socket->session == NULL) {
-		PRINT_ERROR ("ERROR: OpenSSL: Unable to create a new SSL connection from the SSL context: %s\n",
-			     ERR_error_string(ERR_get_error(), NULL));
+		char *error;
+
+		OPENSSL_LAST_ERROR(error);
+		PRINT_ERROR ("ERROR: OpenSSL: Unable to create a new SSL "
+			     "connection from the SSL context: %s\n", error);
 		return ret_error;
 	}
 	
@@ -294,8 +297,11 @@ initialize_tls_session (cherokee_socket_t *socket, cherokee_virtual_server_t *vs
 	 */
 	re = SSL_set_fd (socket->session, socket->socket);
 	if (re != 1) {
+		char *error;
+
+		OPENSSL_LAST_ERROR(error);
 		PRINT_ERROR ("ERROR: OpenSSL: Can not set fd(%d): %s\n", 
-			     socket->socket, ERR_error_string(ERR_get_error(), NULL));
+			     socket->socket, error);
 		return ret_error;
 	}
 
@@ -344,13 +350,16 @@ cherokee_socket_init_tls (cherokee_socket_t *socket, cherokee_virtual_server_t *
 	rc = SSL_accept (socket->session);
 
 	if (rc <= 0) {
+		char *error;
+
 		switch (SSL_get_error(socket->session, rc)) {
 		case SSL_ERROR_WANT_READ:
 		case SSL_ERROR_WANT_WRITE:
 		case SSL_ERROR_WANT_CONNECT:
 			return ret_eagain;
-		default:
-			PRINT_ERROR ("ERROR: Init OpenSSL: %s\n", ERR_error_string(ERR_get_error(), NULL));
+		default: 
+			OPENSSL_LAST_ERROR(error);
+			PRINT_ERROR ("ERROR: Init OpenSSL: %s\n", error);
 			return ret_error;
 		}
 	}
@@ -680,6 +689,7 @@ cherokee_write (cherokee_socket_t *socket, const char *buf, int buf_len, size_t 
 		case EPIPE:       
 		case ETIMEDOUT:
 		case ECONNRESET:  
+		case EHOSTUNREACH:
 			return ret_eof;
 		}
 	
@@ -791,6 +801,7 @@ cherokee_read (cherokee_socket_t *socket, char *buf, int buf_size, size_t *done)
 		case EPIPE: 
 		case ETIMEDOUT:
 		case ECONNRESET:
+		case EHOSTUNREACH:
 			return ret_eof;
 		}
 
@@ -1118,8 +1129,10 @@ cherokee_socket_init_client_tls (cherokee_socket_t *socket)
 	 */
 	socket->ssl_ctx = SSL_CTX_new (SSLv23_client_method());
 	if (socket->ssl_ctx == NULL) {
-		PRINT_ERROR ("ERROR: OpenSSL: Unable to create a new SSL context: %s\n",
-			     ERR_error_string(ERR_get_error(), NULL));
+		char *error;
+
+		OPENSSL_LAST_ERROR(error);
+		PRINT_ERROR ("ERROR: OpenSSL: Unable to create a new SSL context: %s\n", error);
 		return ret_error;
 	}
 
@@ -1133,8 +1146,11 @@ cherokee_socket_init_client_tls (cherokee_socket_t *socket)
 	 */
 	socket->session = SSL_new (socket->ssl_ctx);
 	if (socket->session == NULL) {
-		PRINT_ERROR ("ERROR: OpenSSL: Unable to create a new SSL connection from the SSL context: %s\n",
-			     ERR_error_string(ERR_get_error(), NULL));
+		char *error;
+
+		OPENSSL_LAST_ERROR(error);
+		PRINT_ERROR ("ERROR: OpenSSL: Unable to create a new SSL connection "
+			     "from the SSL context: %s\n", error);
 		return ret_error;
 	}
 
@@ -1142,8 +1158,10 @@ cherokee_socket_init_client_tls (cherokee_socket_t *socket)
 	 */
 	re = SSL_set_fd (socket->session, socket->socket);
 	if (re != 1) {
-		PRINT_ERROR ("ERROR: OpenSSL: Can not set fd(%d): %s\n",
-			     socket->socket, ERR_error_string(ERR_get_error(), NULL));
+		char *error;
+
+		OPENSSL_LAST_ERROR(error);
+		PRINT_ERROR ("ERROR: OpenSSL: Can not set fd(%d): %s\n", socket->socket, error);
 		return ret_error;
 	}
 
@@ -1151,8 +1169,10 @@ cherokee_socket_init_client_tls (cherokee_socket_t *socket)
 
 	re = SSL_connect (socket->session);
 	if (re <= 0) {
-		PRINT_ERROR ("ERROR: OpenSSL: Can not connect: %s\n",
-			     ERR_error_string(ERR_get_error(), NULL));
+		char *error;
+
+		OPENSSL_LAST_ERROR(error);
+		PRINT_ERROR ("ERROR: OpenSSL: Can not connect: %s\n", error);
 		return ret_error;
 	}
 

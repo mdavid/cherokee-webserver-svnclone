@@ -173,6 +173,41 @@ cherokee_header_clean (cherokee_header_t *hdr)
 }
 
 
+static ret_t 
+add_known_header (cherokee_header_t *hdr, cherokee_common_header_t header, off_t info_off, int info_len)
+{
+	HEADER_INTERNAL_CHECK(hdr);
+
+	hdr->header[header].info_off = info_off;
+	hdr->header[header].info_len = info_len;
+
+	return ret_ok;
+}
+
+
+static ret_t 
+add_unknown_header (cherokee_header_t *hdr, off_t header_off, off_t info_off, int info_len)
+{
+	cherokee_header_unknown_entry_t *entry;
+
+	hdr->unknowns_len++;
+
+	hdr->unknowns = realloc (hdr->unknowns, 
+				 sizeof(cherokee_header_unknown_entry_t) * hdr->unknowns_len);
+				 
+	if (hdr->unknowns == NULL) {
+		return ret_nomem;
+	}
+			
+	entry = &hdr->unknowns[hdr->unknowns_len-1];
+	entry->header_off      = header_off;
+	entry->header_info_off = info_off;
+	entry->header_info_len = info_len;
+	
+	return ret_ok;
+}
+
+
 static ret_t
 parse_response_first_line (cherokee_header_t *hdr, cherokee_buffer_t *buf, char **next_pos)
 {
@@ -323,41 +358,26 @@ parse_request_first_line (cherokee_header_t *hdr, cherokee_buffer_t *buf, char *
 	hdr->request_off = begin - buf->buf;
 	hdr->request_len = end - begin;
 
-	return ret_ok;
-}
+	/* Check if the request is a full URL
+	 */
+	begin = buf->buf + hdr->request_off;
+	if (strncmp (begin, "http://", 7) == 0) {
+		char *dir;
+		char *host = begin + 7;
 
+		dir = strchr (host, '/');
+		if (dir == NULL) return ret_error;
 
-static ret_t 
-add_known_header (cherokee_header_t *hdr, cherokee_common_header_t header, off_t info_off, int info_len)
-{
-	HEADER_INTERNAL_CHECK(hdr);
-
-	hdr->header[header].info_off = info_off;
-	hdr->header[header].info_len = info_len;
-
-	return ret_ok;
-}
-
-
-static ret_t 
-add_unknown_header (cherokee_header_t *hdr, off_t header_off, off_t info_off, int info_len)
-{
-	cherokee_header_unknown_entry_t *entry;
-
-	hdr->unknowns_len++;
-
-	hdr->unknowns = realloc (hdr->unknowns, 
-				 sizeof(cherokee_header_unknown_entry_t) * hdr->unknowns_len);
-				 
-	if (hdr->unknowns == NULL) {
-		return ret_nomem;
+		/* Add the host header
+		 */
+		add_known_header (hdr, header_host, begin - buf->buf, dir - host);
+		
+		/* Fix the URL
+		 */
+		hdr->request_len -= (dir - begin);
+		hdr->request_off = dir - buf->buf;
 	}
-			
-	entry = &hdr->unknowns[hdr->unknowns_len-1];
-	entry->header_off      = header_off;
-	entry->header_info_off = info_off;
-	entry->header_info_len = info_len;
-	
+
 	return ret_ok;
 }
 
@@ -475,7 +495,7 @@ cherokee_header_parse (cherokee_header_t *hdr, cherokee_buffer_t *buffer,  chero
 		else if ((hdr->header[header_host].info_off == 0) && 
 			 (strncasecmp(begin, "Host", 4) == 0))
 		{
-			ret = add_known_header (hdr, header_host, (points+2)-buffer->buf, end-points-2);
+ 			ret = add_known_header (hdr, header_host, (points+2)-buffer->buf, end-points-2);
 		} 
 		else if ((hdr->header[header_range].info_off == 0) && 
 			 (strncasecmp(begin, "Range", 5) == 0))
