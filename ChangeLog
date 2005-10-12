@@ -1,3 +1,16 @@
+2005-10-12  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/md5crypt.c (md5_crypt): Fixed to validate Apache MD5
+	passwords.
+
+2005-10-11  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/thread.c (process_polling_connections): Actually I am
+	not sure about this. If the connection is polling for an extra fd
+	and it returns an error, it will clean the connection calling
+	purge_closed_polling_connection() instead of re-queuing it with
+	cherokee_thread_reactive_from_polling().
+
 2005-10-10  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* qa/94-URL-request.py: Added a new test case to test the proxy

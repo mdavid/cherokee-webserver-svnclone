@@ -870,32 +870,19 @@ cherokee_buffer_encode_md5_digest (cherokee_buffer_t *buf)
 
 
 ret_t 
-cherokee_buffer_encode_md5 (cherokee_buffer_t *buf, cherokee_buffer_t *salt, cherokee_buffer_t *encoded)
+cherokee_buffer_encode_md5 (cherokee_buffer_t *buf, cherokee_buffer_t *encoded)
 {
-	int   n;
-	char *sa;
-	char *end;
+	int               i;
 	struct MD5Context context;
 	
-	if (salt->len < 4) {
-		return ret_error;
-	}
-
-	if (strncmp (salt->buf, "$1", 2) != 0) {
-		return ret_error;
-	} 
-
-	n   = 0;
-	sa  = salt->buf + 2;
-	end = salt->buf + salt->len;
-
-	/* Skip character until the first $ 
-	 */
-	while ((n < 8) && (*sa != '$') && (sa < end)) 
-		sa++;
+	cherokee_buffer_ensure_size (encoded, 17);
 
 	MD5Init (&context);
 	MD5Update (&context, (md5byte *)buf->buf, buf->len);
+	MD5Final (encoded->buf, &context);
+
+	encoded->buf[16] = '\0';
+	encoded->len = 16;
 
 	return ret_ok;
 }
@@ -908,10 +895,10 @@ cherokee_buffer_encode_sha1 (cherokee_buffer_t *buf, cherokee_buffer_t *encoded)
 	SHA_INFO sha1;
 
 	sha_init (&sha1);
-	sha_update (&sha1, (const unsigned char*) buf->buf, buf->len);
+	sha_update (&sha1, (unsigned char*) buf->buf, buf->len);
 
 	cherokee_buffer_ensure_size (encoded, SHA1_DIGEST_SIZE + 1);
-	sha_final (&sha1, (unsigned char *)encoded->buf);
+	sha_final (&sha1, (unsigned char *) encoded->buf);
 
 	encoded->len = SHA1_DIGEST_SIZE;
 	encoded->buf[encoded->len] = '\0';

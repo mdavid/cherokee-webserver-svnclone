@@ -394,7 +394,7 @@ process_polling_connections (cherokee_thread_t *thd)
 		case -1:
 			/* Error, move back the connection
 			 */
-			cherokee_thread_reactive_from_polling (thd, conn);
+			purge_closed_polling_connection (thd, conn);
 			continue;
 		case 0:			
 			/* Nothing to do.. wait longer

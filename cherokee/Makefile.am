@@ -614,6 +614,8 @@ iocache.h \
 iocache.c \
 md5.h \
 md5.c \
+md5crypt.h \
+md5crypt.c \
 sha1.h \
 sha1.c \
 match.h \

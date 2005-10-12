@@ -450,7 +450,7 @@ fi
 dnl
 dnl Check for vsyslog
 dnl
-AC_CHECK_FUNCS(syslog vsyslog strsep strcasestr memmove strerror bcopy)
+AC_CHECK_FUNCS(syslog vsyslog strsep strcasestr memmove strerror bcopy strlcat)
 
 
 dnl

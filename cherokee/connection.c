@@ -847,7 +847,7 @@ cherokee_connection_send (cherokee_connection_t *cnt)
 	if (!HANDLER_SUPPORT_LENGTH(cnt->handler)) {
 		cnt->range_end += sent;
 	}
-	    
+
 	return ret_ok;
 }
 
