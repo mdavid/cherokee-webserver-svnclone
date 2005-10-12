@@ -10,7 +10,7 @@ PASSWD2 = "Itissecret"
 class Test (TestBase):
     def __init__ (self):
         TestBase.__init__ (self)
-        self.name = "Digest: Inalid user/passwd pair"
+        self.name = "Digest - plain: Inalid user/passwd pair"
  
         self.expected_error    = 401
         self.forbidden_content = MAGIC

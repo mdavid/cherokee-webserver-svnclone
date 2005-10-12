@@ -10,7 +10,7 @@ PASSWD = "itissecret"
 class Test (TestBase):
     def __init__ (self):
         TestBase.__init__ (self)
-        self.name = "Digest: Valid user/passwd pair"
+        self.name = "Digest - Plain: Valid user/passwd pair"
  
         self.expected_error   = 200
         self.expected_content = MAGIC

@@ -35,25 +35,14 @@
 #include "sha1.h"
 #include "md5crypt.h"
 
-
 #define CRYPT_SALT_LENGTH 2
 
-
-/* How to recognizing the Crypt Mechanism: 
- * Passwords encrypted with the MD5 hash are longer than those
- * encrypted with the DES hash and also begin with the characters
- * $1$. Passwords starting with $2$ are encrypted with the Blowfish
- * hash function. DES password strings do not have any particular
- * identifying characteristics, but they are shorter than MD5
- * passwords, and are coded in a 64-character alphabet which does not
- * include the $ character, so a relatively short string which does
- * not begin with a dollar sign is very likely a DES password.
- */
 
 cherokee_module_info_t MODULE_INFO(htpasswd) = {
 	cherokee_validator,                /* type     */
 	cherokee_validator_htpasswd_new    /* new func */
 };
+
 
 ret_t 
 cherokee_validator_htpasswd_new (cherokee_validator_htpasswd_t **htpasswd, cherokee_table_t *properties)
@@ -182,7 +171,7 @@ validate_md5 (cherokee_connection_t *conn, const char *magic, char *crypted)
 	new_md5_crypt = md5_crypt (conn->validator->passwd.buf, crypted, magic, space);
 	if (new_md5_crypt == NULL)
 		return ret_error;
-
+	
 	ret = (strcmp (new_md5_crypt, crypted) == 0) ? ret_ok : ret_error;
 
 	/* There is no need to free new_md5_crypt, it is 'space' (in the stack)..
@@ -214,6 +203,29 @@ validate_non_salted_sha (cherokee_connection_t *conn, char *crypted)
 		return ret_ok;
 
 	return ret_error;
+}
+
+
+static ret_t
+request_isnt_passwd_file (cherokee_validator_htpasswd_t *htpasswd, cherokee_connection_t *conn)
+{
+	ret_t   ret;
+	cuint_t file_ref_len;
+
+	cherokee_buffer_add (conn->local_directory, conn->request->buf+1, conn->request->len-1);  /* 1: add    */
+
+	ret = ret_ok;
+	file_ref_len = strlen (htpasswd->file_ref);
+
+	if (file_ref_len == conn->local_directory->len) {
+		ret = (strncmp (htpasswd->file_ref, 
+				conn->local_directory->buf, 
+				conn->local_directory->len) == 0) ? ret_error : ret_ok;
+	}
+
+	cherokee_buffer_drop_endding (conn->local_directory, conn->request->len-1);              /* 1: remove */
+
+	return ret;
 }
 
 
@@ -274,12 +286,12 @@ cherokee_validator_htpasswd_check (cherokee_validator_htpasswd_t *htpasswd, cher
 		if (strncmp (cryp, "$apr1$", 6) == 0) {
 			const char *magic = "$apr1$";
 			ret_auth = validate_md5 (conn, magic, cryp);
-
+			
 		} else if (strncmp (cryp, "$1$", 3) == 0) {
 			const char *magic = "$1$";
 			ret_auth = validate_md5 (conn, magic, cryp);
 
-		} if (strncmp (cryp, "{SHA}", 5) == 0) {
+		} else if (strncmp (cryp, "{SHA}", 5) == 0) {
 			ret_auth = validate_non_salted_sha (conn, cryp + 5);
 
 		} else if (cryp_len == 13) {
@@ -304,23 +316,13 @@ cherokee_validator_htpasswd_check (cherokee_validator_htpasswd_t *htpasswd, cher
 		return ret_auth;
 	}
 
-
 	/* 2.- Security check:
 	 * Is the client trying to download the passwd file?
 	 */
-	cherokee_buffer_add (conn->local_directory, conn->request->buf+1, conn->request->len-1);  /* 1: add    */
+	ret = request_isnt_passwd_file (htpasswd, conn);	
+	if (ret != ret_ok) return ret;
 
-	ret = (strncmp (htpasswd->file_ref, 
-			conn->local_directory->buf, 
-			conn->local_directory->len) == 0) ? ret_error : ret_ok;
-
-	cherokee_buffer_drop_endding (conn->local_directory, conn->request->len-1);              /* 1: remove */
-
-	if (ret < ret_ok) {
-		return ret_error;
-	}
-
-	return ret;
+	return ret_ok;
 }
 
 
