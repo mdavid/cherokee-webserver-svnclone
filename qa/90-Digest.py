@@ -5,7 +5,7 @@ MAGIC  = "Don't show this"
 class Test (TestBase):
     def __init__ (self):
         TestBase.__init__ (self)
-        self.name = "Digest: Authorization required"
+        self.name = "Digest - Plain: Authorization required"
 
         self.request          = "GET /digest1/file HTTP/1.0\r\n"
         self.expected_error   = 401
