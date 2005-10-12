@@ -33,6 +33,7 @@
 #include "connection.h"
 #include "connection-protected.h"
 #include "sha1.h"
+#include "md5crypt.h"
 
 
 #define CRYPT_SALT_LENGTH 2
@@ -172,46 +173,21 @@ validate_crypt (cherokee_connection_t *conn, const char *crypted)
 
 
 static ret_t
-validate_md5_apache (cherokee_connection_t *conn, const char *crypted)
+validate_md5 (cherokee_connection_t *conn, const char *magic, char *crypted)
 {
-	char              *p;
-	cherokee_buffer_t  salt = CHEROKEE_BUF_INIT;
-	cherokee_buffer_t  md5  = CHEROKEE_BUF_INIT;
+	ret_t  ret;
+	char  *new_md5_crypt;
+	char   space[120];
 
-	/* Format:
-	 * "$apr1$..salt..$.......md5hash..........\0" 
-	 *  <-6 -><-  9  ->
-	 */
-
-	/* Test the beginning
-	 */
-	if (strncmp (crypted, "$apr1$", 6) == 0)
+	new_md5_crypt = md5_crypt (conn->validator->passwd.buf, crypted, magic, space);
+	if (new_md5_crypt == NULL)
 		return ret_error;
 
-	/* Look for the salt
-	 */
-	p = strchr (crypted + 6, '$');
-	if (p != crypted + 6 + 9)
-		return ret_error;
+	ret = (strcmp (new_md5_crypt, crypted) == 0) ? ret_ok : ret_error;
 
-	cherokee_buffer_add (&salt, (char *)crypted + 6, p - (crypted + 6));
-	p++;
-
-	/* Copy the hash
+	/* There is no need to free new_md5_crypt, it is 'space' (in the stack)..
 	 */
-	cherokee_buffer_add (&md5, p, strlen(p));
-
-	/* Validate it!
-	 */
-	// TODO
-	PRINT_ERROR_S ("Apache special MD5 is still not supported\n");
-	
-	/* Clean up
-	 */
- 	cherokee_buffer_mrproper (&md5);
-	cherokee_buffer_mrproper (&salt);
-
-	return ret_error;
+	return ret;
 }
 
 
@@ -238,49 +214,6 @@ validate_non_salted_sha (cherokee_connection_t *conn, char *crypted)
 		return ret_ok;
 
 	return ret_error;
-}
-
-
-static ret_t
-validate_md5 (cherokee_connection_t *conn, char *crypted)
-{
-	ret_t ret;
-	cherokee_buffer_t *tmp;
-	
-	cherokee_buffer_new (&tmp);
-
-	cherokee_buffer_add_buffer (tmp, &conn->validator->user);
-	cherokee_buffer_add (tmp, ":", 1);
-	cherokee_buffer_add_buffer (tmp, &conn->validator->passwd);
-	printf ("1->'%s'\n", tmp->buf);
-
-	cherokee_buffer_encode_md5_digest (tmp);
-//	printf ("2->'%s'\n", tmp->buf);
-//	cherokee_buffer_encode_hex (tmp);
-//	printf ("3->'%s'\n", tmp->buf);
-
-	{
-		cherokee_buffer_t *n;
-
-		cherokee_buffer_new (&n);
-		cherokee_buffer_add (n, crypted, strlen(crypted));
-		cherokee_buffer_encode_hex (n);
-		printf ("crypted->hex: %s\n", n->buf);
-		cherokee_buffer_clean (n);
-
-		cherokee_buffer_add (n, crypted, strlen(crypted));
-		cherokee_buffer_encode_md5_digest (n);
-		cherokee_buffer_encode_hex (n);
-		printf ("crypted->md5->hex: %s\n", n->buf);
-		cherokee_buffer_clean (n);
-	}
-
-	printf ("'%s' == '%s'\n", crypted, tmp->buf);
-	ret = (strcmp(crypted, tmp->buf) == 0) ? ret_ok : ret_error;
-	
-	cherokee_buffer_free (tmp);
-
-	return ret;
 }
 
 
@@ -335,32 +268,32 @@ cherokee_validator_htpasswd_check (cherokee_validator_htpasswd_t *htpasswd, cher
 			continue;
 		}
 
-		/* Check the type of the crypted password
-		 * It recognizes: Apache MD5, MD5, SHA and standard crypt
+		/* Check the type of the crypted password:
+		 * It recognizes: Apache MD5, MD5, SHA, old crypt and plain text
 		 */
 		if (strncmp (cryp, "$apr1$", 6) == 0) {
-			ret_auth = validate_md5_apache (conn, cryp);
-		} 
-		
-		else if (cryp_len == 32) {
-			ret_auth = validate_md5 (conn, cryp);
-		} 
-		
-		if (strncmp (cryp, "{SHA}", 5) == 0) {
-			ret_auth = validate_non_salted_sha (conn, cryp + 5);
-		} 
+			const char *magic = "$apr1$";
+			ret_auth = validate_md5 (conn, magic, cryp);
 
-		else if (cryp_len == 13) {
+		} else if (strncmp (cryp, "$1$", 3) == 0) {
+			const char *magic = "$1$";
+			ret_auth = validate_md5 (conn, magic, cryp);
+
+		} if (strncmp (cryp, "{SHA}", 5) == 0) {
+			ret_auth = validate_non_salted_sha (conn, cryp + 5);
+
+		} else if (cryp_len == 13) {
 			ret_auth = validate_crypt (conn, cryp);
 
 			if (ret_auth != ret_ok)
 				ret_auth = validate_plain (conn, cryp);
-		} 
-		else {
+
+		} else {
 			ret_auth = validate_plain (conn, cryp);
 		}
-		
-		break;
+
+		if (ret_auth == ret_ok)
+			break;
 	}
 
 	fclose(f);

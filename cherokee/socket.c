@@ -799,6 +799,7 @@ cherokee_read (cherokee_socket_t *socket, char *buf, int buf_size, size_t *done)
 			return ret_eagain;
 		case EBADF:
 		case EPIPE: 
+		case ENOTSOCK:
 		case ETIMEDOUT:
 		case ECONNRESET:
 		case EHOSTUNREACH:
