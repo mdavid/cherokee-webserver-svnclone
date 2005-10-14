@@ -112,10 +112,10 @@ auth_pam_talker (int                        num_msg,
 		 */
 		switch (msg[i]->msg_style) {
 		case PAM_PROMPT_ECHO_ON:
-			response[i].resp = strdup(conn->user.buf);
+			response[i].resp = strdup(conn->validator->user.buf);
 			break;
 		case PAM_PROMPT_ECHO_OFF:
-			response[i].resp = strdup(conn->passwd.buf);
+			response[i].resp = strdup(conn->validator->passwd.buf);
 			break;
 		default:
 			if (response)
@@ -142,26 +142,27 @@ cherokee_validator_pam_check (cherokee_validator_pam_t  *pam, cherokee_connectio
 
 	/* Start the PAM query
 	 */
-	ret = pam_start (CHEROKEE_AUTH_SERVICE, conn->user.buf, &pamconv, &pamhandle);
+	ret = pam_start (CHEROKEE_AUTH_SERVICE, conn->validator->user.buf, &pamconv, &pamhandle);
 	if (ret != PAM_SUCCESS) {
 		conn->error_code = http_internal_error;
 		return ret_error;
 	}
 
-	/* NOTE:
-	 * First of all, it's a really *horrible* hack.
-	 * The right way to authenticate a user is call:
+	/* NOTE: 
+	 * First of all, it's a really *awful* hack.  Said that, let's
+	 * see the right way to authenticate a user is call:
 	 *
 	 * 	ret = pam_authenticate (pamhandle, 0);
 	 *
-	 * Instead it, the validator calls to:
+	 * Instead of it, the validator calls to:
 	 *
 	 *	ret = _pam_dispatch (pamhandle, 0, 1);
 	 * 
-	 * It's because pam_uthenticate do long delay if the user is not
-	 * authenticated.  It's a problem if Cherokee is compiled with out
-	 * threading support, because the server will be frozen for some
-	 * second until pam_authenticate finish the delay.
+	 * It is because pam_uthenticate() does a long delay if the
+	 * user is not authenticated sucesfuly.  It is a huge problem
+	 * if Cherokee is compiled without threading support because
+	 * it will be frozen for some time until pam_authenticate()
+	 * comes back.
 	 *
 	 * The second parameter: 0, is the flags
 	 * The last one: 1, is PAM_AUTHENTICATE
@@ -174,7 +175,7 @@ cherokee_validator_pam_check (cherokee_validator_pam_t  *pam, cherokee_connectio
 		CHEROKEE_NEW(msg, buffer);
 
 		cherokee_buffer_add (msg, "PAM: user '", 11);
-		cherokee_buffer_add_buffer (msg, &conn->user);
+		cherokee_buffer_add_buffer (msg, &conn->validator->user);
 		cherokee_buffer_add_va (msg, "' - not authenticated: %s", pam_strerror(pamhandle, ret));
 
 		cherokee_logger_write_string (CONN_VSRV(conn)->logger, "%s", msg->buf);
@@ -190,7 +191,7 @@ cherokee_validator_pam_check (cherokee_validator_pam_t  *pam, cherokee_connectio
 		CHEROKEE_NEW(msg, buffer);
 
 		cherokee_buffer_add (msg, "PAM: user '", 11);
-		cherokee_buffer_add_buffer (msg, &conn->user);
+		cherokee_buffer_add_buffer (msg, &conn->validator->user);
 		cherokee_buffer_add_va (msg, "'  - invalid account: %s", pam_strerror(pamhandle, ret));
 
 		cherokee_logger_write_string (CONN_VSRV(conn)->logger, "%s", msg->buf);
@@ -215,7 +216,7 @@ cherokee_validator_pam_add_headers (cherokee_validator_pam_t  *pam, cherokee_con
 }
 
 
-/*   Library init function
+/* Library init function
  */
 static cherokee_boolean_t _pam_is_init = false;
 
