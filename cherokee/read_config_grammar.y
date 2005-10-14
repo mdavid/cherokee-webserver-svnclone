@@ -555,7 +555,7 @@ tuple : T_ID T_FULLDIR
 			 cherokee_table_new (&vserver->logger_props);
 	   }
 
-	   cherokee_table_add (vserver->logger_props, $1, $2);
+	   cherokee_typed_table_add_str (vserver->logger_props, $1, $2);
 };
 
 

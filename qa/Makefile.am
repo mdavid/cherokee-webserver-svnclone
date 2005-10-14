@@ -95,7 +95,13 @@ run-tests.py \
 90-Digest.py \
 91-Digest2.py \
 92-Digest3.py \
-93-InvalidLinks.py
+93-InvalidLinks.py \
+94-URL-request.py \
+95-htpasswd-apache-md5.py \
+96-htpasswd-md5.py \
+97-htpasswd-sha1.py \
+98-htpasswd-crypt.py \
+99-htpasswd-plain.py
 
 test:
 	./run-tests.py

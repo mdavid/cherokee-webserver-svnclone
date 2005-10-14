@@ -1,4 +1,19 @@
+2005-10-14  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/validator_pam.c: Compilation was broken for this
+	validator. Alexander Serkov <alexander.serkov@gmail.com> sent a
+	patch for it.
+
+	* cherokee.conf.sample.pre, sites-default.sample.pre:
+	DirectoryIndex and DocumentRoot moved from cherokee.conf to
+	site-default. Requested by Cesar Fernandez <cesar@pk2.org>
+
 2005-10-12  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/read_config_grammar.y (tuple): Bug fix.
+	s/cherokee_table_add/cherokee_typed_table_add_str/. It was causing
+	the logging system to use syslog() rather than a target file, even
+	if it was configured for it.
 
 	* cherokee/md5crypt.c (md5_crypt): Fixed to validate Apache MD5
 	passwords.

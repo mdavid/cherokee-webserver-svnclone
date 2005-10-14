@@ -58,19 +58,6 @@ KeepAlive On
 MaxKeepAliveRequests 500
 
 ##
-## DirectoryIndex: Name of the file or files to use as a pre-written HTML
-## directory index.  Separate multiple entries with commas.
-##
-DirectoryIndex index.php, index.html, index.htm, index.shtml
-
-##
-## DocumentRoot: The directory out of which you will serve your
-## documents. By default, all requests are taken from this directory, but
-## symbolic links and aliases may be used to point to other locations.
-##
-DocumentRoot %wwwroot%
-
-##
 ## ServerTokens:  This directive configures what you return as the Server 
 ## HTTP response Header. The default is 'Full' which sends information about
 ## the OS-Type and compiled in modules.  Full conveys the most information, 
