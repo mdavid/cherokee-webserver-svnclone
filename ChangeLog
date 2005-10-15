@@ -1,5 +1,9 @@
 2005-10-15  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* cherokee/validator_htdigest.c (validate_basic,
+	extract_user_entry): Rewritten. Now htdigest works with Basic
+	authentication.
+
 	* cherokee/logger_ncsa.c, cherokee/logger_w3c.c: There files now
 	use cherokee_syslog() instead of syslog().
 
