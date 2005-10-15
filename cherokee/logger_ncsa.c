@@ -44,6 +44,7 @@
 #include <time.h>
 #endif
 
+#include "util.h"
 #include "connection.h"
 #include "connection-protected.h"
 #include "header.h"
@@ -198,7 +199,7 @@ cherokee_logger_ncsa_flush (cherokee_logger_ncsa_t *logger)
 	}
 
 	if (logger->accesslog_fd == NULL) {
-		syslog (LOG_INFO, "%s", LOGGER_BUFFER(logger)->buf);
+		cherokee_syslog (LOG_INFO, LOGGER_BUFFER(logger));
 		return cherokee_buffer_clean (LOGGER_BUFFER(logger));
 	}
 
@@ -319,6 +320,8 @@ build_log_string (cherokee_logger_ncsa_t *logger, cherokee_connection_t *cnt, ch
 ret_t 
 cherokee_logger_ncsa_write_string (cherokee_logger_ncsa_t *logger, const char *string)
 {
+	/* Write it down in the file..
+	 */
 	if (logger->accesslog_fd != NULL) {
 		int ret;
 		ret = fprintf (logger->accesslog_fd, "%s", string);
@@ -326,6 +329,8 @@ cherokee_logger_ncsa_write_string (cherokee_logger_ncsa_t *logger, const char *s
 		return (ret > 0) ? ret_ok : ret_error;
 	} 
 
+	/* .. or, send it to syslog
+	 */
 	syslog (LOG_INFO, "%s", string);
 	return ret_ok;
 }
@@ -382,9 +387,9 @@ cherokee_logger_ncsa_write_error (cherokee_logger_ncsa_t *logger, cherokee_conne
 
 	/* or, send it to syslog
 	 */
-	syslog (LOG_ERR, "%s", tmp.buf);
-
+	cherokee_syslog (LOG_ERR, &tmp);
 	cherokee_buffer_mrproper (&tmp);
+
 	return ret_ok;
 }
 

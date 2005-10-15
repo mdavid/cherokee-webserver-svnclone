@@ -872,14 +872,13 @@ cherokee_buffer_encode_md5_digest (cherokee_buffer_t *buf)
 ret_t 
 cherokee_buffer_encode_md5 (cherokee_buffer_t *buf, cherokee_buffer_t *encoded)
 {
-	int               i;
 	struct MD5Context context;
 	
 	cherokee_buffer_ensure_size (encoded, 17);
 
 	MD5Init (&context);
 	MD5Update (&context, (md5byte *)buf->buf, buf->len);
-	MD5Final (encoded->buf, &context);
+	MD5Final ((unsigned char *)encoded->buf, &context);
 
 	encoded->buf[16] = '\0';
 	encoded->len = 16;

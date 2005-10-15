@@ -1,3 +1,12 @@
+2005-10-15  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/logger_ncsa.c, cherokee/logger_w3c.c: There files now
+	use cherokee_syslog() instead of syslog().
+
+	* cherokee/util.c, cherokee/util.h (cherokee_syslog): Added new
+	method to send information to syslog line by line, each one on a
+	different call.
+
 2005-10-14  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cherokee/validator_pam.c: Compilation was broken for this

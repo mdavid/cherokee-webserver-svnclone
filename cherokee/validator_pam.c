@@ -154,7 +154,7 @@ cherokee_validator_pam_check (cherokee_validator_pam_t  *pam, cherokee_connectio
 	 *
 	 * 	ret = pam_authenticate (pamhandle, 0);
 	 *
-	 * Instead of it, the validator calls to:
+	 * Instead of it, this validator is calling:
 	 *
 	 *	ret = _pam_dispatch (pamhandle, 0, 1);
 	 * 
