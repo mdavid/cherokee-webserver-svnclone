@@ -69,6 +69,7 @@ int   cherokee_estimate_va_length (char *format, va_list ap);
 struct tm *cherokee_gmtime        (const time_t *timep, struct tm *result);
 int        cherokee_readdir       (DIR *dirstream, struct dirent *entry, struct dirent **result);
 ret_t      cherokee_gethostbyname (const char *hostname, struct in_addr *addr);
+ret_t      cherokee_syslog        (int priority, cherokee_buffer_t *buf);
 
 /* Misc
  */

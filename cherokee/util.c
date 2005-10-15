@@ -55,6 +55,10 @@
 # include <netdb.h>         /* defines gethostbyname()  */
 #endif
 
+#ifdef HAVE_SYSLOG_H
+# include <syslog.h>
+#endif
+
 #if defined(HAVE_GNUTLS)
 # include <gnutls/gnutls.h>
 #elif defined(HAVE_OPENSSL)
@@ -715,3 +719,31 @@ cherokee_isbigendian (void)
 }
 
 
+
+ret_t
+cherokee_syslog (int priority, cherokee_buffer_t *buf)
+{
+	char *p;
+	char *nl, *end;
+
+	if (cherokee_buffer_is_empty(buf))
+		return ret_ok;
+
+	p   = buf->buf;
+	end = buf->buf + buf->len;
+
+	do {
+		nl = strchr (p, '\n');
+		if (nl != NULL) 
+			*nl = '\0';
+
+		syslog (priority, "%s", p);
+
+		if (nl != NULL) 
+			*nl = '\n';
+
+		p = nl + 1;
+	} while (p < end);
+
+	return ret_ok;
+}

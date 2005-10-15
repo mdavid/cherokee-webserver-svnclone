@@ -42,6 +42,7 @@
 #include <time.h>
 #endif
 
+#include "util.h"
 #include "connection.h"
 #include "connection-protected.h"
 #include "module.h"
@@ -197,7 +198,7 @@ cherokee_logger_w3c_flush (cherokee_logger_w3c_t *logger)
 	}
 
 #ifdef HAVE_SYSLOG
-	syslog (LOG_ERR, "%s", LOGGER_BUFFER(logger)->buf);
+	cherokee_syslog (LOG_ERR, LOGGER_BUFFER(logger));
 #else
 	fprintf (stderr, "%s", LOGGER_BUFFER(logger)->buf);
 #endif
