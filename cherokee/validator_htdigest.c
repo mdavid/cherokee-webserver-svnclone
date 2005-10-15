@@ -56,7 +56,7 @@ cherokee_validator_htdigest_new (cherokee_validator_htdigest_t **htdigest, chero
 	if (properties) {
 		cherokee_typed_table_get_str (properties, "file", &n->file_ref);
 	}
-	
+
 	if (n->file_ref == NULL) {
 		PRINT_ERROR_S ("htdigest validator needs a \"File\" property\n");
 	}
@@ -82,27 +82,50 @@ build_HA1 (cherokee_connection_t *conn, cherokee_buffer_t *buf)
 }
 
 static ret_t
-read_data_from_line (char *line, char *uid, char **user, char **realm, char **passwd)
+extract_user_entry (cherokee_buffer_t *file, char *user_, char **user, char **realm, char **passwd)
 {
-	/* Read line
-	 */
-	while ((*line == '\r') || (*line == '\n')) line++;
-	*user = line;
+	char *end      = file->buf + file->len;
+	char *pos      = file->buf;
+	int   user_len = strlen (user_);
 		
-	*realm = strchr(line, ':');
-	if (!*realm) return ret_error;
-	*realm++;
-	
-	*passwd = strchr (*realm, ':');
-	if (!*passwd) return ret_error;
-	*passwd++;
-	
-	/* Look for the right user
-	 */
-	if (strncmp (*user, uid, (*realm-*user)-1) != 0)
-		return ret_not_found;
+	while (pos < end) {
+		char *eol;
+		
+		/* Limit the line
+		 */
+		eol = strchr (pos, '\n');
+		if (eol != NULL) 
+			*eol = '\0';
+		
+		/* Check the user
+		 */
+		if ((pos[user_len] == ':') && 
+		    (strncmp (pos, user_, user_len) == 0))
+		{
+			char *tmp;
 
-	return ret_ok;
+			*user = pos;
+			
+			tmp = strchr(pos, ':');
+			if (!tmp) return ret_error;
+			*tmp = '\0';
+			*realm = tmp + 1;
+			
+			tmp = strchr (*realm, ':');
+			if (!tmp) return ret_error;
+			*tmp = '\0';
+			*passwd = tmp + 1;
+
+			return ret_ok;
+		}
+		
+		/* Look for the next line
+		 */
+		pos = eol;
+		while ((*pos == '\r') || (*pos == '\n')) pos++;
+	}
+
+	return ret_not_found;
 }
 
 
@@ -110,33 +133,23 @@ static ret_t
 validate_basic (cherokee_validator_htdigest_t *htdigest, cherokee_connection_t *conn, cherokee_buffer_t *file)
 {
 	ret_t  ret;
-	char  *line;
-	char  *user, *realm, *passwd;
-	cherokee_buffer_t *ha1 = NULL;
-		
-	/* Look for the user entry
+	char  *user   = NULL;
+	char  *realm  = NULL;
+	char  *passwd = NULL;
+	cherokee_boolean_t equal;
+	cherokee_buffer_t  ha1 = CHEROKEE_BUF_INIT;
+
+	ret = extract_user_entry (file, conn->validator->user.buf, &user, &realm, &passwd);
+	if (ret != ret_ok) return ret;
+
+	/* This is the right line
 	 */
-	line = file->buf;
-	do {
-		cherokee_boolean_t equal;
-
-		ret = read_data_from_line (line, conn->validator->user.buf, &user, &realm, &passwd);
-		if (ret != ret_ok) continue;
-
-		printf ("user: '%s', realm: '%s', passwd: '%s'\n", user, realm, passwd);
-
-                /* This is the right line
-		 */
-		cherokee_buffer_new (&ha1);
-		build_HA1 (conn, ha1);
-		equal = (strncmp(ha1->buf, passwd, ha1->len) == 0);
-		cherokee_buffer_free (ha1);
-
-		if (equal) return ret_ok;
-
-	} while ((line = strchr(line, '\n')) != NULL);
-
-	return ret_not_found;
+	build_HA1 (conn, &ha1);
+	
+	equal = (strncmp(ha1.buf, passwd, ha1.len) == 0);
+	cherokee_buffer_mrproper (&ha1);
+	
+	return (equal) ? ret_ok : ret_not_found;
 }
 
 
@@ -151,9 +164,9 @@ validate_digest (cherokee_validator_htdigest_t *htdigest, cherokee_connection_t 
 ret_t 
 cherokee_validator_htdigest_check (cherokee_validator_htdigest_t *htdigest, cherokee_connection_t *conn)
 {
-	ret_t  ret;
-	CHEROKEE_NEW(file, buffer);
-
+	ret_t             ret;
+	cherokee_buffer_t file = CHEROKEE_BUF_INIT;
+	
 	/* Ensure that we have all what we need
 	 */
 	if ((conn->validator == NULL) || cherokee_buffer_is_empty (&conn->validator->user)) 
@@ -164,7 +177,7 @@ cherokee_validator_htdigest_check (cherokee_validator_htdigest_t *htdigest, cher
 
 	/* Read the whole file
 	 */
-	ret = cherokee_buffer_read_file (file, htdigest->file_ref);
+	ret = cherokee_buffer_read_file (&file, htdigest->file_ref);
 	if (ret != ret_ok) {
 		ret = ret_error;
 		goto out;
@@ -173,17 +186,17 @@ cherokee_validator_htdigest_check (cherokee_validator_htdigest_t *htdigest, cher
 	/* Authenticate
 	 */
 	if (conn->req_auth_type & http_auth_basic) {
-		ret = validate_basic (htdigest, conn, file);
+		ret = validate_basic (htdigest, conn, &file);
 
 	} else if (conn->req_auth_type & http_auth_basic) {
-		ret = validate_digest (htdigest, conn, file);
+		ret = validate_digest (htdigest, conn, &file);
 
 	} else {
 		SHOULDNT_HAPPEN;
 	}
 
 out:
-	cherokee_buffer_free (file);
+	cherokee_buffer_mrproper (&file);
 	return ret;
 }
 
