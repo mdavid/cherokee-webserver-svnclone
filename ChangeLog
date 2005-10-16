@@ -1,3 +1,13 @@
+2005-10-16  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* qa/run-tests.py: Fixed to use three digit indexes.
+
+	* qa/??-*py, qa/Makefile.am: Moved to three digits index. We have
+	reached one hundred test.
+
+	* cherokee/validator_htdigest.c (validate_digest):
+	Implemented. Now htpasswd works with Digest authentication.
+
 2005-10-15  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cherokee/validator_htdigest.c (validate_basic,

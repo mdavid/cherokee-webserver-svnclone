@@ -250,8 +250,9 @@ digest_A1 (cherokee_validator_t *validator, char *passwd, cherokee_buffer_t *buf
 {
 	/* Sanity check
 	 */
-	if (cherokee_buffer_is_empty (&validator->user) ||
-	    cherokee_buffer_is_empty (&validator->realm)) 
+	if (passwd == NULL ||
+	    cherokee_buffer_is_empty (&validator->user) ||
+	    cherokee_buffer_is_empty (&validator->realm))  
 		return ret_deny;
 		
 	cherokee_buffer_add_va (buf, "%s:%s:%s", 
@@ -267,6 +268,7 @@ digest_A1 (cherokee_validator_t *validator, char *passwd, cherokee_buffer_t *buf
 static ret_t 
 digest_HA2 (cherokee_validator_t *validator, cherokee_buffer_t *buf, cherokee_connection_t *conn)
 {
+	ret_t       ret;
 	const char *method;
 
 	/* Sanity check
@@ -274,8 +276,8 @@ digest_HA2 (cherokee_validator_t *validator, cherokee_buffer_t *buf, cherokee_co
 	if (cherokee_buffer_is_empty (&validator->uri))
 		return ret_deny;
 
-
-	cherokee_http_method_to_string (conn->header->method, &method, NULL);
+	ret = cherokee_http_method_to_string (conn->header->method, &method, NULL);
+	if (unlikely (ret != ret_ok)) return ret;
 
 	cherokee_buffer_add_va (buf, "%s:%s", method, validator->uri.buf);
 	cherokee_buffer_encode_md5_digest (buf);	
@@ -285,48 +287,57 @@ digest_HA2 (cherokee_validator_t *validator, cherokee_buffer_t *buf, cherokee_co
 
 
 ret_t 
-cherokee_validator_digest_response (cherokee_validator_t *validator, char *passwd, cherokee_buffer_t *buf, cherokee_connection_t *conn)
+cherokee_validator_digest_response (cherokee_validator_t  *validator, 
+				    char                  *A1, 
+				    cherokee_buffer_t     *buf, 
+				    cherokee_connection_t *conn)
 {
-	ret_t             ret;
-	cherokee_buffer_t a1 = CHEROKEE_BUF_INIT;
+	ret_t              ret;
 	cherokee_buffer_t a2 = CHEROKEE_BUF_INIT;
 
-	/* Sanity check
+	/* A1 has to be in string of lenght 32:
+	 * MD5_digest(user":"realm":"passwd)
 	 */
+
+	/* Sanity checks
+	 */
+	if (A1 == NULL)
+		return ret_deny;
+
 	if (cherokee_buffer_is_empty (&validator->nonce))
 		return ret_deny;
-	
-	/* Build A1 and A2 strings
-	 */
-	ret = digest_A1 (validator, passwd, &a1);
-	if (ret != ret_ok) goto error;
 
+	/* Build A2
+	 */
 	ret = digest_HA2 (validator, &a2, conn);
 	if (ret != ret_ok) goto error;
 	
 	/* Build the final string
 	 */
-	cherokee_buffer_ensure_size (buf, a1.len + a2.len + validator->nonce.len + 4);
+	cherokee_buffer_ensure_size (buf, 32 + a2.len + validator->nonce.len + 4);
 
-	cherokee_buffer_add_buffer (buf, &a1);
+	cherokee_buffer_add (buf, A1, 32);
 	cherokee_buffer_add (buf, ":", 1);
 	cherokee_buffer_add_buffer (buf, &validator->nonce);
 	cherokee_buffer_add (buf, ":", 1);
+
 	if (!cherokee_buffer_is_empty (&validator->qop)) {
-		cherokee_buffer_add_buffer (buf, &validator->nc);		
+		if (!cherokee_buffer_is_empty (&validator->nc))
+			cherokee_buffer_add_buffer (buf, &validator->nc);		
 		cherokee_buffer_add (buf, ":", 1);
-		cherokee_buffer_add_buffer (buf, &validator->cnonce);		
+		if (!cherokee_buffer_is_empty (&validator->cnonce))
+			cherokee_buffer_add_buffer (buf, &validator->cnonce);		
 		cherokee_buffer_add (buf, ":", 1);
 		cherokee_buffer_add_buffer (buf, &validator->qop);		
 		cherokee_buffer_add (buf, ":", 1);
 	}
+
 	cherokee_buffer_add_buffer (buf, &a2);
 	cherokee_buffer_encode_md5_digest (buf);
 
 	return ret_ok;
 
 error:
-	cherokee_buffer_mrproper (&a1);
 	cherokee_buffer_mrproper (&a2);
 	return ret;
 }
