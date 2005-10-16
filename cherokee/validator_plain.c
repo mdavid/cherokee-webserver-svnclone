@@ -75,12 +75,55 @@ cherokee_validator_plain_free (cherokee_validator_plain_t *plain)
 }
 
 
+static ret_t
+check_digest (cherokee_validator_plain_t *plain, char *passwd, cherokee_connection_t *conn)
+{			
+	ret_t                 ret;
+	cherokee_buffer_t     a1        = CHEROKEE_BUF_INIT;
+	cherokee_buffer_t     buf       = CHEROKEE_BUF_INIT;
+	cherokee_validator_t *validator = conn->validator;
+
+	/* Sanity check
+	 */
+	if (cherokee_buffer_is_empty (&validator->user) ||
+	    cherokee_buffer_is_empty (&validator->realm)) 
+		return ret_deny;
+
+	/* Build A1
+	 */
+	cherokee_buffer_add_va (&a1, "%s:%s:%s", 
+				validator->user.buf,
+				validator->realm.buf,
+				passwd);
+
+	cherokee_buffer_encode_md5_digest (&a1);
+
+	/* Build a possible response
+	 */
+	cherokee_validator_digest_response (VALIDATOR(plain), a1.buf, &buf, conn);
+
+	/* Check the response
+	 */
+	if (cherokee_buffer_is_empty (&conn->validator->response)) {
+		ret = ret_error;
+		goto go_out;
+	}
+	
+	/* Compare and return
+	 */
+	ret = (strcmp (conn->validator->response.buf, buf.buf) == 0) ? ret_ok : ret_error;
+
+go_out:
+	cherokee_buffer_mrproper (&a1);
+	cherokee_buffer_mrproper (&buf);
+	return ret;
+}
+
 ret_t 
 cherokee_validator_plain_check (cherokee_validator_plain_t *plain, cherokee_connection_t *conn)
 {
-	FILE              *f;
-	ret_t              ret;
-	cherokee_buffer_t  buf = CHEROKEE_BUF_INIT;
+	FILE  *f;
+	ret_t  ret;
 
         if ((conn->validator == NULL) || cherokee_buffer_is_empty(&conn->validator->user)) {
                 return ret_error;
@@ -119,7 +162,8 @@ cherokee_validator_plain_check (cherokee_validator_plain_t *plain, cherokee_conn
 			 
 		/* Is this the right user? 
 		 */
-		if (strcmp (conn->validator->user.buf, line) != 0) {
+		if (strncmp (conn->validator->user.buf, line, 
+			     conn->validator->user.len) != 0) {
 			continue;
 		}
 
@@ -134,21 +178,8 @@ cherokee_validator_plain_check (cherokee_validator_plain_t *plain, cherokee_conn
 			break;
 
 		case http_auth_digest:
-			/* Build a possible response
-			 */
-			cherokee_validator_digest_response (VALIDATOR(plain), pass, &buf, conn);
-
-			/* Check the response
-			 */
-			if (cherokee_buffer_is_empty (&conn->validator->response))
-				continue;
-
-			if (strcmp (conn->validator->response.buf, buf.buf) == 0) {
-				ret = ret_ok;
-				goto go_out;
-			}
-
-			cherokee_buffer_clean (&buf);
+			ret = check_digest (plain, pass, conn);
+			if (ret == ret_ok) goto go_out;
 			break;
 
 		default:
@@ -158,8 +189,6 @@ cherokee_validator_plain_check (cherokee_validator_plain_t *plain, cherokee_conn
 
 go_out:
 	fclose(f);
-	cherokee_buffer_mrproper (&buf);
-
 	return ret;
 }
 

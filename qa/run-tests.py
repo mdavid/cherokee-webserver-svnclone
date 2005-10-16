@@ -7,6 +7,7 @@ import copy
 import signal
 import shutil
 import thread
+import string
 import tempfile
 
 from base import *
@@ -43,7 +44,8 @@ if len(sys.argv) > 1:
 if len(files) == 0:
     files = os.listdir('.') 
     files = filter (lambda x: x[-3:] == '.py', files)
-    files = filter (lambda x: x[2] == '-', files)
+    files = filter (lambda x: x[3] == '-', files)
+    files = filter (lambda x: x[2] in string.digits, files)
     files.sort()
 
 # Process the parameters

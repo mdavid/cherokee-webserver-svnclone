@@ -67,7 +67,7 @@ cherokee_validator_htpasswd_new (cherokee_validator_htpasswd_t **htpasswd, chero
 	}
 
 	if (n->file_ref == NULL) {
-		PRINT_ERROR_S ("htdigest validator needs a \"File\" property\n");
+		PRINT_ERROR_S ("htpasswd validator needs a \"File\" property\n");
 	}
 
 	*htpasswd = n;

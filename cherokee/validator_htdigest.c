@@ -132,20 +132,24 @@ extract_user_entry (cherokee_buffer_t *file, char *user_, char **user, char **re
 static ret_t
 validate_basic (cherokee_validator_htdigest_t *htdigest, cherokee_connection_t *conn, cherokee_buffer_t *file)
 {
-	ret_t  ret;
-	char  *user   = NULL;
-	char  *realm  = NULL;
-	char  *passwd = NULL;
-	cherokee_boolean_t equal;
-	cherokee_buffer_t  ha1 = CHEROKEE_BUF_INIT;
+	ret_t               ret;
+	cherokee_boolean_t  equal;
+	char               *user   = NULL;
+	char               *realm  = NULL;
+	char               *passwd = NULL;
+	cherokee_buffer_t   ha1 = CHEROKEE_BUF_INIT;
 
+	/* Extact the right entry information
+	 */
 	ret = extract_user_entry (file, conn->validator->user.buf, &user, &realm, &passwd);
 	if (ret != ret_ok) return ret;
 
-	/* This is the right line
+	/* Build the hash
 	 */
 	build_HA1 (conn, &ha1);
-	
+
+	/* Compare it with the stored hash, clean, and return
+	 */
 	equal = (strncmp(ha1.buf, passwd, ha1.len) == 0);
 	cherokee_buffer_mrproper (&ha1);
 	
@@ -156,8 +160,35 @@ validate_basic (cherokee_validator_htdigest_t *htdigest, cherokee_connection_t *
 static ret_t
 validate_digest (cherokee_validator_htdigest_t *htdigest, cherokee_connection_t *conn, cherokee_buffer_t *file)
 {
+	ret_t              ret;
+	char              *user   = NULL;
+	char              *realm  = NULL;
+	char              *passwd = NULL;
+	cherokee_buffer_t  buf    = CHEROKEE_BUF_INIT;
+
+	/* Sanity check
+	 */
+	if (cherokee_buffer_is_empty (&conn->validator->response)) 
+		return ret_error;
+
+	/* Extact the right entry information
+	 */
+	ret = extract_user_entry (file, conn->validator->user.buf, &user, &realm, &passwd);
+	if (unlikely(ret != ret_ok)) return ret;
+
+	/* Build the hash:
+	 * In this case passwd is the HA1 hash: md5(user:realm:passwd)
+	 */
+	ret = cherokee_validator_digest_response (VALIDATOR(htdigest), passwd, &buf, conn);
+	if (unlikely(ret != ret_ok)) goto go_out;
 	
-	return ret_not_found;
+	/* Compare and return
+	 */
+	ret = (strcmp (conn->validator->response.buf, buf.buf) == 0) ? ret_ok : ret_error;
+	
+go_out:
+	cherokee_buffer_mrproper (&buf);
+	return ret;
 }
 
 
@@ -188,7 +219,7 @@ cherokee_validator_htdigest_check (cherokee_validator_htdigest_t *htdigest, cher
 	if (conn->req_auth_type & http_auth_basic) {
 		ret = validate_basic (htdigest, conn, &file);
 
-	} else if (conn->req_auth_type & http_auth_basic) {
+	} else if (conn->req_auth_type & http_auth_digest) {
 		ret = validate_digest (htdigest, conn, &file);
 
 	} else {
