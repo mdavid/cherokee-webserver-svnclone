@@ -152,9 +152,9 @@ typedef struct {
 
 
 #ifdef HAVE_OPENSSL
-# define OPENSSL_LAST_ERROR(error)  do { int n;                        \
-                                         while ((n = ERR_get_error())) \
-                                          error = ERR_error_string(n); \
+# define OPENSSL_LAST_ERROR(error)  do { int n;                              \
+                                         while ((n = ERR_get_error()))       \
+                                          error = ERR_error_string(n, NULL); \
                                     } while (0)
 #endif
 
