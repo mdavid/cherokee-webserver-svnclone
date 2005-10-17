@@ -1,9 +1,17 @@
+2005-10-17  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/socket.h (OPENSSL_LAST_ERROR): Fixed. It wasn't
+	compiling because there was a parameter left on the call to
+	ERR_error_string(). Reported by Cesar Fernandez.
+
 2005-10-16  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* qa/100-Digest-htdigest.py, qa/Makefile.am: Added new test unit.
 
 	* qa/run-tests.py: Fixed to use three digit indexes.
 
-	* qa/??-*py, qa/Makefile.am: Moved to three digits index. We have
-	reached one hundred test.
+	* qa/??-*py, qa/Makefile.am: Moved to three digits index. We are
+	about to reach one hundred tests.
 
 	* cherokee/validator_htdigest.c (validate_digest):
 	Implemented. Now htpasswd works with Digest authentication.
