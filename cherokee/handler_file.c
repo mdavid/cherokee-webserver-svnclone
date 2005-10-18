@@ -276,6 +276,13 @@ cherokee_handler_file_init (cherokee_handler_file_t *n)
 	ret = stat_local_directory (n, conn, &io_entry, &n->info);
 	if (ret != ret_ok) return ret;
 
+	/* Ensure it is a file
+	 */
+	if (S_ISDIR(n->info->st_mode)) {
+		conn->error_code = http_access_denied;
+		return ret_error;
+	}
+
 	/* Is it cached on the client?
 	 */
 	ret = check_cached(n);

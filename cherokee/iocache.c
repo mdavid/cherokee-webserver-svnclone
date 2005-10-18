@@ -447,12 +447,18 @@ cherokee_iocache_mmap_get_w_fd (cherokee_iocache_t *iocache, char *filename, int
 
 		if (iocache->srv->bogo_now >= (PRIV(new)->stat_update + FRESHNESS_TIME)) {
 			ret = iocache_entry_update_stat (new, filename, iocache);
-			if (ret != ret_ok) return ret;
+			if (ret != ret_ok) {
+				CHEROKEE_MUTEX_UNLOCK (&iocache->files_lock);
+				return ret;
+			}
 		}
 
 		if (iocache->srv->bogo_now >= (PRIV(new)->mmap_update + FRESHNESS_TIME)) {
 			ret = iocache_entry_update_mmap (new, filename, fd, iocache);
-			if (ret != ret_ok) return ret;
+			if (ret != ret_ok) {
+				CHEROKEE_MUTEX_UNLOCK (&iocache->files_lock);
+				return ret;
+			}
 		}
 
 		PRIV(new)->usages++;
