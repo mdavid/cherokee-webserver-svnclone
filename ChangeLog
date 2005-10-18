@@ -1,3 +1,17 @@
+2005-10-18  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/Makefile.embedded (OBJS): Added nonce.o and
+	typed_table.o
+
+	* cherokee/buffer.c (cherokee_buffer_encode_sha1_base64,
+	cherokee_buffer_encode_sha1): It will compile on u-Cherokee.
+
+	* cherokee/handler_file.c (cherokee_handler_file_init): Check if
+	the request is a directory in order to deny the request.
+
+	* cherokee/iocache.c (cherokee_iocache_mmap_get_w_fd): Fixed a
+	concurrency problem which might cause some troubles.
+
 2005-10-17  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cherokee/socket.h (OPENSSL_LAST_ERROR): Fixed. It wasn't

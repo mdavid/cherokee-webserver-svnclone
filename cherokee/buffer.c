@@ -887,7 +887,7 @@ cherokee_buffer_encode_md5 (cherokee_buffer_t *buf, cherokee_buffer_t *encoded)
 }
 
 
-
+#ifndef CHEROKEE_EMBEDDED
 ret_t 
 cherokee_buffer_encode_sha1 (cherokee_buffer_t *buf, cherokee_buffer_t *encoded)
 {
@@ -938,6 +938,7 @@ cherokee_buffer_encode_sha1_base64 (cherokee_buffer_t *buf)
 
 	return ret_ok;
 }
+#endif
 
 
 ret_t 

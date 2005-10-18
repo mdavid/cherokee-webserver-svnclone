@@ -39,7 +39,7 @@ matching_list.o \
 handler_error.o \
 module_loader.o \
 virtual_server.o \
-validator_plain.o \
+validator_htdigest.o \
 dirs_table_entry.o \
 handler_cgi.o \
 handler_file.o \
@@ -48,6 +48,8 @@ handler_phpcgi.o \
 handler_dirlist.o \
 handler_common.o \
 list_merge_sort.o \
+nonce.o \
+typed_table.o \
 read_config_embedded.o
 
 
