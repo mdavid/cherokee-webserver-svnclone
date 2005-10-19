@@ -74,23 +74,19 @@ generate_file_entry (DIR *dir, cherokee_buffer_t *path, cherokee_handler_dirlist
 	file_entry_t  *n;
 	char          *name;
 	struct dirent *entry;
-	cuint_t        entry_length;
+
+	/* Get the memory
+	 */
+	n = malloc (sizeof(file_entry_t) + path->len + _PC_NAME_MAX + 3);
+	if (unlikely(n == NULL)) return ret_nomem;
 
 	/* Read a new directory entry
 	 */
-	entry = readdir (dir);
+	cherokee_readdir (dir, &n->info, &entry);
 	if (entry == NULL) return ret_eof;
-
-	/* Get a new object
-	 */
-	entry_length = MAX(sizeof(struct dirent), offsetof(struct dirent, d_name) + strlen (entry->d_name) + 1);
-
-	n = malloc (sizeof(file_entry_t) + entry_length);
-	if (unlikely(n == NULL)) return ret_nomem;
 
 	/* Initialization
 	 */
-	memcpy (&n->info, entry, entry_length);
 	INIT_LIST_HEAD(&n->list_entry);
 
 	/* Build the local path, stat and clean

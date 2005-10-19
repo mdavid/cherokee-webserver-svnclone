@@ -28,6 +28,7 @@
 #include "common-internal.h"
 
 #include <dirent.h>
+#include <unistd.h>
 
 #include "list.h"
 #include "buffer.h"
