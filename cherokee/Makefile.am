@@ -716,8 +716,10 @@ icons.h \
 icons.c \
 handler_error.c \
 handler_error.h \
+nonce.h \
 nonce.c \
-nonce.h
+post.h \
+post.c
 
 libcherokee_config_la_SOURCES = \
 admin_client.h \

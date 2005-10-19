@@ -60,6 +60,7 @@
 #include "encoder.h"
 #include "iocache.h"
 #include "encoder_table.h"
+#include "post.h"
 
 typedef enum {
 	phase_nothing,
@@ -159,8 +160,9 @@ struct cherokee_connection {
 
 	/* Post info
 	 */
-	cherokee_buffer_t            *post;
-	size_t                        post_len;
+	cherokee_post_t               post;
+//	cherokee_buffer_t            *post;
+//	size_t                        post_len;
 
 	cherokee_buffer_t            *redirect;
 	

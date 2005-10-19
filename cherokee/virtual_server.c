@@ -26,6 +26,7 @@
 #include "virtual_server.h"
 #include "dirs_table_entry.h"
 #include "list_ext.h"
+#include "socket.h"
 
 #include "handler_error.h"
 

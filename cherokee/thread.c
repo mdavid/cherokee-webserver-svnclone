@@ -530,16 +530,16 @@ process_active_connections (cherokee_thread_t *thd)
 			break;
 
 		case phase_read_post:
-			ret = cherokee_connection_recv (conn, conn->post, &len);
+			ret = cherokee_connection_recv (conn, POST_BUF(&conn->post), &len);
 			
 			switch (ret) {
 			case ret_eagain:
+				cherokee_post_commit_buf (&conn->post);
 				continue;
 
 			case ret_ok:
-				/* It's reading the POST info
-				 */				
-				if (conn->post->len >= conn->post_len) {
+				cherokee_post_commit_buf (&conn->post);
+				if (cherokee_post_got_all (&conn->post)) {
 					break;
 				}
 				continue;
@@ -553,10 +553,12 @@ process_active_connections (cherokee_thread_t *thd)
 			case ret_eof:
 				/* Finish..
 				 */
-				if (conn->post->len < conn->post_len) {
+				if (!cherokee_post_got_all (&conn->post)) {
 					conn->phase = phase_lingering;
 					goto phase_lingering_close;
 				}
+
+				cherokee_post_commit_buf (&conn->post);
 				break;
 				
 			default:
@@ -641,7 +643,7 @@ process_active_connections (cherokee_thread_t *thd)
 			/* If it's a POST we've to read more data
 			 */
 			if (HDR_METHOD(conn->header) == http_post) {
-				if (conn->post->len < conn->post_len) {
+				if (! cherokee_post_got_all (&conn->post)) {
 					conn_set_mode (thd, conn, socket_reading);
 					conn->phase = phase_read_post;
 					continue;

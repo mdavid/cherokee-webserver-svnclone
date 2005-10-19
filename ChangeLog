@@ -1,4 +1,30 @@
+2005-10-19  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* qa/100-Digest-htdigest.py (Test.__init__): Changed name, it was
+	too long.
+
+	* cherokee/handler_cgi.c (cherokee_handler_cgi_init): Adapted to
+	the new POST management class.
+
+	* cherokee/post.c, cherokee/post.h: Added new class to manage POST
+	information.
+
+	* cherokee/validator.c (digest_A1): Removed. No longer needed.
+
 2005-10-18  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/connection.c (post_init): Rewritten using the post
+	class.
+
+	* cherokee/connection.c (cherokee_connection_get_request):
+	Fixed. Some times, it was not replying with the right error code.
+
+	* cherokee/post.h, cherokee/post.c: Added new class.
+
+	* 0.4.27 released
+
+	* cherokee/util.c: Added sys/filio.h in order to import FIONBIO
+	for cherokee_fd_set_nonblocking()
 
 	* cherokee/Makefile.embedded (OBJS): Added nonce.o and
 	typed_table.o

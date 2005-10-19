@@ -10,7 +10,7 @@ DIR    = "digest_htdigest1"
 class Test (TestBase):
     def __init__ (self):
         TestBase.__init__ (self)
-        self.name = "Digest - htdigest: Valid user/passwd pair"
+        self.name = "Digest - htdigest: Valid user/passwd"
  
         self.expected_error   = 200
         self.expected_content = MAGIC
