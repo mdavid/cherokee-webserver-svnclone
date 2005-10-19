@@ -1,5 +1,8 @@
 2005-10-19  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* cherokee/handler_dirlist.c (generate_file_entry): Now it uses
+	cherokee_readdir instead of readdir(). It was not thread safe.
+
 	* qa/100-Digest-htdigest.py (Test.__init__): Changed name, it was
 	too long.
 

@@ -518,8 +518,8 @@ cherokee_iocache_mmap_lookup (cherokee_iocache_t *iocache, char *filename, chero
 	 */
 	PRIV(new)->usages++;
 	iocache->files_usages++;
-	CHEROKEE_MUTEX_UNLOCK (&iocache->files_lock);
 
+	CHEROKEE_MUTEX_UNLOCK (&iocache->files_lock);
 	return ret_ok;
 }
 
