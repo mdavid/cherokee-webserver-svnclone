@@ -116,20 +116,25 @@ ret_t
 cherokee_handler_admin_init (cherokee_handler_admin_t *ahdl)
 {
 	char                    *tmp;
+	size_t                   postl;
 	ret_t                    ret  = ret_ok;
+	cherokee_buffer_t        post = CHEROKEE_BUF_INIT;
 	cherokee_buffer_t        line = CHEROKEE_BUF_INIT;
 	cherokee_connection_t   *conn = HANDLER_CONN(ahdl);
 
 	/* Check for the post info
 	 */
-	if ((conn->post_len <= 0) || cherokee_buffer_is_empty(conn->post)) {
+	cherokee_post_get_len (&conn->post, &postl);
+	if (postl <= 0) {
 		conn->error_code = http_bad_request;
 		return ret_error;
 	}
 
 	/* Process line per line
 	 */
-	for (tmp = conn->post->buf;;) {
+	cherokee_post_walk_read (&conn->post, &post, postl);
+
+	for (tmp = post.buf;;) {
 		char *end1 = strchr (tmp, '\n');
 		char *end2 = strchr (tmp, '\r');
 		char *end  = cherokee_min_str (end1, end2);
@@ -158,6 +163,7 @@ cherokee_handler_admin_init (cherokee_handler_admin_t *ahdl)
 	}
 	
 go_out:
+	cherokee_buffer_mrproper (&post);
 	cherokee_buffer_mrproper (&line);
 	return ret;
 }

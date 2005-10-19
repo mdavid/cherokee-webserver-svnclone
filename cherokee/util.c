@@ -37,6 +37,10 @@
 # include <sys/socket.h>
 #endif
 
+#ifdef HAVE_SYS_FILIO_H
+# include <sys/filio.h>     /* defines FIONBIO and FIONREAD */
+#endif
+
 #ifdef HAVE_SYS_TIME_H
 # include <sys/time.h>
 #endif

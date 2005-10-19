@@ -246,26 +246,6 @@ cherokee_validator_parse_digest (cherokee_validator_t *validator, char *str, cui
 
 
 static ret_t 
-digest_A1 (cherokee_validator_t *validator, char *passwd, cherokee_buffer_t *buf)
-{
-	/* Sanity check
-	 */
-	if (passwd == NULL ||
-	    cherokee_buffer_is_empty (&validator->user) ||
-	    cherokee_buffer_is_empty (&validator->realm))  
-		return ret_deny;
-		
-	cherokee_buffer_add_va (buf, "%s:%s:%s", 
-				validator->user.buf,
-				validator->realm.buf,
-				passwd);
-
-	cherokee_buffer_encode_md5_digest (buf);
-	return ret_ok;
-}
-
-
-static ret_t 
 digest_HA2 (cherokee_validator_t *validator, cherokee_buffer_t *buf, cherokee_connection_t *conn)
 {
 	ret_t       ret;

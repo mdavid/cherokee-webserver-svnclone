@@ -108,8 +108,6 @@ cherokee_connection_new  (cherokee_connection_t **cnt)
 	n->mmaped            = NULL;
 	n->io_entry_ref      = NULL;
 	n->thread            = NULL;
-	n->post              = NULL;
-	n->post_len          = 0;
 	n->extra_polling_fd  = -1;
 	n->rx                = 0;	
 	n->tx                = 0;
@@ -139,6 +137,7 @@ cherokee_connection_new  (cherokee_connection_t **cnt)
 
 	cherokee_socket_new (&n->socket);
 	cherokee_header_new (&n->header);
+	cherokee_post_init (&n->post);
 
 	*cnt = n;
 	return ret_ok;
@@ -166,10 +165,7 @@ cherokee_connection_free (cherokee_connection_t  *cnt)
 		cnt->encoder_buffer = NULL;
 	}
 
-	if (cnt->post != NULL) {
-		cherokee_buffer_free (cnt->post);
-		cnt->post = NULL;
-	}
+	cherokee_post_mrproper (&cnt->post);
 	
 	cherokee_buffer_escape_free (cnt->request_escape);
 	cherokee_buffer_free (cnt->request);
@@ -221,7 +217,6 @@ cherokee_connection_clean (cherokee_connection_t *cnt)
 	cnt->tcp_cork          = 0;
 	cnt->log_at_end        = 1;
 	cnt->realm_ref         = NULL;
-	cnt->post_len          = 0;
 	cnt->mmaped            = NULL;
 	cnt->io_entry_ref      = NULL;
 	cnt->rx                = 0;	
@@ -245,15 +240,13 @@ cherokee_connection_clean (cherokee_connection_t *cnt)
 		cnt->encoder_buffer = NULL;
 	}
 
-	if (cnt->post != NULL) {
-		cherokee_buffer_free (cnt->post);
-		cnt->post = NULL;
-	}
-
 	if (cnt->extra_polling_fd != -1) {
 		close (cnt->extra_polling_fd);
 		cnt->extra_polling_fd = -1;
 	}
+
+
+	cherokee_post_mrproper (&cnt->post);
 
 	cherokee_buffer_clean (cnt->request);
 	cherokee_buffer_escape_clean (cnt->request_escape);
@@ -1294,41 +1287,39 @@ get_range (cherokee_connection_t *cnt, char *ptr, int ptr_len)
 static ret_t
 post_init (cherokee_connection_t *cnt)
 {
-	ret_t ret;
-
-	if (cnt->post != NULL) {
-		SHOULDNT_HAPPEN;
-	}
-
-	cherokee_buffer_new (&cnt->post);
+	ret_t  ret;
+	long   post_len;
+	char  *info     = NULL;
+	int    info_len = 0;
+	CHEROKEE_TEMP(buf,64);
 
 	/* Get the header "Content-Lenght" content
 	 */
-	ret = cherokee_header_copy_known (cnt->header, header_content_length, cnt->post);
+	ret = cherokee_header_get_known (cnt->header, header_content_length, &info, &info_len);
 	if (ret != ret_ok) {
-		/* HTTP/1.1 section 4.4
-		 */
-		if (cnt->header->version <= http_version_10) {
-			cnt->error_code = http_length_required;
-			return ret_error;
-		}
-
+		cnt->error_code = http_length_required;
 		return ret_error;
 	}
 
-	/* Read the number
+	/* Parse the POST length
 	 */
-	cnt->post_len = -1;
-	cnt->post_len = atol(cnt->post->buf);
-	if (cnt->post_len < 0) {
-		cnt->post_len = 0;
+	if ((info_len == 0) || (info_len >= buf_size) || (info == NULL)) {
+		cnt->error_code = http_bad_request;
 		return ret_error;
 	}
 
-	/* Clear the buffer to receive the post data
+	memcpy (buf, info, info_len);
+	buf[info_len] = '\0';
+		
+	post_len = atol(buf);
+	if (post_len < 0) {
+		cnt->error_code = http_bad_request;
+		return ret_error;
+	}
+
+	/* Set the length
 	 */
-	cherokee_buffer_clean (cnt->post);
-	
+	cherokee_post_set_len (&cnt->post, post_len);
 	return ret_ok;
 }
 
@@ -1399,8 +1390,7 @@ cherokee_connection_get_request (cherokee_connection_t *cnt)
 		uint32_t post_len;
 
 		ret = post_init (cnt);
-		if (ret != ret_ok) {
-			cnt->error_code = http_length_required;
+		if (unlikely (ret != ret_ok)) {
 			return ret;
 		}
 
@@ -1409,7 +1399,7 @@ cherokee_connection_get_request (cherokee_connection_t *cnt)
 
 		post_len = cnt->incoming_header->len - header_len;
 
-		cherokee_buffer_add (cnt->post, cnt->incoming_header->buf + header_len, post_len);
+		cherokee_post_append (&cnt->post, cnt->incoming_header->buf + header_len, post_len);
 		cherokee_buffer_drop_endding (cnt->incoming_header, post_len);
 	}
 	

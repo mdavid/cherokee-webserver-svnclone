@@ -55,6 +55,7 @@
 #include "header.h"
 #include "header-protected.h"
 #include "list_ext.h"
+#include "post.h"
 
 
 cherokee_module_info_t MODULE_INFO(cgi)= {
@@ -404,38 +405,47 @@ _extract_path (cherokee_handler_cgi_t *cgi)
 }
 
 
-static ret_t
-_send_post_data (cherokee_handler_cgi_t *cgi)
-{
-	int                    r;
-	cherokee_connection_t *conn;
+/* static ret_t */
+/* _send_post_data (cherokee_handler_cgi_t *cgi) */
+/* { */
+/* 	int                    r; */
+/* 	size_t                 size; */
+/* 	cherokee_connection_t *conn; */
 
-	conn = HANDLER_CONN(cgi);
+/* 	conn = HANDLER_CONN(cgi); */
 
-	if ((conn->post == NULL) || (cgi->post_data_sent >= conn->post_len)) {
-		return ret_ok;
-	}
+/* 	/\* Check the amount of sent information */
+/* 	 *\/ */
+/* 	cherokee_post_get_len (&conn->post, &size); */
 
-	r = write (cgi->pipeOutput,
-		   conn->post->buf + cgi->post_data_sent,
-		   conn->post_len - cgi->post_data_sent);
+/* 	if ((size <= 0) || */
+/* 	    (cgi->post_data_sent > size)) */
+/* 		return ret_ok; */
 
-	if (r == -1) {
-		dbg("Can't write to the client\n");
-		return (errno == EAGAIN) ? ret_eagain : ret_error;
-	}
+/* /\* 	if ((conn->post == NULL) || (cgi->post_data_sent >= conn->post_len)) { *\/ */
+/* /\* 		return ret_ok; *\/ */
+/* /\* 	} *\/ */
 
-	cgi->post_data_sent += r;
-	dbg("Write %d bytes of POST\n", r);
+/* 	r = write (cgi->pipeOutput, */
+/* 		   conn->post->buf + cgi->post_data_sent, */
+/* 		   conn->post_len - cgi->post_data_sent); */
 
-	/* Are all the data sent? 
-	 */
-	if (cgi->post_data_sent >= conn->post_len) {
-		return ret_ok;
-	}
+/* 	if (r == -1) { */
+/* 		dbg("Can't write to the client\n"); */
+/* 		return (errno == EAGAIN) ? ret_eagain : ret_error; */
+/* 	} */
 
-	return ret_eagain;
-}
+/* 	cgi->post_data_sent += r; */
+/* 	dbg("Write %d bytes of POST\n", r); */
+
+/* 	/\* Are all the data sent?  */
+/* 	 *\/ */
+/* 	if (cgi->post_data_sent >= conn->post_len) { */
+/* 		return ret_ok; */
+/* 	} */
+
+/* 	return ret_eagain; */
+/* } */
 
 
 static ret_t
@@ -473,19 +483,23 @@ cherokee_handler_cgi_init (cherokee_handler_cgi_t *cgi)
 
 	cherokee_connection_t *conn = HANDLER_CONN(cgi);
 
-	/* It could be trying to send the post information to the CGI: 
-	 * In the previus call to this function it could send everything
-	 * so it returned a ret_eagain to continue, and here we are.
+	/* It might be trying to send the post information to the CGI:
+	 * In the previus call to this function it could send
+	 * everything so it returned a ret_eagain to continue, and
+	 * here we are.
 	 */
 	if (cgi->init_phase == hcgi_phase_sent_post) {
-		ret = _send_post_data (cgi);
+		ret = cherokee_post_walk_to_fd (&conn->post, cgi->pipeOutput);
+
 		switch (ret) {
 		case ret_ok:
 			close (cgi->pipeOutput);
 			cgi->pipeOutput = -1;
 			return ret_ok;
+
 		case ret_eagain:
 			return ret_eagain;
+
 		default:
 			return ret;
 		}
@@ -649,27 +663,20 @@ cherokee_handler_cgi_init (cherokee_handler_cgi_t *cgi)
 
 	/* POST management
 	 */
-	if (conn->post != NULL) {
+	if (! cherokee_post_is_empty (&conn->post)) {
 		cgi->init_phase = hcgi_phase_sent_post;
+		cherokee_post_walk_reset (&conn->post);
+
 #ifndef _WIN32
 		_fd_set_properties (cgi->pipeOutput, O_NONBLOCK, 0);
 #endif
-
-		ret = _send_post_data (cgi);
-		switch (ret) {
-		case ret_ok:
-			break;
-		case ret_eagain:
-			return ret_eagain;
-		default:
-			return ret;
-		}
+		/* It returns eagain to send the POST information in
+		 * the next call to this function.  It can not be send
+		 * in the step() method because we need to get it done
+		 * before call to add_headers().
+		 */
+		return ret_eagain;
 	}
-
-	/* We won't need to send anything more to the client..
-	 */
-	close (cgi->pipeOutput);
-	cgi->pipeOutput = -1;
 
 	return ret_ok;
 }
