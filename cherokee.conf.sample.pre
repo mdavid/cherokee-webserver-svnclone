@@ -11,6 +11,11 @@
 Port 80
 
 ##
+## PortTLS: The port to which the secure server listens. Default 443.
+##
+# PortTLS 443
+
+##
 ## IPv6 support
 ##
 IPv6 Off

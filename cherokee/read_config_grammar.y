@@ -281,9 +281,9 @@ yyerror (char* msg)
 %token T_SERVER T_USERDIR T_PIDFILE T_LISTEN T_SERVER_TOKENS T_ENCODER T_ALLOW T_IO_CACHE T_DIRECTORYINDEX 
 %token T_ICONS T_AUTH T_NAME T_METHOD T_PASSWDFILE T_SSL_CA_LIST_FILE T_FROM T_SOCKET T_LOG_FLUSH_INTERVAL
 %token T_INCLUDE T_PANIC_ACTION T_JUST_ABOUT T_LISTEN_QUEUE_SIZE T_SENDFILE T_MINSIZE T_MAXSIZE T_MAX_FDS
-%token T_SHOW T_CHROOT T_ONLY_SECURE T_MAX_CONNECTION_REUSE T_REWRITE T_POLL_METHOD T_EXTENSION T_IPV6 T_ENV
+%token T_SHOW T_CHROOT T_ONLY_SECURE T_MAX_CONNECTION_REUSE T_REWRITE T_POLL_METHOD T_EXTENSION T_IPV6 T_ENV 
 
-%token <number> T_NUMBER T_PORT 
+%token <number> T_NUMBER T_PORT T_PORT_TLS
 %token <string> T_QSTRING T_FULLDIR T_ID T_HTTP_URL T_HTTPS_URL T_HOSTNAME T_IP T_DOMAIN_NAME T_ADDRESS_PORT
 
 %type <name_ptr> directory_option handler
@@ -311,6 +311,7 @@ line : server_line
 
 common_line : server
             | port
+            | port_tls
             | listen
             | server_tokens
             | mime
@@ -462,6 +463,11 @@ ip_list : ip_or_domain ',' ip_list
 port : T_PORT T_NUMBER 
 {
 	   SRV(server)->port = $2;
+};
+
+port_tls : T_PORT_TLS T_NUMBER 
+{
+	   SRV(server)->port_tls = $2;
 };
 
 listen : T_LISTEN host_name
