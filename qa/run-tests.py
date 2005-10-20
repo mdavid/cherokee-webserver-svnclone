@@ -122,7 +122,7 @@ if port is None:
     pid = os.fork()
     if pid == 0:
         if valgrind:
-            os.execl (VALGRIND_PATH, "valgrind", "--num-callers=20", "--leak-check=yes", server, "-C", cfg_file)
+            os.execl (VALGRIND_PATH, "valgrind", "--leak-check=full", "--num-callers=20", "-v", server, "-C", cfg_file)
         elif strace:
             os.execl (STRACE_PATH, "strace", server, "-C", cfg_file)            
         else:

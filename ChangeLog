@@ -1,4 +1,14 @@
+2005-10-20  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/handler_file.c (cherokee_handler_file_add_headers):
+	Content-Range header fixed. Patch by Mark Nipper
+	<nipsy@bitgnome.net>.
+
 2005-10-19  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/read_config_scanner.l, cherokee/read_config_grammar.y
+	(port_tls), cherokee.conf.sample.pre: Added new configuration
+	entry to configure the TLS port.
 
 	* cherokee/handler_dirlist.c (generate_file_entry): Now it uses
 	cherokee_readdir instead of readdir(). It was not thread safe.

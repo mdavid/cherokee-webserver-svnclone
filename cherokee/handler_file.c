@@ -517,7 +517,7 @@ cherokee_handler_file_add_headers (cherokee_handler_file_t *fhdl,
 	if (HANDLER_CONN(fhdl)->encoder == NULL) {
 		if(HANDLER_CONN(fhdl)->error_code == http_partial_content) {
 			cherokee_buffer_add_va (buffer,
-						"Content-Range: " FMT_OFFSET "-"
+						"Content-Range: bytes " FMT_OFFSET "-"
 						FMT_OFFSET "/" FMT_OFFSET CRLF,
 						HANDLER_CONN(fhdl)->range_start,
 						HANDLER_CONN(fhdl)->range_end - 1,

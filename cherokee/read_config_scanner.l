@@ -62,6 +62,7 @@ nl              [\n\r]
 
 "Handler"               { return T_HANDLER; }
 "Port"                  { return T_PORT; }
+"PortTLS"               { return T_PORT_TLS; }
 "DocumentRoot"          { return T_DOCUMENT_ROOT; }
 "LogFlushInterval"      { return T_LOG_FLUSH_INTERVAL; }
 "Log"                   { return T_LOG; }
