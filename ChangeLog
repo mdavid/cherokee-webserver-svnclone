@@ -1,3 +1,16 @@
+2005-10-21  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* Makefile.am (COMPILATION_TESTS): Added debian_testing.sh and
+	debian_testing_chroot.sh to extra dist.
+
+	* cherokee/Makefile.embedded (OBJS): Fixed. It was not working
+	from the changes of 2005-10-19.
+
+	* cherokee/handler_server_info.c
+	(cherokee_handler_server_info_new): It was outdated. I was trying
+	to read a wrong structure and hence, it was providing random
+	information. Reported by Borja <@softonic.com>
+
 2005-10-20  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cherokee/handler_file.c (cherokee_handler_file_add_headers):

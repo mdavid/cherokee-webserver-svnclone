@@ -48,10 +48,10 @@ handler_phpcgi.o \
 handler_dirlist.o \
 handler_common.o \
 list_merge_sort.o \
+post.o \
 nonce.o \
 typed_table.o \
-read_config_embedded.o
-
+read_config_embedded.o 
 
 all: u-cherokee
 

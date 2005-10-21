@@ -35,8 +35,11 @@
 
 CHEROKEE_BEGIN_DECLS
 
+typedef struct {
+	cherokee_module_info_t *info;
+	void                   *dlopen_ref;
+} cherokee_module_loader_entry_t;
 
-//typedef struct cherokee_module_loader cherokee_module_loader_t;
 typedef struct cherokee_table cherokee_module_loader_t;
 
 #define MODINFO(x)   ((cherokee_module_info_t *) (x))

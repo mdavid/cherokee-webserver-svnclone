@@ -304,21 +304,25 @@ endif
 #
 # Handler admin
 #
+config_common = \
+connection_info.h \
+connection_info.c
+
 handler_admin = \
 handler_admin.c \
-handler_admin.h
+handler_admin.h \
+admin_server.h \
+admin_server.c 
 
 libplugin_admin_la_LDFLAGS = $(module_ldflags)  
 libplugin_admin_la_SOURCES = $(handler_admin)
-libplugin_admin_la_LIBADD  = -lcherokee-config -lcherokee-client
+libplugin_admin_la_LIBADD  = libcherokee-config.la libcherokee-client.la  
 
 if STATIC_HANDLER_ADMIN
-static_handler_admin_src = $(handler_admin)
-static_handler_admin_lib = -lcherokee-config
+static_handler_admin_src = $(handler_admin) $(config_common)
 else
 dynamic_handler_admin_lib = libplugin_admin.la
 endif
-
 
 
 #
@@ -517,11 +521,12 @@ $(PTHREAD_CFLAGS) \
 libcherokee-base.la
 
 libcherokee_server_la_LDFLAGS = $(common_ldflags)
+libcherokee_server_la_CFLAGS = \
+$(static_validator_htpasswd_flags)
 libcherokee_server_la_LIBADD = \
 $(TLS_LIBS) \
 $(PTHREAD_LIBS) \
 $(PTHREAD_CFLAGS) \
-$(static_handler_admin_lib) \
 $(static_validator_pam_lib) \
 $(static_validator_htpasswd_lib) \
 libcherokee-base.la
@@ -649,9 +654,6 @@ downloader.h \
 downloader-protected.h \
 downloader.c 
 
-libcherokee_server_la_CFLAGS = \
-$(static_validator_htpasswd_flags)
-
 libcherokee_server_la_SOURCES = \
 icons_grammar.y \
 icons_scanner.l \
@@ -722,12 +724,9 @@ post.h \
 post.c
 
 libcherokee_config_la_SOURCES = \
+$(config_common) \
 admin_client.h \
-admin_client.c \
-admin_server.h \
-admin_server.c \
-connection_info.h \
-connection_info.c
+admin_client.c 
 
 
 #

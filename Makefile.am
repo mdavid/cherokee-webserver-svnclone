@@ -51,6 +51,11 @@ DISTCLEANFILES = \
 cherokee.pc      \
 $(CONFS)
 
+COMPILATION_TESTS = \
+debian_testing.sh \
+debian_testing_chroot.sh
+
+
 EXTRA_DIST =          \
 TODO                  \
 config.h.mingw        \
@@ -64,7 +69,8 @@ $(m4data_DATA)        \
 $(CONFS_DONE)         \
 $(CONFS_PRE)          \
 $(man_MANS)           \
-$(WINDOWS_PORT_FILES)
+$(WINDOWS_PORT_FILES) \
+$(COMPILATION_TESTS)
 
 
 install-data-local-config:

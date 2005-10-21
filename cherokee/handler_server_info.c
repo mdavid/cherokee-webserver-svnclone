@@ -228,13 +228,15 @@ build_connections_table_content (cherokee_buffer_t *buf, cherokee_server_t *srv)
 static int
 build_modules_table_content_while (const char *key, void *value, void *params[])
 {
-	int                    *loggers    = (int *) params[2];
-	int                    *handlers   = (int *) params[3];
-	int                    *encoders   = (int *) params[4];
-	int                    *validators = (int *) params[5];
-	int                    *generic    = (int *) params[6];
-	cherokee_module_info_t *mod        = value;
-	   
+	int *loggers    = (int *) params[2];
+	int *handlers   = (int *) params[3];
+	int *encoders   = (int *) params[4];
+	int *validators = (int *) params[5];
+	int *generic    = (int *) params[6];
+
+	cherokee_module_loader_entry_t *entry = value;
+	cherokee_module_info_t         *mod   = entry->info;
+
 	if (mod->type & cherokee_logger) {
 		*loggers += 1;
 	} else if (mod->type & cherokee_handler) {
@@ -246,7 +248,7 @@ build_modules_table_content_while (const char *key, void *value, void *params[])
 	} else if (mod->type & cherokee_generic) {
 		*generic += 1;
 	} else {
-		SHOULDNT_HAPPEN;
+		PRINT_ERROR("Unknown module type (%d)\n", mod->type);
 	}
 
 	return 1;
@@ -369,6 +371,8 @@ cherokee_handler_server_info_new  (cherokee_handler_t **hdl, cherokee_connection
 
 	/* Init
 	 */
+	n->just_about = false;
+
 	cherokee_buffer_new (&n->buffer);
 	cherokee_buffer_ensure_size (n->buffer, 4*1024);
 
