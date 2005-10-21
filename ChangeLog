@@ -1,5 +1,10 @@
 2005-10-21  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* cherokee/module.c (cherokee_module_get_name): return fixed.
+
+	* cherokee/iocache.c (cherokee_iocache_free_default): __global
+	renamed to global_io. Sun CC did not like it.
+
 	* Makefile.am (COMPILATION_TESTS): Added debian_testing.sh and
 	debian_testing_chroot.sh to extra dist.
 

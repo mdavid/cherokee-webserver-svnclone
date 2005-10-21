@@ -105,7 +105,7 @@ typedef struct {
 #define PRIV(o) ((cherokee_iocache_entry_extension_t *)(o))
 
 
-static cherokee_iocache_t *__global = NULL;
+static cherokee_iocache_t *global_io = NULL;
 
 
 ret_t 
@@ -142,12 +142,12 @@ cherokee_iocache_get_default (cherokee_iocache_t **iocache)
 {
 	ret_t ret;
 	
-	if (__global == NULL) {
-		ret = cherokee_iocache_new (&__global, NULL);
+	if (global_io == NULL) {
+		ret = cherokee_iocache_new (&global_io, NULL);
 		if (unlikely (ret != ret_ok)) return ret;
 	}
 	
-	*iocache = __global;
+	*iocache = global_io;
 	return ret_ok;
 }
 
@@ -370,8 +370,8 @@ cherokee_iocache_free (cherokee_iocache_t *iocache)
 ret_t 
 cherokee_iocache_free_default (cherokee_iocache_t *iocache)
 {
-	if (iocache == __global) {
-		__global = NULL;
+	if (iocache == global_io) {
+		global_io = NULL;
 	}
 
 	return cherokee_iocache_free (iocache);	
