@@ -37,11 +37,7 @@
 #include "table.h"
 #include "buffer.h"
 
-
-typedef struct {
-	cherokee_module_info_t *info;
-	void                   *dlopen_ref;
-} entry_t;
+typedef cherokee_module_loader_entry_t entry_t;
 
 
 #ifdef CHEROKEE_EMBEDDED
