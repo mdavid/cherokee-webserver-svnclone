@@ -45,7 +45,8 @@ cherokee_module_get_name (cherokee_module_t *module, const char **name)
 	if (module == NULL) return;
 
 	if (module->get_name != NULL) {
-		return module->get_name (module, name);
+		module->get_name (module, name);
+		return;
 	}
 
 	*name = "unknown";

@@ -9,9 +9,13 @@ SRC_DIR="cherokee-${VERSION}"
 # Install a few packages
 echo "deb http://ftp.us.debian.org/debian/ $DISTRO main" >/etc/apt/sources.list
 apt-get update
+apt-get -f -y install
+
 apt-get -y install $COMPILER make libtool bison flex libpam0g-dev
-apt-get -f -y install
-apt-get -f -y install
+for i in `seq 3`; do
+  apt-get -f -y install
+  sleep 1
+done
 
 # Unpack the tarball
 cd /tmp
