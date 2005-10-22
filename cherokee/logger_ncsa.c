@@ -303,7 +303,7 @@ build_log_string (cherokee_logger_ncsa_t *logger, cherokee_connection_t *cnt, ch
 				request->buf, 
 				version, 
 				cnt->error_code,
-				(CST_OFFSET) cnt->range_end - cnt->range_start,
+				(CST_OFFSET) (cnt->range_end - cnt->range_start),
 				(logger->combined) ? combined_info->buf : "");
 	
 	/* Maybe free some memory..
