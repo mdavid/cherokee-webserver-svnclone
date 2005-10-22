@@ -1,5 +1,9 @@
 2005-10-22  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* cherokee/main.c (process_parameters): Specifying a config-file
+	has no effect in main.c when built with CHEROKEE_EMBEDDED.  Patch
+	by Gisle Vanem <giva@bgnett.no>
+
 	* cherokee/iocache.c (iocache_clean_up_each): Fixed a signess
 	problem here.  It was an important issue.
 
