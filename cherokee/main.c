@@ -35,6 +35,15 @@
 
 #include "server.h"
 
+#ifndef CHEROKEE_EMBEDDED
+# define GETOPT_OPT  "C:b"
+# define CONFIG_FILE "[-C configfile] "
+#else
+# define GETOPT_OPT  "b"
+# define CONFIG_FILE ""
+#endif 
+
+
 static cherokee_server_t  *srv         = NULL;
 static char               *config_file = NULL;
 static cherokee_boolean_t  daemon_mode = false;
@@ -103,7 +112,7 @@ process_parameters (int argc, char **argv)
 {
 	int c;
 
-	while ((c = getopt(argc, argv, "C:b")) != -1) {
+	while ((c = getopt(argc, argv, GETOPT_OPT)) != -1) {
 		switch(c) {
 		case 'C':
 			config_file = strdup(optarg);
@@ -114,7 +123,7 @@ process_parameters (int argc, char **argv)
 			break;
 
 		default:
-			fprintf (stderr, "Usage: %s [-C configfile] [-b]\n", argv[0]);
+			fprintf (stderr, "Usage: %s " CONFIG_FILE "[-b]\n", argv[0]);
 			exit(1);
 		}
 	}
