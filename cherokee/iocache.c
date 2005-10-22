@@ -65,8 +65,8 @@ typedef struct {
 	cherokee_iocache_entry_t base;
 	time_t                   stat_update;
 	time_t                   mmap_update;
-	cuint_t                  mmap_usage;
-	cuint_t                  usages;
+	cint_t                   mmap_usage;
+	cint_t                   usages;
 
 #ifdef HAVE_PTHREAD
 	pthread_mutex_t          lock;
@@ -88,7 +88,7 @@ struct cherokee_iocache {
 
 typedef struct {
 	cherokee_iocache_t *iocache;
-	unsigned int        average;
+	float               average;
 	struct list_head    to_delete;
 } clean_up_params_t;
 
@@ -158,30 +158,33 @@ iocache_clean_up_each (const char *key, void *value, void *param)
 	clean_up_params_t        *params = param;
 	cherokee_iocache_entry_t *file   = IOCACHE_ENTRY(value); 
 	to_delete_entry_t        *delobj;
-	cuint_t                   usage;
+	float                     usage;
 
-	/* Is someone using it?
+	/* Reset usage
 	 */
-	if (PRIV(file)->mmap_usage > 0)
-		return true;
-
-	/* Reset usage and the if it's old
-	 */
-	usage = PRIV(file)->usages;
+	usage = (float) PRIV(file)->usages;
 	PRIV(file)->usages = 0;
 
-	if (usage > params->average)
-		return true;
-
-	/* Add to the removal list
+	/* Is it in use?
 	 */
-	delobj = malloc (sizeof (to_delete_entry_t));
-	INIT_LIST_HEAD (&delobj->list);	
+	if (PRIV(file)->mmap_usage > 0) {
+		return true;
+	}
 
-	delobj->file     = file;
-	delobj->filename = key;
+	if ((usage == -1) ||
+	    (usage <= params->average))
+	{
+		/* Add to the removal list
+		 */
+		delobj = malloc (sizeof (to_delete_entry_t));
+		INIT_LIST_HEAD (&delobj->list);	
+		
+		delobj->file     = file;
+		delobj->filename = key;
+		
+		list_add ((list_t *)delobj, &params->to_delete);
+	}
 
-	list_add ((list_t *)delobj, &params->to_delete);
 	return true;
 }
 
@@ -314,14 +317,14 @@ iocache_entry_update_mmap (cherokee_iocache_entry_t *entry, char *filename, int 
 ret_t 
 cherokee_iocache_clean_up (cherokee_iocache_t *iocache, cuint_t num)
 {
-	cuint_t            average;
+	float              average;
 	clean_up_params_t  params;
 	list_t            *i, *tmp;
 	
 	if (iocache->files_num < CACHE_SIZE)
 		return ret_ok;
 
-	average = iocache->files_usages / iocache->files_num;
+	average = (iocache->files_usages / iocache->files_num);
 
 	params.iocache = iocache;
 	params.average = average;
