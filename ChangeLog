@@ -1,8 +1,11 @@
 2005-10-22  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* cherokee/iocache.c (iocache_clean_up_each): Fixed a signess
+	problem here.  It was an important issue.
+
 	* cherokee/logger_ncsa.c (build_log_string): Bad casting
 	fixed. Reported by Marko Mikulicic <marko@autistici.org>
-
+	
 2005-10-21  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cherokee/module.c (cherokee_module_get_name): return fixed.
