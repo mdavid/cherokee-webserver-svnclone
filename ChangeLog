@@ -1,5 +1,8 @@
 2005-10-22  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* cherokee/unix4win32.h (ENOTSOCK, EHOSTUNREACH): Some missing
+	defines in this file. Patch by Gisle Vanem <giva@bgnett.no>
+
 	* cherokee/main.c (process_parameters): Specifying a config-file
 	has no effect in main.c when built with CHEROKEE_EMBEDDED.  Patch
 	by Gisle Vanem <giva@bgnett.no>
