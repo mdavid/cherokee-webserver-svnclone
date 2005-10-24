@@ -530,16 +530,16 @@ process_active_connections (cherokee_thread_t *thd)
 			break;
 
 		case phase_read_post:
+			len = 0;
 			ret = cherokee_connection_recv (conn, POST_BUF(&conn->post), &len);
 			
 			switch (ret) {
 			case ret_eagain:
-				cherokee_post_commit_buf (&conn->post);
 				continue;
 
 			case ret_ok:
-				cherokee_post_commit_buf (&conn->post);
-				if (cherokee_post_got_all (&conn->post)) {
+				cherokee_post_commit_buf (&conn->post, len);
+				if (cherokee_post_got_all (&conn->post)) {	
 					break;
 				}
 				continue;
@@ -558,7 +558,7 @@ process_active_connections (cherokee_thread_t *thd)
 					goto phase_lingering_close;
 				}
 
-				cherokee_post_commit_buf (&conn->post);
+				cherokee_post_commit_buf (&conn->post, len);
 				break;
 				
 			default:

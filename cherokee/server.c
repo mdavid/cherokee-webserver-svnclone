@@ -1120,7 +1120,7 @@ cherokee_server_unlock_threads (cherokee_server_t *srv)
 	ret_t   ret;
 	list_t *i;
 
-	/* Update bogonow before launch the threads
+	/* Update bogo_now before launch the threads
 	 */
 	update_bogo_now (srv);
 

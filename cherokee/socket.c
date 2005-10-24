@@ -946,8 +946,7 @@ cherokee_socket_sendfile (cherokee_socket_t *socket, int fd, size_t size, off_t 
 	 * int
 	 * sendfile (int fd, int s, off_t offset, size_t nbytes,
 	 *           struct sf_hdtr *hdtr, off_t *sbytes, int flags);
-	 */
-	
+	 */	
 	do {
 		re = sendfile (fd,                        /* int             fd     */
 			       SOCKET_FD(socket),         /* int             s      */
