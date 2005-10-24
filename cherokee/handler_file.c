@@ -298,7 +298,7 @@ cherokee_handler_file_init (cherokee_handler_file_t *n)
 		  (conn->encoder == NULL) &&
 		  (conn->socket->is_tls == non_TLS) &&
 		  (n->info->st_size <= IOCACHE_MAX_FILE_SIZE) &&
-		  (http_mehod_with_body (conn->header->method)));
+		  (http_method_with_body (conn->header->method)));
 	
 	if (use_io) {
 		ret = cherokee_iocache_mmap_lookup (srv->iocache,

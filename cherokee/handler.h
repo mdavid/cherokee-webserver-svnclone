@@ -47,11 +47,10 @@ typedef enum {
 
 typedef enum {
 	hsupport_nothing         = 0,
-	hsupport_length          = 1,         /* Know the length. Eg: for keep-alive     */
-	hsupport_range           = 1 << 1,    /* Can handle "Range: bytes=" requests     */
-	hsupport_complex_headers = 1 << 2,    /* Return headers that should be processed */
+	hsupport_length          = 1,         /* Knows the length. Eg: for keep-alive    */
+	hsupport_maybe_length    = 1 << 1,    /* It might include content-length         */
+	hsupport_range           = 1 << 2,    /* Can handle "Range: bytes=" requests     */
 	hsupport_error           = 1 << 3,    /* It is an error handler                  */
-	hsupport_keepalive       = 1 << 4     /* It works with keepalive                 */
 } cherokee_handler_support_t;
 
 
@@ -85,9 +84,9 @@ typedef struct {
 #define HANDLER_THREAD(h)                  (CONN_THREAD(HANDLER_CONN(h)))
 #define HANDLER_SUPPORT_RANGE(h)           (HANDLER(h)->support & hsupport_range)
 #define HANDLER_SUPPORT_LENGTH(h)          (HANDLER(h)->support & hsupport_length)
+#define HANDLER_SUPPORT_MAYBE_LENGTH(h)    (HANDLER(h)->support & hsupport_maybe_length)
 #define HANDLER_SUPPORT_COMPLEX_HEADERS(h) (HANDLER(h)->support & hsupport_complex_headers)
 #define HANDLER_SUPPORT_ERROR(h)           (HANDLER(h)->support & hsupport_error)
-#define HANDLER_SUPPORT_KEEPALIVE(h)       (HANDLER(h)->support & hsupport_keepalive)
 
 ret_t cherokee_handler_init_base   (cherokee_handler_t  *hdl, void *conn);
 ret_t cherokee_handler_free_base   (cherokee_handler_t  *hdl);

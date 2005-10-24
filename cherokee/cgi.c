@@ -168,5 +168,12 @@ cherokee_cgi_build_basic_env (cherokee_connection_t       *conn,
 	cherokee_header_copy_request_w_args (conn->header, tmp);
 	set_env_pair (param, "REQUEST_URI", 11, tmp->buf, tmp->len);
 
+	/* Set HTTPS
+	 */
+	if (conn->socket->is_tls) 
+		set_env_pair (param, "HTTPS", 5, "on", 2);
+	else 
+		set_env_pair (param, "HTTPS", 5, "off", 3);
+
 	return ret_ok;
 }

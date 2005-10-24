@@ -87,7 +87,7 @@ cherokee_handler_cgi_new  (cherokee_handler_t **hdl, void *cnt, cherokee_table_t
 
 	/* Supported features
 	 */
-	HANDLER(n)->support     = hsupport_complex_headers;
+	HANDLER(n)->support     = hsupport_maybe_length;
 
 	/* Process the request_string, and build the arguments table..
 	 * We'll need it later
@@ -109,6 +109,7 @@ cherokee_handler_cgi_new  (cherokee_handler_t **hdl, void *cnt, cherokee_table_t
 	n->extra_param       = NULL;
 	n->init_phase        = hcgi_phase_init;
 	n->system_env        = NULL;
+	n->content_length    = 0;
 	
 	n->envp_last = 0;	
 	for (i=0; i<ENV_VAR_NUM; i++)
@@ -672,6 +673,82 @@ _read_from_cgi (cherokee_handler_cgi_t *cgi, cherokee_buffer_t *buffer)
 }
 
 
+static ret_t
+parse_header (cherokee_handler_cgi_t *cgi, cherokee_buffer_t *buffer)
+{
+	char                  *end;
+	char                  *end1;
+	char                  *end2;
+	char                  *begin;
+	cherokee_connection_t *conn = HANDLER_CONN(cgi);
+
+	
+	if (cherokee_buffer_is_empty (buffer) || buffer->len <= 5)
+		return ret_ok;
+
+	/* It is possible that the header ends with CRLF CRLF
+	 * In this case, we have to remove the last two characters
+	 */
+	if ((buffer->len > 4) &&
+	    (strncmp (CRLF CRLF, buffer->buf + buffer->len - 4, 4) == 0))
+	{
+		cherokee_buffer_drop_endding (conn->header_buffer, 2);
+	}
+	
+	/* Process the header line by line
+	 */
+	begin = buffer->buf;
+	while (begin != NULL) {
+		end1 = strchr (begin, '\r');
+		end2 = strchr (begin, '\n');
+
+		end = cherokee_min_str (end1, end2);
+		if (end == NULL) break;
+
+		end2 = end;
+		while (((*end2 == '\r') || (*end2 == '\n')) && (*end2 != '\0')) end2++;
+
+		if (strncasecmp ("Status: ", begin, 8) == 0) {
+			int  code;
+			char status[4];
+
+			memcpy (status, begin+8, 3);
+			status[3] = '\0';
+		
+			code = atoi (status);
+			if (code <= 0) {
+				conn->error_code = http_internal_error;
+				return ret_error;
+			}
+
+			cherokee_buffer_remove_chunk (buffer, begin - buffer->buf, end2 - begin);
+
+			conn->error_code = code;			
+			continue;
+		}
+
+		else if (strncasecmp ("Content-length: ", begin, 16) == 0) {
+			cherokee_buffer_t tmp = CHEROKEE_BUF_INIT;
+
+			cherokee_buffer_add (&tmp, begin+16, end - (begin+16));
+			cgi->content_length = atoll (tmp.buf);
+			cherokee_buffer_mrproper (&tmp);
+
+			cherokee_buffer_remove_chunk (buffer, begin - buffer->buf, end2 - begin);
+		}
+
+		else if (strncasecmp ("Location: ", begin, 10) == 0) {
+			cherokee_buffer_add (conn->redirect, begin+10, end - (begin+10));
+			cherokee_buffer_remove_chunk (buffer, begin - buffer->buf, end2 - begin);
+		}
+
+		begin = end2;
+	}
+	
+	return ret_ok;
+}
+
+
 ret_t
 cherokee_handler_cgi_add_headers (cherokee_handler_cgi_t *cgi, cherokee_buffer_t *buffer)
 {
@@ -727,8 +804,10 @@ cherokee_handler_cgi_add_headers (cherokee_handler_cgi_t *cgi, cherokee_buffer_t
 	/* Drop out the headers, we already have a copy
 	 */
 	cherokee_buffer_move_to_begin (cgi->data, len + end_len);
-	
-	return ret_ok;
+
+	/* Parse the header.. it is likely we will have something to do with it.
+	 */
+	return parse_header (cgi, buffer);
 }
 
 
