@@ -825,9 +825,9 @@ process_active_connections (cherokee_thread_t *thd)
 					goto phase_lingering_close;
 				}
 
-				/* At this point, two different things could happend:
-				 * - It has a common handler like handler_redir
-				 * - It has a error handler like handler_error
+				/* At this point, two different things might happen:
+				 * - It has got a common handler like handler_redir
+				 * - It has got an error handler like handler_error
 				 */
 
 				conn->phase = phase_init;
@@ -855,7 +855,17 @@ process_active_connections (cherokee_thread_t *thd)
 				RET_UNKNOWN(ret);
 			}
 
-			/* If it has mmaped content, go to next stage
+			/* If it is a error, we have to respin the connection
+			 * to install a proper error handler.
+			 */
+			if ((http_type_300(conn->error_code) || http_type_400(conn->error_code)) &&
+			    (!HANDLER_SUPPORT_ERROR(conn->handler)))								      
+			{
+				conn->phase = phase_setup_connection;
+				continue;				
+			}
+
+			/* If it has mmaped content, skip next stage
 			 */		     
 			if (conn->mmaped != NULL) {
 				goto phase_send_headers_EXIT;
@@ -873,7 +883,7 @@ process_active_connections (cherokee_thread_t *thd)
 				continue;
 
 			case ret_ok:
-				if (!http_mehod_with_body (conn->header->method)) {
+				if (!http_method_with_body (conn->header->method)) {
 					maybe_purge_closed_connection (thd, conn);
 					continue;
 				}
@@ -981,7 +991,6 @@ process_active_connections (cherokee_thread_t *thd)
 			
 		case phase_lingering: 
 		phase_lingering_close:
-
 			ret = cherokee_connection_pre_lingering_close (conn);
 			switch (ret) {
 			case ret_ok:

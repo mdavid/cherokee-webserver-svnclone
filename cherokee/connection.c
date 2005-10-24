@@ -370,75 +370,6 @@ out:
 }
 
 
-static ret_t 
-process_handler_complex_headers (cherokee_connection_t *cnt)
-{
-	char              *info;
-	int                info_len;
-	ret_t              ret       = ret_ok;
-	cherokee_header_t *header;
-	
-	cherokee_header_new (&header);
-
-	ret = cherokee_header_parse (header, cnt->header_buffer, header_type_basic);
-	if (ret < ret_ok) {
-		return ret;
-	}
-
-	/* It is possible that the header ends with CRLF CRLF
-	 * In this case, we have to remove the last two characters
-	 */
-	if ((cnt->header_buffer->len > 4) &&
-	    (strncmp (CRLF CRLF, cnt->header_buffer->buf + cnt->header_buffer->len - 4, 4) == 0))
-	{
-		cherokee_buffer_drop_endding (cnt->header_buffer, 2);
-	}
-	
-	/* Location: 
-	 */
-	if (cherokee_header_get_known (header, header_location, &info, &info_len) == ret_ok) {
-		cherokee_buffer_clean (cnt->redirect);
-		cherokee_header_copy_known (header, header_location, cnt->redirect);
-		cnt->error_code = http_moved_permanently;
-	}
-	
-	/* Status:
-	 */
-	if (cherokee_header_get_unknown (header, "Status", 6, &info, &info_len) == ret_ok) {
-		int  r;
-		int  code;
-		char status[4];
-		
-		memcpy (status, info, 3);
-		status[3] = '\0';
-		
-		r = sscanf (status, "%d", &code);
-		if (r <= 0) {
-			ret = ret_error;
-			goto exit;
-		}
-
-		cnt->error_code = code;
-
-		/* If it is a error, we have to respin the connection
-		 * to install a proper error handler.
-		 */
-		if (http_type_300(cnt->error_code) ||
-		    http_type_400(cnt->error_code)) 
-		{
-			cnt->phase = phase_setup_connection;
-			return ret_eagain;
-		}
-
-		return ret_error;
-	}
-	
-exit:
-	cherokee_header_free (header);
-	return ret;
-}
-
-
 static void
 build_response_header__authenticate (cherokee_connection_t *cnt, cherokee_buffer_t *buffer)
 {
@@ -552,7 +483,6 @@ build_response_header (cherokee_connection_t *cnt, cherokee_buffer_t *buffer)
 		/* Keep-alive is not possible w/o a file cache
 		 */
 		cnt->keepalive = 0;
-
 		if (cnt->handler->support & hsupport_length) {
 			cnt->handler->support ^= hsupport_length;
 		}
@@ -597,13 +527,19 @@ cherokee_connection_build_header (cherokee_connection_t *cnt)
 		RET_UNKNOWN(ret);
 		return ret_error;
 	}
+
+	if (HANDLER_SUPPORT_MAYBE_LENGTH(cnt->handler)) {
+		if (strcasestr (cnt->header_buffer->buf, "Content-length: ") == NULL) {
+			cnt->keepalive = 0;
+		}
+	}
 	
 	/* Does it need to be processed?
-	 */
 	if (HANDLER_SUPPORT_COMPLEX_HEADERS(cnt->handler)) {
 		ret = process_handler_complex_headers (cnt);
 		if (ret != ret_ok) return ret;
 	}
+	 */
 
 	/* Add the server headers	
 	 */
@@ -850,7 +786,7 @@ cherokee_connection_pre_lingering_close (cherokee_connection_t *cnt)
 {
 	ret_t  ret;
 	size_t readed;
-	
+
 	/* At this point, we don't want to follow the TLS protocol
 	 * any longer.
 	 */
@@ -1800,7 +1736,8 @@ cherokee_connection_open_request (cherokee_connection_t *cnt)
 	/* If the connection is keep-alive, have a look at the
 	 * handler to see if supports it.
 	 */
-	if (HANDLER_SUPPORT_LENGTH(cnt->handler) == 0) {
+	if ((HANDLER_SUPPORT_LENGTH(cnt->handler) == 0) && 
+	    (HANDLER_SUPPORT_MAYBE_LENGTH(cnt->handler) == 0)) {
 		cnt->keepalive = 0;
 	}
 	

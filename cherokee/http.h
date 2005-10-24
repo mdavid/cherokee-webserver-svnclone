@@ -117,7 +117,7 @@ typedef enum {
 #define http_type_400(c)  ((c >= 400) && (c <= http_type_400_max))
 #define http_type_500(c)  ((c >= 500) && (c <= http_type_500_max))
 
-#define http_mehod_with_body(m)  ((m != http_head) && (m != http_options))
+#define http_method_with_body(m)  ((m != http_head) && (m != http_options))
 
 ret_t cherokee_http_method_to_string  (cherokee_http_method_t  method,  const char **str, int *str_len);
 ret_t cherokee_http_version_to_string (cherokee_http_version_t version, const char **str, int *str_len);

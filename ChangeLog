@@ -1,5 +1,18 @@
 2005-10-24  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* cherokee/connection.c (process_handler_complex_headers):
+	Removed.
+
+	* cherokee/cgi.c (cherokee_cgi_build_basic_env): Added HTTPS
+	variable.
+
+	* cherokee/handler_cgi.c (parse_header): Added new function. Now,
+	hsupport_complex_headers is deprecated.  It is parsed inside the
+	handler, no longer in the connection.
+
+	* cherokee/buffer.c (cherokee_buffer_remove_chunk): Added new
+	method.
+
 	* qa/102-QueryString.py, qa/Makefile.am (EXTRA_DIST): Added new
 	test in order to ensure QUERY_STRING is working.
 

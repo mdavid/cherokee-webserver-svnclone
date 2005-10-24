@@ -40,7 +40,7 @@ cherokee_handler_error_new (cherokee_handler_t **hdl, cherokee_connection_t *cnt
 	/* Init the base class object
 	 */
 	cherokee_handler_init_base(HANDLER(n), cnt);
-	HANDLER(n)->support = hsupport_error | hsupport_length | hsupport_keepalive;
+	HANDLER(n)->support = hsupport_error | hsupport_length;
 
 	MODULE(n)->init         = (handler_func_init_t) cherokee_handler_error_init;
 	MODULE(n)->free         = (handler_func_free_t) cherokee_handler_error_free;

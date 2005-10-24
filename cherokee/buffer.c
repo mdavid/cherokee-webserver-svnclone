@@ -404,7 +404,6 @@ cherokee_buffer_remove_dups (cherokee_buffer_t *buffer, char c)
 			continue;
 		}
 		
-//		*++a = a[offset];
 		a++;
 		*a = a[offset];
 
@@ -432,6 +431,22 @@ cherokee_buffer_remove_string (cherokee_buffer_t *buf, char *string, int string_
 		memmove (tmp, tmp+string_len, buf->len - (offset+string_len) +1);
 		buf->len -= string_len;
 	}
+
+	return ret_ok;
+}
+
+
+ret_t 
+cherokee_buffer_remove_chunk (cherokee_buffer_t *buf, int from, int len)
+{
+	char *end;
+	char *begin;
+
+	begin = buf->buf + from;
+	end   = begin + len;
+
+	memmove (begin, end, ((buf->buf + buf->len) - end) + 1);
+	buf->len -= len;
 
 	return ret_ok;
 }
