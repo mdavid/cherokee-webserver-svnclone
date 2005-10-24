@@ -21,4 +21,4 @@ class Test (TestBase):
                         echo "Content-Type: text/plain"
                         echo
                         echo "%s"
-                        """) % (MAGIC)
+                        """ % (MAGIC))
