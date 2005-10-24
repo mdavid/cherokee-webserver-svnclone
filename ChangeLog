@@ -1,5 +1,9 @@
 2005-10-24  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* cherokee/handler_redir.c (match_and_substitute): It wasn't
+	storing the right petition in the log file. Reported by Kurt McKee
+	<kurt@kurtmckee.org>
+
 	* qa/Makefile.am (EXTRA_DIST), qa/101-HugePost.py: Added new QA
 	test.
 
