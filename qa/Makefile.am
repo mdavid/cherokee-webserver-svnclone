@@ -102,7 +102,8 @@ run-tests.py \
 097-htpasswd-sha1.py \
 098-htpasswd-crypt.py \
 099-htpasswd-plain.py \
-100-Digest-htdigest.py
+100-Digest-htdigest.py \
+101-HugePost.py
 
 test:
 	./run-tests.py

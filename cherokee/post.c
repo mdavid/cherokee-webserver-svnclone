@@ -75,10 +75,10 @@ cherokee_post_set_len (cherokee_post_t *post, size_t len)
 {
 	post->type = (len > POST_SIZE_TO_DISK) ? post_in_tmp_file : post_in_memory;
 	post->size = len;
-	
+
 	if (post->type == post_in_tmp_file) {
 		char *ptr;
-		char template[64];
+		char  template[64];
 		
 		strncpy (template, "/tmp/cherokee_post_XXXXXX", 64); 
 		
@@ -126,21 +126,25 @@ ret_t
 cherokee_post_append (cherokee_post_t *post, char *str, size_t len)
 {
 	cherokee_buffer_add (&post->info, str, len);
-	return cherokee_post_commit_buf (post);
+	cherokee_post_commit_buf (post, len);
+	return ret_ok;
 }
 
 
 ret_t 
-cherokee_post_commit_buf (cherokee_post_t *post)
+cherokee_post_commit_buf (cherokee_post_t *post, size_t size)
 {
 	size_t written = 0;
+
+	if (size <= 0)
+		return ret_ok;
 
 	switch (post->type) {
 	case post_undefined:
 		return ret_error;
 
 	case post_in_memory:
-		post->received += post->info.len;
+		post->received += size;
 		return ret_ok;
 		
 	case post_in_tmp_file:
@@ -155,6 +159,8 @@ cherokee_post_commit_buf (cherokee_post_t *post)
 		cherokee_buffer_move_to_begin (&post->info, written);
 		return ret_ok;
 	}
+
+	return ret_error;
 }
 
 
@@ -207,6 +213,11 @@ cherokee_post_walk_to_fd (cherokee_post_t *post, int fd)
 		}
 
 		cherokee_buffer_move_to_begin (&post->info, r);
+
+		post->walk_offset += r;
+		if (post->walk_offset < post->info.len)
+			return ret_ok;
+
 		return ret_eagain;
 
 	default:
