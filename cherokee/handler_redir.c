@@ -158,6 +158,10 @@ match_and_substitute (cherokee_handler_redir_t *n)
 			continue;
 		}
 
+		/* Make a copy of the original request before rewrite it
+		 */
+		cherokee_buffer_add_buffer (&conn->request_original, conn->request);
+
 		/* Internal redirect
 		 */
 		if (n->is_hidden == true) {
