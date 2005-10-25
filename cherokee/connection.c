@@ -795,7 +795,8 @@ cherokee_connection_pre_lingering_close (cherokee_connection_t *cnt)
 	/* Shut down the socket for write, which will send a FIN
 	 * to the peer.
 	 */
-	cherokee_socket_shutdown (cnt->socket, SHUT_WR);
+	ret = cherokee_socket_shutdown (cnt->socket, SHUT_WR);
+	if (ret != ret_ok) return ret_ok;
 
 	/* Set the timeout
 	 */
