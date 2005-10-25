@@ -1,3 +1,14 @@
+2005-10-25  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* config.h.win32: Added some new definitions. Patch by Gisle Vanem
+	<giva@bgnett.no>
+
+	* config.h.mingw: Removed, it is not longer needed.
+
+	* cherokee/cgi.c (cherokee_cgi_build_basic_env): Added
+	HTTP_REFERER header.  Wordpress was failing to perform certain
+	operation due to this problem.  Reported by Rodolfo Pilas.
+
 2005-10-24  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cherokee/connection.c (process_handler_complex_headers):

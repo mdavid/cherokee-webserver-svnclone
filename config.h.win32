@@ -35,7 +35,11 @@
 
 /* Misc
  */
-#define FD_SETSIZE  256
+#define FD_SETSIZE   256
+#define _PC_NAME_MAX 256
+#define SO_SUFFIX    "dll"
+#define OS_TYPE      "Win32" 
+
 
 #ifdef __MINGW32__
 #define HAVE_INLINE  1

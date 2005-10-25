@@ -103,6 +103,14 @@ cherokee_cgi_build_basic_env (cherokee_connection_t       *conn,
 		set_env_pair (param, "HTTP_USER_AGENT", 15, tmp->buf, tmp->len);
 	}
 
+	/* Set referer
+	 */
+	cherokee_buffer_clean (tmp);
+	ret = cherokee_header_copy_known (conn->header, header_referer, tmp);
+	if (ret == ret_ok) {
+		set_env_pair (param, "HTTP_REFERER", 12, tmp->buf, tmp->len);
+	}
+
 	/* Content-type and Content-lenght (if available) 
 	 */
 	cherokee_buffer_clean (tmp);
