@@ -202,7 +202,15 @@ cherokee_connection_free (cherokee_connection_t  *cnt)
 ret_t
 cherokee_connection_clean (cherokee_connection_t *cnt)
 {	   
-	uint32_t header_len;
+	uint32_t           header_len;
+	cherokee_server_t *srv = CONN_SRV(cnt);
+
+#ifndef CHEROKEE_EMBEDDED
+	if (cnt->io_entry_ref != NULL) {
+		cherokee_iocache_mmap_release (srv->iocache, cnt->io_entry_ref);
+		cnt->io_entry_ref = NULL;		
+	}
+#endif
 
 	cnt->phase             = phase_reading_header;
 	cnt->phase_return      = phase_nothing;
@@ -218,7 +226,6 @@ cherokee_connection_clean (cherokee_connection_t *cnt)
 	cnt->log_at_end        = 1;
 	cnt->realm_ref         = NULL;
 	cnt->mmaped            = NULL;
-	cnt->io_entry_ref      = NULL;
 	cnt->rx                = 0;	
 	cnt->tx                = 0;
 	cnt->rx_partial        = 0;	
@@ -244,7 +251,6 @@ cherokee_connection_clean (cherokee_connection_t *cnt)
 		close (cnt->extra_polling_fd);
 		cnt->extra_polling_fd = -1;
 	}
-
 
 	cherokee_post_mrproper (&cnt->post);
 

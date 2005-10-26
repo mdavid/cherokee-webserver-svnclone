@@ -25,7 +25,7 @@ dnl Version
 m4_define([cherokee_major_version], [0])
 m4_define([cherokee_minor_version], [4])
 m4_define([cherokee_micro_version], [28])
-m4_define([cherokee_patch_version], [b3])
+m4_define([cherokee_patch_version], [b4])
 m4_define([cherokee_version], m4_format('%s.%s.%s%s', cherokee_major_version, cherokee_minor_version, cherokee_micro_version, cherokee_patch_version))
 
 dnl Init autoconf and automake
@@ -196,6 +196,7 @@ AC_CHECK_TYPE(ssize_t, int)
 AC_CHECK_TYPE(wchar_t, unsigned short)
 
 AC_CHECK_SIZEOF(unsigned long)
+AC_CHECK_SIZEOF(unsigned long long)
 AC_CHECK_SIZEOF(unsigned int)
 AC_CHECK_SIZEOF(off_t)
 

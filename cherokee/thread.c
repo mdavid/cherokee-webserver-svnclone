@@ -923,12 +923,10 @@ process_active_connections (cherokee_thread_t *thd)
 					continue;
 				case ret_eof:
 				case ret_error:
-					cherokee_iocache_mmap_release (srv->iocache, conn->io_entry_ref);
 					conn->phase = phase_lingering;
 					goto phase_lingering_close;
 
 				default:
-					cherokee_iocache_mmap_release (srv->iocache, conn->io_entry_ref);
 					maybe_purge_closed_connection (thd, conn);
 					continue;
 				}
@@ -997,6 +995,7 @@ process_active_connections (cherokee_thread_t *thd)
 				purge_closed_connection (thd, conn);
 				break;
 			case ret_eagain:
+				conn_set_mode (thd, conn, socket_reading);
 				break;
 			default:
 				RET_UNKNOWN(ret);

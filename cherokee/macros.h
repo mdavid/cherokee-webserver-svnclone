@@ -217,12 +217,14 @@
 
 /* Format string for off_t
  */
-#if _FILE_OFFSET_BITS == 64
+#if SIZEOF_OFF_T == SIZEOF_UNSIGNED_LONG_LONG 
 # define FMT_OFFSET "%llu"
 # define CST_OFFSET unsigned long long
-#else
+#elif SIZEOF_OFF_T == SIZEOF_UNISGNED_LONG
 # define FMT_OFFSET "%lu"
 # define CST_OFFSET unsigned long
+#else
+# error Unknown size of off_t 
 #endif
 
 

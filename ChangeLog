@@ -1,3 +1,21 @@
+2005-10-26  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* configure.in, cherokee/macros.h (CST_OFFSET): Fixed a off_t size
+	issue in MacOS X. Patch by Marko Mikulicic <marko@autistici.org>
+
+	* Makefile.am (EXTRA_DIST): Removed config.h.mingw
+
+	* cherokee/thread.c (process_active_connections): Removed calls to
+	cherokee_iocache_mmap_release(), it will be freed on
+	cherokee_connection_clean().  It is safer in this way.
+
+	* cherokee/connection.c (cherokee_connection_clean): It checks for
+	an IOCache entry reference in order to free it at this point.
+
+	* cherokee/thread.c (process_active_connections): If
+	cherokee_connection_pre_lingering_close() returns ret_eagain it
+	will set the connection in read mode.
+
 2005-10-25  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* config.h.win32: Added some new definitions. Patch by Gisle Vanem
