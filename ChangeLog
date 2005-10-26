@@ -3,6 +3,9 @@
 	* configure.in, cherokee/macros.h (CST_OFFSET): Fixed a off_t size
 	issue in MacOS X. Patch by Marko Mikulicic <marko@autistici.org>
 
+	* configure.in: Fixed FreeBSD/OpenBSD compilation. It needed
+	-pthread in the LDFLAGS.
+
 	* Makefile.am (EXTRA_DIST): Removed config.h.mingw
 
 	* cherokee/thread.c (process_active_connections): Removed calls to
