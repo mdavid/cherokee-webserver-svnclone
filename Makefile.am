@@ -58,7 +58,6 @@ debian_testing_chroot.sh
 
 EXTRA_DIST =          \
 TODO                  \
-config.h.mingw        \
 cherokee.spec         \
 cherokee.spec.in      \
 build_solaris.sh.in   \
