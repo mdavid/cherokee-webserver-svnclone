@@ -65,7 +65,7 @@ AC_MSG_CHECKING([host platform characteristics])
           ;;
 	*-*-*freebsd*|*-*-*openbsd*)
 		thread_ldflags="-pthread"
-          libdl=
+          libdl="-pthread"
           ;;
 	*-*-linux*)
 		thread_ldflags="-lpthread"
