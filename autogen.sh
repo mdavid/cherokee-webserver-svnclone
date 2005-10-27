@@ -17,6 +17,8 @@ test -z "$AUTOMAKE" && AUTOMAKE=automake
 test -z "$ACLOCAL" && ACLOCAL=aclocal
 test -z "$AUTOCONF" && AUTOCONF=autoconf
 test -z "$AUTOHEADER" && AUTOHEADER=autoheader
+test -z "$LIBTOOL" && LIBTOOL=libtool
+test -z "$LIBTOOLIZE" && LIBTOOLIZE=libtoolize
 
 ($AUTOCONF --version) < /dev/null > /dev/null 2>&1 || {
 	echo
@@ -26,7 +28,7 @@ test -z "$AUTOHEADER" && AUTOHEADER=autoheader
 	DIE=1
 }
 
-(libtool --version) < /dev/null > /dev/null 2>&1 || {
+($LIBTOOL --version) < /dev/null > /dev/null 2>&1 || {
         echo
         echo "You must have libtool installed to compile gnome-xml."
         echo "Get ftp://ftp.gnu.org/gnu/libtool/libtool-1.4.tar.gz"
@@ -82,7 +84,7 @@ $ACLOCAL $ACLOCAL_FLAGS
 
 # run libtoolize ...
 echo "Running libtoolize..."
-libtoolize --force
+$LIBTOOLIZE --force
 
 echo "Running automake..."
 $AUTOMAKE -a $am_opt

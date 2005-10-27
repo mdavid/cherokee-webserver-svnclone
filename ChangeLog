@@ -1,3 +1,9 @@
+2005-10-27  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* autogen.sh (LIBTOOL, LIBTOOLIZE): Define two variables for the
+	name of these utilities.  MacOS X has a different name for it.
+	Patch by Sébastien Arnaud <arnaudsjr@mac.com>
+
 2005-10-26  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* configure.in, cherokee/macros.h (CST_OFFSET): Fixed a off_t size
