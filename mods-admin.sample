@@ -15,10 +15,10 @@ Directory /admin {
 
    Auth basic {
       Method pam
+      Name "Administration"
       User root
    }
  
    Allow from localhost
-   OnlySecure
 }
 
