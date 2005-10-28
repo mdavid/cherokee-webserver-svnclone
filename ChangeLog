@@ -1,5 +1,14 @@
 2005-10-28  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* qa/104-ScriptAlias_PathInfo.py: Added new test to ensure
+	previous problem is fixed.
+
+	* cherokee/handler_cgi.c (_extract_path): Added support for
+	PathInfo in ScriptAlias'ed configurations.
+
+	* cherokee/handler_cgi.c (build_envp): Now, the user defined
+	variables have precedence over the server's ones.
+
 	* cherokee/fdpoll.c (cherokee_fdpoll_best_new): The poll method
 	has taken over BSD kqueue and Solaris port event. In the real life
 	it is faster.

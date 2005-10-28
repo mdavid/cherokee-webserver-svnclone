@@ -269,6 +269,23 @@ build_envp (cherokee_connection_t *conn, cherokee_handler_cgi_t* cgi)
 	char              *p;
 	cherokee_buffer_t  tmp = CHEROKEE_BUF_INIT;
 
+	/* Add user defined variables at the beginning,
+	 * these have precedence..
+	 */
+	if (cgi->system_env != NULL) {
+		list_for_each (i, cgi->system_env) {
+			char    *name;
+			cuint_t  name_len;
+			char    *value;
+			
+			name     = LIST_ITEM_INFO(i);
+			name_len = strlen(name);
+			value    = name + name_len + 1;
+			
+			cherokee_handler_cgi_add_env_pair (cgi, name, name_len, value, strlen(value));
+		}
+	}
+
 	/* Add the basic enviroment variables
 	 */
 	ret = cherokee_cgi_build_basic_env (conn, 
@@ -297,22 +314,6 @@ build_envp (cherokee_connection_t *conn, cherokee_handler_cgi_t* cgi)
 	 */
 	if (cgi->filename) {
 		set_env_pair (cgi, "SCRIPT_FILENAME", 16, cgi->filename->buf, cgi->filename->len);
-	}
-
-	/* Finally, add user defined variables
-	 */
-	if (cgi->system_env != NULL) {
-		list_for_each (i, cgi->system_env) {
-			char    *name;
-			cuint_t  name_len;
-			char    *value;
-			
-			name     = LIST_ITEM_INFO(i);
-			name_len = strlen(name);
-			value    = name + name_len + 1;
-			
-			cherokee_handler_cgi_add_env_pair (cgi, name, name_len, value, strlen(value));
-		}
 	}
 
 	/* TODO: Fill the others CGI environment variables
@@ -371,6 +372,17 @@ _extract_path (cherokee_handler_cgi_t *cgi)
 
 		cherokee_buffer_new (&cgi->filename);
 		cherokee_buffer_add (cgi->filename, cgi->script_alias, strlen(cgi->script_alias));
+
+		/* Check the path_info even if it uses a
+		 * scriptalias. the PATH_INFO is the rest of the
+		 * substraction * of request - configured directory.
+		 */
+		if (cgi->script_alias != NULL) {
+			cherokee_buffer_add (conn->pathinfo, 
+					     conn->request->buf + conn->web_directory->len, 
+					     conn->request->len - conn->web_directory->len);
+		}
+
 		return ret_ok;
 	}
 
