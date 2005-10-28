@@ -513,8 +513,6 @@ cherokee_handler_cgi_init (cherokee_handler_cgi_t *cgi)
 	/* .. and fork the process 
 	 */
 #ifndef _WIN32
-	printf ("conn->query_string->len %d\n", conn->query_string->len);
-	printf ("conn->pathinfo->len %d\n", conn->pathinfo->len);
 	pid = fork();
 	if (pid == 0) 
 	{
