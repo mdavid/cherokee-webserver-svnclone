@@ -1,5 +1,9 @@
 2005-10-28  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* cherokee/fdpoll.c (cherokee_fdpoll_best_new): The poll method
+	has taken over BSD kqueue and Solaris port event. In the real life
+	it is faster.
+
 	* qa/061-PAM.py (Test.Precondition), qa/062-PAM2.py
 	(Test.Precondition): Added a try: except: block to ensure it does
 	not fail if Cherokee is not installed on /usr and the conf.py is
