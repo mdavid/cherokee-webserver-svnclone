@@ -151,6 +151,8 @@ cherokee_cgi_build_basic_env (cherokee_connection_t       *conn,
 	 */
 	if (conn->validator && !cherokee_buffer_is_empty (&conn->validator->user)) {
 		set_env_pair (param, "REMOTE_USER", 11, conn->validator->user.buf, conn->validator->user.len);
+	} else {
+		set_env_pair (param, "REMOTE_USER", 11, "", 0);
 	}
 
 	/* Set the host name

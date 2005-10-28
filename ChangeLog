@@ -1,4 +1,19 @@
+2005-10-28  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* qa/103-ScriptName.py, qa/Makefile.am (EXTRA_DIST): Added new
+	test.
+
+	* cherokee/cgi.c (cherokee_cgi_build_basic_env): Set REMOTE_USER
+	even if it is empty.  Trac was also expecting to read it.. These
+	problems have been reported by John Hampton
+	<cherokee@pacopablo.com>
+
+	* cherokee/handler_cgi.c (build_envp): Fixed SCRIPT_NAME variable.
+	Trac was failing because it wasn't properly set.
+
 2005-10-27  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* configure.in: 0.4.28 released
 
 	* autogen.sh (LIBTOOL, LIBTOOLIZE): Define two variables for the
 	name of these utilities.  MacOS X has a different name for it.

@@ -276,15 +276,21 @@ build_envp (cherokee_connection_t *conn, cherokee_handler_cgi_t* cgi)
 					    &tmp, cgi);
 	if (unlikely (ret != ret_ok)) return ret;
 
-	/* Set SCRIPT_NAME
+	/* SCRIPT_NAME:
+	 * It is the request without the pathinfo if it exists
 	 */
-	if (cgi->parameter) {
-		p = cgi->parameter->buf + conn->local_directory->len -1;
-		set_env_pair (cgi, "SCRIPT_NAME", 11, p, (cgi->parameter->buf + cgi->parameter->len) - p);
-	} else {	
+	if (cgi->parameter == NULL) {
 		cherokee_buffer_clean (&tmp);
 		cherokee_header_copy_request (conn->header, &tmp);
-		set_env_pair(cgi, "REQUEST_URI", 11, tmp.buf, tmp.len);
+
+		if (conn->pathinfo->len > 0) {
+			set_env_pair (cgi, "SCRIPT_NAME", 11, tmp.buf, tmp.len - conn->pathinfo->len);
+		} else {
+			set_env_pair (cgi, "SCRIPT_NAME", 11, tmp.buf, tmp.len);
+		}
+	} else {
+		p = cgi->parameter->buf + conn->local_directory->len -1;
+		set_env_pair (cgi, "SCRIPT_NAME", 11, p, (cgi->parameter->buf + cgi->parameter->len) - p);
 	}
 
 	/* SCRIPT_FILENAME
@@ -376,10 +382,17 @@ _extract_path (cherokee_handler_cgi_t *cgi)
 		int req_len;
 		int local_len;
 
+		/* It is going to concatenate two paths like:
+		 * local_directory = "/usr/share/cgi-bin/", and
+		 * request = "/thing.cgi", so there will be two
+		 * slashes in the middle of the request.
+		 */
 		req_len   = conn->request->len;
 		local_len = conn->local_directory->len;
 
-		cherokee_buffer_add_buffer (conn->local_directory, conn->request); 
+		cherokee_buffer_add (conn->local_directory, 
+				     conn->request->buf + 1, 
+				     conn->request->len - 1); 
 
 		ret = cherokee_handler_cgi_split_pathinfo (cgi, conn->local_directory, local_len +1);
 		if (unlikely(ret < ret_ok)) goto bye;
@@ -399,7 +412,7 @@ _extract_path (cherokee_handler_cgi_t *cgi)
 		}
 		
 	bye:
-		cherokee_buffer_drop_endding (conn->local_directory, req_len);		
+		cherokee_buffer_drop_endding (conn->local_directory, req_len - 1);
 	}
 
 	return ret;
@@ -500,6 +513,8 @@ cherokee_handler_cgi_init (cherokee_handler_cgi_t *cgi)
 	/* .. and fork the process 
 	 */
 #ifndef _WIN32
+	printf ("conn->query_string->len %d\n", conn->query_string->len);
+	printf ("conn->pathinfo->len %d\n", conn->pathinfo->len);
 	pid = fork();
 	if (pid == 0) 
 	{

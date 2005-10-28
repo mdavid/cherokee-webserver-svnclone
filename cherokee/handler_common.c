@@ -130,7 +130,6 @@ cherokee_handler_common_new (cherokee_handler_t **hdl, void *cnt, cherokee_table
 
 	cherokee_iocache_get_default (&iocache);
 	ret = stat_file (use_iocache, iocache, &nocache_info, conn->local_directory->buf, &file, &info);
-//	ret = cherokee_iocache_stat_get (iocache, conn->local_directory->buf, &file);
 	exists = (ret == ret_ok);
 	
 	if (!exists) {
@@ -210,7 +209,6 @@ cherokee_handler_common_new (cherokee_handler_t **hdl, void *cnt, cherokee_table
 				cherokee_buffer_add_buffer (&new_local_dir, CONN_VSRV(conn)->root);
 				cherokee_buffer_add (&new_local_dir, index, index_len);
 				
-//				ret = cherokee_iocache_stat_get (iocache, new_local_dir.buf, &file);
 				ret = stat_file (use_iocache, iocache, &nocache_info, new_local_dir.buf, &file, &info);
 				exists = (ret == ret_ok);
 
@@ -230,7 +228,6 @@ cherokee_handler_common_new (cherokee_handler_t **hdl, void *cnt, cherokee_table
 			 */
 			cherokee_buffer_add (conn->local_directory, index, index_len);
 
-//			ret = cherokee_iocache_stat_get (iocache, conn->local_directory->buf, &file);
 			ret = stat_file (use_iocache, iocache, &nocache_info, conn->local_directory->buf, &file, &info);
 			exists = (ret == ret_ok);
 
