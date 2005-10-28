@@ -1,5 +1,10 @@
 2005-10-28  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* qa/061-PAM.py (Test.Precondition), qa/062-PAM2.py
+	(Test.Precondition): Added a try: except: block to ensure it does
+	not fail if Cherokee is not installed on /usr and the conf.py is
+	untouched.
+
 	* cherokee/Makefile.am: Some yacc parameter were displaced. It was
 	working with GNU bison, but it was failing with byacc. Patch by
 	Tim Wilde <twilde@dyndns.com>
