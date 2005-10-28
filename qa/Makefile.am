@@ -104,7 +104,8 @@ run-tests.py \
 099-htpasswd-plain.py \
 100-Digest-htdigest.py \
 101-HugePost.py \
-102-QueryString.py
+102-QueryString.py \
+103-ScriptName.py
 
 test:
 	./run-tests.py
