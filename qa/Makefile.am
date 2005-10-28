@@ -105,7 +105,8 @@ run-tests.py \
 100-Digest-htdigest.py \
 101-HugePost.py \
 102-QueryString.py \
-103-ScriptName.py
+103-ScriptName.py \
+104-ScriptAlias_PathInfo.py
 
 test:
 	./run-tests.py
