@@ -1,5 +1,9 @@
 2005-10-28  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* cherokee/Makefile.am: Some yacc parameter were displaced. It was
+	working with GNU bison, but it was failing with byacc. Patch by
+	Tim Wilde <twilde@dyndns.com>
+
 	* mods-admin.sample: It wasn't using the Name entry. Reported by
 	John Hampton <cherokee@pacopablo.com>
 

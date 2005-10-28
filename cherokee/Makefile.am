@@ -772,7 +772,7 @@ icons_scanner.c : icons_scanner.l
 
 icons_grammar.h : icons_grammar.c
 icons_grammar.c : icons_grammar.y
-	$(YACC) -dv -p yy_icons_ $< -o $@
+	$(YACC) -dv -p yy_icons_ -o $@ $<
 
 # Mime:
 mime_scanner.c : mime_scanner.l
@@ -780,7 +780,7 @@ mime_scanner.c : mime_scanner.l
 
 mime_grammar.h : mime_grammar.c
 mime_grammar.c : mime_grammar.y
-	$(YACC) -dv -p yy_mime_ $< -o $@
+	$(YACC) -dv -p yy_mime_ -o $@ $<
 
 
 #
