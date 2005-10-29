@@ -1,5 +1,10 @@
 2005-10-29  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* cherokee/handler_dirlist.c (cherokee_handler_dirlist_step): It
+	should print the version number only if "ServerTokens" was set to
+	"Full", otherwise it should just show the port number. Reported by
+	Mark Nipper <nipsy@bitgnome.net>
+
 	* cherokee/dirs_table_entry.c, cherokee/dirs_table.c,
 	cherokee/connection.c: The property table which was inside the
 	dir_table_entry struct has been splitted in two:

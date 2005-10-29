@@ -716,11 +716,10 @@ cherokee_handler_dirlist_step (cherokee_handler_dirlist_t *dhdl, cherokee_buffer
 	else 
  		port = HANDLER_SRV(dhdl)->port_tls;
 
-	if (CONN_SRV(conn)->server_token <= cherokee_version_product) {
+	if (CONN_SRV(conn)->server_token == cherokee_version_full) 
 		cherokee_buffer_add_version (buffer, port, ver_full_html);
-	} else {
+	else 
 		cherokee_buffer_add_version (buffer, port, ver_port_html);
-	}
 
 	cherokee_buffer_add (buffer, "\n</body></html>", 15);
 
