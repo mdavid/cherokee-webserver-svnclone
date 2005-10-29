@@ -996,7 +996,7 @@ process_active_connections (cherokee_thread_t *thd)
 			 * socket, it would lose them.
 			 */
 			if (conn->keepalive > 0)
-				conn_set_mode (thd, conn, socket_reading);
+				purge_closed_connection (thd, conn);
 
 			ret = cherokee_connection_pre_lingering_close (conn);
 			switch (ret) {
