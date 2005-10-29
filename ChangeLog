@@ -1,3 +1,8 @@
+2005-10-29  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/thread.c (process_active_connections): Do not use
+	lingering close on keep-alive connections.
+
 2005-10-28  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* qa/104-ScriptAlias_PathInfo.py: Added new test to ensure
