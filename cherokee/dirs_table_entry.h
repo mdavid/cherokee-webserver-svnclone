@@ -43,7 +43,8 @@ typedef struct {
 
 	/* Properties table
 	 */
-	cherokee_table_t     *properties; 
+	cherokee_table_t     *validator_properties; 
+	cherokee_table_t     *handler_properties; 
 
 	/* Document root
 	 */
@@ -77,8 +78,9 @@ ret_t cherokee_dirs_table_entry_new  (cherokee_dirs_table_entry_t **entry);
 ret_t cherokee_dirs_table_entry_free (cherokee_dirs_table_entry_t  *entry);
 ret_t cherokee_dirs_table_entry_init (cherokee_dirs_table_entry_t  *entry);
 
-ret_t cherokee_dirs_table_entry_set_prop    (cherokee_dirs_table_entry_t *entry, char *prop_name, cherokee_typed_table_types_t type, void *value, cherokee_table_free_item_t free_func);
-ret_t cherokee_dirs_table_entry_set_handler (cherokee_dirs_table_entry_t *entry, cherokee_module_info_t *modinfo); 
+ret_t cherokee_dirs_table_entry_set_handler_prop   (cherokee_dirs_table_entry_t *entry, char *prop_name, cherokee_typed_table_types_t type, void *value, cherokee_table_free_item_t free_func);
+ret_t cherokee_dirs_table_entry_set_validator_prop (cherokee_dirs_table_entry_t *entry, char *prop_name, cherokee_typed_table_types_t type, void *value, cherokee_table_free_item_t free_func);
+ret_t cherokee_dirs_table_entry_set_handler        (cherokee_dirs_table_entry_t *entry, cherokee_module_info_t *modinfo); 
 
 ret_t cherokee_dirs_table_entry_complete    (cherokee_dirs_table_entry_t *entry, cherokee_dirs_table_entry_t *parent);
 ret_t cherokee_dirs_table_entry_inherit     (cherokee_dirs_table_entry_t *entry);

@@ -241,14 +241,14 @@ handler_redir_add_property (cherokee_dirs_table_entry_t *entry, char *regex, cha
 	   
 	   /* Add it to the list
 	    */
-	   if (entry->properties != NULL) {
-			 cherokee_typed_table_get_list (entry->properties, "regex_list", &plist);
+	   if (entry->handler_properties != NULL) {
+			 cherokee_typed_table_get_list (entry->handler_properties, "regex_list", &plist);
 	   }
 
 	   if (plist == NULL) {
 			 cherokee_list_add (&nlist, serialized);
-			 cherokee_dirs_table_entry_set_prop (entry, "regex_list", typed_list, &nlist, 
-										  (cherokee_typed_free_func_t) cherokee_list_free_item_simple);
+			 cherokee_dirs_table_entry_set_handler_prop (entry, "regex_list", typed_list, &nlist, 
+												(cherokee_typed_free_func_t) cherokee_list_free_item_simple);
 	   } else {
 			 cherokee_list_add_tail (plist, serialized);
 	   }
@@ -256,9 +256,15 @@ handler_redir_add_property (cherokee_dirs_table_entry_t *entry, char *regex, cha
 
 
 static void
-dirs_table_set_prop (cherokee_dirs_table_entry_t *dir_entry, char *prop, char *value)
+dirs_table_set_handler_prop (cherokee_dirs_table_entry_t *dir_entry, char *prop, char *value)
 {
-	   cherokee_dirs_table_entry_set_prop (dir_entry, prop, typed_str, value, NULL);
+	   cherokee_dirs_table_entry_set_handler_prop (dir_entry, prop, typed_str, value, NULL);
+}
+
+static void
+dirs_table_set_validator_prop (cherokee_dirs_table_entry_t *dir_entry, char *prop, char *value)
+{
+	   cherokee_dirs_table_entry_set_validator_prop (dir_entry, prop, typed_str, value, NULL);
 }
 
 
@@ -914,27 +920,27 @@ str_type : T_ID
 handler_option : T_ID str_type
 {
 	   if (!strcasecmp ($1, "bgcolor")) {
-			 dirs_table_set_prop (current_dirs_table_entry, "bgcolor", $2);
+			 dirs_table_set_handler_prop (current_dirs_table_entry, "bgcolor", $2);
 	   } else if (!strcasecmp ($1, "background")) {
-			 dirs_table_set_prop (current_dirs_table_entry, "background", $2);
+			 dirs_table_set_handler_prop (current_dirs_table_entry, "background", $2);
 	   } else if (!strcasecmp ($1, "text")) {
-			 dirs_table_set_prop (current_dirs_table_entry, "text", $2);
+			 dirs_table_set_handler_prop (current_dirs_table_entry, "text", $2);
 	   } else if (!strcasecmp ($1, "link")) {
-			 dirs_table_set_prop (current_dirs_table_entry, "link", $2);
+			 dirs_table_set_handler_prop (current_dirs_table_entry, "link", $2);
 	   } else if (!strcasecmp ($1, "vlink")) {
-			 dirs_table_set_prop (current_dirs_table_entry, "vlink", $2);
+			 dirs_table_set_handler_prop (current_dirs_table_entry, "vlink", $2);
 	   } else if (!strcasecmp ($1, "alink")) {
-			 dirs_table_set_prop (current_dirs_table_entry, "alink", $2);
+			 dirs_table_set_handler_prop (current_dirs_table_entry, "alink", $2);
 	   } else if (!strcasecmp ($1, "headerfile")) {
-			 dirs_table_set_prop (current_dirs_table_entry, "headerfile", $2);
+			 dirs_table_set_handler_prop (current_dirs_table_entry, "headerfile", $2);
 	   } else if (!strcasecmp ($1, "interpreter")) {
-			 dirs_table_set_prop (current_dirs_table_entry, "interpreter", $2);
+			 dirs_table_set_handler_prop (current_dirs_table_entry, "interpreter", $2);
 	   } else if (!strcasecmp ($1, "scriptalias")) {
-			 dirs_table_set_prop (current_dirs_table_entry, "scriptalias", $2);
+			 dirs_table_set_handler_prop (current_dirs_table_entry, "scriptalias", $2);
 	   } else if (!strcasecmp ($1, "url")) {
-			 dirs_table_set_prop (current_dirs_table_entry, "url", $2);
+			 dirs_table_set_handler_prop (current_dirs_table_entry, "url", $2);
 	   } else if (!strcasecmp ($1, "filedir")) {
-			 dirs_table_set_prop (current_dirs_table_entry, "filedir", $2);
+			 dirs_table_set_handler_prop (current_dirs_table_entry, "filedir", $2);
 	   } else {
 			 return 1;
 	   }
@@ -961,7 +967,7 @@ handler_option : T_ENV T_ID str_type
 
 	   /* Add it to the list
 	    */
-	   properties = current_dirs_table_entry->properties;
+	   properties = current_dirs_table_entry->handler_properties;
 
 	   if (properties != NULL) {
 			 cherokee_typed_table_get_list (properties, "env", &plist);
@@ -969,24 +975,24 @@ handler_option : T_ENV T_ID str_type
 
 	   if (plist == NULL) {
 			 cherokee_list_add (&nlist, new_str);
-			 cherokee_dirs_table_entry_set_prop (current_dirs_table_entry, "env", typed_list, &nlist, 
-										  (cherokee_typed_free_func_t) cherokee_list_free_item_simple);
+			 cherokee_dirs_table_entry_set_handler_prop (current_dirs_table_entry, "env", typed_list, &nlist, 
+												(cherokee_typed_free_func_t) cherokee_list_free_item_simple);
 	   } else {
 			 cherokee_list_add_tail (plist, new_str);			 
 	   }
 }
 
 handler_option : T_SOCKET T_FULLDIR
-{ dirs_table_set_prop (current_dirs_table_entry, "socket", $2); };
+{ dirs_table_set_handler_prop (current_dirs_table_entry, "socket", $2); };
 
 handler_option : T_JUST_ABOUT
-{ cherokee_dirs_table_entry_set_prop (current_dirs_table_entry, "about", typed_int, INT_TO_POINTER(1), NULL); };
+{ cherokee_dirs_table_entry_set_handler_prop (current_dirs_table_entry, "about", typed_int, INT_TO_POINTER(1), NULL); };
 
 handler_option : T_SERVER T_ADDRESS_PORT
-{ dirs_table_set_prop (current_dirs_table_entry, "server", $2); };
+{ dirs_table_set_handler_prop (current_dirs_table_entry, "server", $2); };
 
 handler_option : T_IO_CACHE T_NUMBER
-{ cherokee_dirs_table_entry_set_prop (current_dirs_table_entry, "cache", typed_int, INT_TO_POINTER($2), NULL); };
+{ cherokee_dirs_table_entry_set_handler_prop (current_dirs_table_entry, "cache", typed_int, INT_TO_POINTER($2), NULL); };
 
 handler_option : T_NUMBER http_generic
 {
@@ -998,7 +1004,7 @@ handler_option : T_NUMBER http_generic
 	   }
 
 	   snprintf (code, 4, "%d", $1);
-	   dirs_table_set_prop (current_dirs_table_entry, code, $2);
+	   dirs_table_set_handler_prop (current_dirs_table_entry, code, $2);
 };
 
 handler_option : T_SHOW id_list
@@ -1018,7 +1024,8 @@ handler_option : T_SHOW id_list
 				    free (i->string);
 				    i->string = lower;
 
-				    cherokee_dirs_table_entry_set_prop (current_dirs_table_entry, i->string, typed_int, INT_TO_POINTER(1), NULL);				    
+				    cherokee_dirs_table_entry_set_handler_prop (current_dirs_table_entry, 
+													   i->string, typed_int, INT_TO_POINTER(1), NULL);
 			 } else {
 				    PRINT_MSG ("ERROR: Unknown parameter '%s' for \"Show\"", i->string);
 			 }
@@ -1367,7 +1374,7 @@ auth_option_params :
                    ;
 
 auth_option_param : T_PASSWDFILE T_FULLDIR 
-{ dirs_table_set_prop (current_dirs_table_entry, "file", $2); };
+{ dirs_table_set_validator_prop (current_dirs_table_entry, "file", $2); };
 
 
 

@@ -353,7 +353,7 @@ cherokee_connection_setup_error_handler (cherokee_connection_t *cnt)
 	/* Create a new error handler
 	 */
 	if ((entry != NULL) && (entry->handler_new_func != NULL)) {
-		ret = entry->handler_new_func ((void **) &cnt->handler, cnt, entry->properties);
+		ret = entry->handler_new_func ((void **) &cnt->handler, cnt, entry->handler_properties);
 		if (ret == ret_ok) goto out;
 	} 
 
@@ -1538,7 +1538,7 @@ cherokee_connection_check_authentication (cherokee_connection_t *cnt, cherokee_d
 	/* Create the validator object
 	 */
 	ret = plugin_entry->validator_new_func ((void **) &cnt->validator, 
-						plugin_entry->properties);
+						plugin_entry->validator_properties);
 	if (ret != ret_ok) {
 		goto error;
 	}
@@ -1643,7 +1643,7 @@ cherokee_connection_create_handler (cherokee_connection_t *cnt, cherokee_dirs_ta
 
 	/* Create and assign a handler object
 	 */
-	ret = (plugin_entry->handler_new_func) ((void **)&cnt->handler, cnt, plugin_entry->properties);
+	ret = (plugin_entry->handler_new_func) ((void **)&cnt->handler, cnt, plugin_entry->handler_properties);
 	if (ret == ret_eagain) return ret_eagain;
 	if (ret != ret_ok) {
 		if ((cnt->handler == NULL) && (cnt->error_code == http_ok)) {
