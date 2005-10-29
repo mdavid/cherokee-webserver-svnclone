@@ -989,6 +989,15 @@ process_active_connections (cherokee_thread_t *thd)
 			
 		case phase_lingering: 
 		phase_lingering_close:
+
+			/* It should not use lingering close on
+			 * keepalive connections.  If there were some
+			 * pipelined connections waiting on the
+			 * socket, it would lose them.
+			 */
+			if (conn->keepalive > 0)
+				conn_set_mode (thd, conn, socket_reading);
+
 			ret = cherokee_connection_pre_lingering_close (conn);
 			switch (ret) {
 			case ret_ok:
