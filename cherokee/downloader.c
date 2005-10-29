@@ -28,6 +28,7 @@
 #include "request.h"
 #include "url.h"
 #include "header-protected.h"
+#include "util.h"
 
 #include <errno.h>
 

@@ -87,7 +87,6 @@ cherokee_dirs_table_get (cherokee_dirs_table_t *pt, cherokee_buffer_t *requested
 		if (web_directory->len <= 0)
 			goto go_out;
 
-
 		/* Modify url for next loop:
 		 * Find the last / and finish the string there.
 		 */
@@ -124,7 +123,8 @@ go_out:
 	
 #if 0
 	printf ("ptable::GET - entry %p\n", entry);
-	if (entry) printf ("ptable::GET - entry->properties: %p\n", entry->properties);
+	if (entry) printf ("ptable::GET - entry->handler_properties: %p\n", entry->handler_properties);
+	if (entry) printf ("ptable::GET - entry->validator_properties: %p\n", entry->validator_properties);
 #endif
 
 	return (entry == NULL) ? ret_error : ret_ok;
@@ -160,7 +160,6 @@ relink_func (const char *key_, void *value, void *param)
 	do {
 		void *parent = NULL;
 
-
 		if (cherokee_buffer_is_endding (&key, '/')) {
 			cherokee_buffer_drop_endding (&key, 1);
 		} else {
@@ -183,6 +182,7 @@ out:
 	cherokee_buffer_mrproper (&key);
 	return true;
 }
+
 
 ret_t 
 cherokee_dirs_table_relink (cherokee_dirs_table_t *pt)

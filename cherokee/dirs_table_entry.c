@@ -27,6 +27,12 @@
 
 #include "access.h"
 
+typedef enum {
+	table_handler,
+	table_validator
+} prop_table_types_t;
+
+
 ret_t 
 cherokee_dirs_table_entry_new (cherokee_dirs_table_entry_t **entry)
 {
@@ -42,17 +48,21 @@ cherokee_dirs_table_entry_new (cherokee_dirs_table_entry_t **entry)
 ret_t 
 cherokee_dirs_table_entry_init (cherokee_dirs_table_entry_t *entry)
 {
-	entry->parent             = NULL;
-	entry->properties         = NULL;
-	entry->handler_new_func   = NULL;
-	entry->validator_new_func = NULL;
-	entry->access             = NULL;
-	entry->authentication     = http_auth_nothing;
-	entry->only_secure        = false;
+	entry->parent               = NULL;
 
-	entry->document_root      = NULL;
-	entry->auth_realm         = NULL;
-	entry->users              = NULL;
+	entry->handler_new_func     = NULL;
+	entry->handler_properties   = NULL;
+
+	entry->validator_new_func   = NULL;
+	entry->validator_properties = NULL;
+
+	entry->access               = NULL;
+	entry->authentication       = http_auth_nothing;
+	entry->only_secure          = false;
+
+	entry->document_root        = NULL;
+	entry->auth_realm           = NULL;
+	entry->users                = NULL;
 
 	return ret_ok;
 }
@@ -61,9 +71,14 @@ cherokee_dirs_table_entry_init (cherokee_dirs_table_entry_t *entry)
 ret_t 
 cherokee_dirs_table_entry_free (cherokee_dirs_table_entry_t *entry) 
 {
-	if (entry->properties != NULL) {
-		cherokee_typed_table_free (entry->properties);
-		entry->properties = NULL;
+	if (entry->handler_properties != NULL) {
+		cherokee_typed_table_free (entry->handler_properties);
+		entry->handler_properties = NULL;
+	}
+
+	if (entry->validator_properties != NULL) {
+		cherokee_typed_table_free (entry->validator_properties);
+		entry->validator_properties = NULL;
 	}
 	
 	if (entry->access != NULL) {
@@ -91,15 +106,27 @@ cherokee_dirs_table_entry_free (cherokee_dirs_table_entry_t *entry)
 }
 
 
-ret_t 
-cherokee_dirs_table_entry_set_prop (cherokee_dirs_table_entry_t *entry, char *prop_name, cherokee_typed_table_types_t type, void *value, cherokee_table_free_item_t free_func)
+static ret_t 
+entry_set_prop (prop_table_types_t table_type, cherokee_dirs_table_entry_t *entry, char *prop_name, cherokee_typed_table_types_t type, void *value, cherokee_table_free_item_t free_func)
 {
-	ret_t ret;
+	ret_t              ret;
+	cherokee_table_t **table;
+
+	/* Choose the table
+	 */
+	switch (table_type) {
+	case table_handler:
+		table = &entry->handler_properties;
+		break;
+	case table_validator:
+		table = &entry->validator_properties;
+		break;
+	}
 	
 	/* Create the table on demand to save memory
 	 */
-	if (entry->properties == NULL) {
-		ret = cherokee_table_new (&entry->properties);
+	if (*table == NULL) {
+		ret = cherokee_table_new (table);
 		if (unlikely(ret != ret_ok)) return ret;
 	}
 
@@ -107,18 +134,32 @@ cherokee_dirs_table_entry_set_prop (cherokee_dirs_table_entry_t *entry, char *pr
 	 */
 	switch (type) {
 	case typed_int:
-		return cherokee_typed_table_add_int (entry->properties, prop_name, POINTER_TO_INT(value));
+		return cherokee_typed_table_add_int (*table, prop_name, POINTER_TO_INT(value));
 	case typed_str:
-		return cherokee_typed_table_add_str (entry->properties, prop_name, value);
+		return cherokee_typed_table_add_str (*table, prop_name, value);
 	case typed_data:
-		return cherokee_typed_table_add_data (entry->properties, prop_name, value, free_func);
+		return cherokee_typed_table_add_data (*table, prop_name, value, free_func);
 	case typed_list:
-		return cherokee_typed_table_add_list (entry->properties, prop_name, value, free_func);
+		return cherokee_typed_table_add_list (*table, prop_name, value, free_func);
 	default:
 		SHOULDNT_HAPPEN;
 	}
 	
 	return ret_error;
+}
+
+
+ret_t 
+cherokee_dirs_table_entry_set_handler_prop (cherokee_dirs_table_entry_t *entry, char *prop_name, cherokee_typed_table_types_t type, void *value, cherokee_table_free_item_t free_func)
+{
+	return entry_set_prop (table_handler, entry, prop_name, type, value, free_func);
+}
+
+
+ret_t 
+cherokee_dirs_table_entry_set_validator_prop (cherokee_dirs_table_entry_t *entry, char *prop_name, cherokee_typed_table_types_t type, void *value, cherokee_table_free_item_t free_func)
+{
+	return entry_set_prop (table_validator, entry, prop_name, type, value, free_func);
 }
 
 
@@ -148,8 +189,11 @@ cherokee_dirs_table_entry_complete (cherokee_dirs_table_entry_t *entry, cherokee
 	if (entry->parent == NULL) 
 		entry->parent = main->parent;
 	
-	if (entry->properties == NULL)
-		entry->properties = main->properties;
+	if (entry->handler_properties == NULL)
+		entry->handler_properties = main->handler_properties;
+
+	if (entry->validator_properties == NULL)
+		entry->validator_properties = main->validator_properties;
 
 	if (entry->handler_new_func == NULL)
 		entry->handler_new_func = main->handler_new_func;
