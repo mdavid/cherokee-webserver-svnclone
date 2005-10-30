@@ -336,6 +336,19 @@ purge_closed_connection (cherokee_thread_t *thread, cherokee_connection_t *conn)
 
 
 static void
+purge_maybe_lingering (cherokee_thread_t *thread, cherokee_connection_t *conn)
+{
+	if (conn->keepalive <= 0) {
+		purge_closed_connection (thread, conn);
+		return;
+	}
+
+	conn->phase = phase_lingering;
+	conn_set_mode (thread, conn, socket_reading);
+}
+
+
+static void
 maybe_purge_closed_connection (cherokee_thread_t *thread, cherokee_connection_t *conn)
 {
 	cherokee_server_t *srv = thread->server;
@@ -494,8 +507,8 @@ process_active_connections (cherokee_thread_t *thd)
 				
 			case ret_eof:
 			case ret_error:
-				conn->phase = phase_lingering;
-				goto phase_lingering_close;
+				purge_closed_connection (thd, conn);
+				continue;
 				
 			default:
 				RET_UNKNOWN(ret);
@@ -509,8 +522,8 @@ process_active_connections (cherokee_thread_t *thd)
 				continue;
 				
 			case ret_error:
-				conn->phase = phase_lingering;
-				goto phase_lingering_close;
+				purge_closed_connection (thd, conn);
+				continue;
 				
 			case ret_ok:
 				/* RFC2817
@@ -545,17 +558,15 @@ process_active_connections (cherokee_thread_t *thd)
 				continue;
 				
 			case ret_error:
-				/* Opss..
-				 */
-				conn->phase = phase_lingering;
-				goto phase_lingering_close;
+				purge_maybe_lingering (thd, conn);
+				continue;
 				
 			case ret_eof:
 				/* Finish..
 				 */
 				if (!cherokee_post_got_all (&conn->post)) {
-					conn->phase = phase_lingering;
-					goto phase_lingering_close;
+					purge_closed_connection (thd, conn);
+					continue;
 				}
 
 				cherokee_post_commit_buf (&conn->post, len);
@@ -594,9 +605,8 @@ process_active_connections (cherokee_thread_t *thd)
 				continue;
 			case ret_eof:
 			case ret_error:
-				conn->phase = phase_lingering;
-				goto phase_lingering_close;
-
+				purge_closed_connection (thd, conn);
+				continue;
 			default:
 				RET_UNKNOWN(ret);
 			}
@@ -820,9 +830,9 @@ process_active_connections (cherokee_thread_t *thd)
 					
 					/* It could not change the handler to an error managing handler,
 					 * so it is a critical error
-					 */
-					conn->phase = phase_lingering;
-					goto phase_lingering_close;
+					 */					
+					purge_closed_connection (thd, conn);
+					continue;
 				}
 
 				/* At this point, two different things might happen:
@@ -895,8 +905,8 @@ process_active_connections (cherokee_thread_t *thd)
 
 			case ret_eof:
 			case ret_error:
-				conn->phase = phase_lingering;
-				goto phase_lingering_close;
+				purge_closed_connection (thd, conn);
+				continue;
 
 			default:
 				RET_UNKNOWN(ret);
@@ -921,10 +931,14 @@ process_active_connections (cherokee_thread_t *thd)
 				switch (ret) {
 				case ret_eagain:
 					continue;
+
 				case ret_eof:
+					maybe_purge_closed_connection (thd, conn);
+					continue;
+
 				case ret_error:
-					conn->phase = phase_lingering;
-					goto phase_lingering_close;
+					purge_maybe_lingering (thd, conn);
+					continue;
 
 				default:
 					maybe_purge_closed_connection (thd, conn);
@@ -946,9 +960,12 @@ process_active_connections (cherokee_thread_t *thd)
 
 				switch (ret) {
 				case ret_eof:
+					maybe_purge_closed_connection (thd, conn);
+					continue;
+
 				case ret_error:
-					conn->phase = phase_lingering;
-					goto phase_lingering_close;
+					purge_maybe_lingering (thd, conn);
+					continue;
 					
 				case ret_eagain:
 					break;
@@ -964,11 +981,15 @@ process_active_connections (cherokee_thread_t *thd)
 				 */
 				ret = cherokee_connection_send (conn);
 
-				if ((ret == ret_eof) ||
-				    (ret == ret_error)) 
-				{
-					conn->phase = phase_lingering;
-					goto phase_lingering_close;
+				switch (ret) {
+				case ret_eof:
+					maybe_purge_closed_connection (thd, conn);
+					continue;
+				case ret_error:
+					purge_maybe_lingering (thd, conn);
+					continue;					
+				default:
+					break;
 				}
 				break;
 
@@ -979,8 +1000,8 @@ process_active_connections (cherokee_thread_t *thd)
 				maybe_purge_closed_connection (thd, conn);
 				continue;
 			case ret_error:
-				conn->phase = phase_lingering;
-				goto phase_lingering_close;
+				purge_maybe_lingering (thd, conn);
+				continue;
 
 			default:
 				RET_UNKNOWN(ret);
@@ -988,15 +1009,6 @@ process_active_connections (cherokee_thread_t *thd)
 			break;
 			
 		case phase_lingering: 
-		phase_lingering_close:
-
-			/* It should not use lingering close on
-			 * keepalive connections.  If there were some
-			 * pipelined connections waiting on the
-			 * socket, it would lose them.
-			 */
-			if (conn->keepalive > 0)
-				maybe_purge_closed_connection (thd, conn);
 
 			ret = cherokee_connection_pre_lingering_close (conn);
 			switch (ret) {
@@ -1004,8 +1016,7 @@ process_active_connections (cherokee_thread_t *thd)
 				purge_closed_connection (thd, conn);
 				break;
 			case ret_eagain:
-				conn_set_mode (thd, conn, socket_reading);
-				break;
+				continue;
 			default:
 				RET_UNKNOWN(ret);
 			}
