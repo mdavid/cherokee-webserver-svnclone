@@ -54,6 +54,12 @@
 # include <netdb.h>
 #endif
 
+#ifdef HAVE_SYS_TIME_H
+# include <sys/time.h>
+#else 
+# include <time.h>
+#endif
+
 
 /* sendfile() function related includes
  */
@@ -1186,7 +1192,9 @@ cherokee_socket_init_client_tls (cherokee_socket_t *socket)
 ret_t 
 cherokee_socket_set_timeout (cherokee_socket_t *socket, cuint_t timeout)
 {
-	cuint_t block;
+	int            re;
+	cuint_t        block;
+	struct timeval tv;
 
 	if (socket->socket <= 0) {
 		return ret_error;
@@ -1198,17 +1206,29 @@ cherokee_socket_set_timeout (cherokee_socket_t *socket, cuint_t timeout)
 	/* Set the socket to blocking
 	 */
 	block = 0;
+
 #ifdef _WIN32
-	if (ioctlsocket (socket->socket, FIONBIO, &block) == SOCKET_ERROR)
+	re = ioctlsocket (socket->socket, FIONBIO, &block);	
+	if (re == SOCKET_ERROR) {
 #else	
-	if (ioctl (socket->socket, FIONBIO, &block) < 0)
+	re = ioctl (socket->socket, FIONBIO, &block);	
+	if (re < 0) {
 #endif
+		PRINT_ERROR ("ioctl (%d, FIONBIO, &%d) = %d\n", socket->socket, block, re);
 		return ret_error;
+	}
 
 	/* Set the send / receive timeouts
 	 */
-	setsockopt (socket->socket, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
-	setsockopt (socket->socket, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout));
+#ifdef SO_RCVTIMEO
+	tv.tv_sec  = timeout / 1000;
+	tv.tv_usec = timeout % 1000;
+
+	re = setsockopt (socket->socket, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+	if (re < 0) {
+		PRINT_ERROR ("Couldn't set SO_RCVTIMEO, fd=%d, timeout=%d\n", socket->socket, timeout);
+	}
+#endif
 
 	return ret_ok;		      
 }

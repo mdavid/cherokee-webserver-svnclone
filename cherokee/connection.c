@@ -802,11 +802,12 @@ cherokee_connection_pre_lingering_close (cherokee_connection_t *cnt)
 	 * to the peer.
 	 */
 	ret = cherokee_socket_shutdown (cnt->socket, SHUT_WR);
-	if (ret != ret_ok) return ret_ok;
+	if (unlikely (ret != ret_ok)) return ret_ok;
 
 	/* Set the timeout
 	 */
-	cherokee_socket_set_timeout (cnt->socket, MSECONS_TO_LINGER);	
+	ret = cherokee_socket_set_timeout (cnt->socket, MSECONS_TO_LINGER);	
+	if (unlikely (ret != ret_ok)) return ret_ok;
 
 	/* Read from the socket to nowhere
 	 */

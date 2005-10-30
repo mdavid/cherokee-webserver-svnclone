@@ -1,3 +1,21 @@
+2005-10-30  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/socket.c (cherokee_socket_set_timeout): Removed call to
+	setsockopt with SO_SNDTIMEO. That side of the socket is already
+	closed.
+
+	* cherokee/thread.c (purge_maybe_lingering,
+	process_active_connections): Added a new function for purge (and
+	maybe perform the lingering close) a connection from the active
+	connection list.  The error management of the error situations of
+	the loop call to purge_closed_connection instead of set the
+	lingering close phase.
+
+	* cherokee/socket.c, cherokee/connection.c
+	(cherokee_connection_pre_lingering_close): Error management
+	improved. Now it checks if there was some error in the ioctl
+	calls.
+
 2005-10-29  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cherokee/handler_dirlist.c (cherokee_handler_dirlist_step): It
