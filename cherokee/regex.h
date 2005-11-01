@@ -41,6 +41,7 @@ ret_t cherokee_regex_table_free  (cherokee_regex_table_t  *table);
 ret_t cherokee_regex_table_clean (cherokee_regex_table_t  *table);
 
 ret_t cherokee_regex_table_get  (cherokee_regex_table_t *table, char *pattern, void **pcre);
+ret_t cherokee_regex_table_add  (cherokee_regex_table_t *table, char *pattern);
 
 
 CHEROKEE_END_DECLS

@@ -106,7 +106,9 @@ run-tests.py \
 101-HugePost.py \
 102-QueryString.py \
 103-ScriptName.py \
-104-ScriptAlias_PathInfo.py
+104-ScriptAlias_PathInfo.py \
+105-If-Range.py \
+106-If-Range2.py
 
 test:
 	./run-tests.py

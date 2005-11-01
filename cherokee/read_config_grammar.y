@@ -45,11 +45,13 @@
 #include "server.h"
 #include "server-protected.h"
 #include "virtual_server.h"
-#include "dirs_table_entry.h"
+#include "config_entry.h"
 #include "encoder.h"
 #include "logger_table.h"
 #include "access.h"
 #include "list_ext.h"
+#include "reqs_list.h"
+#include "reqs_list_entry.h"
 
 
 /* Define the parameter name of the yyparse() argument
@@ -84,7 +86,8 @@ extern int   yylineno;
 
 char                                   *current_yacc_file           = NULL;
 static cherokee_dirs_table_t           *current_dirs_table          = NULL;
-static cherokee_dirs_table_entry_t     *current_dirs_table_entry    = NULL;
+static cherokee_config_entry_t         *current_config_entry        = NULL;
+static list_t                          *current_reqs_list           = NULL;
 static cherokee_virtual_server_t       *current_virtual_server      = NULL;
 static cherokee_encoder_table_entry_t  *current_encoder_entry       = NULL;
 static cherokee_module_info_t          *current_module_info         = NULL;
@@ -96,7 +99,7 @@ typedef struct {
 
 struct {
 	   char                           *handler_name;
-	   cherokee_dirs_table_entry_t    *entry;
+	   cherokee_config_entry_t        *entry;
 	   cherokee_virtual_server_t      *vserver;
 	   cherokee_dirs_table_t          *dirs;
 	   char                           *document_root;
@@ -105,16 +108,25 @@ struct {
 
 struct {
 	   char                           *handler_name;
-	   cherokee_dirs_table_entry_t    *entry;
+	   cherokee_config_entry_t        *entry;
 	   cherokee_virtual_server_t      *vserver;
 	   cherokee_exts_table_t          *exts;
 	   char                           *document_root;
 	   linked_list_t                  *exts_list;
 } extension_content_tmp;
 
+struct {
+	   char                           *handler_name;
+	   cherokee_reqs_list_entry_t     *entry;
+	   cherokee_virtual_server_t      *vserver;
+	   list_t                         *reqs;
+	   char                           *document_root;
+} request_content_tmp;
+
 
 #define auto_virtual_server ((current_virtual_server) ? current_virtual_server : SRV(server)->vserver_default)
 #define auto_dirs_table     ((current_dirs_table) ? current_dirs_table : &(auto_virtual_server)->dirs)
+#define auto_reqs_table     ((current_reqs_list) ? current_reqs_list : &(auto_virtual_server)->reqs)
 
 
 static void
@@ -161,13 +173,24 @@ make_slash_end (char *string)
 	   return make_finish_with_slash (string, &len);
 }
 
-static cherokee_dirs_table_entry_t *
-dirs_table_entry_new (void)
+static cherokee_config_entry_t *
+config_entry_new (void)
 {
-	   cherokee_dirs_table_entry_t *entry;
+	   cherokee_config_entry_t *entry;
 
-	   cherokee_dirs_table_entry_new (&entry);
-	   current_dirs_table_entry = entry;
+	   cherokee_config_entry_new (&entry);
+	   current_config_entry = entry;
+
+	   return entry;
+}
+
+static cherokee_reqs_list_entry_t *
+reqs_list_entry_new (void)
+{
+	   cherokee_reqs_list_entry_t *entry;
+
+	   cherokee_reqs_list_entry_new (&entry);
+	   current_config_entry = (cherokee_config_entry_t *)entry;      /* It is okay! */
 
 	   return entry;
 }
@@ -211,7 +234,7 @@ load_module (cherokee_module_loader_t *loader, char *name, cherokee_module_info_
 
 
 static void
-handler_redir_add_property (cherokee_dirs_table_entry_t *entry, char *regex, char *subs, int show)
+handler_redir_add_property (cherokee_config_entry_t *entry, char *regex, char *subs, int show)
 {
 	   int     regex_len;
 	   int     subs_len;
@@ -247,7 +270,7 @@ handler_redir_add_property (cherokee_dirs_table_entry_t *entry, char *regex, cha
 
 	   if (plist == NULL) {
 			 cherokee_list_add (&nlist, serialized);
-			 cherokee_dirs_table_entry_set_handler_prop (entry, "regex_list", typed_list, &nlist, 
+			 cherokee_config_entry_set_handler_prop (entry, "regex_list", typed_list, &nlist, 
 												(cherokee_typed_free_func_t) cherokee_list_free_item_simple);
 	   } else {
 			 cherokee_list_add_tail (plist, serialized);
@@ -256,15 +279,15 @@ handler_redir_add_property (cherokee_dirs_table_entry_t *entry, char *regex, cha
 
 
 static void
-dirs_table_set_handler_prop (cherokee_dirs_table_entry_t *dir_entry, char *prop, char *value)
+dirs_table_set_handler_prop (cherokee_config_entry_t *dir_entry, char *prop, char *value)
 {
-	   cherokee_dirs_table_entry_set_handler_prop (dir_entry, prop, typed_str, value, NULL);
+	   cherokee_config_entry_set_handler_prop (dir_entry, prop, typed_str, value, NULL);
 }
 
 static void
-dirs_table_set_validator_prop (cherokee_dirs_table_entry_t *dir_entry, char *prop, char *value)
+dirs_table_set_validator_prop (cherokee_config_entry_t *dir_entry, char *prop, char *value)
 {
-	   cherokee_dirs_table_entry_set_validator_prop (dir_entry, prop, typed_str, value, NULL);
+	   cherokee_config_entry_set_validator_prop (dir_entry, prop, typed_str, value, NULL);
 }
 
 
@@ -288,6 +311,7 @@ yyerror (char* msg)
 %token T_ICONS T_AUTH T_NAME T_METHOD T_PASSWDFILE T_SSL_CA_LIST_FILE T_FROM T_SOCKET T_LOG_FLUSH_INTERVAL
 %token T_INCLUDE T_PANIC_ACTION T_JUST_ABOUT T_LISTEN_QUEUE_SIZE T_SENDFILE T_MINSIZE T_MAXSIZE T_MAX_FDS
 %token T_SHOW T_CHROOT T_ONLY_SECURE T_MAX_CONNECTION_REUSE T_REWRITE T_POLL_METHOD T_EXTENSION T_IPV6 T_ENV 
+%token T_REQUEST
 
 %token <number> T_NUMBER T_PORT T_PORT_TLS
 %token <string> T_QSTRING T_FULLDIR T_ID T_HTTP_URL T_HTTPS_URL T_HOSTNAME T_IP T_DOMAIN_NAME T_ADDRESS_PORT
@@ -345,6 +369,7 @@ common_line : server
 
 server_line : directory
             | extension
+            | request
             | errorhandler
             | document_root
             | directoryindex
@@ -885,13 +910,13 @@ group2 : T_GROUP T_NUMBER
 handler : T_HANDLER T_ID '{' handler_options '}' 
 {
 	   $$.name = $2;
-	   $$.ptr = current_dirs_table_entry;
+	   $$.ptr = current_config_entry;
 };
 
 handler : T_HANDLER T_ID 
 {
 	   $$.name = $2;
-	   $$.ptr = current_dirs_table_entry;
+	   $$.ptr = current_config_entry;
 };
 
 http_generic : T_HTTP_URL  { $$ = $1; }
@@ -899,12 +924,12 @@ http_generic : T_HTTP_URL  { $$ = $1; }
 
 handler_option : T_SHOW T_REWRITE T_QSTRING T_QSTRING
 {
-	   handler_redir_add_property (current_dirs_table_entry, $3, $4, 1);
+	   handler_redir_add_property (current_config_entry, $3, $4, 1);
 }
 
 handler_option : T_REWRITE T_QSTRING T_QSTRING
 {
-	   handler_redir_add_property (current_dirs_table_entry, $2, $3, 0);
+	   handler_redir_add_property (current_config_entry, $2, $3, 0);
 };
 
 str_type : T_ID
@@ -920,27 +945,27 @@ str_type : T_ID
 handler_option : T_ID str_type
 {
 	   if (!strcasecmp ($1, "bgcolor")) {
-			 dirs_table_set_handler_prop (current_dirs_table_entry, "bgcolor", $2);
+			 dirs_table_set_handler_prop (current_config_entry, "bgcolor", $2);
 	   } else if (!strcasecmp ($1, "background")) {
-			 dirs_table_set_handler_prop (current_dirs_table_entry, "background", $2);
+			 dirs_table_set_handler_prop (current_config_entry, "background", $2);
 	   } else if (!strcasecmp ($1, "text")) {
-			 dirs_table_set_handler_prop (current_dirs_table_entry, "text", $2);
+			 dirs_table_set_handler_prop (current_config_entry, "text", $2);
 	   } else if (!strcasecmp ($1, "link")) {
-			 dirs_table_set_handler_prop (current_dirs_table_entry, "link", $2);
+			 dirs_table_set_handler_prop (current_config_entry, "link", $2);
 	   } else if (!strcasecmp ($1, "vlink")) {
-			 dirs_table_set_handler_prop (current_dirs_table_entry, "vlink", $2);
+			 dirs_table_set_handler_prop (current_config_entry, "vlink", $2);
 	   } else if (!strcasecmp ($1, "alink")) {
-			 dirs_table_set_handler_prop (current_dirs_table_entry, "alink", $2);
+			 dirs_table_set_handler_prop (current_config_entry, "alink", $2);
 	   } else if (!strcasecmp ($1, "headerfile")) {
-			 dirs_table_set_handler_prop (current_dirs_table_entry, "headerfile", $2);
+			 dirs_table_set_handler_prop (current_config_entry, "headerfile", $2);
 	   } else if (!strcasecmp ($1, "interpreter")) {
-			 dirs_table_set_handler_prop (current_dirs_table_entry, "interpreter", $2);
+			 dirs_table_set_handler_prop (current_config_entry, "interpreter", $2);
 	   } else if (!strcasecmp ($1, "scriptalias")) {
-			 dirs_table_set_handler_prop (current_dirs_table_entry, "scriptalias", $2);
+			 dirs_table_set_handler_prop (current_config_entry, "scriptalias", $2);
 	   } else if (!strcasecmp ($1, "url")) {
-			 dirs_table_set_handler_prop (current_dirs_table_entry, "url", $2);
+			 dirs_table_set_handler_prop (current_config_entry, "url", $2);
 	   } else if (!strcasecmp ($1, "filedir")) {
-			 dirs_table_set_handler_prop (current_dirs_table_entry, "filedir", $2);
+			 dirs_table_set_handler_prop (current_config_entry, "filedir", $2);
 	   } else {
 			 return 1;
 	   }
@@ -967,7 +992,7 @@ handler_option : T_ENV T_ID str_type
 
 	   /* Add it to the list
 	    */
-	   properties = current_dirs_table_entry->handler_properties;
+	   properties = current_config_entry->handler_properties;
 
 	   if (properties != NULL) {
 			 cherokee_typed_table_get_list (properties, "env", &plist);
@@ -975,7 +1000,7 @@ handler_option : T_ENV T_ID str_type
 
 	   if (plist == NULL) {
 			 cherokee_list_add (&nlist, new_str);
-			 cherokee_dirs_table_entry_set_handler_prop (current_dirs_table_entry, "env", typed_list, &nlist, 
+			 cherokee_config_entry_set_handler_prop (current_config_entry, "env", typed_list, &nlist, 
 												(cherokee_typed_free_func_t) cherokee_list_free_item_simple);
 	   } else {
 			 cherokee_list_add_tail (plist, new_str);			 
@@ -983,16 +1008,16 @@ handler_option : T_ENV T_ID str_type
 }
 
 handler_option : T_SOCKET T_FULLDIR
-{ dirs_table_set_handler_prop (current_dirs_table_entry, "socket", $2); };
+{ dirs_table_set_handler_prop (current_config_entry, "socket", $2); };
 
 handler_option : T_JUST_ABOUT
-{ cherokee_dirs_table_entry_set_handler_prop (current_dirs_table_entry, "about", typed_int, INT_TO_POINTER(1), NULL); };
+{ cherokee_config_entry_set_handler_prop (current_config_entry, "about", typed_int, INT_TO_POINTER(1), NULL); };
 
 handler_option : T_SERVER T_ADDRESS_PORT
-{ dirs_table_set_handler_prop (current_dirs_table_entry, "server", $2); };
+{ dirs_table_set_handler_prop (current_config_entry, "server", $2); };
 
 handler_option : T_IO_CACHE T_NUMBER
-{ cherokee_dirs_table_entry_set_handler_prop (current_dirs_table_entry, "cache", typed_int, INT_TO_POINTER($2), NULL); };
+{ cherokee_config_entry_set_handler_prop (current_config_entry, "cache", typed_int, INT_TO_POINTER($2), NULL); };
 
 handler_option : T_NUMBER http_generic
 {
@@ -1004,7 +1029,7 @@ handler_option : T_NUMBER http_generic
 	   }
 
 	   snprintf (code, 4, "%d", $1);
-	   dirs_table_set_handler_prop (current_dirs_table_entry, code, $2);
+	   dirs_table_set_handler_prop (current_config_entry, code, $2);
 };
 
 handler_option : T_SHOW id_list
@@ -1024,7 +1049,7 @@ handler_option : T_SHOW id_list
 				    free (i->string);
 				    i->string = lower;
 
-				    cherokee_dirs_table_entry_set_handler_prop (current_dirs_table_entry, 
+				    cherokee_config_entry_set_handler_prop (current_config_entry, 
 													   i->string, typed_int, INT_TO_POINTER(1), NULL);
 			 } else {
 				    PRINT_MSG ("ERROR: Unknown parameter '%s' for \"Show\"", i->string);
@@ -1087,7 +1112,7 @@ extension : T_EXTENSION id_list '{'
 	    */
 	   extension_content_tmp.exts_list      = $2;
 	   extension_content_tmp.vserver        = auto_virtual_server;
-	   extension_content_tmp.entry          = dirs_table_entry_new (); /* new! */
+	   extension_content_tmp.entry          = config_entry_new (); /* new! */
 	   extension_content_tmp.handler_name   = NULL;
 	   extension_content_tmp.document_root  = NULL;
 
@@ -1117,7 +1142,7 @@ directory_options '}'
 			 re = load_module (&SRV(server)->loader, extension_content_tmp.handler_name, &info);
 			 if (re != 0) return 1;
 	   
-			 cherokee_dirs_table_entry_set_handler (extension_content_tmp.entry, info);	   
+			 cherokee_config_entry_set_handler (extension_content_tmp.entry, info);	   
 	   }
 
 	   /* Add "web_dir -> entry" in the dirs table
@@ -1163,7 +1188,7 @@ directory_options '}'
 	   free_linked_list (extension_content_tmp.exts_list, free);
 	   extension_content_tmp.exts_list = NULL;
 
-	   current_dirs_table_entry = NULL;
+	   current_config_entry = NULL;
 };
 
 
@@ -1174,7 +1199,7 @@ directory : T_DIRECTORY T_FULLDIR '{'
 	   directory_content_tmp.directory_name = $2;
 	   directory_content_tmp.vserver        = auto_virtual_server;
 	   directory_content_tmp.dirs           = auto_dirs_table;
-	   directory_content_tmp.entry          = dirs_table_entry_new (); /* new! */
+	   directory_content_tmp.entry          = config_entry_new (); /* new! */
 	   directory_content_tmp.handler_name   = NULL;
 	   directory_content_tmp.document_root  = NULL;
 } 
@@ -1202,7 +1227,7 @@ directory_options '}'
 			 re = load_module (&SRV(server)->loader, directory_content_tmp.handler_name, &info);
 			 if (re != 0) return 1;
 	   
-			 cherokee_dirs_table_entry_set_handler (directory_content_tmp.entry, info);	   
+			 cherokee_config_entry_set_handler (directory_content_tmp.entry, info);	   
 	   }
 	   
 	   /* Add "web_dir -> entry" in the dirs table
@@ -1235,14 +1260,59 @@ directory_options '}'
 	   directory_content_tmp.entry         = NULL;
 	   directory_content_tmp.handler_name  = NULL;
 
-	   current_dirs_table_entry = NULL;
+	   current_config_entry = NULL;
 };
+
+
+request : T_REQUEST T_QSTRING '{'
+{
+	   /* Fill the tmp struct
+	    */
+	   request_content_tmp.vserver        = auto_virtual_server;
+	   request_content_tmp.reqs           = auto_reqs_table;
+	   request_content_tmp.entry          = reqs_list_entry_new (); /* new! */
+	   request_content_tmp.handler_name   = NULL;
+	   request_content_tmp.document_root  = NULL;
+	   
+	   cherokee_buffer_add (&(request_content_tmp.entry->request), $2, strlen($2));
+} 
+directory_options '}'
+{
+	   cherokee_module_info_t *info;
+
+	   /* Does this directory have a handler
+	    */
+	   if (request_content_tmp.handler_name != NULL) {
+			 int re;
+			 re = load_module (&SRV(server)->loader, request_content_tmp.handler_name, &info);
+			 if (re != 0) return 1;
+	   
+			 cherokee_config_entry_set_handler ((cherokee_config_entry_t *)request_content_tmp.entry, info);	   
+	   }
+
+	   /* Add the new entry
+	    */
+	   cherokee_reqs_list_add (request_content_tmp.reqs, request_content_tmp.entry, SRV(server)->regexs);
+
+	   /* Clean
+	    */
+	   if (request_content_tmp.document_root != NULL) {
+			 free (request_content_tmp.document_root);
+			 request_content_tmp.document_root = NULL;
+	   }
+
+	   request_content_tmp.vserver       = NULL;
+	   request_content_tmp.reqs          = NULL;
+	   request_content_tmp.entry         = NULL;
+	   request_content_tmp.handler_name  = NULL;
+}
 
 
 directory_option : handler
 {	   
 	   directory_content_tmp.handler_name = $1.name;
 	   extension_content_tmp.handler_name = $1.name;
+	   request_content_tmp.handler_name   = $1.name;
 };
 
 
@@ -1261,8 +1331,9 @@ directory_option : T_DOCUMENT_ROOT T_FULLDIR
 
 directory_option : T_AUTH id_list '{' auth_options '}'
 {
-	   linked_list_t                  *i     = $2;
-	   cherokee_dirs_table_entry_t *entry = directory_content_tmp.entry;
+	   linked_list_t               *i     = $2;
+	   cherokee_config_entry_t *entry = current_config_entry;
+//directory_content_tmp.entry;
 
 	   while (i != NULL) {
 			 if (strncasecmp(i->string, "basic", 5) == 0) {
@@ -1299,7 +1370,8 @@ directory_option : T_ALLOW T_FROM ip_list
 			 i = i->next;
 			 free (prev);
 	   }
-	   directory_content_tmp.entry->access = n;
+
+	   current_config_entry->access = n;
 };
 
 directory_option : T_ONLY_SECURE
@@ -1308,17 +1380,18 @@ directory_option : T_ONLY_SECURE
 	   PRINT_MSG_S ("WARNING: Ignoring SSL configuration entry: \"OnlySecure\"\n");
 #endif
 
-	   directory_content_tmp.entry->only_secure = true;
+	   current_config_entry->only_secure = true;
 };
 
 auth_option : T_NAME T_QSTRING 
 {
 	   cherokee_buffer_t *realm;
 
-	   if (directory_content_tmp.entry->auth_realm == NULL) 
-			 cherokee_buffer_new (&directory_content_tmp.entry->auth_realm);
+	   if (current_config_entry->auth_realm == NULL) 
+			 cherokee_buffer_new (&current_config_entry->auth_realm);
 
-	   realm = directory_content_tmp.entry->auth_realm;
+	   realm = current_config_entry->auth_realm;
+
 
 	   cherokee_buffer_add (realm, $2, strlen($2));
 	   free ($2);
@@ -1328,15 +1401,15 @@ auth_option : T_USER id_list
 {
 	   linked_list_t *i;
 
-	   if (directory_content_tmp.entry->users == NULL) {
-			 cherokee_table_new (&directory_content_tmp.entry->users);
+	   if (current_config_entry->users == NULL) {
+			 cherokee_table_new (&current_config_entry->users);
 	   }
 
 	   i = $2;
 	   while (i!=NULL) {
 			 linked_list_t *prev;
 
-			 cherokee_table_add (directory_content_tmp.entry->users, i->string, NULL);
+			 cherokee_table_add (current_config_entry->users, i->string, NULL);
 
 			 free(i->string);
 			 prev = i;
@@ -1362,7 +1435,8 @@ auth_option : T_METHOD T_ID maybe_auth_option_params
 			 PRINT_MSG ("ERROR: %s is not a validator module!!\n", $2);
 	   }
 
-	   directory_content_tmp.entry->validator_new_func = info->new_func;
+
+	   current_config_entry->validator_new_func = info->new_func;
 };
 
 maybe_auth_option_params : '{' auth_option_params '}'
@@ -1374,7 +1448,7 @@ auth_option_params :
                    ;
 
 auth_option_param : T_PASSWDFILE T_FULLDIR 
-{ dirs_table_set_validator_prop (current_dirs_table_entry, "file", $2); };
+{ dirs_table_set_validator_prop (current_config_entry, "file", $2); };
 
 
 
@@ -1446,11 +1520,11 @@ errorhandler : T_ERROR_HANDLER T_ID
 	   
 	   /* Remove the old (by default) error handler and cretate a new one
 	    */
-	   vsrv->error_handler = dirs_table_entry_new();
+	   vsrv->error_handler = config_entry_new();
 
 	   /* Setup the loaded module
 	    */
-	   cherokee_dirs_table_entry_set_handler (vsrv->error_handler, info);
+	   cherokee_config_entry_set_handler (vsrv->error_handler, info);
 } 
 maybe_handlererror_options;
 

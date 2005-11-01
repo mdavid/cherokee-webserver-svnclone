@@ -1,4 +1,28 @@
+2005-11-01  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/config_entry.h, cherokee/config_entry.c:
+	dirs_table_entry.h and dirs_table_entry.c have been renamed.
+
+	* cherokee/handler_file.c (check_cached): Added support for
+	If-Range headers.
+
+	* qa/105-If-Range.py, qa/106-If-Range2.py, qa/Makefile.am
+	(EXTRA_DIST): Added to two tests to check the support of the
+	"If-Range:" header from HTTP/1.1.
+
+2005-10-31  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/post.c (cherokee_post_walk_to_fd): bugfix. It must
+	return ret_eagain if there is some remaining information waiting
+	to be sent.
+
+	* cherokee/regex.h, cherokee/regex.c (cherokee_regex_table_add):
+	Added new method.
+
 2005-10-30  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/handler_cgi.c (cherokee_handler_cgi_free): Bugfix, Only
+	close file descriptors if it is greeter than zero.
 
 	* cherokee/socket.c (cherokee_socket_set_timeout): Removed call to
 	setsockopt with SO_SNDTIMEO. That side of the socket is already

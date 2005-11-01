@@ -120,7 +120,6 @@ class TestBase:
                 return -1
         else:
             if not item in self.reply:
-                print "Quiere '%s' en '%s'" % (item, self.reply)
                 return -1
 
     def _check_result_forbidden_item (self, item):

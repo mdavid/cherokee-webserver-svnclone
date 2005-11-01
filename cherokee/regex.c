@@ -64,12 +64,48 @@ cherokee_regex_table_free (cherokee_regex_table_t *table)
 }
 
 
+static ret_t
+_add (cherokee_regex_table_t *table, char *pattern, void **regex)
+{
+	void       *tmp;
+	const char *error_msg;
+	int         error_offset;
+
+	/* It wasn't in the cache. Lets go to compile the pattern..
+	 * First of all, we have to check again the table because another 
+	 * thread could create a new entry after the previous unlock.
+	 */
+	CHEROKEE_RWLOCK_WRITER (&table->rwlock);
+
+	tmp = (pcre*)cherokee_table_get_val (table->cache, pattern);
+	if (tmp != NULL) {
+		*regex = tmp;
+
+		CHEROKEE_RWLOCK_UNLOCK (&table->rwlock);
+		return ret_ok;
+	}
+	
+	tmp = pcre_compile (pattern, 0, &error_msg, &error_offset, NULL);
+	if (tmp == NULL) {
+		PRINT_ERROR ("ERROR: regex <<%s>>: \"%s\", offset %d\n", pattern, error_msg, error_offset);
+
+		CHEROKEE_RWLOCK_UNLOCK (&table->rwlock);
+		return ret_error;
+	}
+	
+	cherokee_table_add (table->cache, pattern, tmp);
+	CHEROKEE_RWLOCK_UNLOCK (&table->rwlock);
+	
+	if (regex != NULL)
+		*regex = tmp;
+
+	return ret_ok;
+}
+
+
 ret_t 
 cherokee_regex_table_get (cherokee_regex_table_t *table, char *pattern, void **regex)
 {
-	const char* error_msg;
-	int         error_offset;
-
 	/* Check if it is already in the cache
 	 */
 	CHEROKEE_RWLOCK_READER(&table->rwlock);
@@ -77,24 +113,14 @@ cherokee_regex_table_get (cherokee_regex_table_t *table, char *pattern, void **r
 	CHEROKEE_RWLOCK_UNLOCK(&table->rwlock);
 	if (*regex != NULL) return ret_ok;
 	
-	/* It wasn't in the cache. Lets go to compile the pattern..
-	 * First of all, we have to check agin the table because another 
-	 * thread could create a new entry after the previous unlock.
+	/* It wasn't there; add a new entry
 	 */
-	CHEROKEE_RWLOCK_WRITER (&table->rwlock);
+	return _add (table, pattern, regex);
+}
 
-	*regex = (pcre*)cherokee_table_get_val (table->cache, pattern);
-	if (*regex != NULL) return ret_ok;
-	
-	*regex = pcre_compile (pattern, 0, &error_msg, &error_offset, NULL);
-	if (*regex == NULL) {
-		PRINT_ERROR ("ERROR: regex <<%s>>: \"%s\", offset %d\n", pattern, error_msg, error_offset);
-		CHEROKEE_RWLOCK_UNLOCK (&table->rwlock);
-		return ret_error;
-	}
-	
-	cherokee_table_add (table->cache, pattern, *regex);
-	CHEROKEE_RWLOCK_UNLOCK (&table->rwlock);
-	
-	return ret_ok;
+
+ret_t 
+cherokee_regex_table_add (cherokee_regex_table_t *table, char *pattern)
+{
+	return _add (table, pattern, NULL);
 }

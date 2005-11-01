@@ -23,7 +23,7 @@
  */
 
 #include "common-internal.h"
-#include "dirs_table_entry.h"
+#include "config_entry.h"
 
 #include "access.h"
 
@@ -34,11 +34,11 @@ typedef enum {
 
 
 ret_t 
-cherokee_dirs_table_entry_new (cherokee_dirs_table_entry_t **entry)
+cherokee_config_entry_new (cherokee_config_entry_t **entry)
 {
-	CHEROKEE_NEW_STRUCT (n, dirs_table_entry);
+	CHEROKEE_NEW_STRUCT (n, config_entry);
 		
-	cherokee_dirs_table_entry_init (n);
+	cherokee_config_entry_init (n);
 
 	*entry = n;	
 	return ret_ok;
@@ -46,7 +46,7 @@ cherokee_dirs_table_entry_new (cherokee_dirs_table_entry_t **entry)
 
 
 ret_t 
-cherokee_dirs_table_entry_init (cherokee_dirs_table_entry_t *entry)
+cherokee_config_entry_init (cherokee_config_entry_t *entry)
 {
 	entry->parent               = NULL;
 
@@ -69,7 +69,7 @@ cherokee_dirs_table_entry_init (cherokee_dirs_table_entry_t *entry)
 
 
 ret_t 
-cherokee_dirs_table_entry_free (cherokee_dirs_table_entry_t *entry) 
+cherokee_config_entry_free (cherokee_config_entry_t *entry) 
 {
 	if (entry->handler_properties != NULL) {
 		cherokee_typed_table_free (entry->handler_properties);
@@ -107,7 +107,7 @@ cherokee_dirs_table_entry_free (cherokee_dirs_table_entry_t *entry)
 
 
 static ret_t 
-entry_set_prop (prop_table_types_t table_type, cherokee_dirs_table_entry_t *entry, char *prop_name, cherokee_typed_table_types_t type, void *value, cherokee_table_free_item_t free_func)
+entry_set_prop (prop_table_types_t table_type, cherokee_config_entry_t *entry, char *prop_name, cherokee_typed_table_types_t type, void *value, cherokee_table_free_item_t free_func)
 {
 	ret_t              ret;
 	cherokee_table_t **table;
@@ -150,21 +150,21 @@ entry_set_prop (prop_table_types_t table_type, cherokee_dirs_table_entry_t *entr
 
 
 ret_t 
-cherokee_dirs_table_entry_set_handler_prop (cherokee_dirs_table_entry_t *entry, char *prop_name, cherokee_typed_table_types_t type, void *value, cherokee_table_free_item_t free_func)
+cherokee_config_entry_set_handler_prop (cherokee_config_entry_t *entry, char *prop_name, cherokee_typed_table_types_t type, void *value, cherokee_table_free_item_t free_func)
 {
 	return entry_set_prop (table_handler, entry, prop_name, type, value, free_func);
 }
 
 
 ret_t 
-cherokee_dirs_table_entry_set_validator_prop (cherokee_dirs_table_entry_t *entry, char *prop_name, cherokee_typed_table_types_t type, void *value, cherokee_table_free_item_t free_func)
+cherokee_config_entry_set_validator_prop (cherokee_config_entry_t *entry, char *prop_name, cherokee_typed_table_types_t type, void *value, cherokee_table_free_item_t free_func)
 {
 	return entry_set_prop (table_validator, entry, prop_name, type, value, free_func);
 }
 
 
 ret_t 
-cherokee_dirs_table_entry_set_handler (cherokee_dirs_table_entry_t *entry, cherokee_module_info_t *modinfo)
+cherokee_config_entry_set_handler (cherokee_config_entry_t *entry, cherokee_module_info_t *modinfo)
 {
 	return_if_fail (modinfo != NULL, ret_error);
 
@@ -180,7 +180,7 @@ cherokee_dirs_table_entry_set_handler (cherokee_dirs_table_entry_t *entry, chero
 
 
 ret_t 
-cherokee_dirs_table_entry_complete (cherokee_dirs_table_entry_t *entry, cherokee_dirs_table_entry_t *main)
+cherokee_config_entry_complete (cherokee_config_entry_t *entry, cherokee_config_entry_t *main)
 {
 	/* If a temporary dirs_table entry inherits from valid entry, it will
 	 * get references than mustn't be free'd, like 'user'. Take care.
@@ -224,12 +224,12 @@ cherokee_dirs_table_entry_complete (cherokee_dirs_table_entry_t *entry, cherokee
 
 
 ret_t 
-cherokee_dirs_table_entry_inherit (cherokee_dirs_table_entry_t *entry)
+cherokee_config_entry_inherit (cherokee_config_entry_t *entry)
 {
-	cherokee_dirs_table_entry_t *parent = entry;
+	cherokee_config_entry_t *parent = entry;
 
 	while ((parent = parent->parent) != NULL) {
-		cherokee_dirs_table_entry_complete (entry, parent);
+		cherokee_config_entry_complete (entry, parent);
 	}
 
 	return ret_ok;

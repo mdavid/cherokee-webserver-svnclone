@@ -97,8 +97,8 @@ cherokee_handler_cgi_new  (cherokee_handler_t **hdl, void *cnt, cherokee_table_t
 		
 	/* Init
 	 */
-	n->pipeInput         = 0;
-	n->pipeOutput        = 0;
+	n->pipeInput         = -1;
+	n->pipeOutput        = -1;
 	n->post_data_sent    = 0;
 	n->pid               = -1;
 	n->filename          = NULL;
@@ -166,11 +166,15 @@ cherokee_handler_cgi_free (cherokee_handler_cgi_t *cgi)
 
 	/* Close the connection with the CGI
 	 */
-	if (cgi->pipeInput >= 0)
+	if (cgi->pipeInput > 0) {
 		close (cgi->pipeInput);
+		cgi->pipeInput = -1;
+	}
 
-	if (cgi->pipeOutput >= 0)
+	if (cgi->pipeOutput > 0) {
 		close (cgi->pipeOutput);
+		cgi->pipeOutput = -1;
+	}
 
         /* Maybe kill the CGI
 	 */
@@ -402,9 +406,10 @@ _extract_path (cherokee_handler_cgi_t *cgi)
 		req_len   = conn->request->len;
 		local_len = conn->local_directory->len;
 
-		cherokee_buffer_add (conn->local_directory, 
-				     conn->request->buf + 1, 
-				     conn->request->len - 1); 
+		if (conn->request->len > 0)
+			cherokee_buffer_add (conn->local_directory, 
+					     conn->request->buf + 1, 
+					     conn->request->len - 1); 
 
 		ret = cherokee_handler_cgi_split_pathinfo (cgi, conn->local_directory, local_len +1);
 		if (unlikely(ret < ret_ok)) goto bye;

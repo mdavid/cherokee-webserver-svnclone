@@ -46,7 +46,7 @@ cherokee_dirs_table_free (cherokee_dirs_table_t *pt)
 {
 	return cherokee_table_free2 (
 		TABLE(pt), 
-		(cherokee_table_free_item_t) cherokee_dirs_table_entry_free);
+		(cherokee_table_free_item_t) cherokee_config_entry_free);
 }
 
 
@@ -62,17 +62,17 @@ cherokee_dirs_table_mrproper (cherokee_dirs_table_t *pt)
 {
 	return cherokee_table_mrproper2 (
 		TABLE(pt), 
-		(cherokee_table_free_item_t) cherokee_dirs_table_entry_free);
+		(cherokee_table_free_item_t) cherokee_config_entry_free);
 }
 
 
 ret_t 
 cherokee_dirs_table_get (cherokee_dirs_table_t *pt, cherokee_buffer_t *requested_url, 
-			 cherokee_dirs_table_entry_t *plugin_entry, cherokee_buffer_t *web_directory)
+			 cherokee_config_entry_t *plugin_entry, cherokee_buffer_t *web_directory)
 {
 	ret_t  ret;
 	char  *slash;
-	cherokee_dirs_table_entry_t *entry = NULL;
+	cherokee_config_entry_t *entry = NULL;
 
 	cherokee_buffer_add_buffer (web_directory, requested_url);
 
@@ -114,11 +114,11 @@ go_out:
 	if (entry != NULL) {
 		/* Copy everythin into the duplicate
 		 */
-		cherokee_dirs_table_entry_complete (plugin_entry, entry);
+		cherokee_config_entry_complete (plugin_entry, entry);
 
 		/* Inherit from parents
 		 */
-		cherokee_dirs_table_entry_inherit (plugin_entry);
+		cherokee_config_entry_inherit (plugin_entry);
 	}
 	
 #if 0
@@ -132,7 +132,7 @@ go_out:
 
 
 ret_t
-cherokee_dirs_table_add (cherokee_dirs_table_t *pt, char *dir, cherokee_dirs_table_entry_t *plugin_entry)
+cherokee_dirs_table_add (cherokee_dirs_table_t *pt, char *dir, cherokee_config_entry_t *plugin_entry)
 {
 #if 0
 	printf ("cherokee_dirs_table_add(table=%p, dir=\"%s\", entry=%p)\n", pt, dir, plugin_entry);
@@ -151,7 +151,7 @@ relink_func (const char *key_, void *value, void *param)
 	char                        *slash;
 	cherokee_buffer_t            key   = CHEROKEE_BUF_INIT;
 	cherokee_dirs_table_t       *table = DTABLE(param);
-	cherokee_dirs_table_entry_t *entry = DT_ENTRY(value);
+	cherokee_config_entry_t     *entry = CONF_ENTRY(value);
 
 	/* It has to look the the parent of this directory
 	 */

@@ -185,10 +185,10 @@ cherokee_post_walk_to_fd (cherokee_post_t *post, int fd)
 		}
 
 		post->walk_offset += r;
-		if (post->walk_offset < post->info.len)
+		if (post->walk_offset >= post->info.len)
 			return ret_ok;
 
-		return ret_ok;
+		return ret_eagain;
 
 	case post_in_tmp_file:
 		cherokee_buffer_ensure_size (&post->info, DEFAULT_READ_SIZE);
@@ -215,7 +215,7 @@ cherokee_post_walk_to_fd (cherokee_post_t *post, int fd)
 		cherokee_buffer_move_to_begin (&post->info, r);
 
 		post->walk_offset += r;
-		if (post->walk_offset < post->info.len)
+		if (post->walk_offset >= post->size)
 			return ret_ok;
 
 		return ret_eagain;

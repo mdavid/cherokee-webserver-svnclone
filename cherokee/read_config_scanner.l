@@ -70,6 +70,7 @@ nl              [\n\r]
 "MimeFile"              { return T_MIME_FILE; }
 "Directory"             { return T_DIRECTORY; }
 "Extension"             { return T_EXTENSION; }
+"Request"               { return T_REQUEST; }
 "KeepAlive"             { return T_KEEPALIVE; }
 "MaxKeepAliveRequests"  { return T_KEEPALIVE_MAX_REQUESTS; }
 "ErrorHandler"          { return T_ERROR_HANDLER; }

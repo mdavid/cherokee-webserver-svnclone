@@ -49,7 +49,7 @@ cherokee_handler_error_redir_new (cherokee_handler_t **hdl, cherokee_connection_
 
 	snprintf (code, 4, "%d", cnt->error_code);
 	   
-	ret = cherokee_typed_table_get_str (properties, code, (void **) &dir);
+	ret = cherokee_typed_table_get_str (properties, code, &dir);
 	if (ret != ret_ok) return ret_error;
 
 	cherokee_buffer_add (cnt->redirect, dir, strlen(dir));

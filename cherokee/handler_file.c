@@ -112,9 +112,9 @@ cherokee_handler_file_get_name (cherokee_handler_file_t *module, const char **na
 static ret_t
 check_cached (cherokee_handler_file_t *n)
 {
-	ret_t ret;
-	char *header;
-	int   header_len;
+	ret_t                  ret;
+	char                  *header;
+	int                    header_len;
 	cherokee_connection_t *conn = HANDLER_CONN(n);
 
 	/* Based in time
@@ -149,20 +149,63 @@ check_cached (cherokee_handler_file_t *n)
 		}
 	}
 	
-	if (conn->header->version == http_version_11) {
-		/* Based in ETag
-		 */
-		ret = cherokee_header_get_unknown (conn->header, "If-None-Match", 13, &header, &header_len);
-		if (ret == ret_ok)  {
-			int    tmp_len;
-			CHEROKEE_TEMP(tmp,100);
-			
-			tmp_len = snprintf (tmp, tmp_size, "%lx=" FMT_OFFSET "x", n->info->st_mtime, n->info->st_size);
+	/* HTTP/1.1 only headers
+	 */
+	if (conn->header->version < http_version_11)
+		return ret_ok;
 
-			if (strncmp (header, tmp, tmp_len) == 0) {
-				conn->error_code = http_not_modified;
-				return ret_error;				
-			}
+	/* Based in ETag
+	 */
+	ret = cherokee_header_get_unknown (conn->header, "If-None-Match", 13, &header, &header_len);
+	if (ret == ret_ok)  {
+		int    tmp_len;
+		CHEROKEE_TEMP(tmp,100);
+		
+		tmp_len = snprintf (tmp, tmp_size, "%lx=" FMT_OFFSET "x", n->info->st_mtime, n->info->st_size);
+		
+		if (strncmp (header, tmp, tmp_len) == 0) {
+			conn->error_code = http_not_modified;
+			return ret_error;				
+		}
+	}
+	
+	/* If-Range
+	 */
+	ret = cherokee_header_get_unknown (conn->header, "If-Range", 8, &header, &header_len);
+	if (ret == ret_ok)  {
+		time_t req_time;
+		char   tmp;
+		char  *end = header + header_len;
+		
+		tmp = *end; 
+		*end = '\0'; 
+		
+		req_time = tdate_parse (header);			
+		if (req_time == -1) {
+			cherokee_logger_write_string (
+				CONN_VSRV(conn)->logger, 
+				"Warning: Unparseable time '%s'",
+				header);
+		}
+		*end = tmp;
+		
+		if (req_time == -1) {
+			return ret_ok;
+		}
+
+		/* If the entity tag given in the If-Range header
+		 * matches the current entity tag for the entity, then
+		 * the server SHOULD provide the specified sub-range
+		 * of the entity using a 206 (Partial content)
+		 * response. If the entity tag does not match, then
+		 * the server SHOULD return the entire entity using a
+		 * 200 (OK) response.
+		 */
+		if (n->info->st_mtime > req_time) {
+			conn->error_code = http_ok;
+
+			conn->range_start = 0;
+			conn->range_end = 0;
 		}
 	}
 

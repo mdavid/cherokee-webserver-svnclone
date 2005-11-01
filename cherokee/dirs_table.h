@@ -28,10 +28,10 @@
 #include "common.h"
 #include "table.h"
 #include "table-protected.h"
-#include "dirs_table_entry.h"
+#include "config_entry.h"
 
 
-typedef cherokee_table_t cherokee_dirs_table_t;  /* Web_directory -> Dirs_table_entry */
+typedef cherokee_table_t cherokee_dirs_table_t;  /* Web_directory -> config_entry */
 #define DTABLE(x) ((cherokee_dirs_table_t *)(x))
 
 
@@ -42,8 +42,8 @@ ret_t cherokee_dirs_table_init     (cherokee_dirs_table_t *pt);
 ret_t cherokee_dirs_table_clean    (cherokee_dirs_table_t *pt);
 ret_t cherokee_dirs_table_mrproper (cherokee_dirs_table_t *pt);
 
-ret_t cherokee_dirs_table_get      (cherokee_dirs_table_t *pt, cherokee_buffer_t *requested_url, cherokee_dirs_table_entry_t *plugin_entry, cherokee_buffer_t *web_directory);
-ret_t cherokee_dirs_table_add      (cherokee_dirs_table_t *pt, char *dir, cherokee_dirs_table_entry_t  *plugin_entry);
+ret_t cherokee_dirs_table_get      (cherokee_dirs_table_t *pt, cherokee_buffer_t *requested_url, cherokee_config_entry_t *plugin_entry, cherokee_buffer_t *web_directory);
+ret_t cherokee_dirs_table_add      (cherokee_dirs_table_t *pt, char *dir, cherokee_config_entry_t  *plugin_entry);
 ret_t cherokee_dirs_table_relink   (cherokee_dirs_table_t *pt);
 
 #endif /* CHEROKEE_DIRS_TABLE_H */

@@ -70,7 +70,7 @@
 #include "handler_error.h"
 #include "buffer.h"
 #include "buffer_escape.h"
-#include "dirs_table_entry.h"
+#include "config_entry.h"
 #include "encoder_table.h"
 #include "server-protected.h"
 #include "access.h"
@@ -79,6 +79,8 @@
 #include "header.h"
 #include "header-protected.h"
 #include "iocache.h"
+#include "reqs_list.h"
+
 
 ret_t
 cherokee_connection_new  (cherokee_connection_t **cnt)
@@ -330,10 +332,10 @@ cherokee_connection_mrproper (cherokee_connection_t *cnt)
 ret_t
 cherokee_connection_setup_error_handler (cherokee_connection_t *cnt)
 {
-	ret_t                           ret;
-	cherokee_server_t              *srv;
-	cherokee_virtual_server_t      *vsrv;
-	cherokee_dirs_table_entry_t    *entry;	
+	ret_t                       ret;
+	cherokee_server_t          *srv;
+	cherokee_virtual_server_t  *vsrv;
+	cherokee_config_entry_t    *entry;	
 
 	srv   = CONN_SRV(cnt);
 	vsrv  = CONN_VSRV(cnt);
@@ -1091,7 +1093,7 @@ cherokee_connection_is_userdir (cherokee_connection_t *cnt)
 
 
 ret_t
-cherokee_connection_build_local_directory (cherokee_connection_t *cnt, cherokee_virtual_server_t *vsrv, cherokee_dirs_table_entry_t *entry)
+cherokee_connection_build_local_directory (cherokee_connection_t *cnt, cherokee_virtual_server_t *vsrv, cherokee_config_entry_t *entry)
 {
 	ret_t ret;
 
@@ -1129,7 +1131,7 @@ cherokee_connection_build_local_directory (cherokee_connection_t *cnt, cherokee_
 
 
 ret_t
-cherokee_connection_build_local_directory_userdir (cherokee_connection_t *cnt, cherokee_virtual_server_t *vsrv, cherokee_dirs_table_entry_t *entry)
+cherokee_connection_build_local_directory_userdir (cherokee_connection_t *cnt, cherokee_virtual_server_t *vsrv, cherokee_config_entry_t *entry)
 {
 	struct passwd *pwd;	
 
@@ -1469,15 +1471,15 @@ cherokee_connection_send_switching (cherokee_connection_t *cnt)
 
 
 ret_t 
-cherokee_connection_get_dir_entry (cherokee_connection_t *cnt, cherokee_dirs_table_t *plugins, cherokee_dirs_table_entry_t *plugin_entry)
+cherokee_connection_get_dir_entry (cherokee_connection_t *cnt, cherokee_dirs_table_t *dirs, cherokee_config_entry_t *plugin_entry)
 {
 	ret_t ret;
 
-	return_if_fail (plugins != NULL, ret_error);
+	return_if_fail (dirs != NULL, ret_error);
 
 	/* Look for the handler "*_new" function
 	 */
-	ret = cherokee_dirs_table_get (plugins, cnt->request, plugin_entry, cnt->web_directory);
+	ret = cherokee_dirs_table_get (dirs, cnt->request, plugin_entry, cnt->web_directory);
 	if (ret != ret_ok) {
 		cnt->error_code = http_internal_error;
 		return ret_error;
@@ -1493,7 +1495,7 @@ cherokee_connection_get_dir_entry (cherokee_connection_t *cnt, cherokee_dirs_tab
 
 
 ret_t 
-cherokee_connection_get_ext_entry (cherokee_connection_t *cnt, cherokee_exts_table_t *exts, cherokee_dirs_table_entry_t *plugin_entry)
+cherokee_connection_get_ext_entry (cherokee_connection_t *cnt, cherokee_exts_table_t *exts, cherokee_config_entry_t *plugin_entry)
 {
 	ret_t ret;
 
@@ -1517,7 +1519,31 @@ cherokee_connection_get_ext_entry (cherokee_connection_t *cnt, cherokee_exts_tab
 
 
 ret_t 
-cherokee_connection_check_authentication (cherokee_connection_t *cnt, cherokee_dirs_table_entry_t *plugin_entry)
+cherokee_connection_get_req_entry (cherokee_connection_t *cnt, cherokee_reqs_list_t *reqs, cherokee_config_entry_t *plugin_entry)
+{
+	ret_t ret;
+
+	return_if_fail (reqs != NULL, ret_error);
+
+	/* Look in the extension table
+	 */
+	ret = cherokee_reqs_list_get (reqs, cnt->request, plugin_entry, CONN_SRV(cnt)->regexs);
+	if (unlikely (ret == ret_error)) {
+		cnt->error_code = http_internal_error;
+		return ret_error;
+	}
+
+	/* Set the refereces
+	 */
+	cnt->realm_ref = plugin_entry->auth_realm;
+	cnt->auth_type = plugin_entry->authentication;
+
+	return ret_ok;
+}
+
+
+ret_t 
+cherokee_connection_check_authentication (cherokee_connection_t *cnt, cherokee_config_entry_t *plugin_entry)
 {
 	ret_t ret;
 	char *ptr;
@@ -1596,7 +1622,7 @@ error:
 
 
 ret_t 
-cherokee_connection_check_ip_validation (cherokee_connection_t *cnt, cherokee_dirs_table_entry_t *plugin_entry)
+cherokee_connection_check_ip_validation (cherokee_connection_t *cnt, cherokee_config_entry_t *plugin_entry)
 {
 	ret_t ret;
 
@@ -1615,7 +1641,7 @@ cherokee_connection_check_ip_validation (cherokee_connection_t *cnt, cherokee_di
 
 
 ret_t 
-cherokee_connection_check_only_secure (cherokee_connection_t *cnt, cherokee_dirs_table_entry_t *plugin_entry)
+cherokee_connection_check_only_secure (cherokee_connection_t *cnt, cherokee_config_entry_t *plugin_entry)
 {
 	if (plugin_entry->only_secure == false) {
 		/* No Only-Secure connection..
@@ -1636,7 +1662,7 @@ cherokee_connection_check_only_secure (cherokee_connection_t *cnt, cherokee_dirs
 
 
 ret_t 
-cherokee_connection_create_handler (cherokee_connection_t *cnt, cherokee_dirs_table_entry_t *plugin_entry)
+cherokee_connection_create_handler (cherokee_connection_t *cnt, cherokee_config_entry_t *plugin_entry)
 {
 	ret_t ret;
 
