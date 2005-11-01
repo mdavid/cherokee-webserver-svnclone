@@ -41,16 +41,21 @@
 #include "handler.h"
 #include "dirs_table.h"
 #include "exts_table.h"
-#include "dirs_table_entry.h"
+#include "reqs_list.h"
+#include "config_entry.h"
 #include "logger.h"
+
 
 typedef struct {
 	struct list_head list_entry;
 
 	cherokee_buffer_t           *name;           /* Default name.   Eg: www.0x50.org */
-	cherokee_dirs_table_t        dirs;           /* Eg: (/public, common)            */
-	cherokee_exts_table_t       *exts;           /* Eg: (.php,    phpcgi)            */
-	cherokee_dirs_table_entry_t *error_handler;  /* Default internal error handler   */
+
+	cherokee_dirs_table_t        dirs;           /* Eg: (/public, common) */
+	cherokee_exts_table_t       *exts;           /* Eg: (.php,    phpcgi) */
+	cherokee_reqs_list_t         reqs;           /* Eg: ("*.mp3"  auth{}) */
+
+	cherokee_config_entry_t     *error_handler;  /* Default internal error handler   */
 
 	cherokee_logger_t           *logger;         /* Logger obj              */
 	cherokee_table_t            *logger_props;   /* Logger properties table */

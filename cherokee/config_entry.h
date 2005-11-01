@@ -22,8 +22,8 @@
  * USA
  */
 
-#ifndef CHEROKEE_DIRS_TABLE_ENTRY_H
-#define CHEROKEE_DIRS_TABLE_ENTRY_H
+#ifndef CHEROKEE_CONFIG_ENTRY_H
+#define CHEROKEE_CONFIG_ENTRY_H
 
 #include "common-internal.h"
 
@@ -69,20 +69,20 @@ typedef struct {
 	 */
 	void                 *access;
 
-} cherokee_dirs_table_entry_t; 
+} cherokee_config_entry_t; 
 
-#define DT_ENTRY(x) ((cherokee_dirs_table_entry_t *)(x))
+#define CONF_ENTRY(x) ((cherokee_config_entry_t *)(x))
 
 
-ret_t cherokee_dirs_table_entry_new  (cherokee_dirs_table_entry_t **entry);
-ret_t cherokee_dirs_table_entry_free (cherokee_dirs_table_entry_t  *entry);
-ret_t cherokee_dirs_table_entry_init (cherokee_dirs_table_entry_t  *entry);
+ret_t cherokee_config_entry_new  (cherokee_config_entry_t **entry);
+ret_t cherokee_config_entry_free (cherokee_config_entry_t  *entry);
+ret_t cherokee_config_entry_init (cherokee_config_entry_t  *entry);
 
-ret_t cherokee_dirs_table_entry_set_handler_prop   (cherokee_dirs_table_entry_t *entry, char *prop_name, cherokee_typed_table_types_t type, void *value, cherokee_table_free_item_t free_func);
-ret_t cherokee_dirs_table_entry_set_validator_prop (cherokee_dirs_table_entry_t *entry, char *prop_name, cherokee_typed_table_types_t type, void *value, cherokee_table_free_item_t free_func);
-ret_t cherokee_dirs_table_entry_set_handler        (cherokee_dirs_table_entry_t *entry, cherokee_module_info_t *modinfo); 
+ret_t cherokee_config_entry_set_handler_prop   (cherokee_config_entry_t *entry, char *prop_name, cherokee_typed_table_types_t type, void *value, cherokee_table_free_item_t free_func);
+ret_t cherokee_config_entry_set_validator_prop (cherokee_config_entry_t *entry, char *prop_name, cherokee_typed_table_types_t type, void *value, cherokee_table_free_item_t free_func);
+ret_t cherokee_config_entry_set_handler        (cherokee_config_entry_t *entry, cherokee_module_info_t *modinfo); 
 
-ret_t cherokee_dirs_table_entry_complete    (cherokee_dirs_table_entry_t *entry, cherokee_dirs_table_entry_t *parent);
-ret_t cherokee_dirs_table_entry_inherit     (cherokee_dirs_table_entry_t *entry);
+ret_t cherokee_config_entry_complete    (cherokee_config_entry_t *entry, cherokee_config_entry_t *parent);
+ret_t cherokee_config_entry_inherit     (cherokee_config_entry_t *entry);
 
-#endif /* CHEROKEE_DIRS_TABLE_ENTRY_H */
+#endif /* CHEROKEE_CONFIG_ENTRY_H */

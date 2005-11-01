@@ -38,6 +38,7 @@
 #include "handler_error.h"
 #include "header.h"
 #include "header-protected.h"
+#include "reqs_list_entry.h"
 
 
 #define DEBUG_BUFFER(b)  fprintf(stderr, "%s:%d len=%d crc=%d\n", __FILE__, __LINE__, b->len, cherokee_buffer_crc32(b))
@@ -364,12 +365,14 @@ maybe_purge_closed_connection (cherokee_thread_t *thread, cherokee_connection_t 
 	cherokee_connection_update_vhost_traffic (conn);
 	cherokee_connection_log_delayed (conn);
 
-	/* Manage keepalive
+	/* If it isn't a keep-alive connection, it should try to
+	 * perform a lingering close
 	 */
 	if (conn->keepalive <= 0) {
 		conn->phase = phase_lingering;
 		return;
 	} 	
+
 	conn->keepalive--;
 
 	/* Clean the connection
@@ -663,7 +666,7 @@ process_active_connections (cherokee_thread_t *thd)
 			conn->phase = phase_setup_connection;
 			
 		case phase_setup_connection: {
-			cherokee_dirs_table_entry_t entry;
+			cherokee_config_entry_t entry;
 
 			/* Turn the connection in write mode
 			 */
@@ -689,9 +692,21 @@ process_active_connections (cherokee_thread_t *thd)
 				continue;
 			}
 
-			cherokee_dirs_table_entry_init (&entry);
+			cherokee_config_entry_init (&entry);
+			
+			/* 1.- Read Request configurations
+			 */
+			if (! list_empty (&CONN_VSRV(conn)->reqs)) 
+			{
+				ret = cherokee_connection_get_req_entry (conn, &CONN_VSRV(conn)->reqs, &entry);
+				if (unlikely (ret != ret_ok)) {
+					cherokee_connection_setup_error_handler (conn);
+					conn->phase = phase_init;
+					continue;
+				}				
+			}			
 
-			/* Read the extension configuration
+			/* 2.- Read the extension configuration
 			 */
 			if (CONN_VSRV(conn)->exts != NULL) 
 			{
@@ -703,7 +718,7 @@ process_active_connections (cherokee_thread_t *thd)
 				}				
 			}
 
-			/* Read the directory configuration
+			/* 3.- Read the directory configuration
 			 */
 			if (!cherokee_buffer_is_empty (CONN_VSRV(conn)->userdir) &&
 			    !cherokee_buffer_is_empty (conn->userdir))
@@ -796,6 +811,7 @@ process_active_connections (cherokee_thread_t *thd)
 		}
 			
 		case phase_init: 
+
 			/* Server's "Keep-Alive" could be turned "Off"
 			 */
 			if (srv->keepalive == false) {
@@ -839,7 +855,6 @@ process_active_connections (cherokee_thread_t *thd)
 				 * - It has got a common handler like handler_redir
 				 * - It has got an error handler like handler_error
 				 */
-
 				conn->phase = phase_init;
 				break;
 			}
@@ -1014,7 +1029,7 @@ process_active_connections (cherokee_thread_t *thd)
 			switch (ret) {
 			case ret_ok:
 				purge_closed_connection (thd, conn);
-				break;
+				continue;
 			case ret_eagain:
 				continue;
 			default:

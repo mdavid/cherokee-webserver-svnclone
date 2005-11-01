@@ -22,21 +22,24 @@
  * USA
  */
 
-#ifndef CHEROKEE_EXTS_TABLE_H
-#define CHEROKEE_EXTS_TABLE_H
+#ifndef CHEROKEE_REQS_LIST_H
+#define CHEROKEE_REQS_LIST_H
 
 #include "common.h"
 #include "buffer.h"
+#include "list.h"
+#include "regex.h"
+#include "reqs_list_entry.h"
 #include "config_entry.h"
 
-typedef struct cherokee_exts_table cherokee_exts_table_t;      /* Extension -> config_entry */
-#define EXTTABLE(x) ((cherokee_exts_table_t *)(x))
 
-ret_t cherokee_exts_table_new  (cherokee_exts_table_t **et);
-ret_t cherokee_exts_table_free (cherokee_exts_table_t  *et);
+typedef struct list_head cherokee_reqs_list_t;
+#define REQLIST(x) ((cherokee_req_list_t *)(x))
 
-ret_t cherokee_exts_table_get  (cherokee_exts_table_t *et, cherokee_buffer_t *requested_url, cherokee_config_entry_t *plugin_entry);
-ret_t cherokee_exts_table_add  (cherokee_exts_table_t *et, char *ext, cherokee_config_entry_t  *plugin_entry);
-ret_t cherokee_exts_table_has  (cherokee_exts_table_t *et, char *ext);
+ret_t cherokee_reqs_list_init     (cherokee_reqs_list_t *rl);
+ret_t cherokee_reqs_list_mrproper (cherokee_reqs_list_t *rl);
 
-#endif /* CHEROKEE_EXTS_TABLE_H */
+ret_t cherokee_reqs_list_get      (cherokee_reqs_list_t *rl, cherokee_buffer_t *requested_url, cherokee_config_entry_t *plugin_entry, cherokee_regex_table_t *regexs);
+ret_t cherokee_reqs_list_add      (cherokee_reqs_list_t *rl, cherokee_reqs_list_entry_t *plugin_entry, cherokee_regex_table_t *regexs);
+
+#endif /* CHEROKEE_REQS_LIST_H */

@@ -24,9 +24,10 @@
 
 #include "common-internal.h"
 #include "virtual_server.h"
-#include "dirs_table_entry.h"
+#include "config_entry.h"
 #include "list_ext.h"
 #include "socket.h"
+#include "reqs_list.h"
 
 #include "handler_error.h"
 
@@ -40,14 +41,15 @@ cherokee_virtual_server_new (cherokee_virtual_server_t **vserver)
 
        	CHEROKEE_NEW_STRUCT (vsrv, virtual_server);
 
-	INIT_LIST_HEAD(&vsrv->list_entry);
-	INIT_LIST_HEAD(&(vsrv->index_list));
+	INIT_LIST_HEAD (&vsrv->list_entry);
+	INIT_LIST_HEAD (&vsrv->index_list);
 
 	vsrv->error_handler = NULL;
-
 	vsrv->exts          = NULL;
 	vsrv->logger        = NULL;
 	vsrv->logger_props  = NULL;
+
+	INIT_LIST_HEAD (&vsrv->reqs);
 
 	vsrv->data.rx       = 0;
 	vsrv->data.tx       = 0;
@@ -113,7 +115,7 @@ cherokee_virtual_server_free (cherokee_virtual_server_t *vserver)
 	}
 
 	if (vserver->error_handler != NULL) {
-		cherokee_dirs_table_entry_free (vserver->error_handler);
+		cherokee_config_entry_free (vserver->error_handler);
 		vserver->error_handler = NULL;
 	}
 
@@ -160,6 +162,12 @@ cherokee_virtual_server_free (cherokee_virtual_server_t *vserver)
 	if (vserver->exts != NULL) {
 		cherokee_exts_table_free (vserver->exts);
 		vserver->exts = NULL;
+	}
+
+	/* Requests list
+	 */
+	if (!list_empty (&vserver->reqs)) {
+		cherokee_reqs_list_mrproper (&vserver->reqs);
 	}
 
 	/* Index list

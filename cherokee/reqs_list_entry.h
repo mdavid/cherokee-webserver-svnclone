@@ -22,21 +22,24 @@
  * USA
  */
 
-#ifndef CHEROKEE_EXTS_TABLE_H
-#define CHEROKEE_EXTS_TABLE_H
+#ifndef CHEROKEE_REQS_LIST_ENTRY_H
+#define CHEROKEE_REQS_LIST_ENTRY_H
 
-#include "common.h"
-#include "buffer.h"
+#include "common-internal.h"
 #include "config_entry.h"
 
-typedef struct cherokee_exts_table cherokee_exts_table_t;      /* Extension -> config_entry */
-#define EXTTABLE(x) ((cherokee_exts_table_t *)(x))
 
-ret_t cherokee_exts_table_new  (cherokee_exts_table_t **et);
-ret_t cherokee_exts_table_free (cherokee_exts_table_t  *et);
+typedef struct {
+	   cherokee_config_entry_t  base_entry;
+	   cherokee_buffer_t        request;
+	   struct list_head         list_entry;
+} cherokee_reqs_list_entry_t; 
 
-ret_t cherokee_exts_table_get  (cherokee_exts_table_t *et, cherokee_buffer_t *requested_url, cherokee_config_entry_t *plugin_entry);
-ret_t cherokee_exts_table_add  (cherokee_exts_table_t *et, char *ext, cherokee_config_entry_t  *plugin_entry);
-ret_t cherokee_exts_table_has  (cherokee_exts_table_t *et, char *ext);
+#define RQ_ENTRY(x) ((cherokee_reqs_list_entry_t *)(x))
 
-#endif /* CHEROKEE_EXTS_TABLE_H */
+
+ret_t cherokee_reqs_list_entry_new  (cherokee_reqs_list_entry_t **entry);
+ret_t cherokee_reqs_list_entry_free (cherokee_reqs_list_entry_t  *entry);
+
+
+#endif /* CHEROKEE_REQS_LIST_ENTRY_H */

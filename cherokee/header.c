@@ -67,7 +67,8 @@ known_header_names [] = {
 	{"Referer",          7},
 	{"Location",         8},
 	{"Content-Length",  14},
-	{"Upgrade",          7}
+	{"Upgrade",          7},
+	{"If-Range",         8}
 };
 
 
