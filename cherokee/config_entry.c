@@ -49,6 +49,7 @@ ret_t
 cherokee_config_entry_init (cherokee_config_entry_t *entry)
 {
 	entry->parent               = NULL;
+	entry->priority             = 0;
 
 	entry->handler_new_func     = NULL;
 	entry->handler_properties   = NULL;
@@ -180,44 +181,61 @@ cherokee_config_entry_set_handler (cherokee_config_entry_t *entry, cherokee_modu
 
 
 ret_t 
-cherokee_config_entry_complete (cherokee_config_entry_t *entry, cherokee_config_entry_t *main)
+cherokee_config_entry_complete (cherokee_config_entry_t *entry, cherokee_config_entry_t *main, cherokee_boolean_t same_type)
 {
-	/* If a temporary dirs_table entry inherits from valid entry, it will
+	cherokee_boolean_t overwrite = false;
+
+#define should_assign(t,s,prop,nil)  \
+       	((t->prop == nil) || ((t->prop != nil) && (s->prop != nil) && overwrite))
+
+	if (!same_type && (entry->priority < main->priority)) {
+		overwrite = true;
+	}
+
+//	printf ("same_type=%d, overwrite=%d, prio=%d\n", same_type, overwrite, main->priority);
+
+	/* If a temporary config_entry inherits from valid entry, it will
 	 * get references than mustn't be free'd, like 'user'. Take care.
 	 */
-
-	if (entry->parent == NULL) 
+	if (entry->parent == NULL)
 		entry->parent = main->parent;
-	
-	if (entry->handler_properties == NULL)
+
+	if (should_assign (entry, main, handler_properties, NULL))
 		entry->handler_properties = main->handler_properties;
 
-	if (entry->validator_properties == NULL)
+	if (should_assign (entry, main, validator_properties, NULL))
 		entry->validator_properties = main->validator_properties;
 
-	if (entry->handler_new_func == NULL)
+	if (should_assign (entry, main, handler_new_func, NULL)) {
 		entry->handler_new_func = main->handler_new_func;
+	}
 	
-	if (entry->authentication == 0)
+	if (should_assign (entry, main, authentication, 0))
 		entry->authentication = main->authentication;
 	
-	if (entry->only_secure == false)
+	if (should_assign (entry, main, only_secure, false))
 		entry->only_secure = main->only_secure;
 
-	if (entry->access == NULL)
+	if (should_assign (entry, main, access, NULL))
 		entry->access = main->access;
 	
-	if (entry->validator_new_func == NULL)
+	if (should_assign (entry, main, validator_new_func, NULL))
 		entry->validator_new_func = main->validator_new_func;
 
-  	if (entry->document_root == NULL)  
+  	if (should_assign (entry, main, document_root, NULL))
  		entry->document_root = main->document_root;	 
 	
- 	if (entry->auth_realm == NULL) 
+ 	if (should_assign (entry, main, auth_realm, NULL))
  		entry->auth_realm = main->auth_realm; 
 
-	if (entry->users == NULL)
+	if (should_assign (entry, main, users, NULL))
 		entry->users = main->users;
+
+	/* Finally, assign the new priority to the entry
+	 */
+	if (entry->priority < main->priority) {
+		entry->priority = main->priority;
+	}
 
 	return ret_ok;
 }
@@ -229,7 +247,7 @@ cherokee_config_entry_inherit (cherokee_config_entry_t *entry)
 	cherokee_config_entry_t *parent = entry;
 
 	while ((parent = parent->parent) != NULL) {
-		cherokee_config_entry_complete (entry, parent);
+		cherokee_config_entry_complete (entry, parent, true);
 	}
 
 	return ret_ok;

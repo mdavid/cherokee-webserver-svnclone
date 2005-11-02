@@ -12,13 +12,13 @@ class Test (TestBase):
         self.expected_content  = REQUIRED
         self.forbidden_content = FORBIDDEN
         self.conf              = """
-              Extension abc, def, ghi {
-                 Handler phpcgi
-              }
-
               Directory /extension2 {
                  Handler file
               }
+
+              Extension abc, def, ghi {
+                 Handler phpcgi
+              }              
               """
 
     def Prepare (self, www):

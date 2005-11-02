@@ -176,10 +176,16 @@ make_slash_end (char *string)
 static cherokee_config_entry_t *
 config_entry_new (void)
 {
+	   static cuint_t           priority = 1;
 	   cherokee_config_entry_t *entry;
 
 	   cherokee_config_entry_new (&entry);
 	   current_config_entry = entry;
+
+	   /* Assign the priority
+	    */
+	   entry->priority = priority;
+	   priority++;
 
 	   return entry;
 }
@@ -1116,6 +1122,8 @@ extension : T_EXTENSION id_list '{'
 	   extension_content_tmp.handler_name   = NULL;
 	   extension_content_tmp.document_root  = NULL;
 
+//	   printf ("Extensions %d\n", extension_content_tmp.entry->priority);
+
 	   /* Extensions table is created under demand
 	    */
 	   if (extension_content_tmp.vserver->exts == NULL) {
@@ -1202,6 +1210,8 @@ directory : T_DIRECTORY T_FULLDIR '{'
 	   directory_content_tmp.entry          = config_entry_new (); /* new! */
 	   directory_content_tmp.handler_name   = NULL;
 	   directory_content_tmp.document_root  = NULL;
+
+//	   printf ("Directory %s %d\n", $2, directory_content_tmp.entry->priority);
 } 
 directory_options '}'
 {
@@ -1274,6 +1284,8 @@ request : T_REQUEST T_QSTRING '{'
 	   request_content_tmp.handler_name   = NULL;
 	   request_content_tmp.document_root  = NULL;
 	   
+//	   printf ("Request %s %d\n", $2, request_content_tmp.entry->base_entry.priority);
+
 	   cherokee_buffer_add (&(request_content_tmp.entry->request), $2, strlen($2));
 } 
 directory_options '}'

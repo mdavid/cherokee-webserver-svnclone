@@ -71,7 +71,7 @@ cherokee_exts_table_get (cherokee_exts_table_t *et, cherokee_buffer_t *requested
 	ret = cherokee_table_get (&et->table, dot+1, (void **)&entry);
 	if (ret != ret_ok) return ret;
 	
-	cherokee_config_entry_complete (plugin_entry, entry);
+	cherokee_config_entry_complete (plugin_entry, entry, false);
 	return ret_ok;
 }
 

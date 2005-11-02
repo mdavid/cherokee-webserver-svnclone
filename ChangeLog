@@ -1,4 +1,21 @@
+2005-11-02  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* qa/107-Priority1.py, qa/108-Priority2.py, qa/109-Priority3.py,
+	qa/Makefile.am: Added new tests to check priorities.
+
+	* cherokee/config_entry.c (cherokee_config_entry_complete): Now it
+	implements priority between Directory, Extension and Request
+	entries. Last defined entry wins.
+
+	* qa/079-Extension.py, qa/080-Extension2.py: Fixed precedence.
+
 2005-11-01  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/connection.c (cherokee_connection_get_request): Little
+	test order change.
+
+	* cherokee/config_entry.h, cherokee/read_config_grammar.y
+	(config_entry_new): Added priority support for prioroties.
 
 	* cherokee/config_entry.h, cherokee/config_entry.c:
 	dirs_table_entry.h and dirs_table_entry.c have been renamed.
