@@ -111,7 +111,8 @@ run-tests.py \
 106-If-Range2.py \
 107-Priority1.py \
 108-Priority2.py \
-109-Priority3.py
+109-Priority3.py \
+110-Priority4.py
 
 test:
 	./run-tests.py

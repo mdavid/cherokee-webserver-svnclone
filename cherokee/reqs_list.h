@@ -39,7 +39,7 @@ typedef struct list_head cherokee_reqs_list_t;
 ret_t cherokee_reqs_list_init     (cherokee_reqs_list_t *rl);
 ret_t cherokee_reqs_list_mrproper (cherokee_reqs_list_t *rl);
 
-ret_t cherokee_reqs_list_get      (cherokee_reqs_list_t *rl, cherokee_buffer_t *requested_url, cherokee_config_entry_t *plugin_entry, cherokee_regex_table_t *regexs);
+ret_t cherokee_reqs_list_get      (cherokee_reqs_list_t *rl, cherokee_buffer_t *requested_url, cherokee_config_entry_t *plugin_entry, cherokee_connection_t *conn);
 ret_t cherokee_reqs_list_add      (cherokee_reqs_list_t *rl, cherokee_reqs_list_entry_t *plugin_entry, cherokee_regex_table_t *regexs);
 
 #endif /* CHEROKEE_REQS_LIST_H */

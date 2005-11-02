@@ -26,6 +26,8 @@
 #include "reqs_list.h"
 #include "regex.h"
 #include "pcre/pcre.h"
+#include "server-protected.h"
+#include "connection-protected.h"
 
 
 ret_t 
@@ -48,39 +50,60 @@ ret_t
 cherokee_reqs_list_get (cherokee_reqs_list_t     *rl, 
 			cherokee_buffer_t        *requested_url, 
 			cherokee_config_entry_t  *plugin_entry,
-			cherokee_regex_table_t   *regexs)
+			cherokee_connection_t    *conn)
 {
-	ret_t   ret;
-	list_t *i;
-	list_t *reqs = (list_t *)rl;
+	ret_t                   ret;
+	char                    req_back;
+	list_t                 *i;
+	list_t                 *reqs         = (list_t *)rl;
+	char                   *request      = NULL;
+	cint_t                  request_len  = 0;
 	
-	if (regexs == NULL) 
+	/* Sanity check
+	 */
+	if (CONN_SRV(conn)->regexs == NULL) 
 		return ret_ok;
-	
-	list_for_each (i, reqs) {
-		int   rei;
-		pcre *re                            = NULL;
-		char *request_pattern               = RQ_ENTRY(i)->request.buf;
-		cherokee_reqs_list_entry_t  *lentry = list_entry (i, cherokee_reqs_list_entry_t, list_entry);
-		cherokee_config_entry_t     *entry  = &lentry->base_entry;
 
-		printf ("i %p: %s\n", i, request_pattern);
-		
-		if (request_pattern == NULL)
+	/* Read the request
+	 */
+	ret = cherokee_header_get_request_w_args (conn->header, &request, &request_len);
+	if (unlikely ((ret != ret_ok) || (request == NULL) || (request_len == 0)))
+	    return ret_error;
+
+	req_back = request[request_len];
+	request[request_len] = '\0';
+	
+	/* Try to match the request
+	 */
+	list_for_each (i, reqs) {
+		int                          rei;
+		pcre                        *re      = NULL;
+		cherokee_reqs_list_entry_t  *lentry  = list_entry (i, cherokee_reqs_list_entry_t, list_entry);
+		char                        *pattern = lentry->request.buf;
+		cherokee_config_entry_t     *entry   = &lentry->base_entry;
+
+		if (pattern == NULL)
 			continue;
 		
-		ret = cherokee_regex_table_get (regexs, request_pattern, (void **)&re);
+		ret = cherokee_regex_table_get (CONN_SRV(conn)->regexs, pattern, (void **)&re);
 		if (ret != ret_ok) continue;
 		
-		rei = pcre_exec (re, NULL, requested_url->buf, requested_url->len, 0, 0, NULL, 0);
-		if (rei <= 0) continue;
+		rei = pcre_exec (re, NULL, request, request_len, 0, 0, NULL, 0);
+		if (rei < 0) continue;
 		
 		cherokee_config_entry_complete (plugin_entry, entry, false);
-		return ret_ok;
+
+		ret = ret_ok;
+		goto restore;
 	}
-	
-	return ret_not_found;
+
+	ret = ret_not_found;
+
+restore:
+	request[request_len] = req_back;
+	return ret;
 }
+
 
 
 ret_t 
@@ -88,6 +111,8 @@ cherokee_reqs_list_add  (cherokee_reqs_list_t       *rl,
 			 cherokee_reqs_list_entry_t *plugin_entry,
 			 cherokee_regex_table_t     *regexs)
 {
+	ret_t ret;
+
 	/* Add the new connection
 	 */
 	list_add (&plugin_entry->list_entry, (list_t *)rl);
@@ -96,7 +121,8 @@ cherokee_reqs_list_add  (cherokee_reqs_list_t       *rl,
 	 */
 	if (regexs != NULL) {
 		if (! cherokee_buffer_is_empty (&plugin_entry->request)) {
-			cherokee_regex_table_add (regexs, plugin_entry->request.buf);
+			ret = cherokee_regex_table_add (regexs, plugin_entry->request.buf);
+			if (ret != ret_ok) return ret;
 		}
 	}
 	

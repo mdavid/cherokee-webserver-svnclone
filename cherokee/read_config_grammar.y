@@ -91,6 +91,7 @@ static list_t                          *current_reqs_list           = NULL;
 static cherokee_virtual_server_t       *current_virtual_server      = NULL;
 static cherokee_encoder_table_entry_t  *current_encoder_entry       = NULL;
 static cherokee_module_info_t          *current_module_info         = NULL;
+static cuint_t                          priority_counter            = 1;
 
 typedef struct {
 	   void *next;
@@ -176,7 +177,6 @@ make_slash_end (char *string)
 static cherokee_config_entry_t *
 config_entry_new (void)
 {
-	   static cuint_t           priority = 1;
 	   cherokee_config_entry_t *entry;
 
 	   cherokee_config_entry_new (&entry);
@@ -184,8 +184,8 @@ config_entry_new (void)
 
 	   /* Assign the priority
 	    */
-	   entry->priority = priority;
-	   priority++;
+	   entry->priority = priority_counter;
+	   priority_counter++;
 
 	   return entry;
 }
@@ -197,6 +197,9 @@ reqs_list_entry_new (void)
 
 	   cherokee_reqs_list_entry_new (&entry);
 	   current_config_entry = (cherokee_config_entry_t *)entry;      /* It is okay! */
+
+	   entry->base_entry.priority = priority_counter;
+	   priority_counter++;
 
 	   return entry;
 }
@@ -1290,6 +1293,7 @@ request : T_REQUEST T_QSTRING '{'
 } 
 directory_options '}'
 {
+	   ret_t                   ret;
 	   cherokee_module_info_t *info;
 
 	   /* Does this directory have a handler
@@ -1304,7 +1308,8 @@ directory_options '}'
 
 	   /* Add the new entry
 	    */
-	   cherokee_reqs_list_add (request_content_tmp.reqs, request_content_tmp.entry, SRV(server)->regexs);
+	   ret = cherokee_reqs_list_add (request_content_tmp.reqs, request_content_tmp.entry, SRV(server)->regexs);
+	   if (ret != ret_ok) return 1;
 
 	   /* Clean
 	    */
