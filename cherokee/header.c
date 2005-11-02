@@ -661,6 +661,24 @@ cherokee_header_copy_request (cherokee_header_t *hdr, cherokee_buffer_t *request
 }
 
 
+ret_t 
+cherokee_header_get_request_w_args (cherokee_header_t *hdr, char **req, int *req_len)
+{
+	if ((hdr->request_off == 0) ||
+	    (hdr->request_args_len <= 0)) {
+		return ret_error;
+	}
+
+	if (req != NULL)
+		*req = hdr->input_buffer->buf + hdr->request_off;
+
+	if (req_len != NULL)
+		*req_len = hdr->request_args_len;
+	
+	return ret_ok;
+}
+
+
 ret_t
 cherokee_header_copy_request_w_args (cherokee_header_t *hdr, cherokee_buffer_t *request)
 {

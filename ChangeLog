@@ -1,7 +1,11 @@
 2005-11-02  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* cherokee/header.c (cherokee_header_get_request_w_args): Added
+	new funcion.
+
 	* qa/107-Priority1.py, qa/108-Priority2.py, qa/109-Priority3.py,
-	qa/Makefile.am: Added new tests to check priorities.
+	qa/110-Priority4.py, qa/Makefile.am: Added new tests to check
+	priorities.
 
 	* cherokee/config_entry.c (cherokee_config_entry_complete): Now it
 	implements priority between Directory, Extension and Request

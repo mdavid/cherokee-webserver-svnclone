@@ -1527,7 +1527,7 @@ cherokee_connection_get_req_entry (cherokee_connection_t *cnt, cherokee_reqs_lis
 
 	/* Look in the extension table
 	 */
-	ret = cherokee_reqs_list_get (reqs, cnt->request, plugin_entry, CONN_SRV(cnt)->regexs);
+	ret = cherokee_reqs_list_get (reqs, cnt->request, plugin_entry, cnt);
 	if (unlikely (ret == ret_error)) {
 		cnt->error_code = http_internal_error;
 		return ret_error;
