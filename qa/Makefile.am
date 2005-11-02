@@ -108,7 +108,10 @@ run-tests.py \
 103-ScriptName.py \
 104-ScriptAlias_PathInfo.py \
 105-If-Range.py \
-106-If-Range2.py
+106-If-Range2.py \
+107-Priority1.py \
+108-Priority2.py \
+109-Priority3.py
 
 test:
 	./run-tests.py

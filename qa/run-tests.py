@@ -72,9 +72,11 @@ CONF_BASE = """# Cherokee QA tests
                PanicAction /usr/bin/cherokee-panic
                Directory / { Handler common }
                DirectoryIndex test_index.html, test_index.php, /super_test_index.php
-               Extension php { Handler phpcgi }
                Encoder gzip { allow txt }
             """ % (PORT, www)
+
+BOTTON_CONF = "Extension php { Handler phpcgi }"
+
 
 if ssl:
     CONF_BASE += """SSLCertificateFile    %s
@@ -110,7 +112,7 @@ for obj in objs:
         mod_conf += obj.conf+"\n"
 
 # Write down the configuration file
-cfg = CONF_BASE + mod_conf
+cfg = CONF_BASE + mod_conf + BOTTON_CONF
 cfg_file = tempfile.mktemp("cherokee_tmp_cfg")
 cfg_fd = open (cfg_file, 'w')
 cfg_fd.write (cfg)

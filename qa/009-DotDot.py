@@ -5,6 +5,5 @@ class Test (TestBase):
         TestBase.__init__ (self)
         self.name = "Double dot"
 
-        self.expected_error = 301
         self.request        = "GET /../ HTTP/1.0\r\n"
-
+        self.expected_error = 400

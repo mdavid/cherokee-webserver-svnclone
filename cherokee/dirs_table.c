@@ -114,7 +114,7 @@ go_out:
 	if (entry != NULL) {
 		/* Copy everythin into the duplicate
 		 */
-		cherokee_config_entry_complete (plugin_entry, entry);
+		cherokee_config_entry_complete (plugin_entry, entry, false);
 
 		/* Inherit from parents
 		 */

@@ -75,7 +75,7 @@ cherokee_reqs_list_get (cherokee_reqs_list_t     *rl,
 		rei = pcre_exec (re, NULL, requested_url->buf, requested_url->len, 0, 0, NULL, 0);
 		if (rei <= 0) continue;
 		
-		cherokee_config_entry_complete (plugin_entry, entry);
+		cherokee_config_entry_complete (plugin_entry, entry, false);
 		return ret_ok;
 	}
 	

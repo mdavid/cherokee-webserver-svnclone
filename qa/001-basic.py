@@ -6,6 +6,9 @@ class Test (TestBase):
         self.name = "Basic"
 
         self.expected_error = 200
-        self.request        = "GET / HTTP/1.0\r\n"
-        self.conf           = "Directory / { Handler common }"
+        self.request        = "GET /basic_test1/ HTTP/1.0\r\n"
+        self.conf           = "Directory /basic_test1/ { Handler common }"
+
+    def Prepare (self, www):
+        self.Mkdir (www, "basic_test1")
 

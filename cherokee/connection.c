@@ -1354,15 +1354,15 @@ cherokee_connection_get_request (cherokee_connection_t *cnt)
 	ret = cherokee_header_copy_request (cnt->header, cnt->request);
 	if (ret < ret_ok) goto error;
 
-	/* Remove the "./" substring
-	 */
-	cherokee_buffer_remove_string (cnt->request, "./", 2);
-
 	/* Look for ".."
 	 */
 	if (strstr (cnt->request->buf, "..") != NULL) {
 		goto error;
 	}
+
+	/* Remove the "./" substring
+	 */
+	cherokee_buffer_remove_string (cnt->request, "./", 2);
 
 	/* Look for starting '/' in the request
 	 */
