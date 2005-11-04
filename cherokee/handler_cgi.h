@@ -57,6 +57,7 @@ typedef struct {
 	char   *extra_param;
 	list_t *system_env;
 	size_t  content_length;
+	int     is_error_handler;
 
 	char *envp[ENV_VAR_NUM]; /* Environ variables for execve() */
 	int   envp_last;
