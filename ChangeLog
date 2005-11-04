@@ -1,3 +1,16 @@
+2005-11-04  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/handler_cgi.c (cherokee_handler_cgi_new),
+	cherokee/handler_cgi.h, cherokee/read_config_grammar.y: Added
+	support to error handling in the CGI module.  It can be defined
+	using the option "ErrorHandler on".
+
+	* qa/112-NiceError-CGI.py: Added new QA test.
+
+2005-11-03  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* sites-default.sample.pre: Updated.
+
 2005-11-02  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cherokee/header.c (cherokee_header_get_request_w_args): Added

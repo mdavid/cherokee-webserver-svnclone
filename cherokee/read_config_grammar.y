@@ -1028,6 +1028,9 @@ handler_option : T_SERVER T_ADDRESS_PORT
 handler_option : T_IO_CACHE T_NUMBER
 { cherokee_config_entry_set_handler_prop (current_config_entry, "cache", typed_int, INT_TO_POINTER($2), NULL); };
 
+handler_option: T_ERROR_HANDLER T_NUMBER
+{ cherokee_config_entry_set_handler_prop (current_config_entry, "error_handler", typed_int, INT_TO_POINTER($2), NULL); };
+
 handler_option : T_NUMBER http_generic
 {
 	   char code[4];

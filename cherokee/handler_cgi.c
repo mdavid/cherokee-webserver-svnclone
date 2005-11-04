@@ -110,6 +110,7 @@ cherokee_handler_cgi_new  (cherokee_handler_t **hdl, void *cnt, cherokee_table_t
 	n->init_phase        = hcgi_phase_init;
 	n->system_env        = NULL;
 	n->content_length    = 0;
+	n->is_error_handler  = 0;
 	
 	n->envp_last = 0;	
 	for (i=0; i<ENV_VAR_NUM; i++)
@@ -120,6 +121,11 @@ cherokee_handler_cgi_new  (cherokee_handler_t **hdl, void *cnt, cherokee_table_t
 	if (properties) {
 		cherokee_typed_table_get_str (properties, "scriptalias", &n->script_alias);
 		cherokee_typed_table_get_list (properties, "env", &n->system_env);
+		cherokee_typed_table_get_int (properties, "error_handler", &n->is_error_handler);
+	}
+
+	if (n->is_error_handler) {
+		HANDLER(n)->support |= hsupport_error;		
 	}
 
 	/* Return the object
