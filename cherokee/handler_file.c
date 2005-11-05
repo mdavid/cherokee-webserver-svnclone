@@ -223,7 +223,7 @@ open_local_directory (cherokee_handler_file_t *n, cherokee_connection_t *conn)
 
 	/* Open it
 	 */
-	n->fd = open (conn->local_directory->buf, CHE_O_READ);
+	n->fd = open (conn->local_directory.buf, CHE_O_READ);
 	if (n->fd > 0) return ret_ok;
 
 	/* Manage errors
@@ -252,7 +252,7 @@ stat_local_directory (cherokee_handler_file_t *n, cherokee_connection_t *conn, c
 	/* Without cache
 	 */
 	if (n->nocache) {
-		re = stat (conn->local_directory->buf, &n->nocache_info);
+		re = stat (conn->local_directory.buf, &n->nocache_info);
 		if (re < 0) {
 			switch (errno) {
 			case ENOENT: 
@@ -265,7 +265,7 @@ stat_local_directory (cherokee_handler_file_t *n, cherokee_connection_t *conn, c
 				conn->error_code = http_internal_error;
 			}
 
-			cherokee_buffer_drop_endding (conn->local_directory, conn->request->len);
+			cherokee_buffer_drop_endding (&conn->local_directory, conn->request.len);
 			return ret_error;
 		}
 
@@ -275,7 +275,7 @@ stat_local_directory (cherokee_handler_file_t *n, cherokee_connection_t *conn, c
 
 	/* I/O cache
 	 */
-	ret = cherokee_iocache_stat_get (srv->iocache, conn->local_directory->buf, io_entry);
+	ret = cherokee_iocache_stat_get (srv->iocache, conn->local_directory.buf, io_entry);
 	if (ret != ret_ok) {
 		switch (ret) {
 		case ret_not_found:
@@ -288,7 +288,7 @@ stat_local_directory (cherokee_handler_file_t *n, cherokee_connection_t *conn, c
 			conn->error_code = http_internal_error;
 		}
 		
-		cherokee_buffer_drop_endding (conn->local_directory, conn->request->len);
+		cherokee_buffer_drop_endding (&conn->local_directory, conn->request.len);
 		return ret_error;		
 	}
 
@@ -310,8 +310,8 @@ cherokee_handler_file_init (cherokee_handler_file_t *n)
 	/* Build the local file path                         1.- BUILD
 	 * Take care with "return"s until 2.
 	 */
-	if (conn->request->len > 1) {
-		cherokee_buffer_add (conn->local_directory, conn->request->buf+1, conn->request->len-1); 
+	if (conn->request.len > 1) {
+		cherokee_buffer_add (&conn->local_directory, conn->request.buf+1, conn->request.len-1); 
 	}
 
 	/* Query the I/O cache
@@ -330,7 +330,7 @@ cherokee_handler_file_init (cherokee_handler_file_t *n)
 	 */
 	ret = check_cached(n);
 	if (ret != ret_ok) {
-		cherokee_buffer_drop_endding (conn->local_directory, conn->request->len);
+		cherokee_buffer_drop_endding (&conn->local_directory, conn->request.len);
 		return ret;
 	}
 
@@ -345,17 +345,17 @@ cherokee_handler_file_init (cherokee_handler_file_t *n)
 	
 	if (use_io) {
 		ret = cherokee_iocache_mmap_lookup (srv->iocache,
-						    conn->local_directory->buf,
+						    conn->local_directory.buf,
 						    &io_entry);
 		if (ret != ret_ok) {
 			ret = open_local_directory (n, conn);
 			if (ret != ret_ok) {
-				cherokee_buffer_drop_endding (conn->local_directory, conn->request->len);
+				cherokee_buffer_drop_endding (&conn->local_directory, conn->request.len);
 				return ret;
 			}
 
 			ret = cherokee_iocache_mmap_get_w_fd (srv->iocache,
-							      conn->local_directory->buf,
+							      conn->local_directory.buf,
 							      n->fd,
 							      &io_entry);
 		}
@@ -371,7 +371,7 @@ cherokee_handler_file_init (cherokee_handler_file_t *n)
 	if ((n->fd < 0) && (!use_io)) {
 		ret = open_local_directory (n, conn);
 		if (ret != ret_ok) {
-			cherokee_buffer_drop_endding (conn->local_directory, conn->request->len);
+			cherokee_buffer_drop_endding (&conn->local_directory, conn->request.len);
 			return ret;
 		}
 	}
@@ -379,7 +379,7 @@ cherokee_handler_file_init (cherokee_handler_file_t *n)
 	/* Undo the local file path                          2.- UNDO
 	 * "return" is allowed again
 	 */
-	cherokee_buffer_drop_endding (conn->local_directory, conn->request->len);
+	cherokee_buffer_drop_endding (&conn->local_directory, conn->request.len);
 
 	/* Is it a directory?
 	 */
@@ -429,7 +429,7 @@ cherokee_handler_file_init (cherokee_handler_file_t *n)
 	/* Look for the mime type
 	 */
 #ifndef CHEROKEE_EMBEDDED
-	ext = strrchr (conn->request->buf, '.');
+	ext = strrchr (conn->request.buf, '.');
 	if (ext != NULL) {
 		cherokee_mime_t *m;
 

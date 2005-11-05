@@ -464,7 +464,7 @@ process_active_connections (cherokee_thread_t *thd)
 		 * 1.- Are there a pipelined connection?
 		 */
 		process = ((conn->phase == phase_reading_header) &&
-			   (!cherokee_buffer_is_empty (conn->incoming_header)));
+			   (!cherokee_buffer_is_empty (&conn->incoming_header)));
 			
 		/* Process the connection?
 		 * 2.- Inspect the file descriptor	
@@ -589,10 +589,10 @@ process_active_connections (cherokee_thread_t *thd)
 		case phase_reading_header: 
 			/* Maybe the buffer has a request (previous pipelined)
 			 */
-			if (! cherokee_buffer_is_empty (conn->incoming_header)) {
+			if (! cherokee_buffer_is_empty (&conn->incoming_header)) {
 				ret = cherokee_header_has_header (conn->header,
-								  conn->incoming_header, 
-								  conn->incoming_header->len);
+								  &conn->incoming_header, 
+								  conn->incoming_header.len);
 				if (ret == ret_ok) {
 					goto phase_reading_header_EXIT;
 				}
@@ -600,7 +600,7 @@ process_active_connections (cherokee_thread_t *thd)
 			       			
 			/* Read from the client
 			 */
-			ret = cherokee_connection_recv (conn, conn->incoming_header, &len);
+			ret = cherokee_connection_recv (conn, &conn->incoming_header, &len);
 			switch (ret) {
 			case ret_ok:
 				break;
@@ -626,7 +626,7 @@ process_active_connections (cherokee_thread_t *thd)
 
 			/* May it already has the full header
 			 */
-			ret = cherokee_header_has_header (conn->header, conn->incoming_header, len+4);
+			ret = cherokee_header_has_header (conn->header, &conn->incoming_header, len+4);
 			if (ret != ret_ok) {
 				conn->phase = phase_reading_header;
 				continue;
@@ -674,8 +674,8 @@ process_active_connections (cherokee_thread_t *thd)
 			
 			/* Get the virtual host and maybe set a new vserver reference
 			 */
-			if (!cherokee_buffer_is_empty(conn->host)) {
-				cherokee_table_get (srv->vservers_ref, conn->host->buf, &conn->vserver);
+			if (!cherokee_buffer_is_empty (&conn->host)) {
+				cherokee_table_get (srv->vservers_ref, conn->host.buf, &conn->vserver);
 			}
 
 			/* Set the logger of the connection
@@ -721,7 +721,7 @@ process_active_connections (cherokee_thread_t *thd)
 			/* 3.- Read the directory configuration
 			 */
 			if (!cherokee_buffer_is_empty (CONN_VSRV(conn)->userdir) &&
-			    !cherokee_buffer_is_empty (conn->userdir))
+			    !cherokee_buffer_is_empty (&conn->userdir))
 			{
 				ret = cherokee_connection_get_dir_entry (conn, CONN_VSRV(conn)->userdir_dirs, &entry);
 				if (unlikely (ret != ret_ok)) {
@@ -730,7 +730,7 @@ process_active_connections (cherokee_thread_t *thd)
 					continue;
 				}
 				
-				if (cherokee_buffer_is_empty (conn->local_directory)) {
+				if (cherokee_buffer_is_empty (&conn->local_directory)) {
 					ret = cherokee_connection_build_local_directory_userdir (conn, CONN_VSRV(conn), &entry);
 				}
 
@@ -743,7 +743,7 @@ process_active_connections (cherokee_thread_t *thd)
 					continue;
 				}
 
-				if (cherokee_buffer_is_empty (conn->local_directory)) {
+				if (cherokee_buffer_is_empty (&conn->local_directory)) {
 					ret = cherokee_connection_build_local_directory (conn, CONN_VSRV(conn), &entry);
 				}
 			}

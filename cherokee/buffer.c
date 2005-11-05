@@ -104,14 +104,24 @@ cherokee_buffer_clean (cherokee_buffer_t *buf)
 }
 
 
-ret_t 
-cherokee_buffer_ref_buffer (cherokee_buffer_t *buf, cherokee_buffer_t *ref)
+void
+cherokee_buffer_swap_buffers (cherokee_buffer_t *buf, cherokee_buffer_t *second)
 {
-	buf->buf  = ref->buf;
-	buf->len  = ref->len;
-	buf->size = ref->size;
+	char    *tmp_buf;
+	cuint_t  tmp_len;
+	cuint_t  tmp_size;
 
-	return ret_ok;
+	tmp_buf  = buf->buf;
+	tmp_len  = buf->len;
+	tmp_size = buf->size;
+
+	buf->buf  = second->buf;
+	buf->len  = second->len;
+	buf->size = second->size;
+
+	second->buf = tmp_buf;
+	second->len = tmp_len;
+	second->size = tmp_size;
 }
 
 
@@ -241,13 +251,6 @@ cherokee_buffer_prepend (cherokee_buffer_t  *buf, char *txt, size_t size)
 }
 
 
-int
-cherokee_buffer_is_empty (cherokee_buffer_t *buf)
-{
-	return (buf->len == 0);
-}
-
-
 int   
 cherokee_buffer_is_endding (cherokee_buffer_t *buf, char c)
 {
@@ -286,25 +289,27 @@ cherokee_buffer_move_to_begin (cherokee_buffer_t *buf, int pos)
 
 
 ret_t
-cherokee_buffer_ensure_size (cherokee_buffer_t *buf, int size)
+cherokee_buffer_ensure_size (cherokee_buffer_t *buf, size_t size)
 {
-	/* Is this a new buffer?
-	 * In this case, just take the memory
+	/* Maybe it doesn't need it
+	 */
+	if (size < buf->len) 
+		return ret_ok;
+
+	/* If it is a new buffer, take memory and return
 	 */
 	if (buf->buf == NULL) {
-		buf->buf = (char *) realloc(buf->buf, size);
-		return_if_fail (buf->buf, ret_error);
+		buf->buf = (char *) malloc (size);
+		if (unlikely (buf->buf == NULL)) return ret_nomem;
 		buf->size = size;
 		return ret_ok;
 	}
 
-	/* It already has memory, try to realloc
+	/* It already has memory, but it needs more..
 	 */
-	if (size > buf->size) {
-		buf->buf = (char *) realloc(buf->buf, size);
-		return_if_fail (buf->buf, ret_error);
-		buf->size = size;
-	}
+	buf->buf = (char *) realloc(buf->buf, size);
+	if (unlikely (buf->buf == NULL)) return ret_nomem;
+	buf->size = size;
 	   
 	return ret_ok;
 }

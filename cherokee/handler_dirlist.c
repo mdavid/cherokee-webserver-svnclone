@@ -248,19 +248,19 @@ check_request_finish_with_slash (cherokee_handler_dirlist_t *dhdl)
 {
 	cherokee_connection_t *conn = HANDLER_CONN(dhdl);
 
-	if ((cherokee_buffer_is_empty(conn->request)) ||
-	    (!cherokee_buffer_is_endding (conn->request, '/')))
+	if ((cherokee_buffer_is_empty (&conn->request)) ||
+	    (!cherokee_buffer_is_endding (&conn->request, '/')))
 	{
-		cherokee_buffer_clean (conn->redirect);
-		cherokee_buffer_ensure_size (conn->redirect, conn->request->len + conn->userdir->len + 4);
+		cherokee_buffer_clean (&conn->redirect);
+		cherokee_buffer_ensure_size (&conn->redirect, conn->request.len + conn->userdir.len + 4);
 
-		if (! cherokee_buffer_is_empty (conn->userdir)) {
-			cherokee_buffer_add (conn->redirect, "/~", 2);
-			cherokee_buffer_add_buffer (conn->redirect, conn->userdir);
+		if (! cherokee_buffer_is_empty (&conn->userdir)) {
+			cherokee_buffer_add (&conn->redirect, "/~", 2);
+			cherokee_buffer_add_buffer (&conn->redirect, &conn->userdir);
 		}
 
-		cherokee_buffer_add_buffer (conn->redirect, conn->request);
-		cherokee_buffer_add (conn->redirect, "/", 1);
+		cherokee_buffer_add_buffer (&conn->redirect, &conn->request);
+		cherokee_buffer_add (&conn->redirect, "/", 1);
 		
 		conn->error_code = http_moved_permanently;
 		return ret_error;		
@@ -274,14 +274,14 @@ read_header_file (cherokee_handler_dirlist_t *dhdl)
 {
 	cherokee_connection_t *conn = HANDLER_CONN(dhdl);
 
-	cherokee_buffer_add_buffer (conn->local_directory, conn->request);          /* do   */
-	cherokee_buffer_add_buffer (conn->local_directory, dhdl->header_file);
+	cherokee_buffer_add_buffer (&conn->local_directory, &conn->request);          /* do   */
+	cherokee_buffer_add_buffer (&conn->local_directory, dhdl->header_file);
 	
 	cherokee_buffer_new (&dhdl->header);
-	cherokee_buffer_read_file (dhdl->header, conn->local_directory->buf);
+	cherokee_buffer_read_file (dhdl->header, conn->local_directory.buf);
 	
-	cherokee_buffer_drop_endding (conn->local_directory, 
-				      conn->request->len + dhdl->header_file->len); /* undo */	
+	cherokee_buffer_drop_endding (&conn->local_directory, 
+				      conn->request.len + dhdl->header_file->len); /* undo */	
 }
 
 
@@ -374,8 +374,8 @@ build_file_list (cherokee_handler_dirlist_t *dhdl)
 
 	/* Build the local directory path
 	 */
-	cherokee_buffer_add_buffer (conn->local_directory, conn->request);        /* 1 */
-	dir = opendir (conn->local_directory->buf);
+	cherokee_buffer_add_buffer (&conn->local_directory, &conn->request);        /* 1 */
+	dir = opendir (conn->local_directory.buf);
 
 	if (dir == NULL) {
 		conn->error_code = http_not_found;
@@ -387,7 +387,7 @@ build_file_list (cherokee_handler_dirlist_t *dhdl)
 	for (;;) {
 		ret_t ret;
 		
-		ret = generate_file_entry (dir, conn->local_directory, dhdl, &item);
+		ret = generate_file_entry (dir, &conn->local_directory, dhdl, &item);
 		if (ret == ret_eof) break;
 		if (ret == ret_error) continue;
 
@@ -401,7 +401,7 @@ build_file_list (cherokee_handler_dirlist_t *dhdl)
 	/* Clean
 	 */
 	closedir(dir);
-	cherokee_buffer_drop_endding (conn->local_directory, conn->request->len); /* 2 */
+	cherokee_buffer_drop_endding (&conn->local_directory, conn->request.len); /* 2 */
 
 	/* Sort the file list
 	 */
@@ -460,15 +460,15 @@ build_public_path (cherokee_handler_dirlist_t *dhdl, cherokee_buffer_t *buf)
 {
 	cherokee_connection_t *conn = HANDLER_CONN(dhdl);
 	
-	if (!cherokee_buffer_is_empty (conn->userdir)) {
+	if (!cherokee_buffer_is_empty (&conn->userdir)) {
 		/* ~user local dir request
  		 */
 		cherokee_buffer_add (buf, "/~", 2);
-		cherokee_buffer_add_buffer (buf, conn->userdir);
+		cherokee_buffer_add_buffer (buf, &conn->userdir);
 	}
 	
 	if (cherokee_buffer_is_empty (&conn->request_original)) 
-		cherokee_buffer_add_buffer (buf, conn->request);
+		cherokee_buffer_add_buffer (buf, &conn->request);
 	else 
 		cherokee_buffer_add_buffer (buf, &conn->request_original);
 

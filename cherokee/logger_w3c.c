@@ -230,7 +230,7 @@ cherokee_logger_w3c_write_error  (cherokee_logger_w3c_t *logger, cherokee_connec
 #endif
 
 	request = cherokee_buffer_is_empty(&cnt->request_original) ? 
-		cnt->request : &cnt->request_original;
+		&cnt->request : &cnt->request_original;
 
 	len = snprintf (tmp, tmp_size-1,
 			"%02d:%02d:%02d [error] %s %s\n",
@@ -306,7 +306,7 @@ cherokee_logger_w3c_write_access (cherokee_logger_w3c_t *logger, cherokee_connec
 #endif
 
 	   request = cherokee_buffer_is_empty(&cnt->request_original) ? 
-		   cnt->request : &cnt->request_original;
+		   &cnt->request : &cnt->request_original;
 
 	   len = snprintf (tmp, tmp_size-1,
 			   "%02d:%02d:%02d %s %s\n",

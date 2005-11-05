@@ -169,7 +169,7 @@ cherokee_handler_phpcgi_new  (cherokee_handler_t **hdl, void *cnt, cherokee_tabl
 	/* If it has to fake the effective directory, set the -C paramter:
 	 * Do not chdir to the script's directory
 	 */
-	if (!cherokee_buffer_is_empty(CONN(cnt)->effective_directory)) {
+	if (!cherokee_buffer_is_empty (&CONN(cnt)->effective_directory)) {
 		cherokee_handler_cgi_add_parameter (CGIHANDLER(*hdl), "-C");
 	}
 
@@ -194,11 +194,11 @@ cherokee_handler_phpcgi_init (cherokee_handler_t *hdl)
 	/* Add parameter to CGI handler
 	*/
 	if (CGIHANDLER(hdl)->parameter == NULL) {
-		cherokee_buffer_t *ld = conn->local_directory;
+		cherokee_buffer_t *ld = &conn->local_directory;
 		
 		cherokee_buffer_new (&CGIHANDLER(hdl)->parameter);
 		cherokee_buffer_add (CGIHANDLER(hdl)->parameter, ld->buf, ld->len - 1);
-		cherokee_buffer_add_buffer (CGIHANDLER(hdl)->parameter, conn->request);
+		cherokee_buffer_add_buffer (CGIHANDLER(hdl)->parameter, &conn->request);
 		
 		cherokee_handler_cgi_split_pathinfo (CGIHANDLER(hdl), 
 						     CGIHANDLER(hdl)->parameter,

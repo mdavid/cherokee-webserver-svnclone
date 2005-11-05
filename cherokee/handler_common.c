@@ -126,10 +126,10 @@ cherokee_handler_common_new (cherokee_handler_t **hdl, void *cnt, cherokee_table
 
 	/* Check the request
 	 */
-	cherokee_buffer_add_buffer (conn->local_directory, conn->request);
+	cherokee_buffer_add_buffer (&conn->local_directory, &conn->request);
 
 	cherokee_iocache_get_default (&iocache);
-	ret = stat_file (use_iocache, iocache, &nocache_info, conn->local_directory->buf, &file, &info);
+	ret = stat_file (use_iocache, iocache, &nocache_info, conn->local_directory.buf, &file, &info);
 	exists = (ret == ret_ok);
 	
 	if (!exists) {
@@ -141,9 +141,9 @@ cherokee_handler_common_new (cherokee_handler_t **hdl, void *cnt, cherokee_table
 		/* Maybe it could stat() the file because the request contains
 		 * a PathInfo string at the end..
 		 */
-		begin = conn->local_directory->len - conn->request->len;
+		begin = conn->local_directory.len - conn->request.len;
 		
-		ret = cherokee_split_pathinfo (conn->local_directory, begin, &pathinfo, &pathinfo_len);
+		ret = cherokee_split_pathinfo (&conn->local_directory, begin, &pathinfo, &pathinfo_len);
 		if ((ret == ret_not_found) || (pathinfo_len <= 0)) {
 			conn->error_code = http_not_found;
 			return ret_error;
@@ -151,17 +151,17 @@ cherokee_handler_common_new (cherokee_handler_t **hdl, void *cnt, cherokee_table
 		
 		/* Copy the PathInfo and clean the request 
 		 */
-		cherokee_buffer_add (conn->pathinfo, pathinfo, pathinfo_len);
-		cherokee_buffer_drop_endding (conn->request, pathinfo_len);
+		cherokee_buffer_add (&conn->pathinfo, pathinfo, pathinfo_len);
+		cherokee_buffer_drop_endding (&conn->request, pathinfo_len);
 
 		/* Clean the local_directory, this connection is going
 		 * to restart the connection setup phase
 		 */
-		cherokee_buffer_clean (conn->local_directory);
+		cherokee_buffer_clean (&conn->local_directory);
 		return ret_eagain;
 	}	
 
-	cherokee_buffer_drop_endding (conn->local_directory, conn->request->len);
+	cherokee_buffer_drop_endding (&conn->local_directory, conn->request.len);
 
 	/* Is it a file?
 	 */
@@ -176,13 +176,13 @@ cherokee_handler_common_new (cherokee_handler_t **hdl, void *cnt, cherokee_table
 
 		/* Maybe it has to be redirected
 		 */
-		if (conn->request->buf[conn->request->len-1] != '/') {
+		if (conn->request.buf[conn->request.len-1] != '/') {
 			return cherokee_handler_dirlist_new (hdl, cnt, properties);
 		}
 
 		/* Add the request
 		 */
-		cherokee_buffer_add_buffer (conn->local_directory, conn->request);
+		cherokee_buffer_add_buffer (&conn->local_directory, &conn->request);
 
 		/* Have an index file inside?
 		 */
@@ -202,7 +202,7 @@ cherokee_handler_common_new (cherokee_handler_t **hdl, void *cnt, cherokee_table
 
 				/* Build the secondary path
 				 */
-				cherokee_buffer_add_buffer (conn->effective_directory, conn->local_directory);
+				cherokee_buffer_add_buffer (&conn->effective_directory, &conn->local_directory);
 
 				/* Lets reconstruct the local directory
 				 */
@@ -217,21 +217,21 @@ cherokee_handler_common_new (cherokee_handler_t **hdl, void *cnt, cherokee_table
 				
 				/* Build the new request before respin
 				 */
-				cherokee_buffer_clean (conn->local_directory);
-				cherokee_buffer_clean (conn->request);
-				cherokee_buffer_add (conn->request, index, index_len);				
+				cherokee_buffer_clean (&conn->local_directory);
+				cherokee_buffer_clean (&conn->request);
+				cherokee_buffer_add (&conn->request, index, index_len);				
 
 				return ret_eagain;
 			}
 
 			/* Stat() the possible new path
 			 */
-			cherokee_buffer_add (conn->local_directory, index, index_len);
+			cherokee_buffer_add (&conn->local_directory, index, index_len);
 
-			ret = stat_file (use_iocache, iocache, &nocache_info, conn->local_directory->buf, &file, &info);
+			ret = stat_file (use_iocache, iocache, &nocache_info, conn->local_directory.buf, &file, &info);
 			exists = (ret == ret_ok);
 
-			cherokee_buffer_drop_endding (conn->local_directory, index_len);
+			cherokee_buffer_drop_endding (&conn->local_directory, index_len);
 
 			/* If the file doesn't exist or it is a directory, try with the next one
 			 */
@@ -240,15 +240,15 @@ cherokee_handler_common_new (cherokee_handler_t **hdl, void *cnt, cherokee_table
 			
 			/* Add the index file to the request and clean up
 			 */
-			cherokee_buffer_drop_endding (conn->local_directory,  conn->request->len);
-			cherokee_buffer_add (conn->request, index, index_len);
+			cherokee_buffer_drop_endding (&conn->local_directory,  conn->request.len);
+			cherokee_buffer_add (&conn->request, index, index_len);
 
 			return ret_eagain;
 		}
 
 		/* If the dir hasn't a index file, it uses dirlist
 		 */
-		cherokee_buffer_drop_endding (conn->local_directory, conn->request->len);
+		cherokee_buffer_drop_endding (&conn->local_directory, conn->request.len);
 		return cherokee_handler_dirlist_new (hdl, cnt, properties);
 	}
 

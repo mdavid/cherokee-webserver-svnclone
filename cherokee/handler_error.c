@@ -89,7 +89,7 @@ build_hardcoded_response_page (cherokee_connection_t *cnt, cherokee_buffer_t *bu
 	 */
 	switch (cnt->error_code) {
 	case http_not_found:
-		if (cnt->request) {
+		if (! cherokee_buffer_is_empty (&cnt->request)) {
 			cherokee_buffer_t *req_html_ref = NULL;
 			
 			if (!cherokee_buffer_is_empty (&cnt->request_original)) 
@@ -120,7 +120,7 @@ build_hardcoded_response_page (cherokee_connection_t *cnt, cherokee_buffer_t *bu
 	case http_moved_temporarily:
 		cherokee_buffer_add_va (buffer, 
 					"The document has moved <A HREF=\"%s\">here</A>.",
-					cnt->redirect->buf);
+					cnt->redirect.buf);
 		break;
 	case http_unauthorized:
 		cherokee_buffer_add (buffer, 
