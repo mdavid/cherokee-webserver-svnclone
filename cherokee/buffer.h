@@ -32,6 +32,7 @@
 #include <cherokee/common.h>
 #include <stddef.h>
 #include <stdarg.h>
+#include <stdlib.h>
 
 
 CHEROKEE_BEGIN_DECLS
@@ -50,9 +51,12 @@ typedef struct {
 #define BUF(x) ((cherokee_buffer_t *)(x))
 #define CHEROKEE_BUF_INIT  {NULL, 0, 0}
 
+#define cherokee_buffer_is_empty(b)        (BUF(b)->len == 0)
 #define cherokee_buffer_add_str(b,s)       cherokee_buffer_add (b, s, sizeof(s)-1)
 #define cherokee_buffer_cmp_str(b,s)       cherokee_buffer_cmp (b, s, sizeof(s))
 #define cherokee_buffer_case_cmp_str(b,s)  cherokee_buffer_case_cmp (b, s, sizeof(s))
+
+
 
 
 ret_t cherokee_buffer_new                (cherokee_buffer_t **buf);
@@ -61,7 +65,7 @@ ret_t cherokee_buffer_clean              (cherokee_buffer_t  *buf);
 
 ret_t cherokee_buffer_init               (cherokee_buffer_t  *buf);
 ret_t cherokee_buffer_mrproper           (cherokee_buffer_t  *buf);
-ret_t cherokee_buffer_ref_buffer         (cherokee_buffer_t  *buf, cherokee_buffer_t *ref);
+void  cherokee_buffer_swap_buffers       (cherokee_buffer_t  *buf, cherokee_buffer_t *second);       
 
 ret_t cherokee_buffer_add                (cherokee_buffer_t  *buf, char *txt, size_t size);
 ret_t cherokee_buffer_add_va             (cherokee_buffer_t  *buf, char *format, ...);
@@ -90,9 +94,8 @@ ret_t cherokee_buffer_remove_string      (cherokee_buffer_t  *buf, char *string,
 ret_t cherokee_buffer_remove_chunk       (cherokee_buffer_t  *buf, int from, int len);
 ret_t cherokee_buffer_replace_string     (cherokee_buffer_t  *buf, char *subs, int subs_len, char *repl, int repl_len);
 
-ret_t cherokee_buffer_ensure_size        (cherokee_buffer_t  *buf, int size);
+ret_t cherokee_buffer_ensure_size        (cherokee_buffer_t  *buf, size_t size);
 
-int   cherokee_buffer_is_empty           (cherokee_buffer_t  *buf);
 int   cherokee_buffer_is_endding         (cherokee_buffer_t  *buf, char c);
 char  cherokee_buffer_end_char           (cherokee_buffer_t  *buf);
 

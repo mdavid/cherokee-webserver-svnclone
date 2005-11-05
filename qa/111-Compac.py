@@ -3,7 +3,7 @@ from base import *
 class Test (TestBase):
     def __init__ (self):
         TestBase.__init__ (self)
-        self.name = "Compaq Web Enterprise Management server bug"
+        self.name = "Compaq Web Enterprise Management bug"
 
         self.request           = "GET /<!.StringHttpRequest=Url> HTTP/1.1\r\n"        + \
                                  "Connection: Close\r\n"                              + \

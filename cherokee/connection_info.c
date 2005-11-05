@@ -151,8 +151,8 @@ cherokee_connection_info_fill_up (cherokee_connection_info_t *info, cherokee_con
 	if (! cherokee_buffer_is_empty (&conn->request_original)) {
 		cherokee_buffer_add_buffer (&info->request, &conn->request_original);
 	} 
-	else if (! cherokee_buffer_is_empty (conn->request)) {
-		cherokee_buffer_add_buffer (&info->request, conn->request);
+	else if (! cherokee_buffer_is_empty (&conn->request)) {
+		cherokee_buffer_add_buffer (&info->request, &conn->request);
 	}
 
 	/* Transference

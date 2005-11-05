@@ -282,7 +282,7 @@ build_log_string (cherokee_logger_ncsa_t *logger, cherokee_connection_t *cnt, ch
 	}
 
 	request = cherokee_buffer_is_empty(&cnt->request_original) ? 
-		cnt->request : &cnt->request_original;
+		&cnt->request : &cnt->request_original;
 
 	/* Build the log string
 	 */

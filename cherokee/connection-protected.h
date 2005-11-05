@@ -98,7 +98,7 @@ struct cherokee_connection {
 	int                           tcp_cork;
 	int                           extra_polling_fd;
 		
-	cherokee_buffer_t            *query_string;	
+	cherokee_buffer_t             query_string;	
 	cherokee_table_t             *arguments;
 
 	cherokee_logger_t            *logger_ref;
@@ -109,9 +109,9 @@ struct cherokee_connection {
 	
 	/* Buffers
 	 */
-	cherokee_buffer_t            *incoming_header;  /* -> header               */
-	cherokee_buffer_t            *header_buffer;    /* <- header, -> post data */
-	cherokee_buffer_t            *buffer;           /* <- data                 */
+	cherokee_buffer_t             incoming_header;  /* -> header               */
+	cherokee_buffer_t             header_buffer;    /* <- header, -> post data */
+	cherokee_buffer_t             buffer;           /* <- data                 */
 
 	/* State
 	 */
@@ -126,18 +126,18 @@ struct cherokee_connection {
 	/* Encoders
 	 */
 	cherokee_encoder_t           *encoder;
-	cherokee_buffer_t            *encoder_buffer;
+	cherokee_buffer_t             encoder_buffer;
 
 	/* Eg:
 	 * http://www.alobbs.com/cherokee/dir/file/param1
 	 */
-	cherokee_buffer_t            *local_directory;     /* /var/www/  or  /home/alo/public_html/ */
-	cherokee_buffer_t            *web_directory;       /* /cherokee/ */
-	cherokee_buffer_t            *request;             /* /dir/file */
-	cherokee_buffer_t            *pathinfo;            /* /param1 */
-	cherokee_buffer_t            *userdir;             /* 'alo' in http://www.alobbs.com/~alo/thing */
-	cherokee_buffer_t            *host;
-	cherokee_buffer_t            *effective_directory;
+	cherokee_buffer_t             local_directory;     /* /var/www/  or  /home/alo/public_html/ */
+	cherokee_buffer_t             web_directory;       /* /cherokee/ */
+	cherokee_buffer_t             request;             /* /dir/file */
+	cherokee_buffer_t             pathinfo;            /* /param1 */
+	cherokee_buffer_t             userdir;             /* 'alo' in http://www.alobbs.com/~alo/thing */
+	cherokee_buffer_t             host;
+	cherokee_buffer_t             effective_directory;
 
 	/* Espace versions
 	 */
@@ -164,7 +164,7 @@ struct cherokee_connection {
 	 */
 	cherokee_post_t               post;
 
-	cherokee_buffer_t            *redirect;
+	cherokee_buffer_t             redirect;
 	
 	time_t                        timeout;
 	uint32_t                      keepalive;

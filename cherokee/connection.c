@@ -98,14 +98,13 @@ cherokee_connection_new  (cherokee_connection_t **cnt)
 	n->upgrade           = http_upgrade_nothing;
 	n->handler           = NULL; 
 	n->encoder           = NULL;
-	n->encoder_buffer    = NULL;
-	n->arguments         = NULL;
 	n->logger_ref        = NULL;
 	n->keepalive         = 0;
 	n->range_start       = 0;
 	n->range_end         = 0;
 	n->vserver           = NULL;
 	n->log_at_end        = 1;
+	n->arguments         = NULL;
 	n->realm_ref         = NULL;
 	n->mmaped            = NULL;
 	n->io_entry_ref      = NULL;
@@ -118,24 +117,25 @@ cherokee_connection_new  (cherokee_connection_t **cnt)
 	n->traffic_next      = 0;
 	n->validator         = NULL;
 
-	cherokee_buffer_new (&n->buffer);
-	cherokee_buffer_new (&n->header_buffer);
-	cherokee_buffer_new (&n->incoming_header);
+	cherokee_buffer_init (&n->buffer);
+	cherokee_buffer_init (&n->header_buffer);
+	cherokee_buffer_init (&n->incoming_header);
+	cherokee_buffer_init (&n->encoder_buffer);
 
-	cherokee_buffer_new (&n->local_directory);
-	cherokee_buffer_new (&n->web_directory);
-	cherokee_buffer_new (&n->effective_directory);
-	cherokee_buffer_new (&n->userdir);
-	cherokee_buffer_new (&n->request);
-	cherokee_buffer_new (&n->pathinfo);
-	cherokee_buffer_new (&n->redirect);
-	cherokee_buffer_new (&n->host);
-	cherokee_buffer_new (&n->query_string);
+	cherokee_buffer_init (&n->local_directory);
+	cherokee_buffer_init (&n->web_directory);
+	cherokee_buffer_init (&n->effective_directory);
+	cherokee_buffer_init (&n->userdir);
+	cherokee_buffer_init (&n->request);
+	cherokee_buffer_init (&n->pathinfo);
+	cherokee_buffer_init (&n->redirect);
+	cherokee_buffer_init (&n->host);
 
+	cherokee_buffer_init (&n->query_string);
 	cherokee_buffer_init (&n->request_original);
 
 	cherokee_buffer_escape_new (&n->request_escape);
-	cherokee_buffer_escape_set_ref (n->request_escape, n->request);
+	cherokee_buffer_escape_set_ref (n->request_escape, &n->request);
 
 	cherokee_socket_new (&n->socket);
 	cherokee_header_new (&n->header);
@@ -162,29 +162,25 @@ cherokee_connection_free (cherokee_connection_t  *cnt)
 		cnt->encoder = NULL;
 	}
 
-	if (cnt->encoder_buffer != NULL) {
-		cherokee_buffer_free (cnt->encoder_buffer);
-		cnt->encoder_buffer = NULL;
-	}
-
 	cherokee_post_mrproper (&cnt->post);
 	
 	cherokee_buffer_escape_free (cnt->request_escape);
-	cherokee_buffer_free (cnt->request);
+	cherokee_buffer_mrproper (&cnt->request);
 	cherokee_buffer_mrproper (&cnt->request_original);
 
-	cherokee_buffer_free (cnt->pathinfo);
-	cherokee_buffer_free (cnt->buffer);
-	cherokee_buffer_free (cnt->header_buffer);
-	cherokee_buffer_free (cnt->incoming_header);
-	cherokee_buffer_free (cnt->query_string);
+	cherokee_buffer_mrproper (&cnt->pathinfo);
+	cherokee_buffer_mrproper (&cnt->buffer);
+	cherokee_buffer_mrproper (&cnt->header_buffer);
+	cherokee_buffer_mrproper (&cnt->incoming_header);
+	cherokee_buffer_mrproper (&cnt->query_string);
+	cherokee_buffer_mrproper (&cnt->encoder_buffer);
 
-	cherokee_buffer_free (cnt->local_directory);
-	cherokee_buffer_free (cnt->web_directory);
-	cherokee_buffer_free (cnt->effective_directory);
-	cherokee_buffer_free (cnt->userdir);
-	cherokee_buffer_free (cnt->redirect);
-	cherokee_buffer_free (cnt->host);
+	cherokee_buffer_mrproper (&cnt->local_directory);
+	cherokee_buffer_mrproper (&cnt->web_directory);
+	cherokee_buffer_mrproper (&cnt->effective_directory);
+	cherokee_buffer_mrproper (&cnt->userdir);
+	cherokee_buffer_mrproper (&cnt->redirect);
+	cherokee_buffer_mrproper (&cnt->host);
 
 	if (cnt->validator != NULL) {
 		cherokee_validator_free (cnt->validator);
@@ -244,11 +240,6 @@ cherokee_connection_clean (cherokee_connection_t *cnt)
 		cnt->encoder = NULL;
 	}
 
-	if (cnt->encoder_buffer != NULL) {
-		cherokee_buffer_free (cnt->encoder_buffer);
-		cnt->encoder_buffer = NULL;
-	}
-
 	if (cnt->extra_polling_fd != -1) {
 		close (cnt->extra_polling_fd);
 		cnt->extra_polling_fd = -1;
@@ -256,19 +247,21 @@ cherokee_connection_clean (cherokee_connection_t *cnt)
 
 	cherokee_post_mrproper (&cnt->post);
 
-	cherokee_buffer_clean (cnt->request);
+	cherokee_buffer_clean (&cnt->request);
 	cherokee_buffer_escape_clean (cnt->request_escape);
-	cherokee_buffer_escape_set_ref (cnt->request_escape, cnt->request);
-	cherokee_buffer_mrproper (&cnt->request_original);
+	cherokee_buffer_escape_set_ref (cnt->request_escape, &cnt->request);
 
-	cherokee_buffer_clean (cnt->pathinfo);
-	cherokee_buffer_clean (cnt->local_directory);
-	cherokee_buffer_clean (cnt->web_directory);
-	cherokee_buffer_clean (cnt->effective_directory);
-	cherokee_buffer_clean (cnt->userdir);
-	cherokee_buffer_clean (cnt->redirect);
-	cherokee_buffer_clean (cnt->host);
-	cherokee_buffer_clean (cnt->query_string);
+	cherokee_buffer_mrproper (&cnt->request_original);
+	cherokee_buffer_mrproper (&cnt->encoder_buffer);
+
+	cherokee_buffer_clean (&cnt->pathinfo);
+	cherokee_buffer_clean (&cnt->local_directory);
+	cherokee_buffer_clean (&cnt->web_directory);
+	cherokee_buffer_clean (&cnt->effective_directory);
+	cherokee_buffer_clean (&cnt->userdir);
+	cherokee_buffer_clean (&cnt->redirect);
+	cherokee_buffer_clean (&cnt->host);
+	cherokee_buffer_clean (&cnt->query_string);
 	
 	if (cnt->validator != NULL) {
 		cherokee_validator_free (cnt->validator);
@@ -285,14 +278,14 @@ cherokee_connection_clean (cherokee_connection_t *cnt)
 	cherokee_header_get_length (cnt->header, &header_len);
 
 	cherokee_header_clean (cnt->header);
-	cherokee_buffer_clean (cnt->buffer);
-	cherokee_buffer_clean (cnt->header_buffer);
-	cherokee_buffer_move_to_begin (cnt->incoming_header, header_len);
+	cherokee_buffer_clean (&cnt->buffer);
+	cherokee_buffer_clean (&cnt->header_buffer);
+	cherokee_buffer_move_to_begin (&cnt->incoming_header, header_len);
 
 	/* If the connection has incoming headers to be processed,
 	 * then increment the pending counter from the thread
 	 */	 
-	if (! cherokee_buffer_is_empty (cnt->incoming_header)) {
+	if (! cherokee_buffer_is_empty (&cnt->incoming_header)) {
 		CONN_THREAD(cnt)->pending_conns_num++;
 	}
 
@@ -322,7 +315,7 @@ cherokee_connection_mrproper (cherokee_connection_t *cnt)
 	/* It is not a keep-alive connection, so we shouldn't
 	 * keep any previous header
 	 */
-	cherokee_buffer_clean (cnt->incoming_header);
+	cherokee_buffer_clean (&cnt->incoming_header);
 
 	return ret_ok;
 }
@@ -477,9 +470,9 @@ build_response_header (cherokee_connection_t *cnt, cherokee_buffer_t *buffer)
 
 	/* Redirected connections
 	 */
-	if (cnt->redirect->len >= 1) {
+	if (cnt->redirect.len >= 1) {
 		cherokee_buffer_add (buffer, "Location: ", 10);
-		cherokee_buffer_add_buffer (buffer, cnt->redirect);
+		cherokee_buffer_add_buffer (buffer, &cnt->redirect);
 		cherokee_buffer_add (buffer, CRLF, 2);
 	}
 
@@ -504,8 +497,8 @@ build_response_header (cherokee_connection_t *cnt, cherokee_buffer_t *buffer)
 	
 	/* Maybe the handler add some headers from the handler
 	 */
-	if (! cherokee_buffer_is_empty (cnt->header_buffer)) {
-		cherokee_buffer_add_buffer (buffer, cnt->header_buffer);
+	if (! cherokee_buffer_is_empty (&cnt->header_buffer)) {
+		cherokee_buffer_add_buffer (buffer, &cnt->header_buffer);
 	}
 
 	/* Add the response header ends
@@ -521,7 +514,7 @@ cherokee_connection_build_header (cherokee_connection_t *cnt)
 
 	/* Try to get the headers from the handler
 	 */
-	ret = cherokee_handler_add_headers (cnt->handler, cnt->header_buffer);
+	ret = cherokee_handler_add_headers (cnt->handler, &cnt->header_buffer);
 	switch (ret) {
 	case ret_ok:
 		break;
@@ -537,21 +530,14 @@ cherokee_connection_build_header (cherokee_connection_t *cnt)
 	}
 
 	if (HANDLER_SUPPORT_MAYBE_LENGTH(cnt->handler)) {
-		if (strcasestr (cnt->header_buffer->buf, "Content-length: ") == NULL) {
+		if (strcasestr (cnt->header_buffer.buf, "Content-length: ") == NULL) {
 			cnt->keepalive = 0;
 		}
 	}
 	
-	/* Does it need to be processed?
-	if (HANDLER_SUPPORT_COMPLEX_HEADERS(cnt->handler)) {
-		ret = process_handler_complex_headers (cnt);
-		if (ret != ret_ok) return ret;
-	}
-	 */
-
 	/* Add the server headers	
 	 */
-	build_response_header (cnt, cnt->buffer);
+	build_response_header (cnt, &cnt->buffer);
 
 	return ret_ok;
 }
@@ -567,7 +553,7 @@ cherokee_connection_send_header_and_mmaped (cherokee_connection_t *cnt)
 	/* 1.- Special case: There is not header to send
 	 * It is becase it has been sent in a writev()
 	 */
-	if (cherokee_buffer_is_empty (cnt->buffer)) {
+	if (cherokee_buffer_is_empty (&cnt->buffer)) {
 		ret = cherokee_write (cnt->socket, cnt->mmaped, cnt->mmaped_len, &re);
 		switch (ret) {
 		case ret_eof:
@@ -592,8 +578,8 @@ cherokee_connection_send_header_and_mmaped (cherokee_connection_t *cnt)
 
 	/* 2.- There are header and mmaped content to send
 	 */
-	bufs[0].iov_base = cnt->buffer->buf;
-	bufs[0].iov_len  = cnt->buffer->len;
+	bufs[0].iov_base = cnt->buffer.buf;
+	bufs[0].iov_len  = cnt->buffer.len;
 	bufs[1].iov_base = cnt->mmaped;
 	bufs[1].iov_len  = cnt->mmaped_len;
 
@@ -617,19 +603,19 @@ cherokee_connection_send_header_and_mmaped (cherokee_connection_t *cnt)
 	
 	/* If writev() has not sent all data
 	 */
-	if (re < cnt->buffer->len + cnt->mmaped_len) {
+	if (re < cnt->buffer.len + cnt->mmaped_len) {
 		int offset;
 
-		if (re <= cnt->buffer->len) {
-			cherokee_buffer_move_to_begin (cnt->buffer, re);
+		if (re <= cnt->buffer.len) {
+			cherokee_buffer_move_to_begin (&cnt->buffer, re);
 			return ret_eagain;
 		}
 		
-		offset = re - cnt->buffer->len;
+		offset = re - cnt->buffer.len;
 		cnt->mmaped     += offset;
 		cnt->mmaped_len -= offset;
 
-		cherokee_buffer_clean (cnt->buffer);
+		cherokee_buffer_clean (&cnt->buffer);
 
 		return ret_eagain;
 	}
@@ -690,7 +676,7 @@ cherokee_connection_reading_check (cherokee_connection_t *cnt)
 {
 	/* Check for too long headers
 	 */
-	if (cnt->incoming_header->len > MAX_HEADER_LEN) {
+	if (cnt->incoming_header.len > MAX_HEADER_LEN) {
 		cnt->error_code = http_request_uri_too_long;
 		return ret_error;
 	}
@@ -734,7 +720,7 @@ cherokee_connection_send_header (cherokee_connection_t *cnt)
 
 	/* Send the buffer content
 	 */
-	ret = cherokee_socket_write (cnt->socket, cnt->buffer, &sent);
+	ret = cherokee_socket_write (cnt->socket, &cnt->buffer, &sent);
 	if (unlikely(ret != ret_ok)) return ret;
 	
 	/* Add to the connection traffic counter
@@ -743,14 +729,14 @@ cherokee_connection_send_header (cherokee_connection_t *cnt)
 
 	/* Drop out the sent info
 	 */
-	if (sent == cnt->buffer->len) {
-		cherokee_buffer_clean (cnt->buffer);
+	if (sent == cnt->buffer.len) {
+		cherokee_buffer_clean (&cnt->buffer);
 		return ret_ok;
 	}
 
 	/* There are still info waiting to be sent
 	 */
-	cherokee_buffer_move_to_begin (cnt->buffer, sent);
+	cherokee_buffer_move_to_begin (&cnt->buffer, sent);
 	return ret_eagain;
 }
 
@@ -763,7 +749,7 @@ cherokee_connection_send (cherokee_connection_t *cnt)
 
 	/* Send the buffer content
 	 */
-	ret = cherokee_socket_write (cnt->socket, cnt->buffer, &sent);
+	ret = cherokee_socket_write (cnt->socket, &cnt->buffer, &sent);
 	if (unlikely(ret != ret_ok)) return ret;
 
 	/* Add to the connection traffic counter
@@ -772,10 +758,10 @@ cherokee_connection_send (cherokee_connection_t *cnt)
 	
 	/* Drop out the sent info
 	 */
-	if (sent == cnt->buffer->len) {
-		cherokee_buffer_clean (cnt->buffer);
+	if (sent == cnt->buffer.len) {
+		cherokee_buffer_clean (&cnt->buffer);
 	} else if (sent != 0) {
-		cherokee_buffer_move_to_begin (cnt->buffer, sent);
+		cherokee_buffer_move_to_begin (&cnt->buffer, sent);
 	}
 	
 	/* If this connection has a handler without content-length support
@@ -838,13 +824,13 @@ cherokee_connection_step (cherokee_connection_t *cnt)
 
 	/* Need to 'read' from handler ?
 	 */
-	if (! cherokee_buffer_is_empty (cnt->buffer)) {
+	if (! cherokee_buffer_is_empty (&cnt->buffer)) {
 		return ret_ok;
 	}
 
 	/* Do a step in the handler
 	 */
-	step_ret = cherokee_handler_step (cnt->handler, cnt->buffer);
+	step_ret = cherokee_handler_step (cnt->handler, &cnt->buffer);
 	switch (step_ret) {
 	case ret_ok:
 	case ret_eof:
@@ -863,30 +849,26 @@ cherokee_connection_step (cherokee_connection_t *cnt)
 	/* May be encode..
 	 */
 	if (cnt->encoder != NULL) {
-		ret_t              ret;
-		cherokee_buffer_t *tmp;
+		ret_t ret;
 
 		/* Encode
 		 */
 		switch (step_ret) {
 		case ret_eof:
 		case ret_eof_have_data:
-			ret = cherokee_encoder_flush (cnt->encoder, cnt->buffer, cnt->encoder_buffer);			
-			step_ret = (cnt->encoder_buffer->len == 0)? ret_eof : ret_eof_have_data;
+			ret = cherokee_encoder_flush (cnt->encoder, &cnt->buffer, &cnt->encoder_buffer);			
+			step_ret = (cnt->encoder_buffer.len == 0)? ret_eof : ret_eof_have_data;
 			break;
 		default:
-			ret = cherokee_encoder_encode (cnt->encoder, cnt->buffer, cnt->encoder_buffer);
+			ret = cherokee_encoder_encode (cnt->encoder, &cnt->buffer, &cnt->encoder_buffer);
 			break;
 		}
 		if (ret < ret_ok) return ret;
 
 		/* Swap buffers	
 		 */
-		tmp = cnt->buffer;
-		cnt->buffer = cnt->encoder_buffer;
-		cnt->encoder_buffer = tmp;
-		
-		cherokee_buffer_clean (cnt->encoder_buffer);
+		cherokee_buffer_swap_buffers (&cnt->buffer, &cnt->encoder_buffer);		
+		cherokee_buffer_clean (&cnt->encoder_buffer);
 	}
 	
 	return step_ret;
@@ -916,19 +898,19 @@ get_host (cherokee_connection_t *cnt,
 	/* Copy the string
 	 */
 	size = (end - ptr);
-	ret = cherokee_buffer_add (cnt->host, ptr, size);
+	ret = cherokee_buffer_add (&cnt->host, ptr, size);
 	if (unlikely(ret < ret_ok)) return ret;
 
 	/* Security check: Hostname shouldn't start with a dot
 	 */
-	if ((cnt->host->len >= 1) && (*cnt->host->buf == '.')) {
+	if ((cnt->host.len >= 1) && (*cnt->host.buf == '.')) {
 		return ret_error;
 	}
 
 	/* RFC-1034: Dot ending host names
 	 */
-	if (cherokee_buffer_end_char(cnt->host) == '.')
-		cherokee_buffer_drop_endding (cnt->host, 1);
+	if (cherokee_buffer_end_char (&cnt->host) == '.')
+		cherokee_buffer_drop_endding (&cnt->host, 1);
 	
 	return ret_ok;
 }
@@ -953,7 +935,7 @@ get_encoding (cherokee_connection_t    *cnt,
 
 	/* Look for the request extension
 	 */
-	ext = strrchr (cnt->request->buf, '.');
+	ext = strrchr (cnt->request.buf, '.');
 	if (ext == NULL) {
 		return ret_ok;
 	}
@@ -979,7 +961,7 @@ get_encoding (cherokee_connection_t    *cnt,
 			if (ret < ret_ok) {
 				goto error;
 			}
-			cherokee_buffer_new (&cnt->encoder_buffer);
+			cherokee_buffer_clean (&cnt->encoder_buffer);
 			break;
 		}
 
@@ -1087,8 +1069,8 @@ get_authorization (cherokee_connection_t *cnt,
 int
 cherokee_connection_is_userdir (cherokee_connection_t *cnt)
 {
-	return ((cnt->request->len > 3) && 
-		(cnt->request->buf[1] == '~'));
+	return ((cnt->request.len > 3) && 
+		(cnt->request.buf[1] == '~'));
 }
 
 
@@ -1102,7 +1084,7 @@ cherokee_connection_build_local_directory (cherokee_connection_t *cnt, cherokee_
 	{
 		/* Have a special DocumentRoot
 		 */
-		ret = cherokee_buffer_add_buffer (cnt->local_directory, entry->document_root);
+		ret = cherokee_buffer_add_buffer (&cnt->local_directory, entry->document_root);
 
 		/* It has to drop the webdir from the request:
 		 *	
@@ -1113,17 +1095,17 @@ cherokee_connection_build_local_directory (cherokee_connection_t *cnt, cherokee_
 		 * on petition: http://server/thing/cherokee	
 		 * should read: /usr/share/this/rocks/cherokee	
 		 */
-		cherokee_buffer_add_buffer (&cnt->request_original, cnt->request);
-		cherokee_buffer_move_to_begin (cnt->request, cnt->web_directory->len);
+		cherokee_buffer_add_buffer (&cnt->request_original, &cnt->request);
+		cherokee_buffer_move_to_begin (&cnt->request, cnt->web_directory.len);
 	
-		if ((cnt->request->len >= 2) && (strncmp(cnt->request->buf, "//", 2) == 0)) {
-			cherokee_buffer_move_to_begin (cnt->request, 1);
+		if ((cnt->request.len >= 2) && (strncmp(cnt->request.buf, "//", 2) == 0)) {
+			cherokee_buffer_move_to_begin (&cnt->request, 1);
 		}
 
 	} else {
 		/* Normal request
 		 */
-		ret = cherokee_buffer_add_buffer (cnt->local_directory, vsrv->root);
+		ret = cherokee_buffer_add_buffer (&cnt->local_directory, vsrv->root);
 	}
 	
 	return ret;
@@ -1140,13 +1122,13 @@ cherokee_connection_build_local_directory_userdir (cherokee_connection_t *cnt, c
 	if (entry->document_root &&
 	    entry->document_root->len >= 1) 
 	{
-		cherokee_buffer_add_buffer (cnt->local_directory, entry->document_root);
+		cherokee_buffer_add_buffer (&cnt->local_directory, entry->document_root);
 
-		cherokee_buffer_add_buffer (&cnt->request_original, cnt->request);
-		cherokee_buffer_move_to_begin (cnt->request, cnt->web_directory->len);
+		cherokee_buffer_add_buffer (&cnt->request_original, &cnt->request);
+		cherokee_buffer_move_to_begin (&cnt->request, cnt->web_directory.len);
 
-		if ((cnt->request->len >= 2) && (strncmp(cnt->request->buf, "//", 2) == 0)) {
-			cherokee_buffer_move_to_begin (cnt->request, 1);
+		if ((cnt->request.len >= 2) && (strncmp(cnt->request.buf, "//", 2) == 0)) {
+			cherokee_buffer_move_to_begin (&cnt->request, 1);
 		}
 
 		return ret_ok;
@@ -1154,7 +1136,7 @@ cherokee_connection_build_local_directory_userdir (cherokee_connection_t *cnt, c
 
 	/* Default: it is inside the UserDir in home
 	 */
-	pwd = (struct passwd *) getpwnam (cnt->userdir->buf);
+	pwd = (struct passwd *) getpwnam (cnt->userdir.buf);
 	if ((pwd == NULL) || (pwd->pw_dir == NULL)) {
 		cnt->error_code = http_not_found;
 		return ret_error;
@@ -1162,9 +1144,9 @@ cherokee_connection_build_local_directory_userdir (cherokee_connection_t *cnt, c
 
 	/* Build the local_directory:
 	 */
-	cherokee_buffer_add (cnt->local_directory, pwd->pw_dir, strlen(pwd->pw_dir));
-	cherokee_buffer_add (cnt->local_directory, "/", 1);
-	cherokee_buffer_add_buffer (cnt->local_directory, vsrv->userdir);
+	cherokee_buffer_add (&cnt->local_directory, pwd->pw_dir, strlen(pwd->pw_dir));
+	cherokee_buffer_add (&cnt->local_directory, "/", 1);
+	cherokee_buffer_add_buffer (&cnt->local_directory, vsrv->userdir);
 
 	return ret_ok;
 }
@@ -1278,18 +1260,18 @@ parse_userdir (cherokee_connection_t *cnt)
 
 	/* Find user name endding:
 	 */
-	begin = &cnt->request->buf[2];
+	begin = &cnt->request.buf[2];
 
 	end_username = strchr (begin, '/');
 	if (end_username == NULL) {
-		end_username = &cnt->request->buf[cnt->request->len];
+		end_username = &cnt->request.buf[cnt->request.len];
 
 		/* It has to be redirected 
 		 *
 		 * from http://www.alobbs.com/~alo 
 		 * to   http://www.alobbs.com/~alo/
 		 */
-		cherokee_buffer_add_va (cnt->redirect, "%s/", cnt->request->buf);
+		cherokee_buffer_add_va (&cnt->redirect, "%s/", cnt->request.buf);
 
 		cnt->error_code = http_moved_permanently;
 		return ret_error;
@@ -1305,11 +1287,11 @@ parse_userdir (cherokee_connection_t *cnt)
 
 	/* Get the user home directory
 	 */
-	cherokee_buffer_add (cnt->userdir, begin, end_username - begin);
+	cherokee_buffer_add (&cnt->userdir, begin, end_username - begin);
 
 	/* Drop username from the request
 	 */
-	cherokee_buffer_move_to_begin (cnt->request, (end_username - cnt->request->buf));
+	cherokee_buffer_move_to_begin (&cnt->request, (end_username - cnt->request.buf));
 
 	return ret_ok;
 }
@@ -1324,7 +1306,7 @@ cherokee_connection_get_request (cherokee_connection_t *cnt)
 
 	/* Header parsing
 	 */
-	ret = cherokee_header_parse (cnt->header, cnt->incoming_header, header_type_request);
+	ret = cherokee_header_parse (cnt->header, &cnt->incoming_header, header_type_request);
 	if (ret < ret_ok) {
 		goto error;
 	}
@@ -1343,36 +1325,36 @@ cherokee_connection_get_request (cherokee_connection_t *cnt)
 		ret = cherokee_header_get_length (cnt->header, &header_len);
 		if (unlikely(ret != ret_ok)) return ret;
 
-		post_len = cnt->incoming_header->len - header_len;
+		post_len = cnt->incoming_header.len - header_len;
 
-		cherokee_post_append (&cnt->post, cnt->incoming_header->buf + header_len, post_len);
-		cherokee_buffer_drop_endding (cnt->incoming_header, post_len);
+		cherokee_post_append (&cnt->post, cnt->incoming_header.buf + header_len, post_len);
+		cherokee_buffer_drop_endding (&cnt->incoming_header, post_len);
 	}
 	
 	/* Copy the request
 	 */
-	ret = cherokee_header_copy_request (cnt->header, cnt->request);
+	ret = cherokee_header_copy_request (cnt->header, &cnt->request);
 	if (ret < ret_ok) goto error;
 
 	/* Look for ".."
 	 */
-	if (strstr (cnt->request->buf, "..") != NULL) {
+	if (strstr (cnt->request.buf, "..") != NULL) {
 		goto error;
 	}
 
 	/* Remove the "./" substring
 	 */
-	cherokee_buffer_remove_string (cnt->request, "./", 2);
+	cherokee_buffer_remove_string (&cnt->request, "./", 2);
 
 	/* Look for starting '/' in the request
 	 */
-	if (cnt->request->buf[0] != '/') {
+	if (cnt->request.buf[0] != '/') {
 		goto error;
 	}
 
 	/* Look for "//" 
 	 */
-	cherokee_buffer_remove_dups (cnt->request, '/');
+	cherokee_buffer_remove_dups (&cnt->request, '/');
 
 	/* Check Host header
 	 */
@@ -1445,9 +1427,9 @@ cherokee_connection_send_switching (cherokee_connection_t *cnt)
 
 	/* Maybe build the response string
 	 */
-	if (cherokee_buffer_is_empty (cnt->buffer)) {
+	if (cherokee_buffer_is_empty (&cnt->buffer)) {
 		cnt->error_code = http_switching_protocols;
-		build_response_header (cnt, cnt->buffer);
+		build_response_header (cnt, &cnt->buffer);
 	}
 
 	/* Send the response
@@ -1479,7 +1461,7 @@ cherokee_connection_get_dir_entry (cherokee_connection_t *cnt, cherokee_dirs_tab
 
 	/* Look for the handler "*_new" function
 	 */
-	ret = cherokee_dirs_table_get (dirs, cnt->request, plugin_entry, cnt->web_directory);
+	ret = cherokee_dirs_table_get (dirs, &cnt->request, plugin_entry, &cnt->web_directory);
 	if (ret != ret_ok) {
 		cnt->error_code = http_internal_error;
 		return ret_error;
@@ -1503,7 +1485,7 @@ cherokee_connection_get_ext_entry (cherokee_connection_t *cnt, cherokee_exts_tab
 
 	/* Look in the extension table
 	 */
-	ret = cherokee_exts_table_get (exts, cnt->request, plugin_entry);
+	ret = cherokee_exts_table_get (exts, &cnt->request, plugin_entry);
 	if (unlikely (ret == ret_error)) {
 		cnt->error_code = http_internal_error;
 		return ret_error;
@@ -1527,7 +1509,7 @@ cherokee_connection_get_req_entry (cherokee_connection_t *cnt, cherokee_reqs_lis
 
 	/* Look in the extension table
 	 */
-	ret = cherokee_reqs_list_get (reqs, cnt->request, plugin_entry, cnt);
+	ret = cherokee_reqs_list_get (reqs, &cnt->request, plugin_entry, cnt);
 	if (unlikely (ret == ret_error)) {
 		cnt->error_code = http_internal_error;
 		return ret_error;
@@ -1748,7 +1730,7 @@ cherokee_connection_parse_args (cherokee_connection_t *cnt)
 
 	/* Parse the header
 	 */
-	ret = cherokee_header_get_arguments (cnt->header, cnt->query_string, cnt->arguments);
+	ret = cherokee_header_get_arguments (cnt->header, &cnt->query_string, cnt->arguments);
 	if (unlikely(ret < ret_ok)) return ret;
 
 	return ret_ok;
@@ -1777,7 +1759,7 @@ cherokee_connection_open_request (cherokee_connection_t *cnt)
 	
 	/* Ensure the space for writting
 	 */
-	cherokee_buffer_ensure_size (cnt->buffer, DEFAULT_READ_SIZE+1);
+	cherokee_buffer_ensure_size (&cnt->buffer, DEFAULT_READ_SIZE+1);
 
 	ret = cherokee_handler_init (cnt->handler);
 	return ret;

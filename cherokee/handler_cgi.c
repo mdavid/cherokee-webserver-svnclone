@@ -310,13 +310,13 @@ build_envp (cherokee_connection_t *conn, cherokee_handler_cgi_t* cgi)
 		cherokee_buffer_clean (&tmp);
 		cherokee_header_copy_request (conn->header, &tmp);
 
-		if (conn->pathinfo->len > 0) {
-			set_env_pair (cgi, "SCRIPT_NAME", 11, tmp.buf, tmp.len - conn->pathinfo->len);
+		if (conn->pathinfo.len > 0) {
+			set_env_pair (cgi, "SCRIPT_NAME", 11, tmp.buf, tmp.len - conn->pathinfo.len);
 		} else {
 			set_env_pair (cgi, "SCRIPT_NAME", 11, tmp.buf, tmp.len);
 		}
 	} else {
-		p = cgi->parameter->buf + conn->local_directory->len -1;
+		p = cgi->parameter->buf + conn->local_directory.len -1;
 		set_env_pair (cgi, "SCRIPT_NAME", 11, p, (cgi->parameter->buf + cgi->parameter->len) - p);
 	}
 
@@ -354,7 +354,7 @@ cherokee_handler_cgi_split_pathinfo (cherokee_handler_cgi_t *cgi, cherokee_buffe
 
 	/* Build the PathInfo string 
 	 */
-	cherokee_buffer_add (conn->pathinfo, pathinfo, pathinfo_len);
+	cherokee_buffer_add (&conn->pathinfo, pathinfo, pathinfo_len);
 	
 	/* Drop it out from the original string
 	 */
@@ -388,9 +388,9 @@ _extract_path (cherokee_handler_cgi_t *cgi)
 		 * substraction * of request - configured directory.
 		 */
 		if (cgi->script_alias != NULL) {
-			cherokee_buffer_add (conn->pathinfo, 
-					     conn->request->buf + conn->web_directory->len, 
-					     conn->request->len - conn->web_directory->len);
+			cherokee_buffer_add (&conn->pathinfo, 
+					     conn->request.buf + conn->web_directory.len, 
+					     conn->request.len - conn->web_directory.len);
 		}
 
 		return ret_ok;
@@ -399,7 +399,7 @@ _extract_path (cherokee_handler_cgi_t *cgi)
 	/* Maybe the request contains pathinfo
 	 */
 	if ((cgi->parameter == NULL) &&
-	    cherokee_buffer_is_empty (conn->pathinfo)) 
+	    cherokee_buffer_is_empty (&conn->pathinfo)) 
 	{
 		int req_len;
 		int local_len;
@@ -409,15 +409,15 @@ _extract_path (cherokee_handler_cgi_t *cgi)
 		 * request = "/thing.cgi", so there will be two
 		 * slashes in the middle of the request.
 		 */
-		req_len   = conn->request->len;
-		local_len = conn->local_directory->len;
+		req_len   = conn->request.len;
+		local_len = conn->local_directory.len;
 
-		if (conn->request->len > 0)
-			cherokee_buffer_add (conn->local_directory, 
-					     conn->request->buf + 1, 
-					     conn->request->len - 1); 
+		if (conn->request.len > 0)
+			cherokee_buffer_add (&conn->local_directory, 
+					     conn->request.buf + 1, 
+					     conn->request.len - 1); 
 
-		ret = cherokee_handler_cgi_split_pathinfo (cgi, conn->local_directory, local_len +1);
+		ret = cherokee_handler_cgi_split_pathinfo (cgi, &conn->local_directory, local_len +1);
 		if (unlikely(ret < ret_ok)) goto bye;
 		
 		/* Is the filename set? 
@@ -425,17 +425,17 @@ _extract_path (cherokee_handler_cgi_t *cgi)
 		if (cgi->filename == NULL) {		
 			/* We have to check if the file exists 
 			 */
-			if (stat(conn->local_directory->buf, &st) == -1) {
+			if (stat (conn->local_directory.buf, &st) == -1) {
 				conn->error_code = http_not_found;
 				return ret_error;
 			}
 			
 			cherokee_buffer_new (&cgi->filename);
-			cherokee_buffer_add_buffer (cgi->filename, conn->local_directory);
+			cherokee_buffer_add_buffer (cgi->filename, &conn->local_directory);
 		}
 		
 	bye:
-		cherokee_buffer_drop_endding (conn->local_directory, req_len - 1);
+		cherokee_buffer_drop_endding (&conn->local_directory, req_len - 1);
 	}
 
 	return ret;
@@ -581,8 +581,8 @@ cherokee_handler_cgi_init (cherokee_handler_cgi_t *cgi)
 
 		/* Change the directory 
 		 */
-		if (!cherokee_buffer_is_empty (conn->effective_directory)) {
-			chdir (conn->effective_directory->buf);
+		if (! cherokee_buffer_is_empty (&conn->effective_directory)) {
+			chdir (conn->effective_directory.buf);
 		} else {
 			char *file = strrchr (absolute_path, '/');
 
@@ -728,7 +728,7 @@ parse_header (cherokee_handler_cgi_t *cgi, cherokee_buffer_t *buffer)
 	if ((buffer->len > 4) &&
 	    (strncmp (CRLF CRLF, buffer->buf + buffer->len - 4, 4) == 0))
 	{
-		cherokee_buffer_drop_endding (conn->header_buffer, 2);
+		cherokee_buffer_drop_endding (&conn->header_buffer, 2);
 	}
 	
 	/* Process the header line by line
@@ -774,7 +774,7 @@ parse_header (cherokee_handler_cgi_t *cgi, cherokee_buffer_t *buffer)
 		}
 
 		else if (strncasecmp ("Location: ", begin, 10) == 0) {
-			cherokee_buffer_add (conn->redirect, begin+10, end - (begin+10));
+			cherokee_buffer_add (&conn->redirect, begin+10, end - (begin+10));
 			cherokee_buffer_remove_chunk (buffer, begin - buffer->buf, end2 - begin);
 		}
 

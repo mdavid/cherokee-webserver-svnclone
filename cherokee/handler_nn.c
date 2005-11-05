@@ -127,9 +127,9 @@ cherokee_handler_nn_new (cherokee_handler_t **hdl, void *cnt, cherokee_table_t *
 
 	conn = CONN(cnt);
 
-	cherokee_buffer_add (conn->local_directory, conn->request->buf, conn->request->len);
-	stat_ret = stat (conn->local_directory->buf, &info);
-	cherokee_buffer_drop_endding (conn->local_directory, conn->request->len);
+	cherokee_buffer_add (&conn->local_directory, conn->request.buf, conn->request.len);
+	stat_ret = stat (conn->local_directory.buf, &info);
+	cherokee_buffer_drop_endding (&conn->local_directory, conn->request.len);
 	
 	/* Maybe the file/dir exists
 	 */
@@ -157,9 +157,9 @@ cherokee_handler_nn_init (cherokee_handler_t *hdl)
 	
 	/* Look for the `nearest neighbor' and redirect to it
 	 */
-	cherokee_buffer_clean (conn->redirect);
+	cherokee_buffer_clean (&conn->redirect);
 
-	ret = get_nearest (conn->local_directory, conn->request, conn->redirect);
+	ret = get_nearest (&conn->local_directory, &conn->request, &conn->redirect);
 	if (unlikely (ret != ret_ok)) {
 		CONN(hdl->connection)->error_code = http_not_found;
 		return ret_error;

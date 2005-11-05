@@ -52,7 +52,7 @@ cherokee_handler_error_redir_new (cherokee_handler_t **hdl, cherokee_connection_
 	ret = cherokee_typed_table_get_str (properties, code, &dir);
 	if (ret != ret_ok) return ret_error;
 
-	cherokee_buffer_add (cnt->redirect, dir, strlen(dir));
+	cherokee_buffer_add (&cnt->redirect, dir, strlen(dir));
 	cnt->error_code = http_moved_permanently;
 
 	return cherokee_handler_redir_new (hdl, cnt, properties);

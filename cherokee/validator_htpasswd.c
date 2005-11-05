@@ -212,20 +212,20 @@ request_isnt_passwd_file (cherokee_validator_htpasswd_t *htpasswd, cherokee_conn
 	ret_t   ret;
 	cuint_t file_ref_len;
 
-	if (conn->request->len > 0)
-		cherokee_buffer_add (conn->local_directory, conn->request->buf+1, conn->request->len-1);  /* 1: add    */
+	if (conn->request.len > 0)
+		cherokee_buffer_add (&conn->local_directory, conn->request.buf+1, conn->request.len-1);  /* 1: add    */
 
 	ret = ret_ok;
 	file_ref_len = strlen (htpasswd->file_ref);
 
-	if (file_ref_len == conn->local_directory->len) {
+	if (file_ref_len == conn->local_directory.len) {
 		ret = (strncmp (htpasswd->file_ref, 
-				conn->local_directory->buf, 
-				conn->local_directory->len) == 0) ? ret_error : ret_ok;
+				conn->local_directory.buf, 
+				conn->local_directory.len) == 0) ? ret_error : ret_ok;
 	}
 
-	if (conn->request->len > 0)
-		cherokee_buffer_drop_endding (conn->local_directory, conn->request->len-1);              /* 1: remove */
+	if (conn->request.len > 0)
+		cherokee_buffer_drop_endding (&conn->local_directory, conn->request.len-1);              /* 1: remove */
 
 	return ret;
 }

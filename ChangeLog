@@ -1,3 +1,19 @@
+2005-11-05  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/buffer.c (cherokee_buffer_ensure_size): size is now
+	size_t type instead of int.
+
+	* cherokee/buffer.h, cherokee/buffer.c
+	(cherokee_buffer_ref_buffer): Removed.
+
+	* cherokee/buffer.h, cherokee/buffer.c
+	(cherokee_buffer_swap_buffers): Added new method.
+
+	* cherokee/buffer.h (cherokee_buffer_is_empty): Added a macro to
+	replace the function.
+
+	* cherokee/buffer.c (cherokee_buffer_is_empty): Removed.
+
 2005-11-04  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cherokee/handler_cgi.c (cherokee_handler_cgi_new),

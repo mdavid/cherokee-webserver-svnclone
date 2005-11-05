@@ -63,7 +63,7 @@ cherokee_cgi_build_basic_env (cherokee_connection_t       *conn,
 	 * query component, the QUERY_STRING metavariable MUST be defined
 	 * as an empty string ("").
 	 */
-	set_env_pair (param, "DOCUMENT_ROOT", 13, conn->local_directory->buf, conn->local_directory->len);
+	set_env_pair (param, "DOCUMENT_ROOT", 13, conn->local_directory.buf, conn->local_directory.len);
 
 	/* The IP address of the client sending the request to the
 	 * server. This is not necessarily that of the user agent (such
@@ -125,8 +125,8 @@ cherokee_cgi_build_basic_env (cherokee_connection_t       *conn,
 
 	/* If there is a query_string, set the environment variable
 	 */
-	if (conn->query_string->len > 0) 
-		set_env_pair (param, "QUERY_STRING", 12, conn->query_string->buf, conn->query_string->len);
+	if (conn->query_string.len > 0) 
+		set_env_pair (param, "QUERY_STRING", 12, conn->query_string.buf, conn->query_string.len);
 	else
 		set_env_pair (param, "QUERY_STRING", 12, "", 0);
 
@@ -157,19 +157,19 @@ cherokee_cgi_build_basic_env (cherokee_connection_t       *conn,
 
 	/* Set the host name
 	 */
-	if (!cherokee_buffer_is_empty (conn->host)) {
-		p = strchr (conn->host->buf, ':');
+	if (!cherokee_buffer_is_empty (&conn->host)) {
+		p = strchr (conn->host.buf, ':');
 		if (p != NULL) *p = '\0';
 		
-		set_env_pair (param, "SERVER_NAME", 11, conn->host->buf, conn->host->len);
+		set_env_pair (param, "SERVER_NAME", 11, conn->host.buf, conn->host.len);
 
 		if (p != NULL) *p = ':';
 	}
 
 	/* Set PATH_INFO 
 	 */
-	if (! cherokee_buffer_is_empty(conn->pathinfo)) {
-		set_env_pair (param, "PATH_INFO", 9, conn->pathinfo->buf, conn->pathinfo->len);
+	if (! cherokee_buffer_is_empty (&conn->pathinfo)) {
+		set_env_pair (param, "PATH_INFO", 9, conn->pathinfo.buf, conn->pathinfo.len);
 	}
 
 	/* Set REQUEST_URI 
