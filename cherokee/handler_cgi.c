@@ -483,7 +483,10 @@ cherokee_handler_cgi_init (cherokee_handler_cgi_t *cgi)
 	 * here we are.
 	 */
 	if (cgi->init_phase == hcgi_phase_sent_post) {
-		ret = cherokee_post_walk_to_fd (&conn->post, cgi->pipeOutput);
+		int eagain_fd = -1;
+		int mode      =  0;
+
+		ret = cherokee_post_walk_to_fd (&conn->post, cgi->pipeOutput, &eagain_fd, &mode);
 
 		switch (ret) {
 		case ret_ok:
@@ -492,6 +495,10 @@ cherokee_handler_cgi_init (cherokee_handler_cgi_t *cgi)
 			return ret_ok;
 
 		case ret_eagain:
+			if (eagain_fd != -1) {
+				cherokee_thread_deactive_to_polling (HANDLER_THREAD(cgi), HANDLER_CONN(cgi), eagain_fd, mode);
+			}
+
 			return ret_eagain;
 
 		default:
@@ -660,10 +667,7 @@ cherokee_handler_cgi_init (cherokee_handler_cgi_t *cgi)
 	if (! cherokee_post_is_empty (&conn->post)) {
 		cgi->init_phase = hcgi_phase_sent_post;
 		cherokee_post_walk_reset (&conn->post);
-
-#ifndef _WIN32
-		_fd_set_properties (cgi->pipeOutput, O_NONBLOCK, 0);
-#endif
+		
 		/* It returns eagain to send the POST information in
 		 * the next call to this function.  It can not be send
 		 * in the step() method because we need to get it done
