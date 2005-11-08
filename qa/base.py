@@ -209,7 +209,7 @@ class TestBase:
             if len(request) > 1:
                 src += "\t\t%s\n" %(request)
 
-        if self.post is not None:
+        if self.post is not None and not self.nobody:
             src += "\tPost     = %s\n" % (self.post)
 
         if self.expected_error is not None:
@@ -227,7 +227,8 @@ class TestBase:
         for header in headers[1:]:
             src += "\t\t%s\n" %(header)
 
-        src += "\tBody     = %s\n" % (self.reply[len(header_full)+4:])
+        if not self.nobody:
+            src += "\tBody     = %s\n" % (self.reply[len(header_full)+4:])
 
         return src
 

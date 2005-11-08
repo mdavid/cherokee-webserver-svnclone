@@ -134,7 +134,7 @@ cherokee_post_append (cherokee_post_t *post, char *str, size_t len)
 ret_t 
 cherokee_post_commit_buf (cherokee_post_t *post, size_t size)
 {
-	size_t written = 0;
+	size_t written;
 
 	if (size <= 0)
 		return ret_ok;
@@ -151,12 +151,12 @@ cherokee_post_commit_buf (cherokee_post_t *post, size_t size)
 		if (post->tmp_file_p == NULL)
 			return ret_error;
 
-		post->received += post->info.len;
-
 		written = fwrite (post->info.buf, 1, post->info.len, post->tmp_file_p);
 		if (written < 0) return ret_error;
-		
+
 		cherokee_buffer_move_to_begin (&post->info, written);
+		post->received += written;
+
 		return ret_ok;
 	}
 
@@ -165,7 +165,7 @@ cherokee_post_commit_buf (cherokee_post_t *post, size_t size)
 
 
 ret_t 
-cherokee_post_walk_to_fd (cherokee_post_t *post, int fd)
+cherokee_post_walk_to_fd (cherokee_post_t *post, int fd, int *eagain_fd, int *mode)
 {
 	ssize_t r;
 	size_t  ur;
@@ -209,14 +209,23 @@ cherokee_post_walk_to_fd (cherokee_post_t *post, int fd)
 		 */
 		r = write (fd, post->info.buf, post->info.len);
 		if (r < 0) {
-			return (errno == EAGAIN) ? ret_eagain : ret_error;	
-		}
+			if (errno == EAGAIN) {
+				*eagain_fd = fd;
+				*mode      = 1;
+				return ret_eagain;
+			}
+
+			return ret_error;	
+		} 
+		else if (r == 0)
+			return ret_eagain;
 
 		cherokee_buffer_move_to_begin (&post->info, r);
 
 		post->walk_offset += r;
-		if (post->walk_offset >= post->size)
+		if (post->walk_offset >= post->size) {
 			return ret_ok;
+		}
 
 		return ret_eagain;
 

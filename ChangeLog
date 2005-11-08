@@ -1,3 +1,18 @@
+2005-11-07  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/handler_cgi.c: Better POST management: now it moves the
+	connection to the polling list if needed.
+
+	* qa/run-tests.py: Addad new parameter -b.
+
+	* cherokee/handler_cgi.c (cherokee_handler_cgi_init): Removed
+	O_NONBLOCK property from cgi->pipeOutput.
+
+2005-11-06  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* qa/util.py (letters_random, str_random): Slightly optimized for
+	a faster start time.
+
 2005-11-05  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cherokee/buffer.c (cherokee_buffer_ensure_size): size is now

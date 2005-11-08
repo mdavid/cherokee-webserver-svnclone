@@ -25,6 +25,8 @@ valgrind = False
 strace   = False
 port     = None
 method   = None
+nobody   = False
+
 server   = CHEROKEE_PATH
 
 # Make the DocumentRoot directory
@@ -57,6 +59,7 @@ for p in param:
     elif p     == '-v': valgrind = True
     elif p     == '-s': ssl      = True
     elif p     == '-x': strace   = True
+    elif p     == '-b': nobody   = True
     elif p[:2] == '-n': num      = int(p[2:])
     elif p[:2] == '-t': thds     = int(p[2:])
     elif p[:2] == '-p': port     = int(p[2:])
@@ -99,6 +102,7 @@ objs = []
 for m in mods:
     obj = m.Test()
     obj.tmp = tmp
+    obj.nobody = nobody
     objs.append(obj)
 
 # Prepare www files

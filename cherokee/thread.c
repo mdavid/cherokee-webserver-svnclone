@@ -1247,11 +1247,11 @@ step_MULTI_THREAD_block (cherokee_thread_t *thd, int socket, pthread_mutex_t *mu
 	cherokee_fdpoll_reset (thd->fdpoll, socket);
 	cherokee_fdpoll_watch (thd->fdpoll, fdwatch_msecs);
 	
-	/* This thread might been blocked for long long time,
-	 * so it's really important to update the local bogo now
-	 * values before accept new connections.  Otherwhise, it
-	 * will use an old value for the new connections timeout
-	 * and it'll drop it out in the next step.
+	/* This thread might been blocked for long long time, so it's
+	 * really important to update the local bogo now values before
+	 * accepting new connections.  Otherwhise, it will use an old
+	 * value for the new connections timeout and it'll drop it out
+	 * in the next step.
 	 */
 	update_bogo_now (thd);
 
