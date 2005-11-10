@@ -318,7 +318,7 @@ yyerror (char* msg)
 %token T_TIMEOUT T_KEEPALIVE T_DOCUMENT_ROOT T_LOG T_MIME_FILE T_DIRECTORY T_HANDLER T_USER T_GROUP T_POLICY
 %token T_SERVER T_USERDIR T_PIDFILE T_LISTEN T_SERVER_TOKENS T_ENCODER T_ALLOW T_IO_CACHE T_DIRECTORYINDEX 
 %token T_ICONS T_AUTH T_NAME T_METHOD T_PASSWDFILE T_SSL_CA_LIST_FILE T_FROM T_SOCKET T_LOG_FLUSH_INTERVAL
-%token T_INCLUDE T_PANIC_ACTION T_JUST_ABOUT T_LISTEN_QUEUE_SIZE T_SENDFILE T_MINSIZE T_MAXSIZE T_MAX_FDS
+%token T_PANIC_ACTION T_JUST_ABOUT T_LISTEN_QUEUE_SIZE T_SENDFILE T_MINSIZE T_MAXSIZE T_MAX_FDS
 %token T_SHOW T_CHROOT T_ONLY_SECURE T_MAX_CONNECTION_REUSE T_REWRITE T_POLL_METHOD T_EXTENSION T_IPV6 T_ENV 
 %token T_REQUEST
 
@@ -368,7 +368,6 @@ common_line : server
             | ipv6
             | log_flush_interval
             | poll_method
-            | include
             | panic_action
             | listen_queue_size
             | sendfile
@@ -797,11 +796,6 @@ pidfile : T_PIDFILE T_FULLDIR
 	   free ($2);
 };
 
-
-include : T_INCLUDE T_FULLDIR
-{
-	   cherokee_list_add_tail (&SRV(server)->include_list, $2);
-};
 
 panic_action : T_PANIC_ACTION T_FULLDIR
 {

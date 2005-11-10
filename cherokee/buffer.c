@@ -468,7 +468,6 @@ ret_t
 cherokee_buffer_read_file (cherokee_buffer_t *buf, char *filename)
 {
 	int r, ret, f;
-	int remain;
 	struct stat info;
 
 	/* Stat() the file
@@ -484,8 +483,7 @@ cherokee_buffer_read_file (cherokee_buffer_t *buf, char *filename)
 
 	/* Maybe get memory
 	 */
-	remain = buf->size - buf->len;
-	ret = cherokee_buffer_ensure_size (buf, info.st_size - remain + 1);
+	ret = cherokee_buffer_ensure_size (buf, buf->len + info.st_size + 1);
 	if (unlikely(ret != ret_ok)) return ret;
 	
 	/* Open the file
@@ -495,17 +493,20 @@ cherokee_buffer_read_file (cherokee_buffer_t *buf, char *filename)
 
 	/* Read the content
 	 */
-	r = buf->len;
-	buf->len = read (f, buf->buf+r, info.st_size);
-	if (buf->len < 0) {
-		buf->len = 0;
+	r = read (f, buf->buf + buf->len, info.st_size);
+	if (r < 0) {
+		buf->buf[buf->len] = '\0';
+
+		close(f);
 		return ret_error;
 	}
-	buf->len += r;
 	
 	/* Close it and exit
 	 */
 	close(f);
+
+	buf->len += r;
+	buf->buf[buf->len] = '\0';
 
 	return ret_ok;
 }
@@ -1106,10 +1107,11 @@ cherokee_buffer_replace_string (cherokee_buffer_t *buf,
                 if (substring_position == NULL) {
                         break;
                 }
-                result_length += replacement_length - substring_length;
+
+                result_length += (replacement_length - substring_length);
         } 
 
-	/* Get some memory if needed
+	/* Take the new memory chunk
 	 */
 	result = malloc (result_length + 1);
 	if (result == NULL) return ret_nomem;
@@ -1127,7 +1129,8 @@ cherokee_buffer_replace_string (cherokee_buffer_t *buf,
                         break;
                 }
                 memcpy (result_position, p, substring_position - p);
-                result_position += substring_position - p;
+                result_position += (substring_position - p);
+
                 memcpy (result_position, replacement, replacement_length);
                 result_position += replacement_length;
         }	
@@ -1140,7 +1143,7 @@ cherokee_buffer_replace_string (cherokee_buffer_t *buf,
 	buf->buf  = result;
 	buf->len  = result_length;
 	buf->size = result_length + 1;
-		
+
 	return ret_ok;	
 }
 

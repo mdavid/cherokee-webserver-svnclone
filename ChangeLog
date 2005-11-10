@@ -1,3 +1,16 @@
+2005-11-10  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/server-protected.h: Removed include_list property.
+
+	* cherokee/read_config_scanner.l, cherokee/read_config_grammar.y:
+	"Include" reserved word removed. It is not longer needed.
+	
+	* cherokee/module_read_config.c: Almost rewritten.  The inclusions
+	are now managed in a more handy way.
+
+	* cherokee/buffer.c (cherokee_buffer_read_file): Fixed. There was
+	a consistency problem with the memory management.
+
 2005-11-07  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cherokee/handler_cgi.c: Better POST management: now it moves the

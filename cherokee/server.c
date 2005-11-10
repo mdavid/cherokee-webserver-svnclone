@@ -100,10 +100,6 @@ cherokee_server_new  (cherokee_server_t **srv)
 	 */
 	INIT_LIST_HEAD(&(n->thread_list));
 
-	/* Include config files list
-	 */
-	INIT_LIST_HEAD(&(n->include_list));
-
 	/* Sockets
 	 */
 	n->socket          = -1;
@@ -347,8 +343,6 @@ cherokee_server_free (cherokee_server_t *srv)
 
 	/* Clean config files entries
 	 */
-	cherokee_list_free (&srv->include_list, free);
-
 	if (srv->config_file != NULL) {
 		free (srv->config_file);
 		srv->config_file = NULL;
@@ -1206,6 +1200,10 @@ config_module_execute_function (cherokee_server_t *srv, char *param, char *func_
 ret_t 
 cherokee_server_read_config_file (cherokee_server_t *srv, char *path)
 {
+ 	if (path == NULL) { 
+ 		path = CHEROKEE_CONFDIR"/cherokee.conf"; 
+ 	} 
+
 	return config_module_execute_function (srv, path, "read_config_file");
 }
 
