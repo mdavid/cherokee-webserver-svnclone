@@ -168,7 +168,6 @@ struct cherokee_server {
 	char                      *config_file;
 	char                      *mime_file;
 	char                      *icons_file;
-	struct list_head           include_list;
 
 	/* Performance
 	 */

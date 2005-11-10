@@ -109,7 +109,6 @@ nl              [\n\r]
 "MaxFds"                { return T_MAX_FDS; }
 "PollMethod"            { return T_POLL_METHOD; }
 "policy"                { return T_POLICY; }
-"Include"               { return T_INCLUDE; }
 "OnlySecure"            { return T_ONLY_SECURE; }
 "MaxConnectionReuse"    { return T_MAX_CONNECTION_REUSE; }
 "IOCache"               { return T_IO_CACHE; }
