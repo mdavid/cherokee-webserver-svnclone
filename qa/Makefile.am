@@ -115,7 +115,8 @@ run-tests.py \
 110-Priority4.py \
 111-Compac.py \
 112-NiceError-CGI.py \
-113-HeaderFile.py
+113-HeaderFile.py \
+114-HeaderFile2.py
 
 test:
 	./run-tests.py
