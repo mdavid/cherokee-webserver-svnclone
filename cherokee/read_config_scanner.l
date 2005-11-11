@@ -113,6 +113,7 @@ nl              [\n\r]
 "MaxConnectionReuse"    { return T_MAX_CONNECTION_REUSE; }
 "IOCache"               { return T_IO_CACHE; }
 "Env"                   { return T_ENV; }
+"HeaderFile"            { return T_HEADERFILE; }
 "On"                    { yylval.number = 1; return T_NUMBER; }
 "Off"                   { yylval.number = 0; return T_NUMBER; }
 

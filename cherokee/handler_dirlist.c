@@ -49,6 +49,7 @@
 #include "module_loader.h"
 #include "icons.h"
 #include "common.h"
+#include "list_ext.h"
 
 #define DEFAULT_NAME_LEN 40
 
@@ -171,25 +172,27 @@ cherokee_handler_dirlist_new  (cherokee_handler_t **hdl, void *cnt, cherokee_tab
 
 	/* Properties
 	 */
-	n->show_size     = 1;
-	n->show_date     = 1;
-	n->show_owner    = 0;
-	n->show_group    = 0;
+	n->show_size        = 1;
+	n->show_date        = 1;
+	n->show_owner       = 0;
+	n->show_group       = 0;
+	
+	/* Eyecandy
+	 */
+	n->bgcolor          = "FFFFFF";
+	n->text             = "000000";
+	n->link             = "0000AA";
+	n->vlink            = "0000CC";
+	n->alink            = "0022EE";
+	n->background       = NULL;
+	n->header_file      = NULL;
+	n->header_file_ref  = NULL;
 
-	n->bgcolor       = "FFFFFF";
-	n->text          = "000000";
-	n->link          = "0000AA";
-	n->vlink         = "0000CC";
-	n->alink         = "0022EE";
-	n->background    = NULL;
-	n->header        = NULL;
-	n->header_file   = NULL;
+	cherokee_buffer_init (&n->header);
 
 	/* Read the properties
 	 */
 	if (properties) {
-		char *tmp = NULL;
-
 		cherokee_typed_table_get_str (properties, "bgcolor", &n->bgcolor);
 		cherokee_typed_table_get_str (properties, "text", &n->text);
 		cherokee_typed_table_get_str (properties, "link", &n->link);
@@ -202,11 +205,7 @@ cherokee_handler_dirlist_new  (cherokee_handler_t **hdl, void *cnt, cherokee_tab
 		cherokee_typed_table_get_int (properties, "owner", &n->show_owner);
 		cherokee_typed_table_get_int (properties, "group", &n->show_group);
 
-		cherokee_typed_table_get_str (properties, "headerfile", &tmp);
-		if (tmp != NULL) {
-			cherokee_buffer_new (&n->header_file);
-			cherokee_buffer_add (n->header_file, tmp, strlen(tmp));
-		}
+		cherokee_typed_table_get_list (properties, "headerfile", &n->header_file);
 	}
 
 	*hdl = HANDLER(n);
@@ -219,16 +218,8 @@ cherokee_handler_dirlist_free (cherokee_handler_dirlist_t *dhdl)
 {
 	list_t *i, *tmp;
 
-	if (dhdl->header != NULL) {
-		cherokee_buffer_free (dhdl->header);
-		dhdl->header = NULL;
-	}
+	cherokee_buffer_mrproper (&dhdl->header);
 
-	if (dhdl->header_file != NULL) {
-		cherokee_buffer_free (dhdl->header_file);
-		dhdl->header_file = NULL;
-	}
-	 
 	list_for_each_safe (i, tmp, &dhdl->dirs) {
 		list_del (i);
 		free (i);
@@ -272,16 +263,31 @@ check_request_finish_with_slash (cherokee_handler_dirlist_t *dhdl)
 static void
 read_header_file (cherokee_handler_dirlist_t *dhdl)
 {
+	ret_t                  ret;
+	list_t                *i;
 	cherokee_connection_t *conn = HANDLER_CONN(dhdl);
 
-	cherokee_buffer_add_buffer (&conn->local_directory, &conn->request);          /* do   */
-	cherokee_buffer_add_buffer (&conn->local_directory, dhdl->header_file);
+	list_for_each (i, dhdl->header_file) {
+		cherokee_boolean_t  readed;  
+		cuint_t             filename_len;
+		char               *filename = LIST_ITEM_INFO(i);
+
+		filename_len = strlen(filename);
+		
+		cherokee_buffer_add_buffer (&conn->local_directory, &conn->request);                     /* do   */
+		cherokee_buffer_add (&conn->local_directory, filename, filename_len);
 	
-	cherokee_buffer_new (&dhdl->header);
-	cherokee_buffer_read_file (dhdl->header, conn->local_directory.buf);
-	
-	cherokee_buffer_drop_endding (&conn->local_directory, 
-				      conn->request.len + dhdl->header_file->len); /* undo */	
+		cherokee_buffer_clean (&dhdl->header);
+		ret = cherokee_buffer_read_file (&dhdl->header, conn->local_directory.buf);
+		readed = (ret == ret_ok);
+
+		cherokee_buffer_drop_endding (&conn->local_directory, conn->request.len + filename_len); /* undo */	
+
+		if (readed) {
+			dhdl->header_file_ref = filename;
+			return;
+		}
+	}
 }
 
 
@@ -440,9 +446,7 @@ cherokee_handler_dirlist_init (cherokee_handler_dirlist_t *dhdl)
 
 	/* Maybe read the header file
 	 */
-	if ((dhdl->header_file != NULL) && 
-	    (! cherokee_buffer_is_empty(dhdl->header_file))) 
-	{
+	if (dhdl->header_file != NULL) {
 		read_header_file (dhdl);
 	}
 
@@ -544,8 +548,8 @@ render_page_header (cherokee_handler_dirlist_t *dhdl, cherokee_buffer_t *buffer)
 	cherokee_buffer_free (path);
 	
 	
-	if (dhdl->header != NULL) {
-		cherokee_buffer_add (buffer, dhdl->header->buf, dhdl->header->len);
+	if (! cherokee_buffer_is_empty (&dhdl->header)) {
+		cherokee_buffer_add_buffer (buffer, &dhdl->header);
 	}
 	
 #ifndef CHEROKEE_EMBEDDED
@@ -574,7 +578,7 @@ render_file (cherokee_handler_dirlist_t *dhdl, cherokee_buffer_t *buffer, file_e
 	if ((name[0] == '.') ||
 	    (name[0] == '#') ||
 	    (name[name_len-1] == '~') ||
-	    ((dhdl->header_file) && (strncmp (name, dhdl->header_file->buf, dhdl->header_file->len) == 0)))
+	    ((dhdl->header_file_ref) && (strcmp (name, dhdl->header_file_ref) == 0)))
 	{
 		return ret_ok;
 	}

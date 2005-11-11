@@ -318,7 +318,7 @@ yyerror (char* msg)
 %token T_TIMEOUT T_KEEPALIVE T_DOCUMENT_ROOT T_LOG T_MIME_FILE T_DIRECTORY T_HANDLER T_USER T_GROUP T_POLICY
 %token T_SERVER T_USERDIR T_PIDFILE T_LISTEN T_SERVER_TOKENS T_ENCODER T_ALLOW T_IO_CACHE T_DIRECTORYINDEX 
 %token T_ICONS T_AUTH T_NAME T_METHOD T_PASSWDFILE T_SSL_CA_LIST_FILE T_FROM T_SOCKET T_LOG_FLUSH_INTERVAL
-%token T_PANIC_ACTION T_JUST_ABOUT T_LISTEN_QUEUE_SIZE T_SENDFILE T_MINSIZE T_MAXSIZE T_MAX_FDS
+%token T_HEADERFILE T_PANIC_ACTION T_JUST_ABOUT T_LISTEN_QUEUE_SIZE T_SENDFILE T_MINSIZE T_MAXSIZE T_MAX_FDS
 %token T_SHOW T_CHROOT T_ONLY_SECURE T_MAX_CONNECTION_REUSE T_REWRITE T_POLL_METHOD T_EXTENSION T_IPV6 T_ENV 
 %token T_REQUEST
 
@@ -959,8 +959,6 @@ handler_option : T_ID str_type
 			 dirs_table_set_handler_prop (current_config_entry, "vlink", $2);
 	   } else if (!strcasecmp ($1, "alink")) {
 			 dirs_table_set_handler_prop (current_config_entry, "alink", $2);
-	   } else if (!strcasecmp ($1, "headerfile")) {
-			 dirs_table_set_handler_prop (current_config_entry, "headerfile", $2);
 	   } else if (!strcasecmp ($1, "interpreter")) {
 			 dirs_table_set_handler_prop (current_config_entry, "interpreter", $2);
 	   } else if (!strcasecmp ($1, "scriptalias")) {
@@ -972,6 +970,26 @@ handler_option : T_ID str_type
 	   } else {
 			 return 1;
 	   }
+};
+
+handler_option : T_HEADERFILE id_list
+{
+	   linked_list_t *i;
+	   list_t         nlist = LIST_HEAD_INIT(nlist);
+
+	   i = $2;
+	   while (i!=NULL) {
+			 linked_list_t *prev;
+
+			 cherokee_list_add_tail (&nlist, i->string);
+
+			 prev = i;
+			 i = i->next;
+			 free(prev);
+	   }	   
+
+	   cherokee_config_entry_set_handler_prop (current_config_entry, "headerfile", typed_list, &nlist, 
+									   (cherokee_typed_free_func_t) cherokee_list_free_item_simple);
 };
 
 handler_option : T_ENV T_ID str_type

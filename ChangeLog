@@ -1,5 +1,13 @@
 2005-11-11  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* qa/Makefile.am (EXTRA_DIST), qa/114-HeaderFile2.py: Added new
+	test to ensure previous path works.
+
+	* cherokee/read_config_grammar.y, cherokee/read_config_scanner.l,
+	cherokee/handler_dirlist.h, cherokee/handler_dirlist.c
+	(read_header_file): The dirlist handler now accepts a list on the
+	HeaderFile parameter. It will use the first match as header.
+
 	* cherokee/fdpoll-kqueue.c: Performance fix: it duplicates the
 	speed of the kqueue backend! Patch by Rodrigo Fernandez-Vizarra
 	<rfdzvizarra@yahoo.ie>
