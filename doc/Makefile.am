@@ -24,6 +24,7 @@ Mime_types_configuration.html \
 NCSA_logger.html \
 PHP_execution.html \
 Redirections.html \
+Request_configuration.html \
 Server_configuration.html \
 U-Cherokee.html \
 Validators.html \
