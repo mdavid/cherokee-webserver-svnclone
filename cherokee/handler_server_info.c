@@ -72,7 +72,7 @@ cherokee_module_info_t MODULE_INFO(server_info) = {
 "<table border=\"0\" cellpadding=\"3\" width=\"600\">"                                              CRLF\
 "  <tr class=\"h\"><td>"                                                                            CRLF\
 "    <a href=\"http://www.0x50.org/\"><img border=\"0\" src=\"?logo\" alt=\"Cherokee Logo\" /></a>" CRLF\
-"    <h1 class=\"p\">Cherokee Version " PACKAGE_VERSION "</h1>"                                     CRLF\
+"    <h1 class=\"p\">Cherokee Version %s</h1>"                                                      CRLF\
 "  </td></tr>"                                                                                      CRLF\
 "</table><br />"
 
@@ -299,6 +299,7 @@ build_icons_table_content (cherokee_buffer_t *buf, cherokee_server_t *srv)
 static void
 server_info_build_page (cherokee_handler_server_info_t *hdl)
 {
+	const char        *ver;
 	cherokee_server_t *srv;
 	cherokee_buffer_t *buf;
 	cherokee_buffer_t *table;
@@ -310,7 +311,10 @@ server_info_build_page (cherokee_handler_server_info_t *hdl)
 	   
 	/* Add the page begining
 	 */
-	cherokee_buffer_add (buf, PAGE_HEADER, strlen(PAGE_HEADER));
+	ver = (HANDLER_SRV(hdl)->server_token == cherokee_version_product) ?
+		"" : PACKAGE_VERSION;
+
+	cherokee_buffer_add_va (buf, PAGE_HEADER, ver);
 
 	if (! hdl->just_about) {
 
