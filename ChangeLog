@@ -1,5 +1,12 @@
 2005-11-11  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* cherokee/fdpoll-kqueue.c: Performance fix: it duplicates the
+	speed of the kqueue backend! Patch by Rodrigo Fernandez-Vizarra
+	<rfdzvizarra@yahoo.ie>
+
+	* configure.in: Added DragonFly entry in the host detection. Patch
+	by Rodrigo Fernandez-Vizarra <rfdzvizarra@yahoo.ie>
+
 	* qa/113-HeaderFile.py, qa/Makefile.am (EXTRA_DIST): Added new
 	test.
 
