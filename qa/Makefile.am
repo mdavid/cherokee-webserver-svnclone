@@ -112,7 +112,10 @@ run-tests.py \
 107-Priority1.py \
 108-Priority2.py \
 109-Priority3.py \
-110-Priority4.py
+110-Priority4.py \
+111-Compac.py \
+112-NiceError-CGI.py \
+113-HeaderFile.py
 
 test:
 	./run-tests.py

@@ -1,5 +1,8 @@
 2005-11-11  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* qa/113-HeaderFile.py, qa/Makefile.am (EXTRA_DIST): Added new
+	test.
+
 	* cherokee/handler_server_info.c (server_info_build_page): Now it
 	checks the server token parameter in order to show the server
 	version.
