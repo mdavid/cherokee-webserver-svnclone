@@ -33,6 +33,12 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#ifdef HAVE_SYS_TIME_H
+# include <sys/time.h>
+#else 
+# include <time.h>
+#endif
+
 #ifdef HAVE_SYS_SOCKET_H
 # include <sys/socket.h>
 #endif
@@ -750,4 +756,62 @@ cherokee_syslog (int priority, cherokee_buffer_t *buf)
 	} while (p < end);
 
 	return ret_ok;
+}
+
+
+void
+cherokee_trace (const char *entry, const char *file, int line, const char *func, const char *fmt, ...)
+{
+	static char        *env         = NULL;
+	cherokee_boolean_t  do_log      = false;
+	cherokee_buffer_t   entries     = CHEROKEE_BUF_INIT;
+	char               *lentry;
+	char               *lentry_end;
+	va_list             args;
+	char               *p;
+	
+	/* Maybe get an update from the environment var 
+	 */
+	if (env == NULL) {
+		env = getenv(TRACE_ENV);
+		if (env == NULL) return;
+	}
+       
+	cherokee_buffer_add (&entries, (char *)entry, strlen(entry));
+
+	for (lentry = entries.buf;;) {
+		lentry_end = strchr (lentry, ',');
+		if (lentry_end) *lentry_end = '\0';
+
+		/* Check for 'all'
+		 */
+		p = strstr (env, "all");
+		if (p) do_log = true;
+
+		/* Check the type
+		 */
+		p = strstr (env, lentry);
+		if (p) {
+			char *tmp = p + strlen(lentry);
+			if ((*tmp == '\0') || (*tmp == ',') || (*tmp == ' '))
+				do_log = true;
+		}
+
+		if (lentry_end == NULL)
+			break;
+
+		lentry = lentry_end + 1;
+	}
+
+	if (! do_log) goto out;
+
+	/* Print the trace
+	 */
+	printf ("%18s:%04d (%30s): ", file, line, func);
+	va_start (args, fmt);
+	vprintf (fmt, args);
+	va_end (args);
+
+out:
+	cherokee_buffer_mrproper (&entries);
 }

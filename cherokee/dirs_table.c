@@ -34,6 +34,8 @@
 
 #include "handler.h"
 
+#define ENTRIES "dirs"
+
 
 ret_t 
 cherokee_dirs_table_new (cherokee_dirs_table_t **pt)
@@ -112,6 +114,8 @@ cherokee_dirs_table_get (cherokee_dirs_table_t *pt, cherokee_buffer_t *requested
 
 go_out:	
 	if (entry != NULL) {
+		TRACE (ENTRIES, "Match with \"%s\"\n", web_directory->buf);
+
 		/* Copy everythin into the duplicate
 		 */
 		cherokee_config_entry_complete (plugin_entry, entry, false);

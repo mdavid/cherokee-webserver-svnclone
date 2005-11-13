@@ -1,3 +1,30 @@
+2005-11-13  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* qa/115-Respin.py: Added new test.
+
+	* cherokee/reqs_list.c (cherokee_reqs_list_get): It does not use
+	cherokee_header_get_request_w_args any longer, there was a problem
+	here when a connection was respined.
+
+	* cherokee/thread.c (process_active_connections): Moved request
+	checking after extensions and directories. It will need to remove
+	a previous web_directory assignement if a Request matches.
+
+	* cherokee/connection.c (cherokee_connection_get_req_entry): It
+	removes the content of web_directory if a Request entry is matched
+	in the connection.
+
+	* qa/113-HeaderFile.py (Test.__init__): Fixed, it shouldn't use
+	the full path to the header file.
+
+	* cherokee/macros.h (TRACE): Added new macro.
+
+	* cherokee/util.c (cherokee_trace): Added new tracing function.
+
+2005-11-12  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* configure.in: Added --enable-trace parameter
+
 2005-11-11  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* qa/Makefile.am (EXTRA_DIST), qa/114-HeaderFile2.py: Added new

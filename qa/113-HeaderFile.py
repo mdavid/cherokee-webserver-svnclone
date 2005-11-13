@@ -14,6 +14,12 @@ class Test (TestBase):
         self.request           = "GET /header_file1/file/ HTTP/1.0\r\n"
         self.expected_error    = 200        
 
+        self.conf              = """Directory /header_file1 {
+                                       Handler common {
+                                          HeaderFile header
+                                       }
+                                  }""" 
+
     def Prepare (self, www):
         d = self.Mkdir (www, "header_file1")
         f = self.WriteFile (d, "file", 0444, random_str)
@@ -23,9 +29,3 @@ class Test (TestBase):
 
         self.expected_content  = "file:%s" % (tmpfile)
         self.forbidden_content = "file:%s" % (f)
-
-        self.conf              = """Directory /header_file1 {
-                                       Handler common {
-                                          HeaderFile %s
-                                       }
-                                  }""" % (f)

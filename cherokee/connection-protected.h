@@ -241,5 +241,4 @@ ret_t cherokee_connection_update_vhost_traffic   (cherokee_connection_t *cnt);
 void cherokee_connection_rx_add                  (cherokee_connection_t *cnt, ssize_t rx);
 void cherokee_connection_tx_add                  (cherokee_connection_t *cnt, ssize_t tx);
 
-
 #endif /* CHEROKEE_CONNECTION_PROTECTED_H */
