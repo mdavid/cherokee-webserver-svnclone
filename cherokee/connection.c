@@ -81,6 +81,8 @@
 #include "iocache.h"
 #include "reqs_list.h"
 
+#define ENTRIES "core,connection"
+
 
 ret_t
 cherokee_connection_new  (cherokee_connection_t **cnt)
@@ -1510,10 +1512,18 @@ cherokee_connection_get_req_entry (cherokee_connection_t *cnt, cherokee_reqs_lis
 	/* Look in the extension table
 	 */
 	ret = cherokee_reqs_list_get (reqs, &cnt->request, plugin_entry, cnt);
-	if (unlikely (ret == ret_error)) {
+	switch (ret) {
+	case ret_not_found:
+		break;
+	case ret_ok:
+		cherokee_buffer_clean (&cnt->web_directory);
+		break;
+	case ret_error:
 		cnt->error_code = http_internal_error;
 		return ret_error;
-	}
+	default:
+		SHOULDNT_HAPPEN;
+	}	
 
 	/* Set the refereces
 	 */
@@ -1741,13 +1751,11 @@ ret_t
 cherokee_connection_open_request (cherokee_connection_t *cnt)
 {	
 	ret_t ret;
-
-#if 0
-	printf ("cherokee_connection_open_request:\n\tweb_dir '%s'\n\trequest '%s'\n\tlocal   '%s'\n", 
-		cnt->web_directory->buf,
-		cnt->request->buf,
-		cnt->local_directory->buf);
-#endif
+	
+	TRACE (ENTRIES, "web_directory='%s' request='%s' local_directory='%s'\n", 
+	       cnt->web_directory.buf,
+	       cnt->request.buf,
+	       cnt->local_directory.buf);
 
 	/* If the connection is keep-alive, have a look at the
 	 * handler to see if supports it.

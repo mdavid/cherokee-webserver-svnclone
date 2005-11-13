@@ -28,6 +28,9 @@
 #include "pcre/pcre.h"
 #include "server-protected.h"
 #include "connection-protected.h"
+#include "util.h"
+
+#define ENTRIES "reqs"
 
 
 ret_t 
@@ -53,25 +56,33 @@ cherokee_reqs_list_get (cherokee_reqs_list_t     *rl,
 			cherokee_connection_t    *conn)
 {
 	ret_t                   ret;
-	char                    req_back;
 	list_t                 *i;
 	list_t                 *reqs         = (list_t *)rl;
 	char                   *request      = NULL;
 	cint_t                  request_len  = 0;
-	
+	cherokee_buffer_t       request_tmp  = CHEROKEE_BUF_INIT;
+
 	/* Sanity check
 	 */
 	if (CONN_SRV(conn)->regexs == NULL) 
 		return ret_ok;
 
-	/* Read the request
+	/* Build the request string
 	 */
-	ret = cherokee_header_get_request_w_args (conn->header, &request, &request_len);
-	if (unlikely ((ret != ret_ok) || (request == NULL) || (request_len == 0)))
-	    return ret_error;
+	if (! cherokee_buffer_is_empty (&conn->query_string)) {
+		/* Build the full request
+		 */
+		cherokee_buffer_ensure_size (&request_tmp, conn->request.len + conn->query_string.len + 1);
+		cherokee_buffer_add_buffer (&request_tmp, &conn->request);
+		cherokee_buffer_add (&request_tmp, "?", 1);
+		cherokee_buffer_add_buffer (&request_tmp, &conn->query_string);
 
-	req_back = request[request_len];
-	request[request_len] = '\0';
+		request     = request_tmp.buf;
+		request_len = request_tmp.len;
+	} else {
+		request     = conn->request.buf;
+		request_len = conn->request.len;		
+	}
 	
 	/* Try to match the request
 	 */
@@ -90,6 +101,8 @@ cherokee_reqs_list_get (cherokee_reqs_list_t     *rl,
 		
 		rei = pcre_exec (re, NULL, request, request_len, 0, 0, NULL, 0);
 		if (rei < 0) continue;
+
+		TRACE (ENTRIES, "Request \"%s\" matches with \"%s\"\n", request, pattern);
 		
 		cherokee_config_entry_complete (plugin_entry, entry, false);
 
@@ -100,7 +113,7 @@ cherokee_reqs_list_get (cherokee_reqs_list_t     *rl,
 	ret = ret_not_found;
 
 restore:
-	request[request_len] = req_back;
+	cherokee_buffer_mrproper (&request_tmp);
 	return ret;
 }
 

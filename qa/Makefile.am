@@ -116,7 +116,8 @@ run-tests.py \
 111-Compac.py \
 112-NiceError-CGI.py \
 113-HeaderFile.py \
-114-HeaderFile2.py
+114-HeaderFile2.py \
+115-Respin.py
 
 test:
 	./run-tests.py

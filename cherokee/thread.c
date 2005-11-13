@@ -39,10 +39,34 @@
 #include "header.h"
 #include "header-protected.h"
 #include "reqs_list_entry.h"
+#include "util.h"
 
 
 #define DEBUG_BUFFER(b)  fprintf(stderr, "%s:%d len=%d crc=%d\n", __FILE__, __LINE__, b->len, cherokee_buffer_crc32(b))
+#define ENTRIES "core,thread"
 
+
+static char *
+phase_to_str (cherokee_connection_phase_t phase)
+{
+	switch (phase) {
+	case phase_nothing:           return "Nothing";
+	case phase_switching_headers: return "Switch headers";
+	case phase_tls_handshake:     return "TLS handshake";
+	case phase_reading_header:    return "Reading header";
+	case phase_processing_header: return "Processing header";
+	case phase_read_post:         return "Read POST";
+	case phase_setup_connection:  return "Setup connection";
+	case phase_init:              return "Init connection";
+	case phase_add_headers:       return "Add headers";
+	case phase_send_headers:      return "Send headers";
+	case phase_steping:           return "Step";
+	case phase_lingering:         return "Lingering close";
+	default:
+		SHOULDNT_HAPPEN;
+	}
+	return NULL;
+}
 
 static void
 update_bogo_now_internal (cherokee_thread_t *thd)
@@ -497,6 +521,8 @@ process_active_connections (cherokee_thread_t *thd)
 		 */
 		conn->timeout = thd->bogo_now + srv->timeout;
 
+		TRACE (ENTRIES, "conn on phase n=%d: %s\n", conn->phase, phase_to_str(conn->phase));
+
 		/* Phases
 		 */
 		switch (conn->phase) {
@@ -668,6 +694,8 @@ process_active_connections (cherokee_thread_t *thd)
 		case phase_setup_connection: {
 			cherokee_config_entry_t entry;
 
+			TRACE (ENTRIES, "Setup connection begins: request=\"%s\"\n", conn->request.buf);
+
 			/* Turn the connection in write mode
 			 */
 			conn_set_mode (thd, conn, socket_writing);
@@ -694,19 +722,7 @@ process_active_connections (cherokee_thread_t *thd)
 
 			cherokee_config_entry_init (&entry);
 			
-			/* 1.- Read Request configurations
-			 */
-			if (! list_empty (&CONN_VSRV(conn)->reqs)) 
-			{
-				ret = cherokee_connection_get_req_entry (conn, &CONN_VSRV(conn)->reqs, &entry);
-				if (unlikely (ret != ret_ok)) {
-					cherokee_connection_setup_error_handler (conn);
-					conn->phase = phase_init;
-					continue;
-				}				
-			}			
-
-			/* 2.- Read the extension configuration
+			/* 1.- Read the extension configuration
 			 */
 			if (CONN_VSRV(conn)->exts != NULL) 
 			{
@@ -718,7 +734,7 @@ process_active_connections (cherokee_thread_t *thd)
 				}				
 			}
 
-			/* 3.- Read the directory configuration
+			/* 2.- Read the directory configuration
 			 */
 			if (!cherokee_buffer_is_empty (CONN_VSRV(conn)->userdir) &&
 			    !cherokee_buffer_is_empty (&conn->userdir))
@@ -752,6 +768,18 @@ process_active_connections (cherokee_thread_t *thd)
 				conn->phase = phase_init;
 				continue;
 			}
+
+			/* 3.- Read Request configurations
+			 */
+			if (! list_empty (&CONN_VSRV(conn)->reqs)) 
+			{
+				ret = cherokee_connection_get_req_entry (conn, &CONN_VSRV(conn)->reqs, &entry);
+				if (unlikely (ret != ret_ok)) {
+					cherokee_connection_setup_error_handler (conn);
+					conn->phase = phase_init;
+					continue;
+				}				
+			}			
 
 			/* Check Only-Secure connections
 			 */

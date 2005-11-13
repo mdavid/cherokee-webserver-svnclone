@@ -185,7 +185,24 @@
 #define PRINT_ERROR_S(str) PRINT_ERROR("%s",str)
 #define PRINT_MSG_S(str)   PRINT_MSG("%s",str)
 
- 
+/* Tracing facility
+ */
+#ifdef TRACE_ENABLED
+# define TRACE_ENV "CHEROKEE_TRACE"
+
+# ifdef __GNUC__
+#  define TRACE(fmt,arg...) cherokee_trace (fmt, __FILE__, __LINE__, CHEROKEE_FUNCTION_NAME, ##arg)
+# else
+#  define TRACE(fmt,...) cherokee_trace (fmt, __FILE__, __LINE__, CHEROKEE_FUNCTION_NAME, __VA_ARGS__)
+# endif
+#else
+# ifdef __GNUC__
+#  define TRACE(section,fmt,arg...) do { } while(0)
+# else
+#  define TRACE(section,fmt,...) do { } while(0)
+# endif
+#endif
+
 /* Conversions
  */
 #define POINTER_TO_INT(pointer) ((long)(pointer))

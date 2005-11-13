@@ -42,6 +42,7 @@ cherokee_module_info_t MODULE_INFO(redir) = {
 
 
 #ifndef CHEROKEE_EMBEDDED
+#define ENTRIES "handler,redir"
 
 struct cre_list {
 	pcre* re;
@@ -82,6 +83,8 @@ build_regexs_list (cherokee_handler_redir_t *n, cherokee_connection_t *cnt, list
 		 */
 		ret = cherokee_regex_table_get (CONN_SRV(cnt)->regexs, pattern, (void **)&re);
 		if (ret != ret_ok) continue;
+
+		TRACE (ENTRIES, "Added pattern \"%s\"\n", pattern);
 
 		/* Add to the list in the same order that they are read
 		 */
@@ -152,7 +155,10 @@ match_and_substitute (cherokee_handler_redir_t *n)
 		if (rc == 0) {
 			PRINT_ERROR_S("Too many groups in the regex\n");
 		}
-		
+
+		TRACE (ENTRIES, "subject = \"%s\" + len(\"%s\")\n", conn->request.buf, conn->web_directory.buf);
+		TRACE (ENTRIES, "pcre_exec: subject=\"%s\" -> %d\n", subject, rc);
+
 		if (rc <= 0) {
 			list = list->next;
 			continue;
@@ -181,6 +187,9 @@ match_and_substitute (cherokee_handler_redir_t *n)
 				cherokee_buffer_add (&conn->query_string, args, len);
 				cherokee_buffer_drop_endding (&conn->request, len+1);
 			}
+
+			TRACE (ENTRIES, "Hidden redirect to: request=\"%s\" query_string=\"%s\"\n", 
+			       conn->request.buf, conn->query_string.buf);
 			
 			free (subject_copy);
 			return ret_eagain;
@@ -190,6 +199,9 @@ match_and_substitute (cherokee_handler_redir_t *n)
 		 */
 		cherokee_buffer_ensure_size (&conn->redirect, conn->request.len + subject_len);
 		substitute_groups (&conn->redirect, subject, list->subs, ovector, rc);
+
+		TRACE (ENTRIES, "Redirect %s -> %s\n", conn->request_original.buf, conn->redirect.buf);
+
 		return ret_ok;
 	}
 
@@ -203,7 +215,7 @@ cherokee_handler_redir_new (cherokee_handler_t **hdl, void *cnt, cherokee_table_
 {
 	ret_t ret;
 	CHEROKEE_NEW_STRUCT (n, handler_redir);
-	
+
 	/* Init the base class object
 	 */
 	cherokee_handler_init_base(HANDLER(n), cnt);
@@ -228,6 +240,8 @@ cherokee_handler_redir_new (cherokee_handler_t **hdl, void *cnt, cherokee_table_
 		 */
 		cherokee_typed_table_get_str (properties, "url", &n->target_url);
 		n->target_url_len = (n->target_url == NULL ? 0 : strlen(n->target_url));
+
+		TRACE (ENTRIES, "URL: %s\n", n->target_url);
 	}
 
 	/* Manage the regex rules
@@ -246,7 +260,7 @@ cherokee_handler_redir_new (cherokee_handler_t **hdl, void *cnt, cherokee_table_
 		return ret_eagain;
 	}
 #endif
-
+	
 	/* Return the new handler obj
 	 */
 	*hdl = HANDLER(n);
