@@ -1,3 +1,9 @@
+2005-11-14  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/util.c: Don't even define cherokee_trace() if
+	TRACE_ENABLED is not enabled. Reported by Rodrigo
+	Fernandez-Vizarra <rfdzvizarra@yahoo.ie>
+
 2005-11-13  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* qa/115-Respin.py: Added new test.

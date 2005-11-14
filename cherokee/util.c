@@ -561,6 +561,8 @@ number:
 			;
 		case '%':
 			len++;
+		default:
+			len++;
 		}
 	}
 
@@ -759,6 +761,9 @@ cherokee_syslog (int priority, cherokee_buffer_t *buf)
 }
 
 
+
+#ifdef TRACE_ENABLED
+
 void
 cherokee_trace (const char *entry, const char *file, int line, const char *func, const char *fmt, ...)
 {
@@ -815,3 +820,6 @@ cherokee_trace (const char *entry, const char *file, int line, const char *func,
 out:
 	cherokee_buffer_mrproper (&entries);
 }
+
+#endif
+
