@@ -562,7 +562,7 @@ number:
 		case '%':
 			len++;
 		default:
-			len++;
+			len+=2;
 		}
 	}
 
