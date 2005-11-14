@@ -281,7 +281,7 @@ server_info_build_logo (cherokee_handler_server_info_t *hdl)
 	ret_t ret;
 	cherokee_buffer_t *buffer;
 
-	buffer = hdl->buffer;
+	buffer = &hdl->buffer;
 
 #include "logo.inc"
 
@@ -306,7 +306,7 @@ server_info_build_page (cherokee_handler_server_info_t *hdl)
 
 	/* Init
 	 */
-	buf = hdl->buffer;
+	buf = &hdl->buffer;
 	srv = HANDLER_SRV(hdl);
 	   
 	/* Add the page begining
@@ -353,7 +353,7 @@ server_info_build_page (cherokee_handler_server_info_t *hdl)
 
 	/* Add the page ending
 	 */
-	cherokee_buffer_add (buf, PAGE_FOOT, strlen(PAGE_FOOT));
+	cherokee_buffer_add_str (buf, PAGE_FOOT);
 }
 
 
@@ -377,8 +377,8 @@ cherokee_handler_server_info_new  (cherokee_handler_t **hdl, cherokee_connection
 	 */
 	n->just_about = false;
 
-	cherokee_buffer_new (&n->buffer);
-	cherokee_buffer_ensure_size (n->buffer, 4*1024);
+	cherokee_buffer_init (&n->buffer);
+	cherokee_buffer_ensure_size (&n->buffer, 4*1024);
 
 	if (properties) {
 		cherokee_typed_table_get_int (properties, "about", &n->just_about);
@@ -392,7 +392,7 @@ cherokee_handler_server_info_new  (cherokee_handler_t **hdl, cherokee_connection
 ret_t 
 cherokee_handler_server_info_free (cherokee_handler_server_info_t *hdl)
 {
-	cherokee_buffer_free (hdl->buffer);
+	cherokee_buffer_mrproper (&hdl->buffer);
 	return ret_ok;
 }
 
@@ -432,7 +432,7 @@ cherokee_handler_server_info_init (cherokee_handler_server_info_t *hdl)
 ret_t 
 cherokee_handler_server_info_step (cherokee_handler_server_info_t *hdl, cherokee_buffer_t *buffer)
 {
-	cherokee_buffer_add_buffer (buffer, hdl->buffer);
+	cherokee_buffer_add_buffer (buffer, &hdl->buffer);
 	return ret_eof_have_data;
 }
 
@@ -440,7 +440,7 @@ cherokee_handler_server_info_step (cherokee_handler_server_info_t *hdl, cherokee
 ret_t 
 cherokee_handler_server_info_add_headers (cherokee_handler_server_info_t *hdl, cherokee_buffer_t *buffer)
 {
-	cherokee_buffer_add_va (buffer, "Content-length: %d"CRLF, hdl->buffer->len);
+	cherokee_buffer_add_va (buffer, "Content-length: %d"CRLF, hdl->buffer.len);
 
 	switch (hdl->action) {
 	case send_logo:

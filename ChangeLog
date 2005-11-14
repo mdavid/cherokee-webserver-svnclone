@@ -4,6 +4,10 @@
 	TRACE_ENABLED is not enabled. Reported by Rodrigo
 	Fernandez-Vizarra <rfdzvizarra@yahoo.ie>
 
+	* cherokee/util.c: (cherokee_estimate_va_length),
+	cherokee/handler_server_info.c: Fixed. Bug reported by Rodolfo
+	Pilas <rodolfo@pilas.net>
+
 2005-11-13  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* qa/115-Respin.py: Added new test.

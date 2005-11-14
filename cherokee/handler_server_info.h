@@ -33,7 +33,7 @@
 
 typedef struct {
 	cherokee_handler_t  handler;
-	cherokee_buffer_t  *buffer;
+	cherokee_buffer_t   buffer;
 
 	cherokee_boolean_t  just_about;
 
