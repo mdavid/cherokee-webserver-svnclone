@@ -78,7 +78,7 @@ CONF_BASE = """# Cherokee QA tests
                Encoder gzip { allow txt }
             """ % (PORT, www)
 
-BOTTON_CONF = "Extension php { Handler phpcgi }"
+BOTTON_CONF = "Extension php { Handler phpcgi { Interpreter %s } }" % (PHPCGI_PATH)
 
 
 if ssl:
