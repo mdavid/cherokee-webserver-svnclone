@@ -16,10 +16,12 @@ class Test (TestBase):
                  Handler file
               }
 
-              Extension abc, def, ghi {
-                 Handler phpcgi
+              Extension abc, def, ghi { 
+                 Handler phpcgi {
+                   Interpreter %s
+                 }
               }              
-              """
+              """ % (PHPCGI_PATH) 
 
     def Prepare (self, www):
         self.Mkdir (www, "extension2")

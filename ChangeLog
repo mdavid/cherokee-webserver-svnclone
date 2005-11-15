@@ -1,3 +1,10 @@
+2005-11-15  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* qa/run-tests.py (BOTTON_CONF), qa/068-PathInfo2.py,
+	qa/115-Respin.py, qa/087-Location.py, qa/080-Extension2.py,
+	qa/079-Extension.py, qa/072-Inherit3.py (Test.__init__): Added the
+	PHPCGI_PATH.
+
 2005-11-14  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cherokee/util.c: Don't even define cherokee_trace() if

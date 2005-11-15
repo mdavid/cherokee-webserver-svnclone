@@ -17,9 +17,11 @@ class Test (TestBase):
               }
 
               Extension xyz {
-                 Handler phpcgi
+                 Handler phpcgi {
+                   Interpreter %s
+                 }
               }
-              """
+              """ % (PHPCGI_PATH)
 
     def Prepare (self, www):
         self.Mkdir (www, "extension1")

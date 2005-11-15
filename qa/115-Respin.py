@@ -14,14 +14,16 @@ class Test (TestBase):
                                        Handler common
                                     }
                                     Directory /respin1-cgi {
-                                       Handler phpcgi
+                                       Handler phpcgi {
+                                         Interpreter %s
+                                       }
                                     }
                                     Request "/respin1/.+/" {
                                        Handler redir {
                                          Rewrite "^/respin1/(.+)/$" "/respin1-cgi/file?param=$1"
                                        }
                                     }
-                                 """
+                                 """ % (PHPCGI_PATH)
 
     def Prepare (self, www):
         d = self.Mkdir (www, "respin1-cgi")

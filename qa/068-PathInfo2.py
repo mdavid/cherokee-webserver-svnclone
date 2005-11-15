@@ -8,7 +8,7 @@ class Test (TestBase):
         self.name = "PathInfo, phpcgi"
 
         self.request           = "GET /pathinfo2/deep/deep/test.php%s HTTP/1.0\r\n" %(PATH_INFO)
-        self.conf              = "Directory /pathinfo2 { Handler phpcgi }"
+        self.conf              = "Directory /pathinfo2 { Handler phpcgi { Interpreter %s }}" % (PHPCGI_PATH)
         self.expected_error    = 200
         self.expected_content  = "PathInfo is: "+PATH_INFO
 

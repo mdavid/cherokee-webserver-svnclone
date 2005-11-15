@@ -17,9 +17,11 @@ class Test (TestBase):
               }
 
               Directory /inherit3/dir1/dir2/dir3 {
-                  Handler phpcgi
+                  Handler phpcgi {
+                    Interpreter %s
+                  }
               }
-              """
+              """ % (PHPCGI_PATH)
 
     def Prepare (self, www):
         self.Mkdir (www, "inherit3/dir1/dir2/dir3")
