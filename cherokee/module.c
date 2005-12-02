@@ -28,7 +28,7 @@
 ret_t 
 cherokee_module_init_base  (cherokee_module_t *module)
 {
-	   module->new      = NULL;
+	   module->instance = NULL;
 	   module->init     = NULL;
 	   module->get_name = NULL;
 	   module->free     = NULL;

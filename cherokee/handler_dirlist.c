@@ -78,7 +78,7 @@ generate_file_entry (DIR *dir, cherokee_buffer_t *path, cherokee_handler_dirlist
 
 	/* Get the memory
 	 */
-	n = malloc (sizeof(file_entry_t) + path->len + _PC_NAME_MAX + 3);
+	n = (file_entry_t *) malloc (sizeof(file_entry_t) + path->len + _PC_NAME_MAX + 3);
 	if (unlikely(n == NULL)) return ret_nomem;
 
 	/* Read a new directory entry
@@ -598,7 +598,7 @@ render_file (cherokee_handler_dirlist_t *dhdl, cherokee_buffer_t *buffer, file_e
 		}
 	} else
 #endif	
-		cherokee_buffer_add (buffer, (is_dir) ? "[DIR] " : "[   ] ", 6);
+		cherokee_buffer_add (buffer, (char *) (is_dir) ? "[DIR] " : "[   ] ", 6);
 	
 	/* Add the filename
 	 */
@@ -644,7 +644,7 @@ render_file (cherokee_handler_dirlist_t *dhdl, cherokee_buffer_t *buffer, file_e
 			char          *name;
 
 			user = getpwuid (file->stat.st_uid);
-			name = (user->pw_name) ? user->pw_name : "unknown";
+			name = (char *) (user->pw_name) ? user->pw_name : "unknown";
 
 			cherokee_buffer_add_va (buffer, "%s", name);
 		}
@@ -654,7 +654,7 @@ render_file (cherokee_handler_dirlist_t *dhdl, cherokee_buffer_t *buffer, file_e
 			char         *group;
 
 			user = getgrgid (file->stat.st_gid);
-			group = (user->gr_name) ? user->gr_name : "unknown";
+			group = (char *) (user->gr_name) ? user->gr_name : "unknown";
 
 			cherokee_buffer_add_va (buffer, "%s", group);
 		}

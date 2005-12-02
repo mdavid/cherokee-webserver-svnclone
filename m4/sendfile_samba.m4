@@ -3,16 +3,22 @@ AC_DEFUN([SENDFILE_CHECK],[
 #################################################
 # check for sendfile support
 
-with_sendfile_support=yes
 AC_MSG_CHECKING(whether to check to support sendfile)
-AC_ARG_WITH(sendfile-support,
-[  --with-sendfile-support Check for sendfile support (default=yes)],
-[ case "$withval" in
-  yes)
 
+AC_ARG_WITH(sendfile-support, AC_HELP_STRING([--with-sendfile-support], [Check for sendfile support (default=yes)]),
+		  [check_sendfile="$withval"], [check_sendfile="yes"])
+
+
+found=no
+case "$check_sendfile" in
+  yes)
 	AC_MSG_RESULT(yes);
 
 	case "$host_os" in
+
+	#
+	# Linux
+	#
 	*linux*)
 		AC_CACHE_CHECK([for linux sendfile64 support],samba_cv_HAVE_SENDFILE64,[
 		AC_TRY_LINK([#include <sys/sendfile.h>],
@@ -34,7 +40,7 @@ ssize_t nwritten = sendfile(tofd, fromfd, &offset, total);
 ],
 samba_cv_HAVE_SENDFILE=yes,samba_cv_HAVE_SENDFILE=no)])
 
-# Try and cope with broken Linux sendfile....
+          # Try and cope with broken Linux sendfile....
 		AC_CACHE_CHECK([for broken linux sendfile support],samba_cv_HAVE_BROKEN_LINUX_SENDFILE,[
 		AC_TRY_LINK([\
 #if defined(_FILE_OFFSET_BITS) && (_FILE_OFFSET_BITS == 64)
@@ -50,14 +56,17 @@ ssize_t nwritten = sendfile(tofd, fromfd, &offset, total);
 samba_cv_HAVE_BROKEN_LINUX_SENDFILE=yes,samba_cv_HAVE_BROKEN_LINUX_SENDFILE=no)])
 
 	if test x"$samba_cv_HAVE_SENDFILE64" = x"yes"; then
+		found=yes
     		AC_DEFINE(HAVE_SENDFILE64,1,[Whether 64-bit sendfile() is available])
 		AC_DEFINE(LINUX_SENDFILE_API,1,[Whether linux sendfile() API is available])
 		AC_DEFINE(WITH_SENDFILE,1,[Whether sendfile() should be used])
 	elif test x"$samba_cv_HAVE_SENDFILE" = x"yes"; then
+		found=yes
     		AC_DEFINE(HAVE_SENDFILE,1,[Whether sendfile() is available])
 		AC_DEFINE(LINUX_SENDFILE_API,1,[Whether linux sendfile() API is available])
 		AC_DEFINE(WITH_SENDFILE,1,[Whether sendfile() should be used])
 	elif test x"$samba_cv_HAVE_BROKEN_LINUX_SENDFILE" = x"yes"; then
+		found=yes
 		AC_DEFINE(LINUX_BROKEN_SENDFILE_API,1,[Whether (linux) sendfile() is broken])
 		AC_DEFINE(WITH_SENDFILE,1,[Whether sendfile should be used])
 	else
@@ -65,6 +74,10 @@ samba_cv_HAVE_BROKEN_LINUX_SENDFILE=yes,samba_cv_HAVE_BROKEN_LINUX_SENDFILE=no)]
 	fi
 
 	;;
+
+	#
+	# BSD
+	#
 	*freebsd* | *DragonFly* )
 		AC_CACHE_CHECK([for freebsd sendfile support],samba_cv_HAVE_SENDFILE,[
 		AC_TRY_LINK([\
@@ -88,6 +101,7 @@ samba_cv_HAVE_BROKEN_LINUX_SENDFILE=yes,samba_cv_HAVE_BROKEN_LINUX_SENDFILE=no)]
 samba_cv_HAVE_SENDFILE=yes,samba_cv_HAVE_SENDFILE=no)])
 
 	if test x"$samba_cv_HAVE_SENDFILE" = x"yes"; then
+		found=yes
     		AC_DEFINE(HAVE_SENDFILE,1,[Whether sendfile() support is available])
 		AC_DEFINE(FREEBSD_SENDFILE_API,1,[Whether the FreeBSD sendfile() API is available])
 		AC_DEFINE(WITH_SENDFILE,1,[Whether sendfile() support should be included])
@@ -96,6 +110,9 @@ samba_cv_HAVE_SENDFILE=yes,samba_cv_HAVE_SENDFILE=no)])
 	fi
 	;;
 
+	#
+	# HPUX
+	#
 	*hpux*)
 		AC_CACHE_CHECK([for hpux sendfile64 support],samba_cv_HAVE_SENDFILE64,[
 		AC_TRY_LINK([\
@@ -115,6 +132,7 @@ samba_cv_HAVE_SENDFILE=yes,samba_cv_HAVE_SENDFILE=no)])
 ],
 samba_cv_HAVE_SENDFILE64=yes,samba_cv_HAVE_SENDFILE64=no)])
 	if test x"$samba_cv_HAVE_SENDFILE64" = x"yes"; then
+		found=yes
     		AC_DEFINE(HAVE_SENDFILE64,1,[Whether sendfile64() is available])
 		AC_DEFINE(HPUX_SENDFILE_API,1,[Whether the hpux sendfile() API is available])
 		AC_DEFINE(WITH_SENDFILE,1,[Whether sendfile() support should be included])
@@ -140,6 +158,7 @@ samba_cv_HAVE_SENDFILE64=yes,samba_cv_HAVE_SENDFILE64=no)])
 ],
 samba_cv_HAVE_SENDFILE=yes,samba_cv_HAVE_SENDFILE=no)])
 	if test x"$samba_cv_HAVE_SENDFILE" = x"yes"; then
+		found=yes
     		AC_DEFINE(HAVE_SENDFILE,1,[Whether sendfile() is available])
 		AC_DEFINE(HPUX_SENDFILE_API,1,[Whether the hpux sendfile() API is available])
 		AC_DEFINE(WITH_SENDFILE,1,[Whether sendfile() support should be included])
@@ -148,6 +167,9 @@ samba_cv_HAVE_SENDFILE=yes,samba_cv_HAVE_SENDFILE=no)])
 	fi
 	;;
 
+	#
+	# Solaris
+	#
 	*solaris*)
 		AC_CHECK_LIB(sendfile,sendfilev)
 		AC_CACHE_CHECK([for solaris sendfilev64 support],samba_cv_HAVE_SENDFILEV64,[
@@ -176,6 +198,7 @@ samba_cv_HAVE_SENDFILE=yes,samba_cv_HAVE_SENDFILE=no)])
 samba_cv_HAVE_SENDFILEV64=yes,samba_cv_HAVE_SENDFILEV64=no)])
 
 	if test x"$samba_cv_HAVE_SENDFILEV64" = x"yes"; then
+		found=yes
     		AC_DEFINE(HAVE_SENDFILEV64,1,[Whether sendfilev64() is available])
 		AC_DEFINE(SOLARIS_SENDFILE_API,1,[Whether the soloris sendfile() API is available])
 		AC_DEFINE(WITH_SENDFILE,1,[Whether sendfile() support should be included])
@@ -209,6 +232,7 @@ samba_cv_HAVE_SENDFILEV64=yes,samba_cv_HAVE_SENDFILEV64=no)])
 samba_cv_HAVE_SENDFILEV=yes,samba_cv_HAVE_SENDFILEV=no)])
 
 	if test x"$samba_cv_HAVE_SENDFILEV" = x"yes"; then
+		found=yes
     		AC_DEFINE(HAVE_SENDFILEV,1,[Whether sendfilev() is available])
 		AC_DEFINE(SOLARIS_SENDFILE_API,1,[Whether the solaris sendfile() API is available])
 		AC_DEFINE(WITH_SENDFILE,1,[Whether to include sendfile() support])
@@ -217,15 +241,17 @@ samba_cv_HAVE_SENDFILEV=yes,samba_cv_HAVE_SENDFILEV=no)])
 	fi
 	;;
 
+	#
+	# Everything else
+	#
 	*)
-	;;
-        esac
-        ;;
+	  ;;
+     esac
+     ;;
+
   *)
     AC_MSG_RESULT(no)
     ;;
-  esac ],
-  AC_MSG_RESULT(yes)
-)
+esac
 
-])
+with_sendfile_support=$found])

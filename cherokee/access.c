@@ -84,7 +84,7 @@ typedef struct {
 static ip_item_t *
 new_ip (void) 
 {
-	ip_item_t *n = malloc (sizeof(ip_item_t));
+	ip_item_t *n = (ip_item_t *) malloc (sizeof(ip_item_t));
 	if (n == NULL) return NULL;
 
 	INIT_LIST_HEAD((list_t*)n);
@@ -103,7 +103,7 @@ free_ip (ip_item_t *ip)
 static subnet_item_t *
 new_subnet (void) 
 {
-	subnet_item_t *n = malloc (sizeof(subnet_item_t));
+	subnet_item_t *n = (subnet_item_t *) malloc (sizeof(subnet_item_t));
 	if (n == NULL) return NULL;
 
 	memset (&n->base.ip, 0, sizeof(ip_t));

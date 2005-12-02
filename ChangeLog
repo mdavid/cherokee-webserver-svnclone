@@ -1,3 +1,30 @@
+2005-12-01  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* m4/sendfile_samba.m4: --with-sendfile-support parameter fixed.
+
+2005-11-18  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/thread.c (cherokee_thread_new): Letf-hand
+	thread->server casted with the SRV() macro.
+
+	* cherokee/typed_table.c: There were some wrong casting calling
+	cherokee_typed_table_get()
+
+	* cherokee/avl/avl.c: s/new/new_entry/g
+
+	* cherokee/module.c, cherokee/module.h: Renamed "new" entry to
+	"instance"
+
+	* cherokee/list.h: Renamed new variables to new_entry
+
+	* cherokee/handler_dirlist.c (generate_file_entry): Added casting
+	to malloc.
+
+	* cherokee/resolv_cache.h: Added CHEROKEE_BEGIN_DECLS
+
+	* cherokee/handler_redir.c (build_regexs_list): Renamed "new" to
+	"new_regex", it was not compiling with a C++ compiler.
+
 2005-11-15  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* qa/run-tests.py (BOTTON_CONF), qa/068-PathInfo2.py,

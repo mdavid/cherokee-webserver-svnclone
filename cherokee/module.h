@@ -54,7 +54,7 @@ typedef struct {
 } cherokee_module_info_t;
 
 typedef struct {
-	module_func_new_t       new;      /* constructor step begging */
+	module_func_new_t       instance; /* constructor step begging */
 	module_func_free_t      free;     /* destructor               */
 	module_func_get_name_t  get_name;
 	void                   *init;     /* constructor step endding */

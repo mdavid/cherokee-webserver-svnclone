@@ -693,25 +693,25 @@ avl_t_cur (struct avl_traverser *trav)
    |trav| must not have the null item selected.
    The new item must not upset the ordering of the tree. */
 void *
-avl_t_replace (struct avl_traverser *trav, void *new)
+avl_t_replace (struct avl_traverser *trav, void *new_entry)
 {
   void *old;
 
-  assert (trav != NULL && trav->avl_node != NULL && new != NULL);
+  assert (trav != NULL && trav->avl_node != NULL && new_entry != NULL);
   old = trav->avl_node->avl_data;
-  trav->avl_node->avl_data = new;
+  trav->avl_node->avl_data = new_entry;
   return old;
 }
 
 static void
 copy_error_recovery (struct avl_node **stack, int height,
-                     struct avl_table *new, avl_item_func *destroy)
+                     struct avl_table *new_entry, avl_item_func *destroy)
 {
-  assert (stack != NULL && height >= 0 && new != NULL);
+  assert (stack != NULL && height >= 0 && new_entry != NULL);
 
   for (; height > 2; height -= 2)
     stack[height - 1]->avl_link[1] = NULL;
-  avl_destroy (new, destroy);
+  avl_destroy (new_entry, destroy);
 }
 
 /* Copies |org| to a newly created tree, which is returned.
@@ -730,21 +730,21 @@ avl_copy (const struct avl_table *org, avl_copy_func *copy,
   struct avl_node *stack[2 * (AVL_MAX_HEIGHT + 1)];
   int height = 0;
 
-  struct avl_table *new;
+  struct avl_table *new_entry;
   const struct avl_node *x;
   struct avl_node *y;
 
   assert (org != NULL);
-  new = avl_create (org->avl_compare, org->avl_param,
+  new_entry = avl_create (org->avl_compare, org->avl_param,
                     allocator != NULL ? allocator : org->avl_alloc);
-  if (new == NULL)
+  if (new_entry == NULL)
     return NULL;
-  new->avl_count = org->avl_count;
-  if (new->avl_count == 0)
-    return new;
+  new_entry->avl_count = org->avl_count;
+  if (new_entry->avl_count == 0)
+    return new_entry;
 
   x = (const struct avl_node *) &org->avl_root;
-  y = (struct avl_node *) &new->avl_root;
+  y = (struct avl_node *) &new_entry->avl_root;
   for (;;)
     {
       while (x->avl_link[0] != NULL)
@@ -752,17 +752,17 @@ avl_copy (const struct avl_table *org, avl_copy_func *copy,
           assert (height < 2 * (AVL_MAX_HEIGHT + 1));
 
           y->avl_link[0] =
-            new->avl_alloc->libavl_malloc (new->avl_alloc,
+            new_entry->avl_alloc->libavl_malloc (new_entry->avl_alloc,
                                            sizeof *y->avl_link[0]);
           if (y->avl_link[0] == NULL)
             {
-              if (y != (struct avl_node *) &new->avl_root)
+              if (y != (struct avl_node *) &new_entry->avl_root)
                 {
                   y->avl_data = NULL;
                   y->avl_link[1] = NULL;
                 }
 
-              copy_error_recovery (stack, height, new, destroy);
+              copy_error_recovery (stack, height, new_entry, destroy);
               return NULL;
             }
 
@@ -784,7 +784,7 @@ avl_copy (const struct avl_table *org, avl_copy_func *copy,
               if (y->avl_data == NULL)
                 {
                   y->avl_link[1] = NULL;
-                  copy_error_recovery (stack, height, new, destroy);
+                  copy_error_recovery (stack, height, new_entry, destroy);
                   return NULL;
                 }
             }
@@ -792,11 +792,11 @@ avl_copy (const struct avl_table *org, avl_copy_func *copy,
           if (x->avl_link[1] != NULL)
             {
               y->avl_link[1] =
-                new->avl_alloc->libavl_malloc (new->avl_alloc,
+                new_entry->avl_alloc->libavl_malloc (new_entry->avl_alloc,
                                                sizeof *y->avl_link[1]);
               if (y->avl_link[1] == NULL)
                 {
-                  copy_error_recovery (stack, height, new, destroy);
+                  copy_error_recovery (stack, height, new_entry, destroy);
                   return NULL;
                 }
 
@@ -808,7 +808,7 @@ avl_copy (const struct avl_table *org, avl_copy_func *copy,
             y->avl_link[1] = NULL;
 
           if (height <= 2)
-            return new;
+            return new_entry;
 
           y = stack[--height];
           x = stack[--height];

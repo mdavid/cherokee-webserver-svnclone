@@ -50,6 +50,9 @@
 # define HEADER_INTERNAL_CHECK(h)
 #endif
 
+#ifndef HAVE_STRSEP
+  extern char *strsep (char** str, const char* delims);
+#endif
 
 
 static struct {
@@ -193,8 +196,8 @@ add_unknown_header (cherokee_header_t *hdr, off_t header_off, off_t info_off, in
 
 	hdr->unknowns_len++;
 
-	hdr->unknowns = realloc (hdr->unknowns, 
-				 sizeof(cherokee_header_unknown_entry_t) * hdr->unknowns_len);
+	hdr->unknowns = (cherokee_header_unknown_entry_t *) realloc (
+		hdr->unknowns, sizeof(cherokee_header_unknown_entry_t) * hdr->unknowns_len);
 				 
 	if (hdr->unknowns == NULL) {
 		return ret_nomem;
@@ -261,7 +264,7 @@ parse_response_first_line (cherokee_header_t *hdr, cherokee_buffer_t *buf, char 
 	 */
 	memcpy (tmp, begin+9, 3);
 	tmp[3] = '\0';
-	hdr->response = atoi (tmp);
+	hdr->response = (cherokee_http_t) atoi (tmp);
 
 	return ret_ok;
 }

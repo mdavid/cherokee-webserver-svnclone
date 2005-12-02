@@ -66,7 +66,7 @@ build_regexs_list (cherokee_handler_redir_t *n, cherokee_connection_t *cnt, list
 		char            *subs;
 		int              subs_len;
 		pcre            *re;
-		struct cre_list *new;
+		struct cre_list *new_regex;
 		char            *tmp = LIST_ITEM_INFO(i);
 
 		/* Read the values
@@ -88,15 +88,15 @@ build_regexs_list (cherokee_handler_redir_t *n, cherokee_connection_t *cnt, list
 
 		/* Add to the list in the same order that they are read
 		 */
-		new = (struct cre_list*)malloc(sizeof(struct cre_list));
-		new->re = re;
-		new->subs = subs;
-		new->next = NULL;
+		new_regex = (struct cre_list*)malloc(sizeof(struct cre_list));
+		new_regex->re = re;
+		new_regex->subs = subs;
+		new_regex->next = NULL;
 
 		/* Add entry to the list
 		 */
- 		*last_item = new; 
- 		last_item = &(new->next); 
+ 		*last_item = new_regex; 
+ 		last_item = &(new_regex->next); 
 	}
 }
 
