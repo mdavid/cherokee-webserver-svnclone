@@ -376,7 +376,7 @@ purge_maybe_lingering (cherokee_thread_t *thread, cherokee_connection_t *conn)
 static void
 maybe_purge_closed_connection (cherokee_thread_t *thread, cherokee_connection_t *conn)
 {
-	cherokee_server_t *srv = thread->server;
+	cherokee_server_t *srv = SRV(thread->server);
 
 	/* TCP cork
 	 */
@@ -460,7 +460,7 @@ process_active_connections (cherokee_thread_t *thd)
 	cherokee_boolean_t process;
 	
 	cherokee_connection_t *conn = NULL;
-	cherokee_server_t     *srv  = thd->server;
+	cherokee_server_t     *srv  = SRV(thd->server);
 
 
 	/* Process active connections
@@ -1579,7 +1579,7 @@ cherokee_thread_get_new_connection (cherokee_thread_t *thd, cherokee_connection_
 	cherokee_server_t     *server;
 	static cuint_t         last_conn_id = 0;
 
-	server = thd->server;
+	server = SRV(thd->server);
 
 	if (list_empty (&thd->reuse_list)) {
 		ret_t ret;

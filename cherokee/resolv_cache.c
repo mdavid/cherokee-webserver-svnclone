@@ -81,7 +81,7 @@ cherokee_resolv_cache_get_default (cherokee_resolv_cache_t **resolv)
 		return ret_ok;
 	}
 	
-	*resolv = malloc (sizeof(cherokee_resolv_cache_t));
+	*resolv = (cherokee_resolv_cache_t *) malloc (sizeof(cherokee_resolv_cache_t));
 	return cherokee_resolv_cache_init (*resolv);
 }
 

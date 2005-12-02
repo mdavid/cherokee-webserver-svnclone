@@ -151,7 +151,7 @@ free_linked_list (linked_list_t *list, void (*free_func) (void *))
 static char *
 make_finish_with_slash (char *string, int *len)
 {
-	   char *new;
+	   char *new_entry;
 	   int   new_len;
 
 	   if (string[(*len)-1] == '/') {
@@ -159,12 +159,12 @@ make_finish_with_slash (char *string, int *len)
 	   }
 
 	   new_len = (*len) + 2;
-	   new  = (char*) malloc (new_len);
+	   new_entry  = (char*) malloc (new_len);
 
-	   *len = snprintf (new, new_len, "%s/", string);
+	   *len = snprintf (new_entry, new_len, "%s/", string);
 
 	   free (string);
-	   return new;
+	   return new_entry;
 }
 
 static char *
@@ -738,7 +738,7 @@ maybe_encoder_options : '{' encoder_options '}'
 
 encoder_option : T_ALLOW id_list
 {
-	   linked_list_t *i;
+	   linked_list_t            *i;
 	   cherokee_matching_list_t *matching;
 
 	   cherokee_matching_list_new (&matching);
@@ -759,7 +759,7 @@ encoder_option : T_ALLOW id_list
 
 encoder_option : T_DENY id_list
 {
-	   linked_list_t *i;
+	   linked_list_t            *i;
 	   cherokee_matching_list_t *matching;
 
 	   cherokee_matching_list_new (&matching);

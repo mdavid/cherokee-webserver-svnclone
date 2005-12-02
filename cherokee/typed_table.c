@@ -44,7 +44,7 @@ new_item (void)
 {
 	item_t *n;
 
-	n = malloc (sizeof(item_t));
+	n = (item_t *) malloc (sizeof(item_t));
 	if (unlikely (n == NULL)) 
 		return NULL;
 
@@ -189,7 +189,7 @@ cherokee_typed_table_get_data (cherokee_table_t *table, char *index, void **data
 	ret_t   ret;
 	item_t *val;
 
-	ret = cherokee_table_get (table, index, (void *)&val);
+	ret = cherokee_table_get (table, index, (void **)&val);
 	if (ret != ret_ok) return ret;
 
         if (val->type != typed_data) 
@@ -206,7 +206,7 @@ cherokee_typed_table_get_list (cherokee_table_t *table, char *index, list_t **li
 	ret_t   ret;
 	item_t *val;
 
-	ret = cherokee_table_get (table, index, (void *)&val);
+	ret = cherokee_table_get (table, index, (void **)&val);
 	if (ret != ret_ok) return ret;
 
         if (val->type != typed_list) 
@@ -240,7 +240,7 @@ cherokee_typed_table_get_str (cherokee_table_t *table, char *index, char **str)
 	ret_t   ret;
 	item_t *val;
 
-	ret = cherokee_table_get (table, index, (void *)&val);
+	ret = cherokee_table_get (table, index, (void **)&val);
 	if (ret != ret_ok) return ret;
 
         if (val->type != typed_str) 

@@ -105,7 +105,7 @@ lookup_env (char *table[])
 
 	len = strcspn (ptr, " \n\t\n\r");
 
-	if (!(entry = malloc (len + 1))) {
+	if (!(entry = (char *) malloc (len + 1))) {
 		PRINT_ERROR ("Out of memory.\n");
 	}
 

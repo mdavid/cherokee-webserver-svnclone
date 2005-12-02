@@ -31,6 +31,9 @@
 
 #include <cherokee/common.h>
 
+
+CHEROKEE_BEGIN_DECLS
+
 typedef struct cherokee_resolv_cache cherokee_resolv_cache_t;
 #define RESOLV(x) ((cherokee_resolv_cache_t *)(x))
 

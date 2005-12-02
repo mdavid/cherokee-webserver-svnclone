@@ -49,8 +49,8 @@ cherokee_module_read_config_new  (cherokee_module_read_config_t **config)
 
 	cherokee_module_init_base (MODULE(n));
 
-	MODULE(n)->new  = (module_func_new_t)  cherokee_module_read_config_new;
-	MODULE(n)->free = (module_func_free_t) cherokee_module_read_config_free;
+	MODULE(n)->instance = (module_func_new_t)  cherokee_module_read_config_new;
+	MODULE(n)->free     = (module_func_free_t) cherokee_module_read_config_free;
 
 	*config = n;
 	return ret_ok;

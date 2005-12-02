@@ -467,7 +467,8 @@ cherokee_buffer_crc32 (cherokee_buffer_t  *buf)
 ret_t 
 cherokee_buffer_read_file (cherokee_buffer_t *buf, char *filename)
 {
-	int r, ret, f;
+	int r, f;
+	ret_t ret;
 	struct stat info;
 
 	/* Stat() the file
@@ -729,21 +730,21 @@ cherokee_buffer_encode_base64 (cherokee_buffer_t *buf)
 	cuchar_t         *out;
 	ret_t             ret;
 	int               i, j;
-	cuint_t           inlen = buf->len;
-	cherokee_buffer_t new   = CHEROKEE_BUF_INIT;
+	cuint_t           inlen   = buf->len;
+	cherokee_buffer_t new_buf = CHEROKEE_BUF_INIT;
 		
 	static const char base64tab[]=
 		"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 	/* Get memory
 	 */
-	ret = cherokee_buffer_ensure_size (&new, (buf->len+4)*4/3);
+	ret = cherokee_buffer_ensure_size (&new_buf, (buf->len+4)*4/3);
 	if (unlikely (ret != ret_ok)) return ret;
 
 	/* Encode
 	 */
 	in  = (cuchar_t *) buf->buf;
-	out = (cuchar_t *) new.buf;
+	out = (cuchar_t *) new_buf.buf;
 
         for (i=0, j=0; i < inlen; i += 3) {
 		int     a=0,b=0,c=0;
@@ -769,15 +770,15 @@ cherokee_buffer_encode_base64 (cherokee_buffer_t *buf)
 	
 
 	out[j]  = '\0';
-	new.len = j;
+	new_buf.len = j;
 
 	/* Set the encoded string
 	 */
 	free (buf->buf);
 
-	buf->buf  = new.buf;
-	buf->len  = new.len;	
-	buf->size = new.size;
+	buf->buf  = new_buf.buf;
+	buf->len  = new_buf.len;	
+	buf->size = new_buf.size;
 
 	return ret_ok;
 }
@@ -1113,7 +1114,7 @@ cherokee_buffer_replace_string (cherokee_buffer_t *buf,
 
 	/* Take the new memory chunk
 	 */
-	result = malloc (result_length + 1);
+	result = (char *) malloc (result_length + 1);
 	if (result == NULL) return ret_nomem;
 	
 	/* Build the new string
