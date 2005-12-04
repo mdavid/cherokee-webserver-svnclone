@@ -316,7 +316,7 @@ yyerror (char* msg)
 
 %token T_QUOTE T_DENY T_THREAD_NUM T_SSL_CERT_KEY_FILE T_SSL_CERT_FILE T_KEEPALIVE_MAX_REQUESTS T_ERROR_HANDLER
 %token T_TIMEOUT T_KEEPALIVE T_DOCUMENT_ROOT T_LOG T_MIME_FILE T_DIRECTORY T_HANDLER T_USER T_GROUP T_POLICY
-%token T_SERVER T_USERDIR T_PIDFILE T_LISTEN T_SERVER_TOKENS T_ENCODER T_ALLOW T_IO_CACHE T_DIRECTORYINDEX 
+%token T_SERVER T_USERDIR T_PIDFILE T_LISTEN T_SERVER_TOKENS T_ENCODER T_ALLOW T_DIRECTORYINDEX 
 %token T_ICONS T_AUTH T_NAME T_METHOD T_PASSWDFILE T_SSL_CA_LIST_FILE T_FROM T_SOCKET T_LOG_FLUSH_INTERVAL
 %token T_HEADERFILE T_PANIC_ACTION T_JUST_ABOUT T_LISTEN_QUEUE_SIZE T_SENDFILE T_MINSIZE T_MAXSIZE T_MAX_FDS
 %token T_SHOW T_CHROOT T_ONLY_SECURE T_MAX_CONNECTION_REUSE T_REWRITE T_POLL_METHOD T_EXTENSION T_IPV6 T_ENV 
@@ -967,10 +967,27 @@ handler_option : T_ID str_type
 			 dirs_table_set_handler_prop (current_config_entry, "url", $2);
 	   } else if (!strcasecmp ($1, "filedir")) {
 			 dirs_table_set_handler_prop (current_config_entry, "filedir", $2);
+	   } else if (!strcasecmp ($1, "changeuser")) {
+			 cherokee_config_entry_set_handler_prop (current_config_entry, "changeuser", typed_int, INT_TO_POINTER($2), NULL);
 	   } else {
 			 return 1;
 	   }
 };
+
+
+handler_option : T_ID T_NUMBER
+{
+	   if (!strcasecmp ($1, "changeuser")) {
+			 cherokee_config_entry_set_handler_prop (current_config_entry, "changeuser", typed_int, INT_TO_POINTER($2), NULL);
+	   } else if (!strcasecmp ($1, "iocache")) {
+			 cherokee_config_entry_set_handler_prop (current_config_entry, "cache", typed_int, INT_TO_POINTER($2), NULL);
+	   } else if (!strcasecmp ($1, "errorhandler")) {
+			 cherokee_config_entry_set_handler_prop (current_config_entry, "error_handler", typed_int, INT_TO_POINTER($2), NULL);
+	   } else {
+			 return 1;
+	   }
+};
+
 
 handler_option : T_HEADERFILE id_list
 {
@@ -1037,11 +1054,6 @@ handler_option : T_JUST_ABOUT
 handler_option : T_SERVER T_ADDRESS_PORT
 { dirs_table_set_handler_prop (current_config_entry, "server", $2); };
 
-handler_option : T_IO_CACHE T_NUMBER
-{ cherokee_config_entry_set_handler_prop (current_config_entry, "cache", typed_int, INT_TO_POINTER($2), NULL); };
-
-handler_option: T_ERROR_HANDLER T_NUMBER
-{ cherokee_config_entry_set_handler_prop (current_config_entry, "error_handler", typed_int, INT_TO_POINTER($2), NULL); };
 
 handler_option : T_NUMBER http_generic
 {

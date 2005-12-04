@@ -1,3 +1,14 @@
+2005-12-04  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/handler_cgi.c (cherokee_handler_cgi_new,
+	cherokee_handler_cgi_init): Added support for ChangeUser.
+
+	* cherokee/read_config_grammar.y (str_type): Added ChangeUser
+	option.
+
+	* cherokee/read_config_scanner.l, cherokee/read_config_grammar.y
+	(T_IO_CACHE): Reserved word removed.
+
 2005-12-01  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* m4/sendfile_samba.m4: --with-sendfile-support parameter fixed.
