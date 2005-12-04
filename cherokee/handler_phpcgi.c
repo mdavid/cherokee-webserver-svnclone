@@ -133,6 +133,7 @@ cherokee_handler_phpcgi_new  (cherokee_handler_t **hdl, void *cnt, cherokee_tabl
 {
 	ret_t  ret;
 	char  *interpreter = NULL;
+	int    change_user = 0;
 
 	/* Create the new handler CGI object
 	 */

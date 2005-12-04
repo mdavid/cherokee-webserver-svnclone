@@ -111,7 +111,6 @@ nl              [\n\r]
 "policy"                { return T_POLICY; }
 "OnlySecure"            { return T_ONLY_SECURE; }
 "MaxConnectionReuse"    { return T_MAX_CONNECTION_REUSE; }
-"IOCache"               { return T_IO_CACHE; }
 "Env"                   { return T_ENV; }
 "HeaderFile"            { return T_HEADERFILE; }
 "On"                    { yylval.number = 1; return T_NUMBER; }

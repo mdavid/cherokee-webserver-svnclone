@@ -111,6 +111,7 @@ cherokee_handler_cgi_new  (cherokee_handler_t **hdl, void *cnt, cherokee_table_t
 	n->system_env        = NULL;
 	n->content_length    = 0;
 	n->is_error_handler  = 0;
+	n->change_user       = 0;
 	
 	n->envp_last = 0;	
 	for (i=0; i<ENV_VAR_NUM; i++)
@@ -122,6 +123,7 @@ cherokee_handler_cgi_new  (cherokee_handler_t **hdl, void *cnt, cherokee_table_t
 		cherokee_typed_table_get_str (properties, "scriptalias", &n->script_alias);
 		cherokee_typed_table_get_list (properties, "env", &n->system_env);
 		cherokee_typed_table_get_int (properties, "error_handler", &n->is_error_handler);
+		cherokee_typed_table_get_int (properties, "changeuser", &n->change_user);		
 	}
 
 	if (n->is_error_handler) {
@@ -606,6 +608,17 @@ cherokee_handler_cgi_init (cherokee_handler_cgi_t *cgi)
 			argv[2] = cgi->extra_param;
 		} else {
 			argv[1] = cgi->extra_param;
+		}
+
+		/* Change the execution user?
+		 */
+		if (cgi->change_user) {
+			struct stat info;
+			
+			re = stat (argv[1], &info);
+			if (re >= 0) {
+				setuid (info.st_uid);
+			}
 		}
 
 		/* Lets go.. execute it!
