@@ -168,18 +168,15 @@ endif
 #
 # Handler fastcgi
 #
-if STATIC_HANDLER_CGI
-if STATIC_HANDLER_FASTCGI
-    common_cgi =
-else
-    common_cgi = cgi.h \
-			  cgi.c
-endif
+if !STATIC_HANDLER_FASTCGI
+handlerfcgi_cgi = cgi.h cgi.c
 endif
 
 handler_fastcgi = \
-$(common_cgi) \
+$(handlerfcgi_cgi) \
 fastcgi.h \
+fastcgi-common.h \
+fastcgi-common.c \
 handler_fastcgi.c \
 handler_fastcgi.h \
 fcgi_manager.h \
@@ -232,9 +229,12 @@ endif
 #
 # Handler cgi
 #
+if !STATIC_HANDLER_CGI
+handlercgi_cgi = cgi.h cgi.c
+endif
+
 handler_cgi = \
-cgi.h \
-cgi.c \
+$(handlercgi_cgi) \
 handler_cgi.c \
 handler_cgi.h
 
@@ -578,7 +578,6 @@ $(poll_kqueue_src) \
 $(poll_port_src) \
 $(poll_select_src) \
 $(win32_src) \
-\
 cherokee.h \
 http.h \
 http.c \
@@ -640,7 +639,6 @@ resolv_cache.h \
 resolv_cache.c \
 typed_table.h \
 typed_table.c \
-\
 mime_grammar.y \
 mime_scanner.l
 
@@ -653,6 +651,17 @@ request.c \
 downloader.h \
 downloader-protected.h \
 downloader.c 
+
+
+if STATIC_HANDLER_FASTCGI
+   common_cgi = cgi.h \
+	     	 cgi.c
+endif
+
+if STATIC_HANDLER_CGI
+   common_cgi = cgi.h \
+	     	 cgi.c
+endif
 
 libcherokee_server_la_SOURCES = \
 icons_grammar.y \
@@ -681,6 +690,8 @@ $(static_validator_pam_src) \
 $(static_validator_plain_src) \
 $(static_validator_htdigest_src) \
 $(static_validator_htpasswd_src) \
+\
+$(common_cgi) \
 \
 connection.h \
 connection-protected.h \

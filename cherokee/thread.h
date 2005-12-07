@@ -35,6 +35,7 @@
 #include "socket.h"
 #include "connection.h"
 #include "fdpoll.h"
+#include "table.h"
 
 
 typedef enum {
@@ -53,36 +54,38 @@ typedef struct {
 	struct list_head base;
 
 #ifdef HAVE_PTHREAD
-	pthread_t          thread;
-	pthread_mutex_t    starting_lock;
-	pthread_mutex_t    ownership;
+	pthread_t               thread;
+	pthread_mutex_t         starting_lock;
+	pthread_mutex_t         ownership;
 #endif
 
 	cherokee_fdpoll_t      *fdpoll;
 	cherokee_thread_type_t  thread_type;
 	cherokee_thread_pref_t  thread_pref;
 
-	time_t              bogo_now;
-	struct tm           bogo_now_tm;
-	cherokee_buffer_t  *bogo_now_string;
+	time_t                  bogo_now;
+	struct tm               bogo_now_tm;
+	cherokee_buffer_t      *bogo_now_string;
 	
-	void               *server;
-	cherokee_boolean_t  exit;
+	void                   *server;
+	cherokee_boolean_t      exit;
 
-	int     active_list_num;
-	list_t  active_list;
-	int     polling_list_num;
-	list_t  polling_list;
-	list_t  reuse_list;
-	int     reuse_list_num;
+	int                     active_list_num;
+	list_t                  active_list;
+	int                     polling_list_num;
+	list_t                  polling_list;
+	list_t                  reuse_list;
+	int                     reuse_list_num;
 
-	int     pending_conns_num;      /* Waiting pipelining connections */
+	int                     pending_conns_num;   /* Waiting pipelining connections */
 
 	struct {
-		uint32_t continuous;
-		uint32_t continuous_max;
-		uint32_t recalculate;		
+		uint32_t        continuous;
+		uint32_t        continuous_max;
+		uint32_t        recalculate;		
 	} accept;
+
+	cherokee_table_t        fastcgi_managers;
 
 } cherokee_thread_t;
 
@@ -99,15 +102,16 @@ ret_t cherokee_thread_step_MULTI_THREAD  (cherokee_thread_t *thd, cherokee_boole
 ret_t cherokee_thread_step_SINGLE_THREAD (cherokee_thread_t *thd, cherokee_boolean_t dont_block);
 #endif
 
+
 ret_t cherokee_thread_new  (cherokee_thread_t **thd, void *server, cherokee_thread_type_t type, cherokee_poll_type_t fdtype, int system_fd_num, int fd_num);
 ret_t cherokee_thread_free (cherokee_thread_t  *thd);
 
-ret_t cherokee_thread_unlock                  (cherokee_thread_t *thd);
-ret_t cherokee_thread_wait_end                (cherokee_thread_t *thd);
+ret_t cherokee_thread_unlock                     (cherokee_thread_t *thd);
+ret_t cherokee_thread_wait_end                   (cherokee_thread_t *thd);
 
-ret_t cherokee_thread_add_connection          (cherokee_thread_t *thd, cherokee_connection_t  *conn);
-ret_t cherokee_thread_get_new_connection      (cherokee_thread_t *thd, cherokee_connection_t **conn);
-ret_t cherokee_thread_set_reusable_connection (cherokee_thread_t *thd, cherokee_connection_t  *conn);
+ret_t cherokee_thread_add_connection             (cherokee_thread_t *thd, cherokee_connection_t  *conn);
+ret_t cherokee_thread_get_new_connection         (cherokee_thread_t *thd, cherokee_connection_t **conn);
+ret_t cherokee_thread_set_reusable_connection    (cherokee_thread_t *thd, cherokee_connection_t  *conn);
 
 ret_t cherokee_thread_deactive_to_polling        (cherokee_thread_t *thd, cherokee_connection_t *conn, int fd, int rw);
 ret_t cherokee_thread_reactive_from_polling      (cherokee_thread_t *thd, cherokee_connection_t *conn);
@@ -115,7 +119,7 @@ ret_t cherokee_thread_move_connection_to_polling (cherokee_thread_t *thd, cherok
 ret_t cherokee_thread_move_connection_to_active  (cherokee_thread_t *thd, cherokee_connection_t *conn);
 ret_t cherokee_thread_internal_request_rewrite   (cherokee_thread_t *thd, cherokee_connection_t *conn, cherokee_buffer_t *nr);
 
-int   cherokee_thread_connection_num          (cherokee_thread_t *thd);
-ret_t cherokee_thread_close_all_connections   (cherokee_thread_t *thd);
+int   cherokee_thread_connection_num             (cherokee_thread_t *thd);
+ret_t cherokee_thread_close_all_connections      (cherokee_thread_t *thd);
 
 #endif /* CHEROKEE_THREAD_H */

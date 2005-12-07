@@ -49,9 +49,11 @@
 #include "encoder.h"
 #include "logger_table.h"
 #include "access.h"
+#include "list.h"
 #include "list_ext.h"
 #include "reqs_list.h"
 #include "reqs_list_entry.h"
+#include "fastcgi-common.h"
 
 
 /* Define the parameter name of the yyparse() argument
@@ -91,6 +93,7 @@ static list_t                          *current_reqs_list           = NULL;
 static cherokee_virtual_server_t       *current_virtual_server      = NULL;
 static cherokee_encoder_table_entry_t  *current_encoder_entry       = NULL;
 static cherokee_module_info_t          *current_module_info         = NULL;
+static cherokee_fcgi_server_t          *current_fastcgi_server      = NULL;
 static cuint_t                          priority_counter            = 1;
 
 typedef struct {
@@ -128,7 +131,6 @@ struct {
 #define auto_virtual_server ((current_virtual_server) ? current_virtual_server : SRV(server)->vserver_default)
 #define auto_dirs_table     ((current_dirs_table) ? current_dirs_table : &(auto_virtual_server)->dirs)
 #define auto_reqs_table     ((current_reqs_list) ? current_reqs_list : &(auto_virtual_server)->reqs)
-
 
 static void
 free_linked_list (linked_list_t *list, void (*free_func) (void *))
@@ -326,7 +328,7 @@ yyerror (char* msg)
 %token <string> T_QSTRING T_FULLDIR T_ID T_HTTP_URL T_HTTPS_URL T_HOSTNAME T_IP T_DOMAIN_NAME T_ADDRESS_PORT
 
 %type <name_ptr> directory_option handler
-%type <string> host_name http_generic id_or_path ip_or_domain str_type
+%type <string> host_name http_generic id_or_path ip_or_domain str_type address_or_path
 %type <list> id_list ip_list domain_list id_path_list
 
 %%
@@ -1051,8 +1053,52 @@ handler_option : T_SOCKET T_FULLDIR
 handler_option : T_JUST_ABOUT
 { cherokee_config_entry_set_handler_prop (current_config_entry, "about", typed_int, INT_TO_POINTER(1), NULL); };
 
-handler_option : T_SERVER T_ADDRESS_PORT
-{ dirs_table_set_handler_prop (current_config_entry, "server", $2); };
+handler_option : T_SERVER address_or_path 
+{ 
+	   list_t                  nlist        = LIST_HEAD_INIT(nlist);
+	   list_t                 *plist        = NULL;
+	   cherokee_table_t       *properties;
+	   cherokee_fcgi_server_t *server_entry = NULL;
+	   
+	   /* Add the new entry to the list
+	    */
+	   properties = current_config_entry->handler_properties;
+
+	   if (properties != NULL) {
+			 cherokee_typed_table_get_list (properties, "servers", &plist);
+	   }
+
+	   /* The list is new
+	    */
+	   if (plist == NULL) {
+			 cherokee_fcgi_server_first_new (&server_entry);
+
+			 list_add ((list_t *)server_entry, &nlist);
+			 cherokee_config_entry_set_handler_prop (current_config_entry, "servers", typed_list, &nlist, 
+											 (cherokee_typed_free_func_t) cherokee_fcgi_server_free);
+	   } 
+	   /* Add to an existing list
+	    */
+	   else {
+			 cherokee_fcgi_server_new (&server_entry);
+			 list_add_tail ((list_t *)server_entry, plist);
+	   }
+
+	   current_fastcgi_server = server_entry;
+	   cherokee_buffer_add (&server_entry->host, $2, strlen($2));
+
+} handler_server_optinal;
+
+
+address_or_path : T_ADDRESS_PORT { $$ = $1; }
+                | T_FULLDIR      { $$ = $1; };
+
+handler_server_optinal : 
+                       | '{' T_ID str_type '}' 
+{
+	   if (strcasecmp($2, "interpreter") != 0) return 1;
+	   cherokee_buffer_add (&current_fastcgi_server->interpreter, $3, strlen($3));
+};
 
 
 handler_option : T_NUMBER http_generic
@@ -1152,8 +1198,6 @@ extension : T_EXTENSION id_list '{'
 	   extension_content_tmp.handler_name   = NULL;
 	   extension_content_tmp.document_root  = NULL;
 
-//	   printf ("Extensions %d\n", extension_content_tmp.entry->priority);
-
 	   /* Extensions table is created under demand
 	    */
 	   if (extension_content_tmp.vserver->exts == NULL) {
@@ -1240,8 +1284,6 @@ directory : T_DIRECTORY T_FULLDIR '{'
 	   directory_content_tmp.entry          = config_entry_new (); /* new! */
 	   directory_content_tmp.handler_name   = NULL;
 	   directory_content_tmp.document_root  = NULL;
-
-//	   printf ("Directory %s %d\n", $2, directory_content_tmp.entry->priority);
 } 
 directory_options '}'
 {
@@ -1314,8 +1356,6 @@ request : T_REQUEST T_QSTRING '{'
 	   request_content_tmp.handler_name   = NULL;
 	   request_content_tmp.document_root  = NULL;
 	   
-//	   printf ("Request %s %d\n", $2, request_content_tmp.entry->base_entry.priority);
-
 	   cherokee_buffer_add (&(request_content_tmp.entry->request), $2, strlen($2));
 } 
 directory_options '}'
@@ -1377,7 +1417,6 @@ directory_option : T_AUTH id_list '{' auth_options '}'
 {
 	   linked_list_t               *i     = $2;
 	   cherokee_config_entry_t *entry = current_config_entry;
-//directory_content_tmp.entry;
 
 	   while (i != NULL) {
 			 if (strncasecmp(i->string, "basic", 5) == 0) {

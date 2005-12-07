@@ -568,7 +568,9 @@ cherokee_buffer_multiply (cherokee_buffer_t *buf, int num)
 ret_t
 cherokee_buffer_print_debug (cherokee_buffer_t *buf, int len)
 {
-	int i, length;
+	int           i, length;
+	char          text[17];
+	unsigned char tmp;
 
 	if ((len == -1) || (buf->len <= len)) {
 		length = buf->len;
@@ -576,20 +578,26 @@ cherokee_buffer_print_debug (cherokee_buffer_t *buf, int len)
 		length = len;
 	}
 
-
+	text [16] = 0;
 	for (i=0; i < length; i++) {
 		if (i%16 == 0) {
 			printf ("%08x ", i);
 		}
 
-		printf ("%02x", buf->buf[i] & 0xFF);
+		tmp = buf->buf[i];
+		printf ("%02x",  tmp & 0xFF);
+
+		if ((tmp > ' ') &&  (tmp < 128))
+			text [i%16] = tmp;
+		else
+			text [i%16] = '.';
 
 		if ((i+1)%2 == 0) {
 			printf (" ");
 		}
 
 		if ((i+1)%16 == 0) {
-			printf ("\n");
+			printf ("%s\n", text);
 		}
 
 		fflush(stdout);

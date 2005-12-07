@@ -43,6 +43,7 @@
 
 #ifdef HAVE_SYS_SOCKET_H
 # include <sys/socket.h>
+# include <sys/un.h>
 #endif
 
 #ifdef HAVE_ARPA_INET_H
@@ -100,6 +101,7 @@ typedef enum {
 typedef union {
 	struct sockaddr    sa;
 	struct sockaddr_in sa_in;
+	struct sockaddr_un sa_un;
 #ifdef HAVE_SOCKADDR_IN6
 	struct sockaddr_in6 sa_in6;
 #endif
@@ -140,12 +142,14 @@ typedef struct {
 #define SOCKET_FD(s)           (SOCKET(s)->socket)
 #define SOCKET_AF(s)           (SOCKET(s)->client_addr.sa.sa_family)
 #define SOCKET_ADDR(s)         (SOCKET(s)->client_addr)
+#define SOCKET_ADDR_UNIX(s)    (SOCKET(s)->client_addr.sa_un)
 #define SOCKET_ADDR_IPv4(s)    ((struct sockaddr_in  *)&SOCKET(s)->client_addr)
 #define SOCKET_ADDR_IPv6(s)    ((struct sockaddr_in6 *)&SOCKET(s)->client_addr)
 #define SOCKET_STATUS(s)       (SOCKET(s)->status)
 
 #define SOCKET_SIN_PORT(s)     (SOCKET(s)->client_addr.sa_in.sin_port)
 #define SOCKET_SIN_ADDR(s)     (SOCKET(s)->client_addr.sa_in.sin_addr)
+#define SOCKET_SUN_PATH(s)     (SOCKET(s)->client_addr.sa_un.sun_path)
 
 #define SOCKET_ADDRESS_IPv4(s) (SOCKET_ADDR_IPv4(s)->sin_addr.s_addr)
 #define SOCKET_ADDRESS_IPv6(s) (SOCKET_ADDR_IPv6(s)->sin6_addr.s6_addr)

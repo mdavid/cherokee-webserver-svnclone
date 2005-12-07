@@ -1,3 +1,9 @@
+2005-12-05  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* configure.in: Updated ${srcdir}/cherokee/loader.init.inc
+	generation.  Now it executes the module init function even if it
+	is compiled statically.	
+
 2005-12-04  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cherokee/handler_cgi.c (cherokee_handler_cgi_new,
