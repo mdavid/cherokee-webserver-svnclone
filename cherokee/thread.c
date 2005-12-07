@@ -40,6 +40,7 @@
 #include "header-protected.h"
 #include "reqs_list_entry.h"
 #include "util.h"
+#include "fcgi_manager.h"
 
 
 #define DEBUG_BUFFER(b)  fprintf(stderr, "%s:%d len=%d crc=%d\n", __FILE__, __LINE__, b->len, cherokee_buffer_crc32(b))
@@ -241,6 +242,10 @@ cherokee_thread_new  (cherokee_thread_t **thd, void *server, cherokee_thread_typ
 		SHOULDNT_HAPPEN;
 #endif		
 	}
+
+	/* FastCGI managers
+	 */
+	cherokee_table_init (&n->fastcgi_managers);
 	
 	/* Return the object
 	 */
@@ -1091,13 +1096,10 @@ cherokee_thread_free (cherokee_thread_t *thd)
 	CHEROKEE_MUTEX_DESTROY (&thd->starting_lock);
 	CHEROKEE_MUTEX_DESTROY (&thd->ownership);
 
-//	if (thd->fcgi_managers != NULL) {
-		// FIXME: It can not depend on cherokee_fcgi_* functions
-		//
-//		cherokee_table_free2 (thd->fcgi_managers, 
-//				      (cherokee_table_free_item_t) cherokee_fcgi_manager_free);
-//		thd->fcgi_managers = NULL;
-//	}
+	/* FastCGI managers
+	 */
+	cherokee_table_mrproper2 (&thd->fastcgi_managers, 
+				  (cherokee_table_free_item_t) cherokee_fcgi_manager_free);
 
 	free (thd);
 	return ret_ok;

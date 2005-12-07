@@ -79,7 +79,7 @@
 # include <sys/uio.h>
 
 #elif defined(LINUX_BROKEN_SENDFILE_API)
- extern int32_t sendfile (int out_fd, int in_fd, int32_t *offset, uint32_t count);
+extern int32_t sendfile (int out_fd, int in_fd, int32_t *offset, uint32_t count);
 #endif
 
 
@@ -514,7 +514,7 @@ cherokee_socket_pton (cherokee_socket_t *socket, cherokee_buffer_t *host)
 #if defined(HAVE_INET_PTON)
 		r = inet_pton (AF_INET, host->buf, &SOCKET_SIN_ADDR(socket));
 #else		
-  	        r = inet_aton (host->buf, &SOCKET_SIN_ADDR(socket));
+	r = inet_aton (host->buf, &SOCKET_SIN_ADDR(socket));
 #endif
 
 	return (r > 0) ? ret_ok : ret_error;
@@ -1050,9 +1050,15 @@ cherokee_socket_sendfile (cherokee_socket_t *socket, int fd, size_t size, off_t 
 ret_t
 cherokee_socket_gethostbyname (cherokee_socket_t *socket, cherokee_buffer_t *hostname)
 {
+	if (SOCKET_AF(socket) == AF_UNIX) {
+		SOCKET_ADDR_UNIX(socket).sun_family = AF_UNIX;
+		memset ((char*) SOCKET_SUN_PATH (socket), 0, sizeof (SOCKET_ADDR_UNIX(socket)));
+		strncpy (SOCKET_SUN_PATH (socket), hostname->buf, hostname->len);
+		return ret_ok;
+	}
+
 	return cherokee_gethostbyname (hostname->buf, &SOCKET_SIN_ADDR(socket));
 }
-
 
 
 ret_t 
@@ -1060,7 +1066,11 @@ cherokee_socket_connect (cherokee_socket_t *socket)
 {
 	int r;
 
-	r = connect (SOCKET_FD(socket), (struct sockaddr *) &SOCKET_ADDR(socket), sizeof(cherokee_sockaddr_t));
+	if (SOCKET_AF(socket) == AF_UNIX) 
+		r = connect (SOCKET_FD(socket), (struct sockaddr *) &SOCKET_ADDR_UNIX(socket), sizeof(SOCKET_ADDR_UNIX(socket)));
+	else
+		r = connect (SOCKET_FD(socket), (struct sockaddr *) &SOCKET_ADDR(socket), sizeof(cherokee_sockaddr_t));
+
 	if (r < 0) {
 		int err = SOCK_ERRNO();
 		
@@ -1211,24 +1221,24 @@ cherokee_socket_set_timeout (cherokee_socket_t *socket, cuint_t timeout)
 	re = ioctlsocket (socket->socket, FIONBIO, &block);	
 	if (re == SOCKET_ERROR) {
 #else	
-	re = ioctl (socket->socket, FIONBIO, &block);	
-	if (re < 0) {
+		re = ioctl (socket->socket, FIONBIO, &block);	
+		if (re < 0) {
 #endif
-		PRINT_ERROR ("ioctl (%d, FIONBIO, &%d) = %d\n", socket->socket, block, re);
-		return ret_error;
-	}
+			PRINT_ERROR ("ioctl (%d, FIONBIO, &%d) = %d\n", socket->socket, block, re);
+			return ret_error;
+		}
 
-	/* Set the send / receive timeouts
-	 */
+		/* Set the send / receive timeouts
+		 */
 #ifdef SO_RCVTIMEO
-	tv.tv_sec  = timeout / 1000;
-	tv.tv_usec = timeout % 1000;
+		tv.tv_sec  = timeout / 1000;
+		tv.tv_usec = timeout % 1000;
 
-	re = setsockopt (socket->socket, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
-	if (re < 0) {
-		PRINT_ERROR ("Couldn't set SO_RCVTIMEO, fd=%d, timeout=%d\n", socket->socket, timeout);
-	}
+		re = setsockopt (socket->socket, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+		if (re < 0) {
+			PRINT_ERROR ("Couldn't set SO_RCVTIMEO, fd=%d, timeout=%d\n", socket->socket, timeout);
+		}
 #endif
 
-	return ret_ok;		      
-}
+		return ret_ok;		      
+	}

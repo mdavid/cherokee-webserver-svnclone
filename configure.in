@@ -871,11 +871,6 @@ AC_SUBST(WWW_ROOT)
 dnl
 dnl Options
 dnl
-AC_MSG_CHECKING([fresh module configuration from '${srcdir}'])
-	rm -f ${srcdir}/cherokee/loader.autoconf.h ${srcdir}/cherokee/loader.autoconf.inc 2>/dev/null
-	touch ${srcdir}/cherokee/loader.autoconf.h ${srcdir}/cherokee/loader.autoconf.inc
-AC_MSG_RESULT([ok])
-
 use_static_module=""
 AC_ARG_ENABLE(static-module,
 	   AC_HELP_STRING([--enable-static-module=MODULE][]),
@@ -892,14 +887,20 @@ if test "$have_crypt_lib $have_crypt_include" != "yes yes"; then
 	modules=`echo $modules | sed s/htpasswd//`
 fi
 
+add_calls=""
+init_calls=""
+headers=""
+ext_defs=""
+
 for mod in $modules; do
 	AC_MSG_CHECKING([module "$mod"])
 
 	if echo $use_static_module | grep $mod >/dev/null || echo $use_static_module | grep all >/dev/null; then
-		 cd cherokee
-		 echo "extern cherokee_module_info_t cherokee_${mod}_info;" >> ${srcdir}/loader.autoconf.h
-		 echo "add_static_entry (loader, \"$mod\", &cherokee_${mod}_info);" >> ${srcdir}/loader.autoconf.inc
-		 cd ..
+		 ext_defs="$ext_defs \n extern cherokee_module_info_t cherokee_${mod}_info;"
+
+		 headers="$headers \n void MODULE_INIT($mod) (cherokee_module_loader_t *loader);"
+		 add_calls="$add_calls \n add_static_entry (loader, \"$mod\", &cherokee_${mod}_info);"
+		 init_calls="$init_calls \n MODULE_INIT($mod)(loader);"
 
 	      AC_MSG_RESULT([static])
 	else
@@ -907,6 +908,8 @@ for mod in $modules; do
 	fi
 done
 
+echo "$headers \n\n $add_calls \n\n $init_calls" | sed 's/\\n/\n/g' > ${srcdir}/cherokee/loader.autoconf.inc
+echo "$ext_defs" | sed 's/\\n/\n/g' > ${srcdir}/cherokee/loader.autoconf.h
 
 dnl
 dnl Static/Dynamic modules

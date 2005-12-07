@@ -22,22 +22,30 @@
  * USA
  */
 
+#include "connection.h"
+#include "connection-protected.h"
 #include "common-internal.h"
+#include "handler_fastcgi.h"
 #include "fcgi_manager.h"
 #include "fastcgi.h"
 
 #include <sys/types.h>
 #include <unistd.h>
 
+#define ENTRIES "fastcgi"
+
 #define DEFAULT_PORT        8002
 #define CONN_POLL_INCREMENT 16
 
 
+static pthread_mutex_t   __global_fastcgi_manager_lock;
+
 ret_t 
-cherokee_fcgi_manager_new  (cherokee_fcgi_manager_t **fcgim)
+cherokee_fcgi_manager_new (cherokee_fcgi_manager_t **fcgim, cherokee_fcgi_server_t *config)
 {
 	int   i;
 	ret_t ret;
+	char *port;
 	CHEROKEE_NEW_STRUCT (n,fcgi_manager);
 
 	/* Init
@@ -45,23 +53,52 @@ cherokee_fcgi_manager_new  (cherokee_fcgi_manager_t **fcgim)
 	ret = cherokee_socket_new (&n->socket);
 	if (unlikely(ret != ret_ok)) return ret;
 
-	n->port = DEFAULT_PORT;
 	cherokee_buffer_init (&n->hostname);
-	cherokee_buffer_init (&n->read_buffer);
 
+	cherokee_buffer_init (&n->read_buffer);
 	cherokee_buffer_ensure_size (&n->read_buffer, DEFAULT_READ_SIZE);
 
-	n->conn_poll_size = 0;
-	n->conn_poll      = (cherokee_connection_t **) malloc (
+	n->port              = DEFAULT_PORT;
+	n->request_id        = 0;
+	n->connected         = -1;
+	n->configuration_ref = config;
+
+	n->conn_poll_size    = 0;
+	n->conn_poll         = (cherokee_connection_t **) malloc (
 		CONN_POLL_INCREMENT * sizeof(cherokee_connection_t *));
 
+	n->remaining_size = 0;
 	for (i=0; i<CONN_POLL_INCREMENT; i++) {
 		n->conn_poll[i] = NULL;
+	}
+
+	/* Parse the host
+	 */
+	if (cherokee_buffer_is_empty (&config->host)) {
+		return ret_error;
+	}
+
+	if (config->host.buf[0] == '/') {
+		cherokee_buffer_add_buffer (&n->hostname, &config->host);
+	} else {
+		/* Parse host name
+		 */
+		port = strchr(config->host.buf, ':');
+		if (port == NULL) {
+			cherokee_buffer_add_buffer (&n->hostname, &config->host);
+		} else {
+			*port = '\0';
+			n->port = atoi(port+1);
+			cherokee_buffer_add (&n->hostname, config->host.buf, port - config->host.buf);
+			*port = ':';
+		}
 	}
 
 	/* Return
 	 */
 	*fcgim = n;
+
+	CHEROKEE_MUTEX_INIT(&__global_fastcgi_manager_lock, NULL);
 	return ret_ok;
 }
 
@@ -92,47 +129,63 @@ connect_to_fastcgi_server (cherokee_fcgi_manager_t *fcgim)
 {
 	ret_t ret;
 
-	ret = cherokee_socket_set_client (fcgim->socket, AF_INET);
-	if (ret != ret_ok) return ret;
+	if (fcgim->hostname.buf[0] == '/') {
+		ret = cherokee_socket_set_client (fcgim->socket, AF_UNIX);
+		if (ret != ret_ok) return ret;
 
-	ret = cherokee_socket_gethostbyname (fcgim->socket, &fcgim->hostname);
-	if (ret != ret_ok) return ret;
+		ret = cherokee_socket_gethostbyname (fcgim->socket, &fcgim->hostname);
+		if (ret != ret_ok) return ret;
+	} else {
+		ret = cherokee_socket_set_client (fcgim->socket, AF_INET);
+		if (ret != ret_ok) return ret;
 
-	SOCKET_SIN_PORT(fcgim->socket) = htons(fcgim->port);
+		ret = cherokee_socket_gethostbyname (fcgim->socket, &fcgim->hostname);
+		if (ret != ret_ok) return ret;
 
-	return cherokee_socket_connect (fcgim->socket);
+		SOCKET_SIN_PORT(fcgim->socket) = htons(fcgim->port);
+	}
+
+	fcgim->connected = cherokee_socket_connect (fcgim->socket);
+	return fcgim->connected;
 }
 
 
 ret_t 
-cherokee_fcgi_manager_connect_to_srv (cherokee_fcgi_manager_t *fcgim, char *host)
+cherokee_fcgi_manager_connect_to_srv (cherokee_fcgi_manager_t *fcgim)
 {
-	char *port;
 	ret_t ret;
-	
-	/* Parse host name
-	 */
-	port = strchr(host, ':');
-	if (port == NULL) {
-		cherokee_buffer_add (&fcgim->hostname, host, strlen(host));
-	} else {
-		*port = '\0';
-		fcgim->port = atoi(port+1);
-		cherokee_buffer_add (&fcgim->hostname, host, port - host);
-		*port = ':';
-	}
 	
 	/* Connect to the server
 	 */
 	ret = connect_to_fastcgi_server (fcgim);
-	if (ret != ret_ok) return ret;
+	if (ret != ret_ok) {
+		return ret;
+	}
 
 	return ret_ok;
 }
 
+void
+reset_connection (cherokee_fcgi_manager_t *fcgim)
+{
+	cherokee_handler_fastcgi_t *fcgi;
+	cherokee_connection_t *conn;
+	int i;
+  
+	for (i=0; i<fcgim->conn_poll_size; i++) {
+		conn = fcgim->conn_poll [i];
+		if (conn != NULL) {
+			fcgi = (cherokee_handler_fastcgi_t *) conn->handler;
+			fcgi->status = fcgi_error;
+		}
+		cherokee_fcgi_manager_unregister_conn (fcgim, conn);
+	}
+ 
+	cherokee_fcgi_manager_connect_to_srv (fcgim);
+}
 
 ret_t 
-cherokee_fcgi_manager_spawn_srv (cherokee_fcgi_manager_t *fcgim, char *command)
+cherokee_fcgi_manager_spawn_srv (cherokee_fcgi_manager_t *fcgim)
 {
 	int                re;
 	int                child;
@@ -141,9 +194,9 @@ cherokee_fcgi_manager_spawn_srv (cherokee_fcgi_manager_t *fcgim, char *command)
 	cherokee_buffer_t  tmp;
 
 	cherokee_buffer_init (&tmp);
-	cherokee_buffer_add_va (&tmp, "exec %s", command);
+	cherokee_buffer_add_va (&tmp, "exec %s", fcgim->configuration_ref->interpreter.buf);
 
-	printf ("FastCGI server not running, launching: %s\n", command);
+	TRACE (ENTRIES, "Launching: \"/bin/sh %s\"\n", fcgim->configuration_ref->interpreter.buf);
 
 	child = fork();
 	switch (child) {
@@ -153,6 +206,7 @@ cherokee_fcgi_manager_spawn_srv (cherokee_fcgi_manager_t *fcgim, char *command)
 		re = execve ("/bin/sh", argv, envp);
 		if (re < 0) {
 			PRINT_ERROR ("ERROR: Could spawn %s\n", tmp.buf);
+			exit (1);
 		}
 
 	case -1:
@@ -172,13 +226,12 @@ error:
 	return ret_error;
 }
 
-
 ret_t 
 cherokee_fcgi_manager_register_conn (cherokee_fcgi_manager_t *fcgim, cherokee_connection_t *conn, cuint_t *id)
 {
 	cuint_t i;
 	cint_t  slot = -1;
-
+ 
 	/* Look for the first free slot
 	 */
 	for (i=0; i<fcgim->conn_poll_size; i++) {
@@ -192,7 +245,7 @@ cherokee_fcgi_manager_register_conn (cherokee_fcgi_manager_t *fcgim, cherokee_co
 	 */
 	if (slot == -1) {
 		fcgim->conn_poll = (cherokee_connection_t **) realloc (fcgim->conn_poll, 
-			(fcgim->conn_poll_size + CONN_POLL_INCREMENT) * sizeof(cherokee_connection_t *));		
+								       (fcgim->conn_poll_size + CONN_POLL_INCREMENT) * sizeof(cherokee_connection_t *));		
 		if (unlikely (fcgim->conn_poll == NULL)) return ret_nomem;
 
 		for (i=0; i<CONN_POLL_INCREMENT; i++) {
@@ -207,8 +260,7 @@ cherokee_fcgi_manager_register_conn (cherokee_fcgi_manager_t *fcgim, cherokee_co
 	 */
 	fcgim->conn_poll[slot] = conn;
 
-	printf ("registered id=%d\n", slot);
-	*id = slot;
+	*id = slot + 1;
 	return ret_ok;
 }
 
@@ -236,80 +288,230 @@ cherokee_fcgi_manager_send (cherokee_fcgi_manager_t *fcgim, cherokee_buffer_t *i
 {
 	ret_t ret;
 
+	CHEROKEE_MUTEX_LOCK (&__global_fastcgi_manager_lock);
+	/*printf ("-----------------------write start--------------------------\n");*/
 	ret = cherokee_socket_write (fcgim->socket, info, sent);
-	if (ret != ret_ok) return ret;
+	/*
+	  cherokee_buffer_print_debug (info, -1);
+	  printf ("-----------------------write end %d-%d-%d--------------------------\n", info->len, *sent, ret);*/
+	CHEROKEE_MUTEX_UNLOCK (&__global_fastcgi_manager_lock);
+	if (ret != ret_ok) {
+		reset_connection (fcgim);
+		return ret;
+	}
 
 	cherokee_buffer_move_to_begin (info, *sent);
 	return ret_ok;
 }
 
+static void
+set_status (cherokee_fcgi_manager_t *fcgim, cherokee_fcgi_status_t status)
+{
+	cherokee_handler_fastcgi_t *fcgi;
+	cherokee_connection_t *conn;
+  
+	conn = fcgim->conn_poll [fcgim->request_id - 1];
+	if (conn != NULL) {
+		fcgi = (cherokee_handler_fastcgi_t *) conn->handler;
+		if (fcgi != NULL) {
+			fcgi->status = status;
+		}
+	}
+}
+
+static void
+process_buffer (cherokee_fcgi_manager_t *fcgim, void *data, cuint_t data_len)
+{
+	cherokee_connection_t       *conn;
+	cherokee_handler_fastcgi_t  *fcgi;
+	char                        *message;
+  
+	conn = fcgim->conn_poll [fcgim->request_id - 1];
+	if (conn == NULL)
+	{
+		return;
+	}
+
+	fcgi = (cherokee_handler_fastcgi_t *) conn->handler;
+	switch (fcgim->request_type)
+	{
+	case FCGI_STDERR:
+		message = (char*) strndup (data, data_len + 1);
+		message [data_len] = 0;
+		cherokee_logger_write_string (CONN_VSRV(conn)->logger, "%s", message);
+		free (message);
+		break;
+	case FCGI_STDOUT:
+		cherokee_buffer_add (&fcgi->incoming_buffer, data, data_len);
+		if (fcgim->remaining_size == 0)
+			set_status (fcgim, fcgi_data_available);
+		break;
+	}
+}
 
 static ret_t
 process_read_buffer (cherokee_fcgi_manager_t *fcgim)
 {
-	cuint_t      offset;
-	FCGI_Header *header;
-	
-	offset = 0;
-	while (fcgim->read_buffer.len - offset >= sizeof(FCGI_EndRequestRecord))
-	{
-		cuint_t id;
-		cuint_t len;
+	ret_t                  ret = ret_eagain;
+	cuint_t                len, bytes_to_move, offset = 0;
+	FCGI_Header           *header;
+	FCGI_EndRequestBody   *end_request;
+	void                  *start = fcgim->read_buffer.buf;
 
-		header = (FCGI_Header *)((&fcgim->read_buffer.buf) + offset);
-		id     = (header->requestIdB0 | (header->requestIdB1 << 8));
-		len    = (header->contentLengthB0 | (header->contentLengthB1 << 8)) + header->paddingLength;
+	while (fcgim->read_buffer.len > 0)
+	{ 
+		if (fcgim->remaining_size == 0) { 
+			if (fcgim->read_buffer.len < sizeof(FCGI_Header))
+				return ret_eagain;
 
-		switch (header->type) {
+			header              = (FCGI_Header *) start;
+
+			if (!(header->type == FCGI_STDERR || 
+			      header->type == FCGI_STDOUT || 
+			      header->type == FCGI_END_REQUEST))
+			{
+				printf ("rb:%d x:%d rs:%d\n", fcgim->read_buffer.len, fcgim->padding, fcgim->remaining_size);
+				cherokee_buffer_print_debug (&fcgim->read_buffer, -1);
+				return ret_error;
+			}
+
+			fcgim->request_id   = (header->requestIdB0     | (header->requestIdB1 << 8));
+			fcgim->request_type =  header->type;
+			len                 = (header->contentLengthB0 | (header->contentLengthB1 << 8));
+			fcgim->padding      =  header->paddingLength;
+			fcgim->return_value =  0;
+			fcgim->status       =  0;
+
+			offset = FCGI_HEADER_LEN;
+			if (len > (fcgim->read_buffer.len - FCGI_HEADER_LEN))
+			{
+				fcgim->remaining_size = len - fcgim->read_buffer.len - FCGI_HEADER_LEN + 16;
+				len = fcgim->read_buffer.len - FCGI_HEADER_LEN;
+				bytes_to_move = len;
+			} else {
+				fcgim->remaining_size = 0;
+				bytes_to_move = len;      
+				if ((fcgim->padding + len) > (fcgim->read_buffer.len - FCGI_HEADER_LEN)) {
+					fcgim->padding = (fcgim->padding + len) - fcgim->read_buffer.len - FCGI_HEADER_LEN;
+					bytes_to_move += fcgim->padding;
+				} else {
+					bytes_to_move += fcgim->padding;
+					fcgim->padding = 0;
+				}
+			}
+			bytes_to_move += FCGI_HEADER_LEN;
+		} else {
+			if (fcgim->remaining_size > fcgim->read_buffer.len) {
+				fcgim->remaining_size = fcgim->remaining_size - fcgim->read_buffer.len;
+				len = fcgim->read_buffer.len;
+				bytes_to_move = len;
+			} else {
+				len = fcgim->remaining_size;
+				bytes_to_move = len;
+				if (fcgim->padding > 0) {
+					if ((fcgim->remaining_size + fcgim->padding) > fcgim->read_buffer.len) {
+						fcgim->padding = fcgim->remaining_size + fcgim->padding - fcgim->read_buffer.len;
+					} else {
+						bytes_to_move += fcgim->padding;
+						fcgim->padding = 0;
+					}
+				}
+				fcgim->remaining_size = 0;
+			} 
+		}
+   
+		switch (fcgim->request_type) {
 		case FCGI_STDERR:
-			printf ("strerr\n");
-			break;
 		case FCGI_STDOUT:
-			printf ("stdout\n");
+			if (len > 0)
+				process_buffer (fcgim, (start + offset), len);
 			break;
 		case FCGI_END_REQUEST:
-			printf ("end request\n");
+			end_request = (FCGI_EndRequestBody *) (start + offset);
+			fcgim->status = end_request->protocolStatus;
+			fcgim->return_value =  end_request->appStatusB0        | 
+				(end_request->appStatusB0 << 8)  | 
+				(end_request->appStatusB0 << 16) | 
+				(end_request->appStatusB0 << 24);
+			set_status (fcgim, fcgi_data_completed);
 			break;
 		default:
-			PRINT_ERROR ("ERROR: Unknown FCGI header type: %d\n", header->type);
+			PRINT_ERROR ("ERROR: Unknown FCGI header type: %X\n", header->type);
+			cherokee_buffer_print_debug (&fcgim->read_buffer, -1);
+			ret = ret_error; 
 		}
 
-		offset += sizeof(FCGI_EndRequestRecord);
+		cherokee_buffer_move_to_begin (&fcgim->read_buffer, bytes_to_move);
+
+		if (ret == ret_error)
+			break;
 	}
 
-	return ret_ok;
+	if (fcgim->read_buffer.len == 0)
+		cherokee_buffer_mrproper (&fcgim->read_buffer);
+
+	return ret;
 }
 
-
 ret_t 
-cherokee_fcgi_manager_step (cherokee_fcgi_manager_t *fcgim)
+fcgi_manager_step (cherokee_fcgi_manager_t *fcgim, cuint_t id)
 {
 	ret_t  ret;
 	size_t size;
+	cherokee_connection_t       *conn;
+	cherokee_handler_fastcgi_t  *fcgi;
+  
+	conn = fcgim->conn_poll [id - 1];
+	fcgi = (cherokee_handler_fastcgi_t *) conn->handler;
 
-	/* Read from the FastCGI application	
-	 */
-	if (fcgim->read_buffer.len < sizeof(FCGI_Header)) 
-	{
-		ret = cherokee_socket_read (fcgim->socket, &fcgim->read_buffer, DEFAULT_READ_SIZE, &size);
-		printf ("cherokee_fcgi_manager_step: _read %d\n", ret);
-		if (ret != ret_ok) return ret;
-	}
-
-	/* Process the information
-	 */
-	if (fcgim->read_buffer.len >= sizeof(FCGI_Header))
-	{
-		ret = process_read_buffer (fcgim);
-		printf ("cherokee_fcgi_manager_step: process %d\n", ret);
+	if (fcgi->status > fcgi_data_available)
 		return ret_ok;
-	}
 
-	/* Read
-	 */
-	return ret_eagain;
+	while (1)
+	{
+		/* Read from the FastCGI application	
+		 */
+		if (fcgim->read_buffer.len < sizeof(FCGI_Header)) 
+		{
+			/*
+			  printf (" [readin %d %d" , id, fcgi->status);*/
+			ret = cherokee_socket_read (fcgim->socket, &fcgim->read_buffer, DEFAULT_READ_SIZE, &size);
+			/*printf (" readout %d %d %d] ", id, ret, fcgim->remaining_size);
+			  printf ("-----------------------read start--------------------------\n");
+			  cherokee_buffer_print_debug (&fcgim->read_buffer, -1);
+			  printf ("-----------------------read end %d %d--------------------------\n", size, ret);*/
+			if (ret != ret_ok) {
+				reset_connection (fcgim);
+				return ret;
+			} 
+		}
+
+		/* Process the information
+		 */
+		ret = process_read_buffer (fcgim);
+
+		if (ret == ret_error)
+			break;
+
+		if (fcgim->remaining_size <= 0)
+			break;
+	}
+	/*
+	  printf (" [reading result %d %d %d]\n" , id, fcgi->status, ret);*/
+
+	return ret;
 }
 
+ret_t 
+cherokee_fcgi_manager_step (cherokee_fcgi_manager_t *fcgim, cuint_t id)
+{
+	ret_t ret;
+
+	CHEROKEE_MUTEX_LOCK (&__global_fastcgi_manager_lock);
+	ret = fcgi_manager_step (fcgim, id);
+	CHEROKEE_MUTEX_UNLOCK (&__global_fastcgi_manager_lock);
+	return ret;
+}
 
 ret_t 
 cherokee_fcgi_manager_add_conn (cherokee_fcgi_manager_t *fcgim, cherokee_connection_t *conn)

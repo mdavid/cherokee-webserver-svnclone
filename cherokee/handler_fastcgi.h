@@ -33,6 +33,7 @@
 #include "connection.h"
 #include "socket.h"
 #include "fastcgi.h"
+#include "fastcgi-common.h"
 #include "cgi.h"
 #include "fcgi_manager.h"
 
@@ -56,23 +57,42 @@ typedef union {
 //	struct sockaddr_un  local;
 } cherokee_fcgi_sockaddr_t;
 
+typedef enum {
+	fcgi_error = -1,
+	fcgi_data_unavailable = 0,
+	fcgi_data_available,
+	fcgi_data_completed,
+} cherokee_fcgi_status_t;
+
+typedef enum {
+	fcgi_sending_first_data,
+	fcgi_sending_first_data_completed,
+	fcgi_sending_post_data,
+	fcgi_sending_data_completed,
+	fcgi_sending_data_finalized 
+} cherokee_fcgi_sending_phase_t;
+
 
 typedef struct {
 	cherokee_handler_t  handler;
 	
 	/* FastCGI manager
 	 */
-	cherokee_fcgi_manager_t *manager_ref;
-	char                    *host_ref;
-	char                    *interpreter_ref;
-	cuint_t                  id;
+	cherokee_fcgi_manager_t      *manager_ref;
+	cuint_t                       id;
 
 	/* FastCGI protocol stuff
 	 */
-	cherokee_buffer_t        environment;
-	cherokee_buffer_t        write_buffer;
-	cherokee_buffer_t        incoming_buffer;
+	cherokee_buffer_t             environment;
+	cherokee_buffer_t             write_buffer;
+	cherokee_buffer_t             incoming_buffer;
+	cherokee_buffer_t             data;
+	cuint_t                       status;
+	cherokee_fcgi_sending_phase_t sending_phase;
 
+	cherokee_fcgi_server_t       *configuration;
+	list_t                       *server_list;
+	int                           max_manager;
 } cherokee_handler_fastcgi_t;
 
 #define FCGI(x)  ((cherokee_handler_fastcgi_t *)(x))
