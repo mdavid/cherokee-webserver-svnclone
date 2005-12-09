@@ -37,7 +37,7 @@ typedef struct {
 	cherokee_socket_t       *socket;
 	int                      port;
 	cherokee_buffer_t        hostname;	   
-	int                      connected;
+	cherokee_boolean_t       connected;
 
 	cherokee_buffer_t        read_buffer;
 

@@ -54,23 +54,21 @@
 
 typedef union {
 	cherokee_sockaddr_t tcp;
-//	struct sockaddr_un  local;
 } cherokee_fcgi_sockaddr_t;
 
 typedef enum {
-	fcgi_error = -1,
-	fcgi_data_unavailable = 0,
-	fcgi_data_available,
-	fcgi_data_completed,
-} cherokee_fcgi_status_t;
+	fcgi_post_init,
+	fcgi_post_read,
+	fcgi_post_send,
+	fcgi_post_finished
+} cherokee_fcgi_post_phase_t;
 
 typedef enum {
-	fcgi_sending_first_data,
-	fcgi_sending_first_data_completed,
-	fcgi_sending_post_data,
-	fcgi_sending_data_completed,
-	fcgi_sending_data_finalized 
-} cherokee_fcgi_sending_phase_t;
+	fcgi_phase_init,
+	fcgi_phase_send_post,
+	fcgi_phase_send_header,
+	fcgi_phase_read_fcgi
+} cherokee_fcgi_phase_t;
 
 
 typedef struct {
@@ -87,16 +85,18 @@ typedef struct {
 	cherokee_buffer_t             write_buffer;
 	cherokee_buffer_t             incoming_buffer;
 	cherokee_buffer_t             data;
-	cuint_t                       status;
-	cherokee_fcgi_sending_phase_t sending_phase;
+	cherokee_fcgi_phase_t         phase;
+
+	cherokee_boolean_t            post_sent;
+	cherokee_fcgi_post_phase_t    post_phase;
 
 	cherokee_fcgi_server_t       *configuration;
 	list_t                       *server_list;
 	int                           max_manager;
 } cherokee_handler_fastcgi_t;
 
-#define FCGI(x)  ((cherokee_handler_fastcgi_t *)(x))
 
+#define FCGI(x)                ((cherokee_handler_fastcgi_t *)(x))
 #define FCGI_SOCKADD_LOCAL(x)  (FCGI(x)->addr.local)
 #define FCGI_SOCKADD_TCP(x)    (FCGI(x)->addr.tcp)
 
