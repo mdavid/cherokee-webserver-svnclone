@@ -82,6 +82,8 @@
 extern int32_t sendfile (int out_fd, int in_fd, int32_t *offset, uint32_t count);
 #endif
 
+#define ENTRIES "socket"
+
 
 #include <errno.h>
 #include <unistd.h>
@@ -891,6 +893,8 @@ cherokee_socket_write (cherokee_socket_t *socket, cherokee_buffer_t *buf, size_t
 
 	ret = cherokee_write (socket, buf->buf, buf->len, &_written);
 
+	TRACE (ENTRIES",write", "write fd=%d len=%d ret=%d done=%d\n", socket->socket, buf->len, ret, _written);
+
 	*written = _written;
 	return ret;
 }
@@ -920,6 +924,8 @@ cherokee_socket_read (cherokee_socket_t *socket, cherokee_buffer_t *buf, size_t 
 		buf->len += *done;
 		buf->buf[buf->len] = '\0';
 	}
+
+	TRACE (ENTRIES",read", "read fd=%d count=%d ret=%d done=%d\n", socket->socket, count, ret, *done);
 
 	return ret;
 }

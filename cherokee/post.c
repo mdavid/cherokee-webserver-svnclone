@@ -260,19 +260,28 @@ cherokee_post_walk_read (cherokee_post_t *post, cherokee_buffer_t *buf, cuint_t 
 	case post_in_memory:
 		cherokee_buffer_add (buf, post->info.buf + post->walk_offset, len);
 		post->walk_offset += len;
-		return ret_ok;
+
+		if (post->walk_offset >= post->info.len)
+			return ret_ok;
+
+		return ret_eagain;
 
 	case post_in_tmp_file:
 		cherokee_buffer_ensure_size (buf, buf->len + len + 1);
 
 		ur = fread (buf->buf + buf->len, 1, len, post->tmp_file_p);
 		if (ur <= 0) {
-			return (feof(post->tmp_file_p)) ? ret_eof : ret_error;
+			return (feof(post->tmp_file_p)) ? ret_ok : ret_error;
 		}
 			
 		buf->len           += ur;
 		buf->buf[buf->len]  = '\0';
-		return ret_ok;
+		post->walk_offset  += ur;
+
+		if (post->walk_offset >= post->info.len)
+			return ret_ok;
+
+		return ret_eagain;
 
 	default:
 		SHOULDNT_HAPPEN;

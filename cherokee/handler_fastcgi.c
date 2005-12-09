@@ -100,8 +100,10 @@ cherokee_handler_fastcgi_new (cherokee_handler_t **hdl, cherokee_connection_t *c
 	n->manager_ref     = NULL;
 	n->server_list     = NULL;
 	n->configuration   = NULL;
-	n->status          = fcgi_data_unavailable;
-	n->sending_phase   = fcgi_sending_first_data;
+	n->phase           = fcgi_phase_init;
+
+	n->post_sent       = false;
+	n->post_phase      = fcgi_post_init;
 
 	cherokee_buffer_init (&n->data);
 	cherokee_buffer_init (&n->environment);
@@ -226,6 +228,7 @@ add_env_pair (cherokee_buffer_t *buf,
 	cherokee_buffer_add (buf, val, val_len);
 }
 
+
 static void
 add_more_env (cherokee_handler_fastcgi_t *fcgi, cherokee_buffer_t *buf)
 {
@@ -291,15 +294,15 @@ add_more_env (cherokee_handler_fastcgi_t *fcgi, cherokee_buffer_t *buf)
 	cherokee_buffer_mrproper (&buffer);
 }
 
+
 static ret_t
 build_initial_packages (cherokee_handler_fastcgi_t *fcgi)
 {
 	ret_t                    ret;
-	cherokee_buffer_t        tmp = CHEROKEE_BUF_INIT, write_tmp = CHEROKEE_BUF_INIT;
-	cherokee_connection_t   *conn;
 	FCGI_BeginRequestRecord  request;
-
-	conn = HANDLER_CONN(fcgi);
+	cherokee_buffer_t        tmp       = CHEROKEE_BUF_INIT;
+	cherokee_buffer_t        write_tmp = CHEROKEE_BUF_INIT;
+	cherokee_connection_t   *conn      = HANDLER_CONN (fcgi);;
 
 	cherokee_connection_parse_args (conn);
 
@@ -307,17 +310,20 @@ build_initial_packages (cherokee_handler_fastcgi_t *fcgi)
 	 */
 	fcgi_build_header (&request.header, FCGI_BEGIN_REQUEST, fcgi->id, sizeof(request.body), 0);
 	fcgi_build_request_body (&request);
+
 	cherokee_buffer_add (&fcgi->write_buffer, (void *)&request, sizeof(FCGI_BeginRequestRecord));
+
+	TRACE (ENTRIES, "Added FCGI_BEGIN_REQUEST, len=%d\n", fcgi->write_buffer.len);
   
 	/* Add enviroment variables
 	 */ 
-	cherokee_buffer_mrproper (&tmp);
 	ret = cherokee_cgi_build_basic_env (conn, (cherokee_cgi_set_env_pair_t) add_env_pair, &tmp, &write_tmp);
 	if (unlikely (ret != ret_ok)) return ret; 
 
 	add_more_env (fcgi, &write_tmp);
 	fixup_params (&write_tmp, fcgi->id);
 	cherokee_buffer_add_buffer (&fcgi->write_buffer, &write_tmp);
+
 	cherokee_buffer_mrproper (&tmp);
 	cherokee_buffer_mrproper (&write_tmp);
 
@@ -325,6 +331,8 @@ build_initial_packages (cherokee_handler_fastcgi_t *fcgi)
 	 */
 	fcgi_build_header (&request.header, FCGI_PARAMS, fcgi->id, 0, 0);
 	cherokee_buffer_add (&fcgi->write_buffer, (void *)&request.header, sizeof(FCGI_Header));
+
+	TRACE (ENTRIES, "Added FCGI_PARAMS, len=%d\n", fcgi->write_buffer.len);
 
 	return ret_ok;
 }
@@ -417,12 +425,15 @@ cherokee_handler_fastcgi_init (cherokee_handler_fastcgi_t *fcgi)
 		}
 	}
 
+
+	TRACE (ENTRIES, "Manager \"%s\" ready, registering conn\n", fcgi->configuration->host.buf);
+
 	/* Register this connection in the FastCGI manager
 	 */
 	ret = cherokee_fcgi_manager_register_conn (fcgi->manager_ref, conn, &fcgi->id);
   	if (unlikely (ret != ret_ok)) return ret;
 
-	/* Send the first packet
+	/* Build the first packets
 	 */
 	ret = build_initial_packages (fcgi);
 	if (unlikely (ret != ret_ok)) return ret;
@@ -430,43 +441,267 @@ cherokee_handler_fastcgi_init (cherokee_handler_fastcgi_t *fcgi)
 	return ret_ok;
 }
 
-static
-void
-complete_request (cherokee_handler_fastcgi_t *fcgi)
+
+static void
+send_empty_stdin (cherokee_handler_fastcgi_t *fcgi)
 {
 	FCGI_BeginRequestRecord  request;
   
 	fcgi_build_header (&request.header, FCGI_STDIN, fcgi->id, 0, 0);
 	cherokee_buffer_add (&fcgi->write_buffer, (void *)&request.header, sizeof(FCGI_Header));
 
-	fcgi->sending_phase = fcgi_sending_data_finalized;
+	TRACE (ENTRIES, "Adding empty FCGI_STDIN, len=%d\n", fcgi->write_buffer.len);
 }
 
-static
-ret_t 
+
+static ret_t 
 read_fcgi (cherokee_handler_fastcgi_t *fcgi)
 {
-	ret_t                    ret = ret_eagain;
+	ret_t                    ret;
+	cherokee_fcgi_manager_t *fcgim = fcgi->manager_ref;
+
+	/* Read info from the FastCGI
+	 */
+	ret = cherokee_fcgi_manager_step (fcgim, fcgi->id);
+	switch (ret) {
+	case ret_error:
+		return ret;
+	case ret_ok:
+		break;
+	default:
+		return ret;
+	}
+	
+	return ret_ok;
+}
+
+
+
+/* 	if (ret != ret_eof) { */
+/* 		if (fcgi->status == fcgi_data_available || fcgi->status == fcgi_data_completed) */
+/* 			ret = ret_ok; */
+/* 		else */
+/* 			ret = ret_eagain; */
+/* 	} else { */
+/* 		if (fcgi->sending_phase <= fcgi_sending_first_data_completed) {         */
+/* 			ret = ret_eagain; */
+/* 		} */
+/* 	} */
+
+
+
+
+
+/* 	switch (fcgi->sending_phase) { */
+/* 	case fcgi_sending_first_data: */
+/* 		if (cherokee_post_is_empty (&conn->post)) { */
+/* 			complete_request (fcgi); */
+/* 			fcgi->sending_phase = fcgi_sending_data_finalized; */
+/* 			break; */
+/* 		}  */
+	
+/* 		fcgi->sending_phase = fcgi_sending_first_data_completed; */
+
+/* 	case fcgi_sending_first_data_completed: */
+/* 		if (cherokee_post_is_empty (&conn->post)) { */
+/* 			fcgi->sending_phase = fcgi_sending_data_completed; */
+/* 			break; */
+/* 		} */
+
+/* 		cherokee_post_walk_reset (&conn->post); */
+/* 		fcgi->sending_phase = fcgi_sending_post_data; */
+		
+/* 	case fcgi_sending_post_data: */
+/* 		ret = cherokee_post_walk_read (&conn->post, &post_buffer, DEFAULT_READ_SIZE); */
+/* 		size = post_buffer.len; */
+/* 		if (size > 0) { */
+/* 			fcgi_build_header (&request.header, FCGI_STDIN, fcgi->id, size, 0); */
+/* 			cherokee_buffer_add (&fcgi->write_buffer, (void *)&request.header, sizeof(FCGI_Header)); */
+/* 			cherokee_buffer_add_buffer (&fcgi->write_buffer, &post_buffer); */
+/* 			cherokee_buffer_mrproper (&post_buffer); */
+/* 		} */
+
+/* 		if (ret == ret_error) return ret; */
+/* 		fcgi->sending_phase = fcgi_sending_data_completed; */
+		
+/* 	case fcgi_sending_data_completed: */
+/* 		complete_request (fcgi); */
+/* 		fcgi->sending_phase = fcgi_sending_data_finalized; */
+
+/* 	case fcgi_sending_data_finalized: */
+/* 		break; */
+
+/* 	defalut: */
+/* 		SHOULDNT_HAPPEN; */
+/* 	} */
+
+
+
+ 
+
+
+
+/* 	if (fcgi->sending_phase == fcgi_sending_first_data_completed) { */
+/* 		if (! cherokee_post_is_empty (&conn->post)) { */
+/* 			cherokee_post_walk_reset (&conn->post); */
+/* 			fcgi->sending_phase = fcgi_sending_post_data; */
+/* 		}  */
+/* 	} */
+
+/* 	TRACE (ENTRIES, "Read from FCGI, phase %s\n", "fcgi_sending_post_data"); */
+
+/* 	if (fcgi->sending_phase == fcgi_sending_post_data) { */
+/* 		ret = cherokee_post_walk_read (&conn->post, &post_buffer, DEFAULT_READ_SIZE); */
+/* 		size = post_buffer.len; */
+/* 		if (size > 0) { */
+/* 			fcgi_build_header (&request.header, FCGI_STDIN, fcgi->id, size, 0); */
+/* 			cherokee_buffer_add (&fcgi->write_buffer, (void *)&request.header, sizeof(FCGI_Header)); */
+/* 			cherokee_buffer_add_buffer (&fcgi->write_buffer, &post_buffer); */
+/* 			cherokee_buffer_mrproper (&post_buffer); */
+/* 		} */
+
+/* 		if (ret == ret_error) return ret; */
+/* 		fcgi->sending_phase = fcgi_sending_data_completed; */
+/* 	} */
+
+/* 	TRACE (ENTRIES, "Read from FCGI, phase %s\n", "fcgi_sending_first_data"); */
+
+/* 	if (fcgi->sending_phase == fcgi_sending_first_data)  */
+/* 		if (cherokee_post_is_empty (&conn->post)) { */
+/* 			complete_request (fcgi); */
+/* 			fcgi->sending_phase = fcgi_sending_data_finalized; */
+/* 		} */
+
+/* 	TRACE (ENTRIES, "Read from FCGI, phase %s\n", "fcgi_sending_data_completed"); */
+
+/* 	if (fcgi->sending_phase == fcgi_sending_data_completed) { */
+/* 		complete_request (fcgi);  */
+/* 		fcgi->sending_phase = fcgi_sending_data_finalized; */
+/* 	} */
+			
+  
+/* 	/\* It has something to send */
+/* 	 *\/ */
+/* 	if (! cherokee_buffer_is_empty (&fcgi->write_buffer)) {  */
+/*  		ret = cherokee_fcgi_manager_send (fcgi->manager_ref, &fcgi->write_buffer, &size);  */
+    
+/* 		switch (ret) { */
+/* 		case ret_ok: */
+/* 			break; */
+
+/* 		case ret_eagain: */
+/* 			return ret_eagain; */
+
+/* 		case ret_eof: */
+/* 			return ret_error; */
+/* 		case ret_error: */
+/* 			return ret_error; */
+/* 		default: */
+/* 			SHOULDNT_HAPPEN; */
+/* 		} */
+/* 		if (cherokee_buffer_is_empty (&fcgi->write_buffer)) { */
+/* 			cherokee_buffer_mrproper (&fcgi->write_buffer); */
+/* 			if (fcgi->sending_phase == fcgi_sending_first_data) */
+/* 				fcgi->sending_phase = fcgi_sending_first_data_completed; */
+/* 		} */
+/* 	} */
+
+/* 	TRACE (ENTRIES, "Read from FCGI, phase %s\n", "fcgi_sending_first_data_completed"); */
+
+/* 	if (fcgi->sending_phase == fcgi_sending_first_data_completed) { */
+/* 		if (!cherokee_post_is_empty (&conn->post)) { */
+/* 			return ret_eagain; */
+/* 		} */
+/* 	} */
+
+/* 	TRACE (ENTRIES, "Read from FCGI, phase %s\n", "fcgi_sending_post_data"); */
+
+/* 	if (fcgi->sending_phase == fcgi_sending_post_data) */
+/* 		return ret_eagain; */
+
+/* 	TRACE (ENTRIES, "Read from FCGI, phase %s\n", "not completed"); */
+
+/* 	if (fcgi->sending_phase < fcgi_sending_first_data_completed) */
+/* 	{ */
+/* 		ret = ret_eagain; */
+/* 	} else { */
+/* 		ret = cherokee_fcgi_manager_step (fcgim, fcgi->id); */
+/* 		if (ret != ret_eof) */
+/* 		{ */
+/* 			if (fcgi->status == fcgi_data_available || fcgi->status == fcgi_data_completed) */
+/* 				ret = ret_ok; */
+/* 			else */
+/* 				ret = ret_eagain; */
+/* 		} else { */
+/* 			if (fcgi->sending_phase <= fcgi_sending_first_data_completed) {         */
+/* 				ret = ret_eagain; */
+/* 			} */
+/* 		} */
+/* 	} */
+
+
+static ret_t
+send_write_buffer (cherokee_handler_fastcgi_t *fcgi)
+{
+	ret_t  ret;
+	size_t size = 0;
+
+	TRACE (ENTRIES, "Sending: there are %d bytes to be sent\n", fcgi->write_buffer.len);
+	
+	ret = cherokee_fcgi_manager_send (fcgi->manager_ref, &fcgi->write_buffer, &size);
+
+	TRACE (ENTRIES, "Sending: now, there are %d bytes, had ret=%d\n", fcgi->write_buffer.len, ret);
+
+	switch (ret) {
+	case ret_ok:
+		if (cherokee_buffer_is_empty (&fcgi->write_buffer))
+			return ret_ok;
+		return ret_eagain;
+	case ret_eagain:
+		return ret_eagain;
+	case ret_eof:
+		return ret_error;
+	case ret_error:
+		return ret_error;
+	default:
+		SHOULDNT_HAPPEN;
+	}	
+
+	return ret_eagain;
+}
+
+
+static ret_t
+send_post (cherokee_handler_fastcgi_t *fcgi)
+{
+	ret_t                    ret;
 	size_t                   size;
-	cherokee_fcgi_manager_t *fcgim;
-	cherokee_connection_t   *conn;
+	cherokee_connection_t   *conn        = HANDLER_CONN(fcgi);
 	cherokee_buffer_t        post_buffer = CHEROKEE_BUF_INIT;
 	FCGI_BeginRequestRecord  request;
 
-	conn  = HANDLER_CONN(fcgi);
-	fcgim = fcgi->manager_ref;
 
- 
-	if (fcgi->sending_phase == fcgi_sending_first_data_completed) {
-		if (! cherokee_post_is_empty (&conn->post)) {
-			cherokee_post_walk_reset (&conn->post);
-			fcgi->sending_phase = fcgi_sending_post_data;
-		} 
-	}
+	TRACE (ENTRIES, "Sending POST %s\n", "");
 
-	if (fcgi->sending_phase == fcgi_sending_post_data) {
-		ret = cherokee_post_walk_read (&conn->post, &post_buffer, DEFAULT_READ_SIZE);
-		size = post_buffer.len;
+	/* Send Post
+	 */
+	switch (fcgi->post_phase) {
+	case fcgi_post_init:
+		TRACE (ENTRIES, "Read from FCGI, phase %s\n", "init");
+
+		/* Does it have post?
+		 */
+		if (cherokee_post_is_empty (&conn->post)) {
+			send_empty_stdin(fcgi);
+
+			fcgi->post_phase = fcgi_post_finished;
+			return ret_ok;
+		}
+
+		/* Prepare the stdin header
+		 */
+		cherokee_post_walk_reset (&conn->post);
+		cherokee_post_get_len (&conn->post, &size);
 		if (size > 0) {
 			fcgi_build_header (&request.header, FCGI_STDIN, fcgi->id, size, 0);
 			cherokee_buffer_add (&fcgi->write_buffer, (void *)&request.header, sizeof(FCGI_Header));
@@ -474,119 +709,60 @@ read_fcgi (cherokee_handler_fastcgi_t *fcgi)
 			cherokee_buffer_mrproper (&post_buffer);
 		}
 
-		if (ret == ret_ok) {
-			fcgi->sending_phase = fcgi_sending_data_completed;
-		} else
-			return ret;
-	}
+		fcgi->post_phase = fcgi_post_read;
 
-	if (fcgi->sending_phase == fcgi_sending_first_data && cherokee_post_is_empty (&conn->post))
-		complete_request (fcgi);
+	case fcgi_post_read:
+		TRACE (ENTRIES, "Read from FCGI, phase %s\n", "post read");
 
-	if (fcgi->sending_phase == fcgi_sending_data_completed)
-		complete_request (fcgi);
-  
-	/* It has something to send
-	 */
-	if (! cherokee_buffer_is_empty (&fcgi->write_buffer)) { 
- 		ret = cherokee_fcgi_manager_send (fcgi->manager_ref, &fcgi->write_buffer, &size); 
-    
+		ret = cherokee_post_walk_read (&conn->post, &post_buffer, DEFAULT_READ_SIZE);
 		switch (ret) {
 		case ret_ok:
 			break;
-
-		case ret_eagain:
-			return ret_eagain;
-
-		case ret_eof:
-			return ret_error;
 		case ret_error:
-			return ret_error;
+		case ret_eagain:
+			return ret;
 		default:
-			SHOULDNT_HAPPEN;
+			RET_UNKNOWN(ret);
+			return ret_error;
 		}
-		if (cherokee_buffer_is_empty (&fcgi->write_buffer)) {
-			cherokee_buffer_mrproper (&fcgi->write_buffer);
-			if (fcgi->sending_phase == fcgi_sending_first_data)
-				fcgi->sending_phase = fcgi_sending_first_data_completed;
-		}
-	}
+			
+		fcgi->post_phase = fcgi_post_send;
 
-	if (fcgi->sending_phase == fcgi_sending_first_data_completed && !cherokee_post_is_empty (&conn->post))
-		return ret_eagain;
+	case fcgi_post_send:
+		TRACE (ENTRIES, "Read from FCGI, phase %s\n", "post send");
 
-	if (fcgi->sending_phase == fcgi_sending_post_data)
-		return ret_eagain;
+		if (! cherokee_buffer_is_empty (&fcgi->write_buffer)) { 
+			ret = cherokee_fcgi_manager_send (fcgi->manager_ref, &fcgi->write_buffer, &size); 
+			
+			switch (ret) {
+			case ret_ok:
+				break;
+			case ret_eagain:
+				return ret_eagain;
+			case ret_eof:
+				return ret_error;
+			case ret_error:
+				return ret_error;
+			default:
+				SHOULDNT_HAPPEN;
+			}
 
-	if (fcgi->sending_phase < fcgi_sending_first_data_completed)
-	{
-		ret = ret_eagain;
-	} else {
-		ret = cherokee_fcgi_manager_step (fcgim, fcgi->id);
-		if (ret != ret_eof)
-		{
-			if (fcgi->status == fcgi_data_available || fcgi->status == fcgi_data_completed)
-				ret = ret_ok;
-			else
-				ret = ret_eagain;
-		} else {
-			if (fcgi->sending_phase <= fcgi_sending_first_data_completed) {        
-				ret = ret_eagain;
+			if (cherokee_buffer_is_empty (&fcgi->write_buffer)) {
+				fcgi->post_phase = fcgi_post_read;
+				return ret_eagain;
 			}
 		}
+		
+	case fcgi_post_finished:
+		TRACE (ENTRIES, "Read from FCGI, phase %s\n", "finished");
+		break;
 	}
 
-	return ret;
+	return ret_ok;
 }
 
-ret_t 
-cherokee_handler_fastcgi_step (cherokee_handler_fastcgi_t *fcgi, cherokee_buffer_t *buffer)
-{
-	ret_t ret = ret_ok;
 
-	return_if_fail (buffer != NULL, ret_error);
- 
-	if (!cherokee_buffer_is_empty (&fcgi->incoming_buffer))
-	{
-		cherokee_buffer_add_buffer (buffer, &fcgi->incoming_buffer);
-		cherokee_buffer_mrproper (&fcgi->incoming_buffer);
-		if (fcgi->status == fcgi_error)
-			ret = ret_error;
-		else if (fcgi->status != fcgi_data_completed)
-		{
-			fcgi->status = fcgi_data_unavailable;
-		} else {
-			return ret_ok;
-		}
-	}
-
-	/* Lets read from the FastCGI server
-	 */
-	if (fcgi->status != fcgi_data_completed) {
-		ret = read_fcgi (fcgi); 
-		if (ret == ret_ok) {
-			if (fcgi->status > fcgi_data_unavailable) {
-				cherokee_buffer_add_buffer (buffer, &fcgi->incoming_buffer);
-				cherokee_buffer_mrproper (&fcgi->incoming_buffer);
-			} 
-			if (fcgi->status == fcgi_error)
-				ret = ret_error;
-			else if (fcgi->status == fcgi_data_completed)
-				ret = ret_ok;
-			else {
-				fcgi->status = fcgi_data_unavailable;
-				ret = ret_eagain;
-			}
-		}
-
-	} else {
-		ret = ret_ok;
-	}
-
-	return ret;
-}
-
-ret_t
+static ret_t
 process_header (cherokee_handler_fastcgi_t *fcgi, cherokee_buffer_t *buf)
 {
 	cherokee_connection_t *conn   = HANDLER_CONN(fcgi);
@@ -632,69 +808,131 @@ process_header (cherokee_handler_fastcgi_t *fcgi, cherokee_buffer_t *buf)
 ret_t 
 cherokee_handler_fastcgi_add_headers (cherokee_handler_fastcgi_t *fcgi, cherokee_buffer_t *buffer)
 {
-	ret_t ret;
-
+	ret_t  ret;
 	int    len;
-	char  *content;
 	int    end_len;
+	char  *content;
 
-	/* Sanity check
+	switch (fcgi->phase) {
+	case fcgi_phase_init:
+		fcgi->phase = fcgi_phase_send_header;
+
+	case fcgi_phase_send_post:
+		TRACE (ENTRIES, "Adding headers, phase %s\n", "send POST");
+
+		if (! fcgi->post_sent) {
+			ret = send_post(fcgi);
+			switch (ret) {
+			case ret_ok:
+				fcgi->post_phase = fcgi_post_finished;
+				fcgi->post_sent  = true;
+				break;
+			default:
+				return ret;
+			}
+		}
+
+		fcgi->phase = fcgi_phase_send_header;
+
+	case fcgi_phase_send_header:
+		TRACE (ENTRIES, "Adding headers, phase %s\n", "send header");
+
+		if (!cherokee_buffer_is_empty (&fcgi->write_buffer)) {
+			ret = send_write_buffer (fcgi);
+			switch (ret) {
+			case ret_ok:
+				break;
+			case ret_error:
+			case ret_eagain:
+				return ret;
+			default:
+				RET_UNKNOWN(ret);
+			}
+		}
+
+		fcgi->phase = fcgi_phase_read_fcgi;
+
+	case fcgi_phase_read_fcgi:
+		TRACE (ENTRIES, "Adding headers, phase %s\n", "read fcgi");
+
+		ret = read_fcgi (fcgi);
+		switch (ret) {
+		case ret_eof:
+		case ret_ok:
+			break;
+		case ret_error:
+		case ret_eagain:
+			return ret;			
+		default:
+			RET_UNKNOWN(ret);
+		}
+
+		if (cherokee_buffer_is_empty (&fcgi->incoming_buffer))
+			return ret_error;
+			
+		/* Look the end of headers
+		 */ 
+		content = strstr (fcgi->incoming_buffer.buf, CRLF CRLF);
+		if (content != NULL) {
+			end_len = 4;
+		} else {
+			content = strstr (fcgi->incoming_buffer.buf, "\n\n");
+			end_len = 2;
+		}
+		
+		if (content == NULL) {
+			return (ret == ret_eof) ? ret_eof : ret_eagain;
+		}
+		
+		/* Copy the header
+		 */
+		len = content - fcgi->incoming_buffer.buf;	
+		
+		cherokee_buffer_ensure_size (buffer, len+6);
+		cherokee_buffer_add (buffer, fcgi->incoming_buffer.buf, len);
+		cherokee_buffer_add (buffer, CRLF, 2);
+	
+		/* Drop out the headers, we already have a copy
+		 */
+		cherokee_buffer_move_to_begin (&fcgi->incoming_buffer, len + end_len);
+		
+		return process_header (fcgi, buffer);
+	}
+
+	SHOULDNT_HAPPEN;
+	return ret_error;
+}
+
+
+ret_t 
+cherokee_handler_fastcgi_step (cherokee_handler_fastcgi_t *fcgi, cherokee_buffer_t *buffer)
+{
+	ret_t ret = ret_ok;
+
+	/* Send remaining information
 	 */
-	return_if_fail (buffer != NULL, ret_error);
+	if (!cherokee_buffer_is_empty (&fcgi->incoming_buffer)) {
+		cherokee_buffer_add_buffer (buffer, &fcgi->incoming_buffer);
+		cherokee_buffer_mrproper (&fcgi->incoming_buffer);
+		return ret_ok;
+	}
 
-	/* Read information from the FCGI
+	/* Lets read from the FastCGI server
 	 */
-	ret = read_fcgi (fcgi);
-
+	ret = read_fcgi (fcgi); 
 	switch (ret) {
-	case ret_eof:
 	case ret_ok:
-		break;
-
+		cherokee_buffer_add_buffer (buffer, &fcgi->incoming_buffer);
+		cherokee_buffer_mrproper (&fcgi->incoming_buffer);
+		return ret_ok;
 	case ret_error:
 	case ret_eagain:
 		return ret;
-
 	default:
 		RET_UNKNOWN(ret);
-		return ret_error;
 	}
-
-	if (fcgi->incoming_buffer.buf == NULL)
-	{
-		if (ret == ret_eof)
-			return ret_error;
-		else
-			return ret_ok;
-	} 
-
-	/* Look the end of headers
-	 */ 
-	content = strstr (fcgi->incoming_buffer.buf, CRLF CRLF);
-	if (content != NULL) {
-		end_len = 4;
-	} else {
-		content = strstr (fcgi->incoming_buffer.buf, "\n\n");
-		end_len = 2;
-	}
-
-	if (content == NULL) {
-		return (ret == ret_eof) ? ret_eof : ret_eagain;
-	}
-
-	/* Copy the header
-	 */
-	len = content - fcgi->incoming_buffer.buf;	
-
-	cherokee_buffer_ensure_size (buffer, len+6);
-	cherokee_buffer_add (buffer, fcgi->incoming_buffer.buf, len);
-	cherokee_buffer_add (buffer, CRLF, 2);
 	
-	/* Drop out the headers, we already have a copy
-	 */
-	cherokee_buffer_move_to_begin (&fcgi->incoming_buffer, len + end_len);
-
-	return process_header (fcgi, buffer);
+	return ret_error;
 }
 
 

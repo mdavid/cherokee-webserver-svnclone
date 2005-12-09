@@ -1,3 +1,7 @@
+2005-12-09  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/post.c (cherokee_post_walk_read): Fixed.
+
 2005-12-05  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* configure.in: Updated ${srcdir}/cherokee/loader.init.inc
