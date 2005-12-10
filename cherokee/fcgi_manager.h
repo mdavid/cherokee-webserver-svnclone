@@ -45,7 +45,6 @@ typedef struct {
 	cuint_t                  request_id;
 	cherokee_buffer_t        request_buffer;
 	int                      return_value;
-	int                      status;
 
 	cuint_t                  padding;
 	cuint_t                  remaining_size;
@@ -70,9 +69,5 @@ ret_t cherokee_fcgi_manager_unregister_conn (cherokee_fcgi_manager_t *fcgim, che
 
 ret_t cherokee_fcgi_manager_step            (cherokee_fcgi_manager_t *fcgim, cuint_t);
 ret_t cherokee_fcgi_manager_send            (cherokee_fcgi_manager_t *fcgim, cherokee_buffer_t *info, size_t *sent);
-
-ret_t cherokee_fcgi_manager_add_conn        (cherokee_fcgi_manager_t *fcgim, cherokee_connection_t *conn);
-ret_t cherokee_fcgi_manager_del_conn        (cherokee_fcgi_manager_t *fcgim, cherokee_connection_t *conn);
-
 
 #endif /* CHEROKEE_FCGI_MANAGER_H */

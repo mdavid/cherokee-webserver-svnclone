@@ -67,7 +67,8 @@ typedef enum {
 	fcgi_phase_init,
 	fcgi_phase_send_post,
 	fcgi_phase_send_header,
-	fcgi_phase_read_fcgi
+	fcgi_phase_read_fcgi,
+	fcgi_phase_finished
 } cherokee_fcgi_phase_t;
 
 
