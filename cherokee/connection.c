@@ -1511,7 +1511,11 @@ cherokee_connection_get_req_entry (cherokee_connection_t *cnt, cherokee_reqs_lis
 
 	/* Look in the extension table
 	 */
+#ifndef CHEROKEE_EMBEDDED
 	ret = cherokee_reqs_list_get (reqs, &cnt->request, plugin_entry, cnt);
+#else
+	ret = ret_not_found;
+#endif
 	switch (ret) {
 	case ret_not_found:
 		break;

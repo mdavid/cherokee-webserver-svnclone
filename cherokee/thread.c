@@ -243,10 +243,6 @@ cherokee_thread_new  (cherokee_thread_t **thd, void *server, cherokee_thread_typ
 #endif		
 	}
 
-	/* FastCGI managers
-	 */
-	cherokee_table_init (&n->fastcgi_managers);
-	
 	/* Return the object
 	 */
 	*thd = n;
@@ -1095,11 +1091,6 @@ cherokee_thread_free (cherokee_thread_t *thd)
 
 	CHEROKEE_MUTEX_DESTROY (&thd->starting_lock);
 	CHEROKEE_MUTEX_DESTROY (&thd->ownership);
-
-	/* FastCGI managers
-	 */
-	cherokee_table_mrproper2 (&thd->fastcgi_managers, 
-				  (cherokee_table_free_item_t) cherokee_fcgi_manager_free);
 
 	free (thd);
 	return ret_ok;

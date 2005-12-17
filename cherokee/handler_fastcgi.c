@@ -48,6 +48,7 @@ cherokee_module_info_t MODULE_INFO(fastcgi) = {
 #define FCGI_PATH_INFO_VAR        "PATH_INFO"
 #define FCGI_PATH_TRANSLATED_VAR  "PATH_TRANSLATED"
 
+static cherokee_table_t __fcgi_managers;
 
 static void
 fcgi_build_header (FCGI_Header *hdr, cuchar_t type, cushort_t request_id, cuint_t content_length, cuchar_t padding)
@@ -378,8 +379,7 @@ cherokee_handler_fastcgi_init (cherokee_handler_fastcgi_t *fcgi)
 {
 	ret_t                    ret;
 	cherokee_connection_t   *conn      = HANDLER_CONN(fcgi);
-	cherokee_thread_t       *thread    = HANDLER_THREAD(fcgi);
-	cherokee_table_t        *managers  = &thread->fastcgi_managers;
+	cherokee_table_t        *managers  = &__fcgi_managers;
 	
 	/* Read the current server and set the next one
 	 */
@@ -805,4 +805,6 @@ void
 MODULE_INIT(fastcgi) (cherokee_module_loader_t *loader)
 {
 	PRINT_ERROR_S ("WARNING: The FastCGI is under development, it isn't ready to be used!\n");
+
+	cherokee_table_init(&__fcgi_managers);
 }

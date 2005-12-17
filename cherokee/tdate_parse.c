@@ -60,7 +60,7 @@ pound_case( char* str )
 }
 
 static int
-strlong_compare (char* v1, char *v2)
+strlong_compare (void *v1, void *v2)
 {
 	   return strcmp( ((struct strlong*) v1)->s, ((struct strlong*) v2)->s );
 }

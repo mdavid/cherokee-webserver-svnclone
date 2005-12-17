@@ -465,7 +465,11 @@ cherokee_split_arguments (cherokee_buffer_t *request,
 	char *end = request->buf + request->len;
 
 	tmp = strchr (p, '?');
-	if (tmp == NULL) return ret_ok;
+	if (tmp == NULL) {
+		*arguments     = NULL;
+		*arguments_len = 0;
+		return ret_ok;
+	}
 
 	*arguments = tmp+1;
 	*arguments_len = end - *arguments;
