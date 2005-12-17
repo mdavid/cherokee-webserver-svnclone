@@ -329,14 +329,12 @@ process_buffer (cherokee_fcgi_manager_t *fcgim, void *data, cuint_t data_len)
 	char                        *message;
   
 	conn = fcgim->conn_poll [fcgim->request_id - 1];
-	if (conn == NULL)
-	{
-		return;
-	}
+	if (conn == NULL) return;
 
 	fcgi = (cherokee_handler_fastcgi_t *) conn->handler;
-	switch (fcgim->request_type)
-	{
+	if (fcgi == NULL) return;
+
+	switch (fcgim->request_type) {
 	case FCGI_STDERR:
 		message = (char*) strndup (data, data_len + 1);
 		message [data_len] = 0;
@@ -489,6 +487,7 @@ cherokee_fcgi_manager_step (cherokee_fcgi_manager_t *fcgim, cuint_t id)
 			break;
 		case ret_eagain:
 			return ret;
+		case ret_eof:
 		case ret_error:
 			reset_connection (fcgim);
 			return ret;
