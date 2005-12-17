@@ -119,7 +119,8 @@ endif
 #
 handler_server_info = \
 handler_server_info.c \
-handler_server_info.h
+handler_server_info.h \
+logo.inc 
 
 libplugin_server_info_la_LDFLAGS = $(module_ldflags) 
 libplugin_server_info_la_SOURCES = $(handler_server_info)
@@ -178,9 +179,7 @@ fastcgi.h \
 fastcgi-common.h \
 fastcgi-common.c \
 handler_fastcgi.c \
-handler_fastcgi.h \
-fcgi_manager.h \
-fcgi_manager.c 
+handler_fastcgi.h 
 
 libplugin_fastcgi_la_LDFLAGS = $(module_ldflags)  
 libplugin_fastcgi_la_SOURCES = $(handler_fastcgi)
@@ -736,7 +735,9 @@ handler_error.h \
 nonce.h \
 nonce.c \
 post.h \
-post.c
+post.c \
+fcgi_manager.h \
+fcgi_manager.c 
 
 libcherokee_config_la_SOURCES = \
 $(config_common) \
@@ -922,5 +923,4 @@ $(WINDOWS_PORT_FILES) \
 $(EMBEDDED_VERSION_FILES) \
 read_config_grammar.h \
 loader.autoconf.h \
-loader.autoconf.inc \
-logo.inc 
+loader.autoconf.inc

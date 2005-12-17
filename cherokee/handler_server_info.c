@@ -76,8 +76,11 @@ cherokee_module_info_t MODULE_INFO(server_info) = {
 "  </td></tr>"                                                                                      CRLF\
 "</table><br />"
 
+#define AUTHOR                                                                                          \
+"<a href=\"http://www.alobbs.com\">Alvaro Lopez Ortega</a> &lt;alvaro@alobbs.com&gt;"
+
 #define LICENSE                                                                                         \
-"<p>Copyright (C) 2001, 2002, 2003, 2004, 2005 Alvaro Lopez Ortega &lt;alvaro@alobbs.com&gt;</p>"         CRLF\
+"<p>Copyright (C) 2001, 2002, 2003, 2004, 2005 " AUTHOR "</p>"                                      CRLF\
 "<p>This program is free software; you can redistribute it and/or"                                  CRLF\
 "modify it under the terms of version 2 of the GNU General Public"                                  CRLF\
 "License as published by the Free Software Foundation.</p>"                                         CRLF\

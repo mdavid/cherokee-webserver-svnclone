@@ -40,7 +40,7 @@ handler_error.o \
 module_loader.o \
 virtual_server.o \
 validator_htdigest.o \
-dirs_table_entry.o \
+config_entry.o \
 handler_cgi.o \
 handler_file.o \
 handler_redir.o \

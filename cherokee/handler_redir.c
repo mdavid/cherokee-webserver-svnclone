@@ -171,8 +171,8 @@ match_and_substitute (cherokee_handler_redir_t *n)
 		/* Internal redirect
 		 */
 		if (n->is_hidden == true) {
-			int   len;
 			char *args;
+			int   len;
 			char *subject_copy = strdup (subject);
 
 			cherokee_buffer_ensure_size (&conn->request, conn->request.len + subject_len);

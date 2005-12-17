@@ -64,6 +64,7 @@ cherokee_module_info_t MODULE_INFO(cgi)= {
 };
 
 
+#define ENTRIES "handler,cgi"
 #define dbg PRINT_DEBUG
 
 #define set_env_pair(c,n,l,v,l2) cherokee_handler_cgi_add_env_pair(c,n,l,v,l2) 
@@ -362,6 +363,8 @@ cherokee_handler_cgi_split_pathinfo (cherokee_handler_cgi_t *cgi, cherokee_buffe
 	 */
 	cherokee_buffer_drop_endding (buf, pathinfo_len);
 
+	TRACE (ENTRIES, "Pathinfo '%s'\n", conn->pathinfo.buf);
+
 	return ret_ok;
 }
 
@@ -377,6 +380,8 @@ _extract_path (cherokee_handler_cgi_t *cgi)
 	 * doesn't need to find the executable file..
 	 */
 	if (cgi->script_alias != NULL) {
+		TRACE (ENTRIES, "Script alias '%s'\n", cgi->script_alias);
+
 		if (stat(cgi->script_alias, &st) == -1) {
 			conn->error_code = http_not_found;
 			return ret_error;
@@ -434,6 +439,8 @@ _extract_path (cherokee_handler_cgi_t *cgi)
 			
 			cherokee_buffer_new (&cgi->filename);
 			cherokee_buffer_add_buffer (cgi->filename, &conn->local_directory);
+			
+			TRACE (ENTRIES, "Filename: '%s'\n", cgi->filename->buf);
 		}
 		
 	bye:
@@ -487,6 +494,8 @@ cherokee_handler_cgi_init (cherokee_handler_cgi_t *cgi)
 	if (cgi->init_phase == hcgi_phase_sent_post) {
 		int eagain_fd = -1;
 		int mode      =  0;
+
+		TRACE (ENTRIES",post", "Sending POST fd=%d\n", cgi->pipeOutput);
 
 		ret = cherokee_post_walk_to_fd (&conn->post, cgi->pipeOutput, &eagain_fd, &mode);
 

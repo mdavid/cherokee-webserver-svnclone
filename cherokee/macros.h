@@ -234,10 +234,10 @@
 
 /* Format string for off_t
  */
-#if SIZEOF_OFF_T == SIZEOF_UNSIGNED_LONG_LONG 
+#if (SIZEOF_OFF_T == SIZEOF_UNSIGNED_LONG_LONG)
 # define FMT_OFFSET "%llu"
 # define CST_OFFSET unsigned long long
-#elif SIZEOF_OFF_T == SIZEOF_UNISGNED_LONG
+#elif (SIZEOF_OFF_T ==  SIZEOF_UNSIGNED_LONG)
 # define FMT_OFFSET "%lu"
 # define CST_OFFSET unsigned long
 #else

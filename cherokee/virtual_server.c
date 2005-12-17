@@ -167,7 +167,9 @@ cherokee_virtual_server_free (cherokee_virtual_server_t *vserver)
 	/* Requests list
 	 */
 	if (!list_empty (&vserver->reqs)) {
+#ifndef CHEROKEE_EMBEDDED
 		cherokee_reqs_list_mrproper (&vserver->reqs);
+#endif
 	}
 
 	/* Index list

@@ -79,7 +79,8 @@ _add (cherokee_regex_table_t *table, char *pattern, void **regex)
 
 	tmp = (pcre*)cherokee_table_get_val (table->cache, pattern);
 	if (tmp != NULL) {
-		*regex = tmp;
+		if (regex != NULL)
+			*regex = tmp;
 
 		CHEROKEE_RWLOCK_UNLOCK (&table->rwlock);
 		return ret_ok;

@@ -1,3 +1,30 @@
+2005-12-17  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/handler_fastcgi.c (cherokee_handler_fastcgi_init): It
+	is going to use just one connection to each FastCGI server instead
+	of one per thread as I thought previously.
+
+	* cherokee/regex.c (_add): Potential SegFault fixed.
+
+2005-12-15  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/Makefile.am (libcherokee_server_la_SOURCES): Moved
+	fcgi_managed.{c,h} to the library.
+
+2005-12-14  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/connection.c (cherokee_connection_get_req_entry): Fixed
+	for the embedded version.
+
+	* cherokee/util.c (cherokee_split_arguments): Fixed.
+
+2005-12-12  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/Makefile.am (handler_server_info): Added logo.inc to
+	the handler code
+
+	* cherokee/logo.inc: Logo updated.
+
 2005-12-09  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cherokee/post.c (cherokee_post_walk_read): Fixed.
