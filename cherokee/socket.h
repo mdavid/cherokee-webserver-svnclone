@@ -101,7 +101,10 @@ typedef enum {
 typedef union {
 	struct sockaddr    sa;
 	struct sockaddr_in sa_in;
+
+#ifdef HAVE_SOCKADDR_UN
 	struct sockaddr_un sa_un;
+#endif
 #ifdef HAVE_SOCKADDR_IN6
 	struct sockaddr_in6 sa_in6;
 #endif
@@ -119,10 +122,6 @@ typedef struct {
 	socklen_t                 client_addr_len;
 	cherokee_socket_status_t  status;
 	cherokee_socket_type_t    is_tls;
-
-#ifdef _WIN32
-        HANDLE  hSelectEvent;
-#endif
 
 #ifdef HAVE_TLS
 	cherokee_boolean_t         initialized;

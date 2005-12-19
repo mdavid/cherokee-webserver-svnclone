@@ -91,6 +91,7 @@ if test "$ac_cv_working_getnameinfo" = "yes"; then
 fi
 ])
 
+
 AC_DEFUN([APR_CHECK_SOCKADDR_IN6],[
 AC_CACHE_CHECK(for sockaddr_in6, ac_cv_define_sockaddr_in6,[
 AC_TRY_COMPILE([
@@ -162,6 +163,33 @@ AC_DEFUN([AC_ACME_SOCKADDR_IN6],
     AC_MSG_RESULT($ac_cv_acme_sockaddr_in6)
     if test $ac_cv_acme_sockaddr_in6 = yes ; then
             AC_DEFINE(HAVE_SOCKADDR_IN6, 1, [HAVE_SOCKADDR_IN6])
+    fi])
+
+
+dnl
+dnl Checks to see if struct sockaddr_un exists
+dnl
+dnl usage:
+dnl
+dnl     AC_ACME_SOCKADDR_UN
+dnl
+dnl results:
+dnl
+dnl     HAVE_SOCKADDR_UN (defined)
+dnl
+AC_DEFUN([AC_ACME_SOCKADDR_UN],
+    [AC_MSG_CHECKING(if struct sockaddr_un exists)
+    AC_CACHE_VAL(ac_cv_acme_sockaddr_un,
+        AC_TRY_COMPILE([
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/un.h>],
+        [struct sockaddr_un sa6],
+        ac_cv_acme_sockaddr_un=yes,
+        ac_cv_acme_sockaddr_un=no))
+    AC_MSG_RESULT($ac_cv_acme_sockaddr_un)
+    if test $ac_cv_acme_sockaddr_un = yes ; then
+            AC_DEFINE(HAVE_SOCKADDR_UN, 1, [HAVE_SOCKADDR_UN])
     fi])
 
 

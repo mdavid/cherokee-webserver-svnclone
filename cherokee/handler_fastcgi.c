@@ -48,7 +48,13 @@ cherokee_module_info_t MODULE_INFO(fastcgi) = {
 #define FCGI_PATH_INFO_VAR        "PATH_INFO"
 #define FCGI_PATH_TRANSLATED_VAR  "PATH_TRANSLATED"
 
+
 static cherokee_table_t __fcgi_managers;
+
+#ifdef HAVE_PTHREAD
+pthread_mutex_t __fcgi_managers_sem;
+#endif
+
 
 static void
 fcgi_build_header (FCGI_Header *hdr, cuchar_t type, cushort_t request_id, cuint_t content_length, cuchar_t padding)
@@ -167,8 +173,7 @@ fixup_params (cherokee_buffer_t *buf, cuint_t id)
 	crafted_id [1] = (cuchar_t) (id >> 8) & 0xff;
 
 	byte = (char*) buf->buf;
-	while (byte < end)
-	{
+	while (byte < end) {
 		byte += 2;
 		if (*byte == (char) 0xFF)
 			*byte = crafted_id [1];
@@ -186,11 +191,16 @@ fixup_params (cherokee_buffer_t *buf, cuint_t id)
 		byte ++;
 		byte += (length + 1);
 	}
-  
- 
+
+	printf ("last_pad %p\n", last_pad);
+	printf ("buf->%p..%p\n", buf->buf, buf->buf+buf->size);
+
 	if ((buf->len % 8) != 0) {
 		pad = 8 - (buf->len % 8);
+
+		printf ("buf->len %d, buf->len + pad %d\n", buf->len, buf->len + pad);
 		cherokee_buffer_ensure_size (buf, buf->len + pad);
+		printf ("buf->len %d\n", buf->len);
     
 		*last_pad = pad;
 		cherokee_buffer_add (buf, padding, pad);
@@ -800,11 +810,18 @@ cherokee_handler_fastcgi_step (cherokee_handler_fastcgi_t *fcgi, cherokee_buffer
 
 /* Library init function
  */
+static cherokee_boolean_t is_init = false;
 
 void  
 MODULE_INIT(fastcgi) (cherokee_module_loader_t *loader)
 {
+	if (is_init) 
+		return;
+
 	PRINT_ERROR_S ("WARNING: The FastCGI is under development, it isn't ready to be used!\n");
 
 	cherokee_table_init(&__fcgi_managers);
+	CHEROKEE_MUTEX_INIT (&__fcgi_managers_sem, NULL);
+
+	is_init = true;
 }

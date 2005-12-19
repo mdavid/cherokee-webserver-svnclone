@@ -1,3 +1,10 @@
+2005-12-18  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* m4/network.m4: Added new macro AC_ACME_SOCKADDR_UN
+
+	* cherokee/win32_misc.c, cherokee/socket.h, cherokee/socket.c:
+	Better W32 support. Patch by Gisle Vanem <giva@bgnett.no>
+	
 2005-12-17  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cherokee/handler_fastcgi.c (cherokee_handler_fastcgi_init): It
