@@ -41,8 +41,10 @@ cherokee_module_info_t MODULE_INFO(redir) = {
 };
 
 
-#ifndef CHEROKEE_EMBEDDED
 #define ENTRIES "handler,redir"
+
+
+#ifndef CHEROKEE_EMBEDDED
 
 struct cre_list {
 	pcre* re;

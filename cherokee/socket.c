@@ -1057,10 +1057,15 @@ ret_t
 cherokee_socket_gethostbyname (cherokee_socket_t *socket, cherokee_buffer_t *hostname)
 {
 	if (SOCKET_AF(socket) == AF_UNIX) {
+#ifndef _WIN32
+		SHOULDNT_HAPPEN;
+		return ret_no_sys;
+#else
 		SOCKET_ADDR_UNIX(socket).sun_family = AF_UNIX;
 		memset ((char*) SOCKET_SUN_PATH (socket), 0, sizeof (SOCKET_ADDR_UNIX(socket)));
 		strncpy (SOCKET_SUN_PATH (socket), hostname->buf, hostname->len);
 		return ret_ok;
+#endif
 	}
 
 	return cherokee_gethostbyname (hostname->buf, &SOCKET_SIN_ADDR(socket));
@@ -1072,10 +1077,16 @@ cherokee_socket_connect (cherokee_socket_t *socket)
 {
 	int r;
 
-	if (SOCKET_AF(socket) == AF_UNIX) 
+	if (SOCKET_AF(socket) == AF_UNIX) {
+#ifdef _WIN32
+		SHOULDNT_HAPPEN;
+		return ret_no_sys;
+#else
 		r = connect (SOCKET_FD(socket), (struct sockaddr *) &SOCKET_ADDR_UNIX(socket), sizeof(SOCKET_ADDR_UNIX(socket)));
-	else
+#endif
+	} else {
 		r = connect (SOCKET_FD(socket), (struct sockaddr *) &SOCKET_ADDR(socket), sizeof(cherokee_sockaddr_t));
+	}
 
 	if (r < 0) {
 		int err = SOCK_ERRNO();

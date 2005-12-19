@@ -29,6 +29,7 @@
 #include "common-internal.h"
 #include "server.h"
 #include "ncpus.h"
+#include "util.h"
 #include "unix4win32.h"
 
 #ifdef HAVE_OPENSSL
@@ -38,7 +39,7 @@
 #endif
 
 #ifndef __GNUC__
-#error "You must be joking"
+# error "You must be joking"
 #endif
 
 #ifdef HAVE_IPV6
@@ -60,13 +61,6 @@ static WSADATA wsa_data;
  */
 static _ctor void win_init (void)
 {
-  const char *env = getenv ("CHEROKEE_TRACE");
-
-  if (env)
-  {
-    win_trace = atoi (env);
-    LoadLibrary ("exchndl.dll");   /* Dr MingW exception handler */
-  }
   if (WSAStartup (MAKEWORD(1,1), &wsa_data) != 0)
   {
     PRINT_ERROR ("WSAStartup failed; %s\n", win_strerror(GetLastError()));
@@ -485,13 +479,15 @@ void *win_mmap (int fd, size_t size, int prot)
       UnmapViewOfFile (file_ptr);
     }
   }
-  file_ptr = (map ? map->file_ptr : NULL);
+  file_ptr = (map ? (void*)map->file_ptr : NULL);
   if (!file_ptr)
      CloseHandle (os_map);
 
-  if (win_trace > 1)
-     PRINT_DEBUG ("win_mmap(): fd %d, os_map %08lX, file_ptr %08lX, size %u, prot %d\n",
-                  fd, (DWORD)os_map, (DWORD)file_ptr, size, prot);
+#if 0
+  TRACE ("mmap", "fd %d, os_map %08lX, file_ptr %08lX, size %u, prot %d\n",
+	    fd, (DWORD)os_map, (DWORD)file_ptr, size, prot);
+#endif
+
   return (file_ptr);
 }
 
@@ -527,6 +523,9 @@ void *win_dlopen (const char *dll_name, int flags)
   if (rc)
        last_error = 0;
   else last_error = GetLastError();
+
+ TRACE ("dlfcn", "%s, %s\n", dll_name, rc ? "ok" : "fail");
+
   (void) flags;
   return (rc);
 }
@@ -543,12 +542,17 @@ void *win_dlsym (const void *dll_handle, const char *func_name)
   if (rc)
        last_error = 0;
   else last_error = GetLastError();
+
+  TRACE ("dlfcn", "%s, %s\n", func_name, rc ? "ok" : "fail");
+
   return (rc);
 }
 
 int win_dlclose (const void *dll_handle)
 {
   HINSTANCE hnd = (HINSTANCE)dll_handle;
+
+  TRACE ("dlfcn", "%s\n", hnd ? "ok" : "fail");
 
   last_func = "win_dlclose";
   if (!hnd)
@@ -579,7 +583,7 @@ const char *win_dlerror (void)
 
 #define	IN6ADDRSZ     16
 #define	INADDRSZ      4
-#define	INT16SZ	      2
+#define	INT16SZ	    2
 
 /* Set both incase user was dumb enough to use the original strerror()
  */
