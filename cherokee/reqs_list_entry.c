@@ -34,6 +34,9 @@ cherokee_reqs_list_entry_new  (cherokee_reqs_list_entry_t **entry)
 	 */
 	cherokee_config_entry_init (&n->base_entry);
 
+	memset (n->ovector, 0, sizeof(int)*OVECTOR_LEN);
+	n->ovecsize = 0;
+
 	/* Init properties
 	 */
 	cherokee_buffer_init (&n->request);

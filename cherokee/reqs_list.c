@@ -70,7 +70,7 @@ cherokee_reqs_list_get (cherokee_reqs_list_t     *rl,
 	/* Build the request string
 	 */
 	if (! cherokee_buffer_is_empty (&conn->query_string)) {
-		/* Build the full request
+		/* Append the query_string at the end
 		 */
 		cherokee_buffer_ensure_size (&request_tmp, conn->request.len + conn->query_string.len + 1);
 		cherokee_buffer_add_buffer (&request_tmp, &conn->request);
@@ -99,11 +99,14 @@ cherokee_reqs_list_get (cherokee_reqs_list_t     *rl,
 		ret = cherokee_regex_table_get (CONN_SRV(conn)->regexs, pattern, (void **)&re);
 		if (ret != ret_ok) continue;
 		
-		rei = pcre_exec (re, NULL, request, request_len, 0, 0, NULL, 0);
+		rei = pcre_exec (re, NULL, request, request_len, 0, 0, lentry->ovector, OVECTOR_LEN);
 		if (rei < 0) continue;
 
 		TRACE (ENTRIES, "Request \"%s\" matches with \"%s\"\n", request, pattern);
 		
+		lentry->ovecsize      = rei;
+		conn->req_matched_ref = lentry;
+
 		cherokee_config_entry_complete (plugin_entry, entry, false);
 
 		ret = ret_ok;

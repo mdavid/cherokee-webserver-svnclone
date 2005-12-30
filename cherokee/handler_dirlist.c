@@ -187,6 +187,7 @@ cherokee_handler_dirlist_new  (cherokee_handler_t **hdl, void *cnt, cherokee_tab
 	n->background       = NULL;
 	n->header_file      = NULL;
 	n->header_file_ref  = NULL;
+ 	n->build_headers    = true;
 
 	cherokee_buffer_init (&n->header);
 
@@ -206,6 +207,8 @@ cherokee_handler_dirlist_new  (cherokee_handler_t **hdl, void *cnt, cherokee_tab
 		cherokee_typed_table_get_int (properties, "group", &n->show_group);
 
 		cherokee_typed_table_get_list (properties, "headerfile", &n->header_file);
+
+		cherokee_typed_table_get_int (properties, "show_headerfile", &n->build_headers);
 	}
 
 	*hdl = HANDLER(n);
@@ -268,22 +271,24 @@ read_header_file (cherokee_handler_dirlist_t *dhdl)
 	cherokee_connection_t *conn = HANDLER_CONN(dhdl);
 
 	list_for_each (i, dhdl->header_file) {
-		cherokee_boolean_t  readed;  
-		cuint_t             filename_len;
-		char               *filename = LIST_ITEM_INFO(i);
+		cuint_t  filename_len;
+		char    *filename = LIST_ITEM_INFO(i);
 
 		filename_len = strlen(filename);
-		
-		cherokee_buffer_add_buffer (&conn->local_directory, &conn->request);                     /* do   */
-		cherokee_buffer_add (&conn->local_directory, filename, filename_len);
-	
 		cherokee_buffer_clean (&dhdl->header);
-		ret = cherokee_buffer_read_file (&dhdl->header, conn->local_directory.buf);
-		readed = (ret == ret_ok);
+		
+		if (filename[0] != '/') {
+			cherokee_buffer_add_buffer (&conn->local_directory, &conn->request);                     /* do   */
+			cherokee_buffer_add (&conn->local_directory, filename, filename_len);
+	
+			ret = cherokee_buffer_read_file (&dhdl->header, conn->local_directory.buf);
+			
+			cherokee_buffer_drop_endding (&conn->local_directory, conn->request.len + filename_len); /* undo */	
+		} else {
+			ret = cherokee_buffer_read_file (&dhdl->header, filename);
+		}
 
-		cherokee_buffer_drop_endding (&conn->local_directory, conn->request.len + filename_len); /* undo */	
-
-		if (readed) {
+		if (ret == ret_ok) {
 			dhdl->header_file_ref = filename;
 			return;
 		}
@@ -485,35 +490,46 @@ render_page_header (cherokee_handler_dirlist_t *dhdl, cherokee_buffer_t *buffer)
 {
 	cherokee_connection_t *conn;
  	cherokee_icons_t      *icons;
-
-	CHEROKEE_NEW(path,buffer);
+	cherokee_buffer_t      path = CHEROKEE_BUF_INIT;
+	
+//	CHEROKEE_NEW(path,buffer);
 
 	conn  = HANDLER_CONN(dhdl);
 	icons = HANDLER_SRV(dhdl)->icons;
 	
-	cherokee_buffer_add (buffer, "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 3.2 Final//EN\">" CRLF, 57);
+	if (dhdl->build_headers) {
+		cherokee_buffer_add_str (buffer, "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 3.2 Final//EN\">" CRLF);
 	
-	/* Step 1:
-	 * Build the public path
-	 */
-	build_public_path (dhdl, path);
+		/* Step 1:
+		 * Build the public path
+		 */
+		build_public_path (dhdl, &path);
 	
-	/* Add some HTML: title and body begin
-	 */
-	cherokee_buffer_add (buffer, "<html><head><title>Index of ", 28);
-	cherokee_buffer_add_buffer (buffer, path);
-	cherokee_buffer_add (buffer, "</title></head><body ", 21);
+		/* Add some HTML: title and body begin
+		 */
+		cherokee_buffer_add_str (buffer, "<html><head><title>Index of ");
+		cherokee_buffer_add_buffer (buffer, &path);
+		cherokee_buffer_add_str (buffer, "</title></head><body");
 	
-	cherokee_buffer_add_va (buffer, "bgcolor=\"%s\" text=\"%s\" link=\"%s\" vlink=\"%s\" alink=\"%s\"", 
-				dhdl->bgcolor, dhdl->text, dhdl->link, dhdl->vlink, dhdl->alink);
+		cherokee_buffer_add_va (buffer, " bgcolor=\"%s\" text=\"%s\" link=\"%s\" vlink=\"%s\" alink=\"%s\"", 
+					dhdl->bgcolor, dhdl->text, dhdl->link, dhdl->vlink, dhdl->alink);
 	
-	if (dhdl->background) {
-		cherokee_buffer_add_va (buffer, " background=\"%s\"", dhdl->background);
+		if (dhdl->background) {
+			cherokee_buffer_add_va (buffer, " background=\"%s\"", dhdl->background);
+		}
+	
+		cherokee_buffer_add_str (buffer, "><h1>Index of ");
+		cherokee_buffer_add_buffer (buffer, &path);
+		cherokee_buffer_add_str (buffer, "</h1>");
+
+	} else {
+		/* The custom header should be enough
+		 */
+		cherokee_buffer_add_buffer (buffer, &dhdl->header);
+		cherokee_buffer_mrproper (&dhdl->header);
 	}
-	
-	cherokee_buffer_add (buffer, "><h1>Index of ", 14);
-	cherokee_buffer_add_buffer (buffer, path);
-	cherokee_buffer_add (buffer, "</h1><pre>", 10);
+
+	cherokee_buffer_add_str (buffer, "<pre>");
 	
 	/* Step 2:
 	 * Print the ordering bar
@@ -545,7 +561,7 @@ render_page_header (cherokee_handler_dirlist_t *dhdl, cherokee_buffer_t *buffer)
 	/* Step 3:
 	 * Free the path, we will not need it again
 	 */
-	cherokee_buffer_free (path);
+	cherokee_buffer_mrproper (&path);
 	
 	
 	if (! cherokee_buffer_is_empty (&dhdl->header)) {

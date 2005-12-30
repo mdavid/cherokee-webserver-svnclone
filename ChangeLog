@@ -1,3 +1,33 @@
+2005-12-30  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/connection.c (cherokee_connection_get_request): Now it
+	uses cherokee_short_path() rather than strcmp() and
+	cherokee_buffer_remove_string().
+
+	* cherokee/util.c (cherokee_short_path): New function.
+
+2005-12-26  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/reqs_list_entry.h,
+	cherokee/reqs_list_entry.c (cherokee_reqs_list_entry_new): Added
+	ovector and ovecsize to store "Points to a vector of ints for
+	result offsets".
+
+	* qa/117-DomainToDir.py, qa/Makefile.am: Added new test.
+
+2005-12-25  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/handler_dirlist.c (read_header_file): Now, it accepts
+	full paths in the HeaderFile parameter.
+
+	* cherokee/read_config_grammar.y (handler_option T_HEADERFILE):
+	Now it accepts "ID or path" lists instead of ID lists.
+
+	* cherokee/handler_fastcgi.c (fixup_params, add_env_pair_2_params,
+	add_env_pair_with_id): Now, parameter entries are added with the
+	right ID, so there is no fix up needed beyond a basic padding
+	check.
+
 2005-12-18  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* m4/network.m4: Added new macro AC_ACME_SOCKADDR_UN

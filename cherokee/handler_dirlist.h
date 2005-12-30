@@ -77,9 +77,10 @@ typedef struct {
 	cuint_t show_owner;
 	cuint_t show_group;
 	
-	cherokee_buffer_t  header;          /* Header content */
-	list_t            *header_file;     /* List of possible header filenames */
-	char              *header_file_ref; /* Pointer to the used header filename */
+	cherokee_buffer_t   header;          /* Header content */
+	list_t             *header_file;     /* List of possible header filenames */
+	char               *header_file_ref; /* Pointer to the used header filename */
+	cherokee_boolean_t  build_headers;   /* Build headers */
 
 } cherokee_handler_dirlist_t;
 

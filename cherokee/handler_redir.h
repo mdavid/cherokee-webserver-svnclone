@@ -31,13 +31,17 @@
 #include "list.h"
 
 typedef struct {
-	cherokee_handler_t  handler;
+	cherokee_handler_t          handler;
 
-	char               *target_url;
-	int                 target_url_len;
-	list_t             *regex_list_ref;
-	void               *regex_list_cre;
-	cherokee_boolean_t  is_hidden;
+	char                       *target_url;
+	int                         target_url_len;
+
+	list_t                     *regex_list_ref;
+	void                       *regex_list_cre;
+
+	cherokee_boolean_t          is_hidden;	
+	cherokee_boolean_t          use_previous_match;
+
 } cherokee_handler_redir_t;
 
 #define REHANDLER(x)  ((cherokee_handler_redir_t *)(x))

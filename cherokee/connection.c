@@ -118,6 +118,7 @@ cherokee_connection_new  (cherokee_connection_t **cnt)
 	n->tx_partial        = 0;
 	n->traffic_next      = 0;
 	n->validator         = NULL;
+	n->req_matched_ref   = NULL;
 
 	cherokee_buffer_init (&n->buffer);
 	cherokee_buffer_init (&n->header_buffer);
@@ -231,6 +232,7 @@ cherokee_connection_clean (cherokee_connection_t *cnt)
 	cnt->rx_partial        = 0;	
 	cnt->tx_partial        = 0;
 	cnt->traffic_next      = 0;
+	cnt->req_matched_ref   = NULL;
 	
 	if (cnt->handler != NULL) {
 		cherokee_handler_free (cnt->handler);
@@ -1338,21 +1340,16 @@ cherokee_connection_get_request (cherokee_connection_t *cnt)
 	ret = cherokee_header_copy_request (cnt->header, &cnt->request);
 	if (ret < ret_ok) goto error;
 
-	/* Look for ".."
-	 */
-	if (strstr (cnt->request.buf, "..") != NULL) {
-		goto error;
-	}
-
-	/* Remove the "./" substring
-	 */
-	cherokee_buffer_remove_string (&cnt->request, "./", 2);
-
 	/* Look for starting '/' in the request
 	 */
 	if (cnt->request.buf[0] != '/') {
 		goto error;
 	}
+
+	/* Short the path. It transforms the request:
+	 * /dir1/dir2/../file in /dir1/file
+	 */
+	cherokee_short_path (&cnt->request);
 
 	/* Look for "//" 
 	 */
@@ -1514,7 +1511,7 @@ cherokee_connection_get_req_entry (cherokee_connection_t *cnt, cherokee_reqs_lis
 #ifndef CHEROKEE_EMBEDDED
 	ret = cherokee_reqs_list_get (reqs, &cnt->request, plugin_entry, cnt);
 #else
-	ret = ret_not_found;
+	return ret_ok;
 #endif
 	switch (ret) {
 	case ret_not_found:
