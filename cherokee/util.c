@@ -845,6 +845,12 @@ cherokee_short_path (cherokee_buffer_t *path)
 			continue;
 		}
 
+		if ((p[1] == '/') && (p > path->buf) && (*(p-1) == '/')) {
+			cherokee_buffer_remove_chunk (path, p - path->buf, 2);
+			p -= 2;
+			continue;
+		}
+
 		if (end < p+2) {
 			return ret_ok;
 		}
