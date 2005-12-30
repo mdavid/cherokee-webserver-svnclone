@@ -857,13 +857,10 @@ cherokee_logrotate_LDADD = libcherokee-config.la libcherokee-base.la libcherokee
 #
 # Test programs
 #
-noinst_PROGRAMS = cherokee_admin cherokee_short_path
+noinst_PROGRAMS = cherokee_admin
 
 cherokee_admin_SOURCES = cherokee_admin.c 
 cherokee_admin_LDADD = libcherokee-config.la libcherokee-base.la libcherokee-client.la 
-
-cherokee_short_path_SOURCES = cherokee_short_path.c
-cherokee_short_path_LDADD = libcherokee-base.la
 
 ##cherokee_table_test_SOURCES = cherokee_table_test.c
 ##cherokee_table_test_LDADD = libcherokee.la
