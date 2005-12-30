@@ -175,6 +175,7 @@ struct cherokee_connection {
 	void                         *mmaped;
 	off_t                         mmaped_len;
 	cherokee_iocache_entry_t     *io_entry_ref;
+	cherokee_reqs_list_entry_t   *req_matched_ref;
 };
 
 #define CONN_SRV(c)    (SRV(CONN(c)->server))

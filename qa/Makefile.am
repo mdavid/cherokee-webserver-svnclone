@@ -117,7 +117,9 @@ run-tests.py \
 112-NiceError-CGI.py \
 113-HeaderFile.py \
 114-HeaderFile2.py \
-115-Respin.py
+115-Respin.py \
+116-RequestTiny.py \
+117-DomainToDir.py
 
 test:
 	./run-tests.py

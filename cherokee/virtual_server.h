@@ -64,7 +64,8 @@ typedef struct {
 	cherokee_buffer_t           *userdir;        /* Eg: public_html             */
 	cherokee_dirs_table_t       *userdir_dirs;   /* Eg: (/public, common)       */
 
-	list_t                       index_list;     /* Eg: index.html, index.php */
+	list_t                       index_list;     /* Eg: index.html, index.php  */
+	cherokee_boolean_t           relative_paths; /* Allow ".." in the requests */
 
 	struct {                                     /* Number of bytes {up,down}loaded */
 		size_t tx;

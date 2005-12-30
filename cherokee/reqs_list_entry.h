@@ -28,11 +28,16 @@
 #include "common-internal.h"
 #include "config_entry.h"
 
+#define OVECTOR_LEN 30
+
 
 typedef struct {
-	   cherokee_config_entry_t  base_entry;
-	   cherokee_buffer_t        request;
-	   struct list_head         list_entry;
+	cherokee_config_entry_t  base_entry;
+	cherokee_buffer_t        request;
+	struct list_head         list_entry;
+	
+	int                      ovector[OVECTOR_LEN];
+	int                      ovecsize;
 } cherokee_reqs_list_entry_t; 
 
 #define RQ_ENTRY(x) ((cherokee_reqs_list_entry_t *)(x))

@@ -56,9 +56,10 @@ struct cre_list {
 static void
 build_regexs_list (cherokee_handler_redir_t *n, cherokee_connection_t *cnt, list_t *regex_list)
 {
-	ret_t             ret;
-	list_t           *i;
- 	struct cre_list **last_item; 
+	ret_t                   ret;
+	list_t                 *i;
+ 	struct cre_list       **last_item; 
+	cherokee_connection_t  *conn = HANDLER_CONN(n);
 	
  	last_item = (struct cre_list**)&(n->regex_list_cre); 
 
@@ -80,6 +81,15 @@ build_regexs_list (cherokee_handler_redir_t *n, cherokee_connection_t *cnt, list
 
 		subs = pattern + pattern_len + 1;
 		subs_len = strlen (subs);
+
+		/* If the pattern is empty we have to use the
+		 * last matched Request entry, if any..
+		 */
+		if ((pattern_len == 0) &&
+		    (conn->req_matched_ref != NULL)) 
+		{
+			n->use_previous_match = true;
+		}
 
 		/* Look for the pattern
 		 */
@@ -146,24 +156,33 @@ match_and_substitute (cherokee_handler_redir_t *n)
 {
 	struct cre_list       *list;
 	cherokee_connection_t *conn = HANDLER_CONN(n);
-
+	
 	list = (struct cre_list*)n->regex_list_cre;
 	while (list != NULL) {	
-		int   ovector[30], rc;
+		int   ovector[OVECTOR_LEN], rc;
 		char *subject     = conn->request.buf + conn->web_directory.len;
 		int   subject_len = strlen (subject);
 
-		rc = pcre_exec (list->re, NULL, subject, subject_len, 0, 0, ovector, 30);
-		if (rc == 0) {
-			PRINT_ERROR_S("Too many groups in the regex\n");
-		}
 
-		TRACE (ENTRIES, "subject = \"%s\" + len(\"%s\")\n", conn->request.buf, conn->web_directory.buf);
-		TRACE (ENTRIES, "pcre_exec: subject=\"%s\" -> %d\n", subject, rc);
+		/* It might be matched previosly in the request parsing..
+		 */
+		if (n->use_previous_match) {
+			memcpy (ovector, conn->req_matched_ref->ovector, OVECTOR_LEN * sizeof(int));
+			rc = conn->req_matched_ref->ovecsize;
 
-		if (rc <= 0) {
-			list = list->next;
-			continue;
+		} else {
+			rc = pcre_exec (list->re, NULL, subject, subject_len, 0, 0, ovector, 30);
+			if (rc == 0) {
+				PRINT_ERROR_S("Too many groups in the regex\n");
+			}
+
+			TRACE (ENTRIES, "subject = \"%s\" + len(\"%s\")\n", conn->request.buf, conn->web_directory.buf);
+			TRACE (ENTRIES, "pcre_exec: subject=\"%s\" -> %d\n", subject, rc);
+
+			if (rc <= 0) {
+				list = list->next;
+				continue;
+			}
 		}
 
 		/* Make a copy of the original request before rewrite it
@@ -234,7 +253,8 @@ cherokee_handler_redir_new (cherokee_handler_t **hdl, void *cnt, cherokee_table_
 	n->target_url           = NULL;
 	n->target_url_len       = 0;
 	n->is_hidden            = false;
-	
+	n->use_previous_match   = false;
+
 	/* It needs at least the "URL" configuration parameter..
 	 */
 	if (cherokee_buffer_is_empty (&CONN(cnt)->redirect) && properties) {

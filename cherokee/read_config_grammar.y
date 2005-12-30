@@ -247,18 +247,20 @@ load_module (cherokee_module_loader_t *loader, char *name, cherokee_module_info_
 static void
 handler_redir_add_property (cherokee_config_entry_t *entry, char *regex, char *subs, int show)
 {
-	   int     regex_len;
-	   int     subs_len;
 	   char   *p;
 	   char   *serialized;
+	   int     regex_len    = 0;
+	   int     subs_len     = 0;
 	   list_t *plist        = NULL;
 	   list_t  nlist        = LIST_HEAD_INIT(nlist);
 
 	   /* Build the string:
 	    * [1]show [s]regex \0 [s]subs \0
 	    */
-	   regex_len = strlen(regex);
 	   subs_len = strlen(subs);
+
+	   if (regex != NULL)
+			 regex_len = strlen(regex);
 
 	   serialized = (char *) malloc (1 + regex_len + 1 + subs_len + 1);
 	   memset (serialized, 0, regex_len + subs_len + 3);
@@ -286,6 +288,13 @@ handler_redir_add_property (cherokee_config_entry_t *entry, char *regex, char *s
 	   } else {
 			 cherokee_list_add_tail (plist, serialized);
 	   }
+}
+
+
+static void
+handler_redir_add_property_simple (cherokee_config_entry_t *entry, char *subs, int show)
+{
+	   handler_redir_add_property (entry, NULL, subs, show);
 }
 
 
@@ -927,6 +936,8 @@ handler : T_HANDLER T_ID
 http_generic : T_HTTP_URL  { $$ = $1; }
              | T_HTTPS_URL { $$ = $1; };
 
+
+
 handler_option : T_SHOW T_REWRITE T_QSTRING T_QSTRING
 {
 	   handler_redir_add_property (current_config_entry, $3, $4, 1);
@@ -936,6 +947,17 @@ handler_option : T_REWRITE T_QSTRING T_QSTRING
 {
 	   handler_redir_add_property (current_config_entry, $2, $3, 0);
 };
+
+handler_option : T_SHOW T_REWRITE T_QSTRING 
+{
+	   handler_redir_add_property_simple (current_config_entry, $3, 1);
+}
+
+handler_option : T_REWRITE T_QSTRING
+{
+	   handler_redir_add_property_simple (current_config_entry, $2, 0);
+};
+
 
 str_type : T_ID
          | T_FULLDIR
@@ -984,14 +1006,22 @@ handler_option : T_ID T_NUMBER
 	   } else if (!strcasecmp ($1, "iocache")) {
 			 cherokee_config_entry_set_handler_prop (current_config_entry, "cache", typed_int, INT_TO_POINTER($2), NULL);
 	   } else if (!strcasecmp ($1, "errorhandler")) {
-			 cherokee_config_entry_set_handler_prop (current_config_entry, "error_handler", typed_int, INT_TO_POINTER($2), NULL);
-	   } else {
 			 return 1;
 	   }
 };
 
+handler_option : T_ERROR_HANDLER T_NUMBER
+{
+	   cherokee_config_entry_set_handler_prop (current_config_entry, "error_handler", typed_int, INT_TO_POINTER($2), NULL);
+};
 
-handler_option : T_HEADERFILE id_list
+handler_option : T_SHOW T_HEADERFILE T_NUMBER
+{
+	   cherokee_config_entry_set_handler_prop (current_config_entry, "show_headerfile", typed_int, INT_TO_POINTER($3), NULL);
+};
+
+
+handler_option : T_HEADERFILE id_path_list
 {
 	   linked_list_t *i;
 	   list_t         nlist = LIST_HEAD_INIT(nlist);
@@ -1532,7 +1562,6 @@ auth_option_params :
 
 auth_option_param : T_PASSWDFILE T_FULLDIR 
 { dirs_table_set_validator_prop (current_config_entry, "file", $2); };
-
 
 
 userdir : T_USERDIR T_ID 
