@@ -827,3 +827,65 @@ out:
 
 #endif
 
+
+
+ret_t 
+cherokee_short_path (cherokee_buffer_t *path)
+{
+	char *p   = path->buf;
+	char *end = path->buf + path->len;
+
+	while (p < end) {
+		char    *dots_end;
+		char    *prev_slash;
+		cuint_t  len;
+
+		if (p[0] != '.') {
+			p++;
+			continue;
+		}
+
+		if (end < p+2) {
+			return ret_ok;
+		}
+
+		if (p[1] != '.') {
+			p+=2;
+			continue;
+		}
+
+		dots_end = p + 2;
+		while ((dots_end < end) && (*dots_end == '.')) {
+			dots_end++;
+		}
+		
+		if (dots_end >= end)
+			return ret_ok;
+
+		prev_slash = p-1;
+
+		if (prev_slash < path->buf)
+			return ret_ok;
+		
+		if (*prev_slash != '/') {
+			p = dots_end;
+			continue;
+		}
+
+		if (prev_slash > path->buf)
+			prev_slash--;
+		
+		while ((prev_slash > path->buf) && (*prev_slash != '/')) {
+			prev_slash--;
+		}
+		
+		len = dots_end - prev_slash;
+
+		cherokee_buffer_remove_chunk (path, (prev_slash - path->buf), len);
+
+		end = path->buf + path->len;
+		p -= len;
+	}
+
+	return ret_ok;
+}

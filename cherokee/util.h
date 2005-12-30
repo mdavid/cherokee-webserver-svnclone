@@ -91,6 +91,9 @@ ret_t cherokee_split_arguments (cherokee_buffer_t *request,
 				char             **arguments,
 				int               *arguments_len);
 
+ret_t cherokee_short_path      (cherokee_buffer_t *path);
+
+
 CHEROKEE_END_DECLS
 
 #endif /* CHEROKEE_UTIL_H */
