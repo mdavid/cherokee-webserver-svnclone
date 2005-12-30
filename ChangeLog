@@ -1,5 +1,9 @@
 2005-12-30  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* qa/119-Dotdot2.py, qa/120-Dotdot3.py,
+	qa/Makefile.am (EXTRA_DIST): Added two new tests to check the new
+	"dot dot" parsing function.
+
 	* cherokee/connection.c (cherokee_connection_get_request): Now it
 	uses cherokee_short_path() rather than strcmp() and
 	cherokee_buffer_remove_string().
