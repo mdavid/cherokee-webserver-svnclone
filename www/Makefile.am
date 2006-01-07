@@ -1,16 +1,31 @@
 ## Cherokee: Makefile.am  -*- makefile -*-
 
 cherokeewwwdir = "@WWW_ROOT@"
-cherokeewww_DATA = \
-index.html
 
 cherokeewwwimagesdir = "@WWW_ROOT@/images"
 cherokeewwwimages_DATA = \
-top-layer.png \
+default-bg.png \
 cherokee-logo.png \
 powered_by_cherokee.png
 
-EXTRA_DIST = \
-$(cherokeewww_DATA) \
-$(cherokeewwwimages_DATA) 
+HTMLS = \
+index.html
 
+install-data-local: $(HTMLS)
+	@$(mkinstalldirs) $(DESTDIR)$(cherokeewwwdir)
+	@if test -f $(DESTDIR)$(cherokeewwwdir)/index.html ; then \
+		echo "$@ will not overwrite existing $(cherokeewwwdir)/index.html"; \
+	else \
+		$(INSTALL_DATA) $(top_builddir)/www/index.html $(DESTDIR)$(cherokeewwwdir)/index.html; \
+	fi
+
+uninstall-local: 
+	@if test -f $(DESTDIR)$(cherokeewwwdir)/index.html ; then \
+		echo "rm -f $(DESTDIR)$(cherokeewwwdir)/index.html"; \
+		$(RM) -f $(DESTDIR)$(cherokeewwwdir)/index.html; \
+	fi
+
+
+EXTRA_DIST = \
+$(HTMLS) \
+$(cherokeewwwimages_DATA) 
