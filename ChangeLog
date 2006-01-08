@@ -1,7 +1,15 @@
 2006-01-08  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* cherokee/connection.c (cherokee_connection_get_request),
+	cherokee/thread.c (process_active_connections): If UserDir is
+	unset it should manage requests starting by /~ like common
+	requests. Fixed.
+
+	* qa/121-NoUserDir.py, qa/Makefile.am: New test: "If UserDir isn't
+	set, it should threat ~ as a common character"
+
 	* cherokee/connection.c (cherokee_connection_get_request): There
-	was an error in the UserDir redirections.
+	was an error in the UserDir redirections. 
 
 	* www/Makefile.am (install-data-local): Little bugfix.
 

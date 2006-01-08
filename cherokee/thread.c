@@ -701,12 +701,6 @@ process_active_connections (cherokee_thread_t *thd)
 			 */
 			conn_set_mode (thd, conn, socket_writing);
 			
-			/* Get the virtual host and maybe set a new vserver reference
-			 */
-			if (!cherokee_buffer_is_empty (&conn->host)) {
-				cherokee_table_get (srv->vservers_ref, conn->host.buf, &conn->vserver);
-			}
-
 			/* Set the logger of the connection
 			 */
 			conn->logger_ref = CONN_VSRV(conn)->logger;

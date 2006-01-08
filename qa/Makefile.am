@@ -122,7 +122,8 @@ run-tests.py \
 117-DomainToDir.py \
 118-Request-redir.py \
 119-Dotdot2.py \
-120-Dotdot3.py
+120-Dotdot3.py \
+121-NoUserDir.py
 
 test:
 	./run-tests.py
