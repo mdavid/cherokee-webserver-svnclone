@@ -16,7 +16,7 @@ install-data-local: $(HTMLS)
 	@if test -f $(DESTDIR)$(cherokeewwwdir)/index.html ; then \
 		echo "$@ will not overwrite existing $(cherokeewwwdir)/index.html"; \
 	else \
-		$(INSTALL_DATA) $(top_builddir)/www/index.html $(DESTDIR)$(cherokeewwwdir)/index.html; \
+		$(INSTALL_DATA) $(top_srcdir)/www/index.html $(DESTDIR)$(cherokeewwwdir)/index.html; \
 	fi
 
 uninstall-local: 
