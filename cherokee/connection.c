@@ -1354,7 +1354,7 @@ cherokee_connection_get_request (cherokee_connection_t *cnt)
 	 */
 	cherokee_buffer_remove_dups (&cnt->request, '/');
 
-	/* Check Host header
+	/* Read the Host header
 	 */
 	ret = cherokee_header_get_known (cnt->header, header_host, &host, &host_len);
 	switch (ret) {
@@ -1370,6 +1370,11 @@ cherokee_connection_get_request (cherokee_connection_t *cnt)
 	case ret_ok:
 		ret = get_host (cnt, host, host_len);
 		if (unlikely(ret < ret_ok)) goto error;
+		
+		/* Set the virtual host reference
+		 */
+		cherokee_table_get (CONN_SRV(cnt)->vservers_ref, cnt->host.buf, &cnt->vserver);
+
 		break;
 
 	default:
@@ -1378,7 +1383,9 @@ cherokee_connection_get_request (cherokee_connection_t *cnt)
 
 	/* Userdir requests
 	 */
-	if (cherokee_connection_is_userdir (cnt)) {
+	if ((!cherokee_buffer_is_empty (CONN_VSRV(cnt)->userdir)) && 
+	    cherokee_connection_is_userdir (cnt)) 
+	{
 		ret = parse_userdir (cnt);
 		if (ret != ret_ok) return ret;
 	}
