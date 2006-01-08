@@ -191,7 +191,6 @@ unregister_conn (cherokee_fcgi_manager_t *fcgim, cherokee_connection_t *conn)
 
 	slot = id - 1;
 	fcgim->conn_poll[slot] = NULL;
-	printf ("unreg id=%d = NULL\n", slot);
 	return ret_ok;
 }
 
@@ -295,15 +294,12 @@ cherokee_fcgi_manager_register_conn (cherokee_fcgi_manager_t *fcgim, cherokee_co
 	/* Look for the first free slot
 	 */
 	for (i=0; i<fcgim->conn_poll_size; i++) {
-		printf ("fcgim->conn_poll[%d] = %p\n", i, fcgim->conn_poll[i]);
 		if (fcgim->conn_poll[i] == NULL) {
 			slot = i;
 			break;
 		}
 	}
 
-	printf ("slot = %d\n", slot);
-	
 	/* If there isn't a free slot, get more memory
 	 */
 	if (slot == -1) {
@@ -334,8 +330,6 @@ cherokee_fcgi_manager_register_conn (cherokee_fcgi_manager_t *fcgim, cherokee_co
 	TRACE (ENTRIES, "Manager(%p) registered ID=%d\n", fcgim, slot+1);
 
 	*id = slot + 1;
-	printf ("reg id=%d = conn %p\n", *id, conn);
-
 	UNLOCK;
 	return ret_ok;
 }
@@ -494,8 +488,6 @@ process_read_buffer (cherokee_fcgi_manager_t *fcgim, cherokee_handler_fastcgi_t 
 			break;
 
 		case FCGI_END_REQUEST:
-			printf ("!!!!!!!!FCGI_END_REQUEST\n");
-
 			end_request = (FCGI_EndRequestBody *) (start + offset);
 
 			fcgim->return_value =  ((end_request->appStatusB0)       | 
@@ -538,7 +530,6 @@ cherokee_fcgi_manager_step (cherokee_fcgi_manager_t *fcgim, cuint_t id)
   
 	conn = fcgim->conn_poll [id - 1];
 	if (conn == NULL) {
-		printf ("id %d == NULL! step\n", id);
 		SHOULDNT_HAPPEN;
 
 		UNLOCK;

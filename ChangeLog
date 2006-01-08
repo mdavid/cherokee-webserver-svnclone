@@ -1,3 +1,9 @@
+2006-01-08  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/handler_fastcgi.c (fixup_padding): Applied path by
+	Mohammad DAMT <mdamt@gnome.org>. The padding entry of the last
+	packet was set to zero (which was incorrect in 7 of 8 cases).
+
 2006-01-07  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* www/Makefile.am: It shouldn't overwrtie /var/www/index.html if
