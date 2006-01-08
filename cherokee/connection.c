@@ -1268,7 +1268,6 @@ parse_userdir (cherokee_connection_t *cnt)
 
 	end_username = strchr (begin, '/');
 	if (end_username == NULL) {
-		end_username = &cnt->request.buf[cnt->request.len];
 
 		/* It has to be redirected 
 		 *
@@ -1381,7 +1380,7 @@ cherokee_connection_get_request (cherokee_connection_t *cnt)
 	 */
 	if (cherokee_connection_is_userdir (cnt)) {
 		ret = parse_userdir (cnt);
-		if (ret != ret_ok) goto error;
+		if (ret != ret_ok) return ret;
 	}
 
 	/* RFC 2817: Client Requested Upgrade to HTTP over TLS
