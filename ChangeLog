@@ -1,5 +1,7 @@
 2006-01-08  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* www/Makefile.am (install-data-local): Little bugfix.
+
 	* cherokee/handler_fastcgi.c (fixup_padding): Applied path by
 	Mohammad DAMT <mdamt@gnome.org>. The padding entry of the last
 	packet was set to zero (which was incorrect in 7 of 8 cases).
