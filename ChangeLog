@@ -1,5 +1,8 @@
 2006-01-08  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* cherokee/connection.c (cherokee_connection_get_request): There
+	was an error in the UserDir redirections.
+
 	* www/Makefile.am (install-data-local): Little bugfix.
 
 	* cherokee/handler_fastcgi.c (fixup_padding): Applied path by
