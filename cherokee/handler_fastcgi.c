@@ -137,7 +137,6 @@ cherokee_handler_fastcgi_free (cherokee_handler_fastcgi_t *hdl)
 	cherokee_connection_t *conn = HANDLER_CONN(hdl);
 
 	if (hdl->manager_ref != NULL) {
-		printf ("cherokee_handler_fastcgi_free\n");
 		cherokee_fcgi_manager_unregister_conn (hdl->manager_ref, conn);
 	}
 
@@ -149,6 +148,49 @@ cherokee_handler_fastcgi_free (cherokee_handler_fastcgi_t *hdl)
 	return ret_ok;
 }
 
+
+static void
+fixup_padding (cherokee_buffer_t *buf, cuint_t id)
+{
+	char *byte, *end, *last_pad;
+	char  padding [8] = {0, 0, 0, 0, 0, 0, 0, 0};
+	int   length;
+	int   crafted_id [2];
+	int   pad;
+
+	if (buf->len == 0)
+		return;
+
+	end = buf->buf + buf->len;
+	crafted_id [0] = (cuchar_t) id;
+	crafted_id [1] = (cuchar_t) (id >> 8) & 0xff;
+	byte = (char*) buf->buf;
+
+	while (byte < end) {
+		byte += 4;
+
+		length = (*byte << 8);
+		byte ++;
+		length |= *byte;
+		byte ++;
+		length += *byte;
+
+		last_pad = byte;
+		byte ++;
+		byte += (length + 1);
+	}
+
+	if ((buf->len % 8) != 0) {
+		pad = 8 - (buf->len % 8);
+		cherokee_buffer_ensure_size (buf, buf->len + pad);
+
+		*last_pad = pad;
+		cherokee_buffer_add (buf, padding, pad);
+	}
+
+}
+
+#if 0
 
 static void
 fixup_padding (cherokee_buffer_t *buf, cuint_t id)
@@ -173,6 +215,8 @@ fixup_padding (cherokee_buffer_t *buf, cuint_t id)
 	cherokee_buffer_ensure_size (buf, buf->len + pad);
 	cherokee_buffer_add (buf, padding, pad);
 }
+
+#endif
 
 
 static void
