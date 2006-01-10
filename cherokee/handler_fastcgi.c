@@ -149,6 +149,8 @@ cherokee_handler_fastcgi_free (cherokee_handler_fastcgi_t *hdl)
 }
 
 
+#if 0
+
 static void
 fixup_padding (cherokee_buffer_t *buf, cuint_t id)
 {
@@ -161,10 +163,14 @@ fixup_padding (cherokee_buffer_t *buf, cuint_t id)
 	if (buf->len == 0)
 		return;
 
-	end = buf->buf + buf->len;
+	if ((buf->len % 8) == 0) 
+		return;
+
+	byte = (char*) buf->buf;
+	end  = buf->buf + buf->len;
+
 	crafted_id [0] = (cuchar_t) id;
 	crafted_id [1] = (cuchar_t) (id >> 8) & 0xff;
-	byte = (char*) buf->buf;
 
 	while (byte < end) {
 		byte += 4;
@@ -180,49 +186,45 @@ fixup_padding (cherokee_buffer_t *buf, cuint_t id)
 		byte += (length + 1);
 	}
 
-	if ((buf->len % 8) != 0) {
-		pad = 8 - (buf->len % 8);
-		cherokee_buffer_ensure_size (buf, buf->len + pad);
+	pad = 8 - (buf->len % 8);
+	cherokee_buffer_ensure_size (buf, buf->len + pad);
 
-		*last_pad = pad;
-		cherokee_buffer_add (buf, padding, pad);
-	}
-
+	*last_pad = pad;
+	cherokee_buffer_add (buf, padding, pad);
 }
 
-#if 0
+#endif
 
 static void
-fixup_padding (cherokee_buffer_t *buf, cuint_t id)
+fixup_padding (cherokee_buffer_t *buf, cuint_t id, FCGI_Header *last_header)
 {
 	cuint_t                  rest;
 	cuint_t                  pad;
-	FCGI_BeginRequestRecord *request;
 	char                     padding[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 
 	if (buf->len <= 0)
 		return;
 
-	request = (FCGI_BeginRequestRecord *)buf->buf;
 	rest    = buf->len % 8;
 	pad     = 8 - rest;
 
 	if (rest == 0) 
 		return;
 
-//	request->header.paddingLength = pad;
+	last_header->paddingLength = pad;
 
 	cherokee_buffer_ensure_size (buf, buf->len + pad);
 	cherokee_buffer_add (buf, padding, pad);
 }
 
-#endif
+
 
 
 static void
-add_env_pair_with_id (cherokee_buffer_t *buf, cuint_t id,
-		      char *key, int key_len,
-		      char *val, int val_len)
+add_env_pair_with_id_and_header_ref (cherokee_buffer_t *buf, cuint_t id,
+				     char *key, int key_len,
+				     char *val, int val_len,
+				     FCGI_Header **req_ref)
 {
 	FCGI_BeginRequestRecord  request;
 	int                      len;
@@ -231,9 +233,12 @@ add_env_pair_with_id (cherokee_buffer_t *buf, cuint_t id,
 	len += key_len > 127 ? 4 : 1;
 	len += val_len > 127 ? 4 : 1;
 
-	cherokee_buffer_ensure_size (buf, buf->len + key_len + val_len + sizeof(FCGI_Header));
-
 	fcgi_build_header (&request.header, FCGI_PARAMS, id, len, 0);
+
+	if (req_ref != NULL)
+		*req_ref = buf->buf + buf->len;
+
+	cherokee_buffer_ensure_size (buf, buf->len + key_len + val_len + sizeof(FCGI_Header));
 	cherokee_buffer_add (buf, (void *)&request.header, sizeof(FCGI_Header));
 
 	if (key_len <= 127) {
@@ -260,6 +265,15 @@ add_env_pair_with_id (cherokee_buffer_t *buf, cuint_t id,
 
 
 static void
+add_env_pair_with_id (cherokee_buffer_t *buf, cuint_t id,
+		      char *key, int key_len,
+		      char *val, int val_len)
+{
+	add_env_pair_with_id_and_header_ref (buf, id, key, key_len, val, val_len, NULL);
+}
+
+
+static void
 add_env_pair_2_params (void *params[2], 
 		       char *key, int key_len,
 		       char *val, int val_len)
@@ -275,7 +289,7 @@ add_env_pair_2_params (void *params[2],
 
 
 static void
-add_more_env (cherokee_handler_fastcgi_t *fcgi, cherokee_buffer_t *buf)
+add_more_env (cherokee_handler_fastcgi_t *fcgi, cherokee_buffer_t *buf, FCGI_Header **last_header)
 {
 	cherokee_connection_t   *conn;
 	cherokee_buffer_t        buffer = CHEROKEE_BUF_INIT;
@@ -333,9 +347,10 @@ add_more_env (cherokee_handler_fastcgi_t *fcgi, cherokee_buffer_t *buf)
 			      FCGI_PATH_TRANSLATED_VAR, sizeof (FCGI_PATH_TRANSLATED_VAR) - 1,
 			      buffer.buf, buffer.len);
 
-	add_env_pair_with_id (buf, fcgi->id,
-			      FCGI_SCRIPT_NAME_VAR, sizeof (FCGI_SCRIPT_NAME_VAR) - 1,
-			      conn->request.buf, conn->request.len);
+	add_env_pair_with_id_and_header_ref (buf, fcgi->id,
+					     FCGI_SCRIPT_NAME_VAR, sizeof (FCGI_SCRIPT_NAME_VAR) - 1,
+					     conn->request.buf, conn->request.len,
+					     last_header);
 
 	cherokee_buffer_mrproper (&buffer);
 }
@@ -347,10 +362,10 @@ build_initial_packages (cherokee_handler_fastcgi_t *fcgi)
 	ret_t                    ret;
 	FCGI_BeginRequestRecord  request;
 	void                    *params[2];
-	cherokee_buffer_t        tmp       = CHEROKEE_BUF_INIT;
-	cherokee_buffer_t        write_tmp = CHEROKEE_BUF_INIT;
-	cherokee_connection_t   *conn      = HANDLER_CONN (fcgi);;
-
+	cherokee_buffer_t        tmp         = CHEROKEE_BUF_INIT;
+	cherokee_buffer_t        write_tmp   = CHEROKEE_BUF_INIT;
+	cherokee_connection_t   *conn        = HANDLER_CONN (fcgi);;
+	FCGI_Header             *last_header = NULL;
 
 	cherokee_connection_parse_args (conn);
 
@@ -371,8 +386,8 @@ build_initial_packages (cherokee_handler_fastcgi_t *fcgi)
 	ret = cherokee_cgi_build_basic_env (conn, (cherokee_cgi_set_env_pair_t) add_env_pair_2_params, &tmp, params);
 	if (unlikely (ret != ret_ok)) return ret; 
 
-	add_more_env (fcgi, &write_tmp);
-	fixup_padding (&write_tmp, fcgi->id);
+	add_more_env (fcgi, &write_tmp, &last_header);
+	fixup_padding (&write_tmp, fcgi->id, last_header);
 	
 	cherokee_buffer_add_buffer (&fcgi->write_buffer, &write_tmp);
 

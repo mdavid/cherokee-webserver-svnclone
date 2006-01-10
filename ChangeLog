@@ -1,3 +1,9 @@
+2006-01-10  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/handler_fastcgi.c (fixup_padding): It keeps track of
+	the last header package. In this way, it doesn't need to parse the
+	buffer header in order to set the padding length.
+
 2006-01-08  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cherokee/connection.c (cherokee_connection_get_request),
