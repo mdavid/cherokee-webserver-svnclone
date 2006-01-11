@@ -139,6 +139,7 @@ AC_PATH_PROG(cherokeepath, cherokee)
 
 AC_PROG_CC
 AC_PROG_INSTALL
+AC_PROG_MAKE_SET
 
 AC_LIBTOOL_DLOPEN
 AC_LIBTOOL_WIN32_DLL
@@ -216,7 +217,7 @@ fi
 AC_FUNC_MEMCMP
 AC_FUNC_MMAP
 
-AC_CHECK_FUNCS(gmtime gmtime_r getrlimit getdtablesize readdir_r)
+AC_CHECK_FUNCS(gmtime gmtime_r localtime localtime_r getrlimit getdtablesize readdir_r)
 
 
 AH_BOTTOM([

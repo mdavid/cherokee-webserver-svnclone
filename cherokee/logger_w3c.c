@@ -216,19 +216,24 @@ cherokee_logger_w3c_write_error  (cherokee_logger_w3c_t *logger, cherokee_connec
 	int                len;
 	struct tm         *conn_time;
 	cherokee_buffer_t *request;
+	static int        *this_timezone = NULL;
+
 	CHEROKEE_TEMP (tmp, 200);
 
 	/* Read the bogonow value from the server
 	 */
 	conn_time = &CONN_THREAD(cnt)->bogo_now_tm;
 
-#ifdef HAVE_INT_TIMEZONE
-	z = - (timezone / 60);
-#else
-#warning TODO
-	z = 0;
-#endif
+	/* Get the timezone reference
+	 */
+	if (this_timezone == NULL) {
+		this_timezone = cherokee_get_timezone_ref();
+	}
+	
+	z = - (*this_timezone / 60);
 
+	/* Build the string
+	 */
 	request = cherokee_buffer_is_empty(&cnt->request_original) ? 
 		&cnt->request : &cnt->request_original;
 
@@ -273,6 +278,7 @@ cherokee_logger_w3c_write_access (cherokee_logger_w3c_t *logger, cherokee_connec
 	int                len;
 	struct tm         *conn_time;
 	cherokee_buffer_t *request;
+	static int        *this_timezone = NULL;
 	CHEROKEE_TEMP (tmp, 200);
 
 	/* Read the bogonow value from the server
@@ -298,35 +304,38 @@ cherokee_logger_w3c_write_access (cherokee_logger_w3c_t *logger, cherokee_connec
 		logger->header_added = 1;
 	}
 	
-#ifdef HAVE_INT_TIMEZONE
-	   z = - (timezone / 60);
-#else
-#warning TODO
-	   z = 0;
-#endif
+	/* Get the timezone reference
+	 */
+	if (this_timezone == NULL) {
+		this_timezone = cherokee_get_timezone_ref();
+	}
+	
+	z = - (*this_timezone / 60);
 
-	   request = cherokee_buffer_is_empty(&cnt->request_original) ? 
-		   &cnt->request : &cnt->request_original;
+	/* Build the string
+	 */
+	request = cherokee_buffer_is_empty(&cnt->request_original) ? 
+		&cnt->request : &cnt->request_original;
 
-	   len = snprintf (tmp, tmp_size-1,
-			   "%02d:%02d:%02d %s %s\n",
-			   conn_time->tm_hour, 
-			   conn_time->tm_min, 
-			   conn_time->tm_sec,
-			   method[cnt->header->method],
-			   request->buf);
+	len = snprintf (tmp, tmp_size-1,
+			"%02d:%02d:%02d %s %s\n",
+			conn_time->tm_hour, 
+			conn_time->tm_min, 
+			conn_time->tm_sec,
+			method[cnt->header->method],
+			request->buf);
 
 	   
-	   if ((len > tmp_size-1) || (len == -1)) {
-		   len = tmp_size;
-		   tmp[tmp_size-1] = '\n';
-	   }
+	if ((len > tmp_size-1) || (len == -1)) {
+		len = tmp_size;
+		tmp[tmp_size-1] = '\n';
+	}
 
-	   CHEROKEE_MUTEX_LOCK(&buffer_lock);
-	   cherokee_buffer_add (LOGGER_BUFFER(logger), tmp, len);
-	   CHEROKEE_MUTEX_UNLOCK(&buffer_lock);
+	CHEROKEE_MUTEX_LOCK(&buffer_lock);
+	cherokee_buffer_add (LOGGER_BUFFER(logger), tmp, len);
+	CHEROKEE_MUTEX_UNLOCK(&buffer_lock);
 
-	   return ret_ok;
+	return ret_ok;
 }
 
 
