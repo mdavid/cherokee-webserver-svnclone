@@ -870,7 +870,7 @@ cherokee_short_path (cherokee_buffer_t *path)
 		char    *dots_end;
 		char    *prev_slash;
 		cuint_t  len;
-
+		
 		if (p[0] != '.') {
 			p++;
 			continue;
@@ -878,7 +878,7 @@ cherokee_short_path (cherokee_buffer_t *path)
 
 		if ((p[1] == '/') && (p > path->buf) && (*(p-1) == '/')) {
 			cherokee_buffer_remove_chunk (path, p - path->buf, 2);
-			p -= 2;
+			p -= 1;
 			continue;
 		}
 
@@ -928,14 +928,13 @@ cherokee_short_path (cherokee_buffer_t *path)
 }
 
 
-int * 
+long * 
 cherokee_get_timezone_ref (void)
 {
-	static int _faked_timezone = 0;
-
 #ifdef HAVE_INT_TIMEZONE
 	return &timezone;
 #else
+	static long _faked_timezone = 0;
 	return &_faked_timezone;
 #endif
 }
