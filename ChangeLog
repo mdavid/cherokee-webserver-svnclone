@@ -1,5 +1,12 @@
 2006-01-11  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* cherokee/util.c (cherokee_short_path): There was an out by one
+	here. In some situations, it was reading one byte outside the
+	reserved memory. It is now fixed.
+
+	* cherokee/util.h, cherokee/util.c (cherokee_get_timezone_ref):
+	timezone is long, not int.
+
 	* cherokee/header.c (parse_request_first_line, parse_method):
 	Added a bunch of methods.  Now it should be able to parse WebDAV
 	requests.

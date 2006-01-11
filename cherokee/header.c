@@ -279,7 +279,6 @@ parse_method (cherokee_header_t *hdr, char *line, char **pointer)
 		hdr->method = http_get;
 		*pointer += 4;
 		return ret_ok;
-
 	} else if (strncmp (line, "POST ", 5) == 0) {
 		hdr->method = http_post;
 		*pointer += 5;
@@ -308,9 +307,10 @@ parse_method (cherokee_header_t *hdr, char *line, char **pointer)
 		hdr->method = http_connect;
 		*pointer += 8;
 		return ret_ok;
-	}
-#ifdef WEBDAV_SUPPORT
-	  else if (strncmp (line, "COPY ", 5) == 0) {
+
+	/* WebDAV methods
+	 */
+	} else if (strncmp (line, "COPY ", 5) == 0) {
 		hdr->method = http_copy;
 		*pointer += 5;
 		return ret_ok;
@@ -359,7 +359,6 @@ parse_method (cherokee_header_t *hdr, char *line, char **pointer)
 		*pointer += 12;
 		return ret_ok;
 	}
-#endif
 
 	return ret_error;
 }

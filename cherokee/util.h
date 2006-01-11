@@ -68,7 +68,7 @@ int   cherokee_estimate_va_length (char *format, va_list ap);
  */
 struct tm *cherokee_gmtime           (const time_t *timep, struct tm *result);
 struct tm *cherokee_localtime        (const time_t *timep, struct tm *result);
-int       *cherokee_get_timezone_ref (void);
+long      *cherokee_get_timezone_ref (void);
 
 /* Thread safe functions
  */
