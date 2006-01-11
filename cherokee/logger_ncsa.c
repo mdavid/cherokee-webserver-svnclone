@@ -228,19 +228,21 @@ build_log_string (cherokee_logger_ncsa_t *logger, cherokee_connection_t *cnt, ch
         const char        *version;
 	struct tm         *conn_time;
 	char               ipaddr[CHE_INET_ADDRSTRLEN];
+	static int        *this_timezone = NULL;
 	cherokee_buffer_t *combined_info = NULL;
 	cherokee_buffer_t *request;
 
 	/* Read the bogonow value from the server
 	 */
 	conn_time = &CONN_THREAD(cnt)->bogo_now_tm;
+
+	/* Get the timezone reference
+	 */
+	if (this_timezone == NULL) {
+		this_timezone = cherokee_get_timezone_ref();
+	}
 	
-#ifdef HAVE_INT_TIMEZONE
-	z = - (timezone / 60);
-#else
-#warning TODO
-	z = 0;
-#endif
+	z = - (*this_timezone / 60);
 
 	memset (ipaddr, 0, sizeof(ipaddr));
 	cherokee_socket_ntop (cnt->socket, ipaddr, sizeof(ipaddr)-1);

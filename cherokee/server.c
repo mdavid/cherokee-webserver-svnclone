@@ -1081,27 +1081,36 @@ cherokee_server_reinit (cherokee_server_t *srv)
 static void
 update_bogo_now (cherokee_server_t *srv)
 {
-	time_t prev;
+	time_t      prev;
+	static int *this_timezone = NULL;
 
 	CHEROKEE_RWLOCK_WRITER (&srv->bogo_now_mutex);      /* 1.- lock as writer */
 
 	prev = srv->bogo_now;
 	srv->bogo_now = time (NULL);
-	cherokee_gmtime (&srv->bogo_now, &srv->bogo_now_tm);
+	cherokee_localtime (&srv->bogo_now, &srv->bogo_now_tm);
 	
 	/* Update time string if needed
 	 */
 	if (prev < srv->bogo_now) {
+		int z;
+
 		cherokee_buffer_clean (srv->bogo_now_string);
 
-		cherokee_buffer_add_va (srv->bogo_now_string, "%s, %02d %s %d %02d:%02d:%02d GMT",
+		if (this_timezone == NULL) 
+			this_timezone = cherokee_get_timezone_ref();
+		z = - (*this_timezone / 60);
+
+		cherokee_buffer_add_va (srv->bogo_now_string, "%s, %02d %s %d %02d:%02d:%02d GMT%c%d",
 					cherokee_weekdays[srv->bogo_now_tm.tm_wday], 
 					srv->bogo_now_tm.tm_mday,
 					cherokee_months[srv->bogo_now_tm.tm_mon], 
 					srv->bogo_now_tm.tm_year + 1900,
 					srv->bogo_now_tm.tm_hour,
 					srv->bogo_now_tm.tm_min,
-					srv->bogo_now_tm.tm_sec);
+					srv->bogo_now_tm.tm_sec,
+					(z < 0) ? '-' : '+',
+					(z / 60));
 	}
 
 	CHEROKEE_RWLOCK_UNLOCK (&srv->bogo_now_mutex);      /* 2.- release */

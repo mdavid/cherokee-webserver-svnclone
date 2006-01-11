@@ -1,3 +1,21 @@
+2006-01-11  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* configure.in: Added a new check for the localtime localtime_r
+	functions.
+
+	* cherokee/util.h, cherokee/util.c (cherokee_localtime,
+	cherokee_get_timezone_ref): Added new functions.
+
+	* cherokee/server.c (update_bogo_now): Fixed, now it sends the
+	header with the right GMT value. Until now, it was using the
+	coverted time to GMT (which was the same time, but it is king of
+	weird to be in GMT+1 and reply header like being in GMT).
+
+	* cherokee/logger_w3c.c (cherokee_logger_w3c_write_access)
+	(cherokee_logger_w3c_write_error),
+	cherokee/logger_ncsa.c (build_log_string): Integrated with
+	cherokee_localtime() and cherokee_get_timezone_ref() functions.
+
 2006-01-10  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cherokee/handler_fastcgi.c (fixup_padding): It keeps track of

@@ -353,6 +353,37 @@ cherokee_gmtime (const time_t *timep, struct tm *result)
 }
 
 
+#if defined(HAVE_PTHREAD) && !defined(HAVE_LOCALTIME_R)
+static pthread_mutex_t localtime_mutex = PTHREAD_MUTEX_INITIALIZER;
+#endif
+
+struct tm *
+cherokee_localtime (const time_t *timep, struct tm *result)
+{
+#ifndef HAVE_PTHREAD
+	struct tm *tmp;
+
+	tmp = localtime (timep);
+	memcpy (result, tmp, sizeof(struct tm));
+	return result;	
+#else 
+# ifdef HAVE_LOCALTIME_R
+	return localtime_r (timep, result);
+# else
+	struct tm *tmp;
+
+	CHEROKEE_MUTEX_LOCK (&localtime_mutex);
+	tmp = localtime (timep);
+	memcpy (result, tmp, sizeof(struct tm));
+	CHEROKEE_MUTEX_UNLOCK (&localtime_mutex);
+
+	return result;
+# endif
+#endif
+}
+
+
+
 
 #if defined(HAVE_PTHREAD) && !defined(HAVE_READDIR_R)
 static pthread_mutex_t readdir_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -894,4 +925,17 @@ cherokee_short_path (cherokee_buffer_t *path)
 	}
 
 	return ret_ok;
+}
+
+
+int * 
+cherokee_get_timezone_ref (void)
+{
+	static int _faked_timezone = 0;
+
+#ifdef HAVE_INT_TIMEZONE
+	return &timezone;
+#else
+	return &_faked_timezone;
+#endif
 }
