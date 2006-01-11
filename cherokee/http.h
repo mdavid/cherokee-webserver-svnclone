@@ -45,12 +45,26 @@ typedef enum {
 typedef enum {
 	http_get,
 	http_post,
-	http_put,
 	http_head,
+	http_put,
 	http_options,
 	http_delete,
 	http_trace,
 	http_connect,
+
+	http_copy,
+	http_lock,
+	http_mkcol,
+	http_move,
+	http_notify,
+	http_poll,
+	http_propfind,
+	http_proppatch,
+	http_search,
+	http_subscribe,
+	http_unlock,
+	http_unsubscribe,
+
 	http_unknown
 } cherokee_http_method_t;
 
