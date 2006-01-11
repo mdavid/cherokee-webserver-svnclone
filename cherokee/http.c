@@ -27,50 +27,47 @@
 
 #include <stdio.h>
 
-#define set_ptr(ptr,val) if(ptr) { *ptr=val; }
-
+#define entry(name,name_str)                       \
+	    case name:	                           \
+	         if (len) *len = sizeof(name_str); \
+	         *str = name_str;                  \
+ 		 return ret_ok;
 
 ret_t 
 cherokee_http_method_to_string (cherokee_http_method_t method, const char **str, int *len)
 {
 	switch (method) {
-	case http_get:
-		set_ptr(len, 3);
-		*str = "GET";
-		return ret_ok;
-	case http_post:
-		set_ptr(len, 4);
-		*str = "POST";
-		return ret_ok;
-	case http_put:
-		set_ptr(len, 3);
-		*str = "PUT";
-		return ret_ok;
-	case http_head:
-		set_ptr(len, 4);
-		*str = "HEAD";
-		return ret_ok;
-	case http_options:
-		set_ptr(len, 7);
-		*str = "OPTIONS";
-		return ret_ok;
-	case http_delete:
-		set_ptr(len, 6);
-		*str = "DELETE";
-		return ret_ok;
-	case http_trace:
-		set_ptr(len, 5);
-		*str = "TRACE";
-		return ret_ok;
-	case http_connect:
-		set_ptr(len, 7);
-		*str = "CONNECT";
-		return ret_ok;
+		/* HTTP 1.1 methods
+		 */
+		entry (http_get, "GET");
+		entry (http_post, "POST");
+		entry (http_head, "HEAD");
+		entry (http_put, "PUT");
+		entry (http_options, "PUT");
+		entry (http_delete, "DELETE");
+		entry (http_trace, "TRACE");
+		entry (http_connect, "CONNECT");
+
+		/* WebDAV methods
+		 */
+		entry (http_copy, "COPY");
+		entry (http_lock, "LOCK");
+		entry (http_mkcol, "MKCOL");
+		entry (http_move, "MOVE");
+		entry (http_notify, "NOTIFY");
+		entry (http_poll, "POLL");
+		entry (http_propfind, "PROPFIND");
+		entry (http_proppatch, "PROPPATCH");
+		entry (http_search, "SEARCH");
+		entry (http_subscribe, "SUBSCRIBE");
+		entry (http_unlock, "UNLOCK");
+		entry (http_unsubscribe, "UNSUBSCRIBE");
+
 	default:
 		break;
 	};
 
-	set_ptr(len, 7);
+	if (len) *len = 7;
 	*str = "UNKNOWN";
 	return ret_error;
 }
@@ -80,23 +77,14 @@ ret_t
 cherokee_http_version_to_string (cherokee_http_version_t version, const char **str, int *len)
 {
 	switch (version) {
-	case http_version_11:
-		set_ptr(len, 8);
-		*str = "HTTP/1.1";
-		return ret_ok;
-	case http_version_10:
-		set_ptr(len, 8);
-		*str = "HTTP/1.0";
-		return ret_ok;
-	case http_version_09:
-		set_ptr(len, 8);
-		*str = "HTTP/0.9";
-		return ret_ok;
+		entry (http_version_11, "HTTP/1.1");
+		entry (http_version_10, "HTTP/1.0");
+		entry (http_version_09, "HTTP/0.9");
 	default:
 		break;
 	};
 
-	set_ptr(len, 12);
+	if (len) *len = 12;
 	*str = "HTTP/Unknown";
 	return ret_error;
 }

@@ -1,5 +1,12 @@
 2006-01-11  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* cherokee/header.c (parse_request_first_line, parse_method):
+	Added a bunch of methods.  Now it should be able to parse WebDAV
+	requests.
+
+	* cherokee/http.c (cherokee_http_method_to_string,
+	cherokee_http_version_to_string): Rewritten.
+
 	* configure.in: Added a new check for the localtime localtime_r
 	functions.
 

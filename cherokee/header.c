@@ -269,13 +269,110 @@ parse_response_first_line (cherokee_header_t *hdr, cherokee_buffer_t *buf, char 
 	return ret_ok;
 }
 
+
+static ret_t
+parse_method (cherokee_header_t *hdr, char *line, char **pointer)
+{
+	/* These are HTTP/1.1 methods
+	 */
+	if (strncmp (line, "GET ", 4) == 0) {
+		hdr->method = http_get;
+		*pointer += 4;
+		return ret_ok;
+
+	} else if (strncmp (line, "POST ", 5) == 0) {
+		hdr->method = http_post;
+		*pointer += 5;
+		return ret_ok;
+	} else if (strncmp (line, "HEAD ", 5) == 0) {
+		hdr->method = http_head;
+		*pointer += 5;
+		return ret_ok;
+	} else if (strncmp (line, "OPTIONS ", 8) == 0) {
+		hdr->method = http_options;
+		*pointer += 8;
+		return ret_ok;
+	} else if (strncmp (line, "PUT ", 4) == 0) {
+		hdr->method = http_put;
+		*pointer += 4;
+		return ret_ok;
+	} else if (strncmp (line, "DELETE ", 7) == 0) {
+		hdr->method = http_delete;
+		*pointer += 7;
+		return ret_ok;
+	} else if (strncmp (line, "TRACE ", 6) == 0) {
+		hdr->method = http_trace;
+		*pointer += 6;
+		return ret_ok;
+	} else if (strncmp (line, "CONNECT ", 8) == 0) {
+		hdr->method = http_connect;
+		*pointer += 8;
+		return ret_ok;
+	}
+#ifdef WEBDAV_SUPPORT
+	  else if (strncmp (line, "COPY ", 5) == 0) {
+		hdr->method = http_copy;
+		*pointer += 5;
+		return ret_ok;
+	} else if (strncmp (line, "LOCK ", 5) == 0) {
+		hdr->method = http_lock;
+		*pointer += 5;
+		return ret_ok;
+	} else if (strncmp (line, "MKCOL ", 6) == 0) {
+		hdr->method = http_mkcol;
+		*pointer += 6;
+		return ret_ok;
+	} else if (strncmp (line, "MOVE ", 5) == 0) {
+		hdr->method = http_move;
+		*pointer += 5;
+		return ret_ok;
+	} else if (strncmp (line, "NOTIFY ", 7) == 0) {
+		hdr->method = http_notify;
+		*pointer += 7;
+		return ret_ok;
+	} else if (strncmp (line, "POLL ", 5) == 0) {
+		hdr->method = http_poll;
+		*pointer += 5;
+		return ret_ok;
+	} else if (strncmp (line, "PROPFIND ", 9) == 0) {
+		hdr->method = http_propfind;
+		*pointer += 9;
+		return ret_ok;
+	} else if (strncmp (line, "PROPPATCH ", 10) == 0) {
+		hdr->method = http_proppatch;
+		*pointer += 10;
+		return ret_ok;
+	} else if (strncmp (line, "SEARCH ", 7) == 0) {
+		hdr->method = http_search;
+		*pointer += 7;
+		return ret_ok;
+	} else if (strncmp (line, "SUBSCRIBE ", 10) == 0) {
+		hdr->method = http_subscribe;
+		*pointer += 10;
+		return ret_ok;
+	} else if (strncmp (line, "UNLOCK ", 7) == 0) {
+		hdr->method = http_unlock;
+		*pointer += 7;
+		return ret_ok;
+	} else if (strncmp (line, "UNSUBSCRIBE ", 12) == 0) {
+		hdr->method = http_unsubscribe;
+		*pointer += 12;
+		return ret_ok;
+	}
+#endif
+
+	return ret_error;
+}
+
+
 static ret_t
 parse_request_first_line (cherokee_header_t *hdr, cherokee_buffer_t *buf, char **next_pos)
 {
-	char *line  = buf->buf;
-	char *begin = line;
-	char *end;
-	char *ptr;
+	ret_t  ret;
+	char  *line  = buf->buf;
+	char  *begin = line;
+	char  *end;
+	char  *ptr;
 
 	/* Example:
 	 * GET / HTTP/1.0
@@ -297,26 +394,8 @@ parse_request_first_line (cherokee_header_t *hdr, cherokee_buffer_t *buf, char *
 
 	/* Get the method
 	 */
-	if (strncmp (line, "GET ", 4) == 0) {
-		hdr->method = http_get;
-		begin += 4;
-
-	} else if (strncmp (line, "POST ", 5) == 0) {
-		hdr->method = http_post;
-		begin += 5;
-
-	} else if (strncmp (line, "HEAD ", 5) == 0) {
-		hdr->method = http_head;
-		begin += 5;
-		
-	} else if (strncmp (line, "OPTIONS ", 8) == 0) {
-		hdr->method = http_options;
-		begin += 8;
-		
-	} else {
-		return ret_error;
-	}
-
+	ret = parse_method (hdr, line, &begin);
+	if (unlikely (ret != ret_ok)) return ret;
 
 	/* Get the protocol version
 	 */	
