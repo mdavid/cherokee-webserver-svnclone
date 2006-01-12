@@ -1316,7 +1316,7 @@ cherokee_connection_get_request (cherokee_connection_t *cnt)
 
 	/* Maybe read the POST data
 	 */
-	if (HDR_METHOD(cnt->header) == http_post) {
+	if (http_method_with_input (cnt->header->method)) {
 		uint32_t header_len;
 		uint32_t post_len;
 

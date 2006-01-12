@@ -682,7 +682,8 @@ process_active_connections (cherokee_thread_t *thd)
 
 			/* If it's a POST we've to read more data
 			 */
-			if (HDR_METHOD(conn->header) == http_post) {
+			if (http_method_with_input (conn->header->method)) 
+			{
 				if (! cherokee_post_got_all (&conn->post)) {
 					conn_set_mode (thd, conn, socket_reading);
 					conn->phase = phase_read_post;
