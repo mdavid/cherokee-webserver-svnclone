@@ -373,7 +373,6 @@ class TestCollection:
         return r
 
     def __str__ (self):
-        print "str de", id(self.current_test)
         return str(self.current_test)
 
 
