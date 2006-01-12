@@ -1,5 +1,9 @@
 2006-01-12  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* cherokee/connection.c (cherokee_connection_get_request),
+	cherokee/thread.c (process_active_connections): It must use
+	http_method_with_input() instead of the checking with http_post.
+
 	* qa/122-Methods.py, qa/Makefile.am (EXTRA_DIST): New test to
 	check non common methods.
 

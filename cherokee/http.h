@@ -139,7 +139,7 @@ typedef enum {
 				   (m == http_mkcol)    || \
 				   (m == http_search)   || \
 				   (m == http_propfind) || \
-				   (m == http_proppath));
+				   (m == http_proppatch))
 
 ret_t cherokee_http_method_to_string  (cherokee_http_method_t  method,  const char **str, int *str_len);
 ret_t cherokee_http_version_to_string (cherokee_http_version_t version, const char **str, int *str_len);
