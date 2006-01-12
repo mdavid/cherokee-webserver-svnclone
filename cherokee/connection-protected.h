@@ -215,6 +215,7 @@ ret_t cherokee_connection_setup_error_handler    (cherokee_connection_t *cnt);
 ret_t cherokee_connection_check_authentication   (cherokee_connection_t *cnt, cherokee_config_entry_t *plugin_entry);
 ret_t cherokee_connection_check_ip_validation    (cherokee_connection_t *cnt, cherokee_config_entry_t *plugin_entry);
 ret_t cherokee_connection_check_only_secure      (cherokee_connection_t *cnt, cherokee_config_entry_t *plugin_entry);
+ret_t cherokee_connection_check_http_method      (cherokee_connection_t *cnt, cherokee_config_entry_t *plugin_entry);
 
 /* Iteration
  */

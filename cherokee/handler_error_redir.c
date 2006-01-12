@@ -30,9 +30,11 @@
 #include "handler_redir.h"
 #include "module_loader.h"
 
-cherokee_module_info_t MODULE_INFO(error_redir) = {
-	   cherokee_handler,                 /* type     */
-	   cherokee_handler_error_redir_new  /* new func */
+
+cherokee_module_info_handler_t MODULE_INFO(error_redir) = {
+	.module.type     = cherokee_handler,                 /* type         */
+	.module.new_func = cherokee_handler_error_redir_new, /* new func     */
+	.valid_methods   = http_all_methods                  /* http methods */
 };
 
 

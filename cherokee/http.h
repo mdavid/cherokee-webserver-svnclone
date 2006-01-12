@@ -43,29 +43,30 @@ typedef enum {
 } cherokee_http_version_t;
 
 typedef enum {
-	http_get,
-	http_post,
-	http_head,
-	http_put,
-	http_options,
-	http_delete,
-	http_trace,
-	http_connect,
+	http_unknown      = 0,
+	http_all_methods  = 0xFFFFFFFF,
 
-	http_copy,
-	http_lock,
-	http_mkcol,
-	http_move,
-	http_notify,
-	http_poll,
-	http_propfind,
-	http_proppatch,
-	http_search,
-	http_subscribe,
-	http_unlock,
-	http_unsubscribe,
+	http_get          = 1,
+	http_post         = 1 << 1,
+	http_head         = 1 << 2,
+	http_put          = 1 << 3,
+	http_options      = 1 << 4,
+	http_delete       = 1 << 5,
+	http_trace        = 1 << 6,
+	http_connect      = 1 << 7,
 
-	http_unknown
+	http_copy         = 1 << 8,
+	http_lock         = 1 << 9,
+	http_mkcol        = 1 << 10,
+	http_move         = 1 << 11,
+	http_notify       = 1 << 12,
+	http_poll         = 1 << 13,
+	http_propfind     = 1 << 14,
+	http_proppatch    = 1 << 15,
+	http_search       = 1 << 16,
+	http_subscribe    = 1 << 17,
+	http_unlock       = 1 << 18,
+	http_unsubscribe  = 1 << 19
 } cherokee_http_method_t;
 
 typedef enum {
@@ -94,6 +95,7 @@ typedef enum {
 	http_unauthorized          = 401,
 	http_access_denied         = 403,
 	http_not_found             = 404,
+	http_method_not_allowed    = 405,
 	http_length_required       = 411,
 	http_request_uri_too_long  = 414,
 	http_range_not_satisfiable = 416,
@@ -115,6 +117,7 @@ typedef enum {
 #define http_unauthorized_string          "401 Authorization Required"
 #define http_access_denied_string         "403 Forbidden"
 #define http_not_found_string             "404 Not Found"
+#define http_method_not_allowed_string    "405 Method Not Allowed"
 #define http_length_required_string       "411 Length Required"
 #define http_request_uri_too_long_string  "414 Request-URI too long"
 #define http_range_not_satisfiable_string "416 Requested range not satisfiable"
@@ -132,6 +135,11 @@ typedef enum {
 #define http_type_500(c)  ((c >= 500) && (c <= http_type_500_max))
 
 #define http_method_with_body(m)  ((m != http_head) && (m != http_options))
+#define http_method_with_input(m) ((m == http_post)     || \
+				   (m == http_mkcol)    || \
+				   (m == http_search)   || \
+				   (m == http_propfind) || \
+				   (m == http_proppath));
 
 ret_t cherokee_http_method_to_string  (cherokee_http_method_t  method,  const char **str, int *str_len);
 ret_t cherokee_http_version_to_string (cherokee_http_version_t version, const char **str, int *str_len);

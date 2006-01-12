@@ -30,6 +30,7 @@
 #define CHEROKEE_MODULE_H
 
 #include <cherokee/common.h>
+#include <cherokee/http.h>
 
 CHEROKEE_BEGIN_DECLS
 
@@ -54,6 +55,12 @@ typedef struct {
 } cherokee_module_info_t;
 
 typedef struct {
+	cherokee_module_info_t module;
+	cherokee_http_method_t valid_methods;
+} cherokee_module_info_handler_t;
+
+
+typedef struct {
 	module_func_new_t       instance; /* constructor step begging */
 	module_func_free_t      free;     /* destructor               */
 	module_func_get_name_t  get_name;
@@ -61,7 +68,8 @@ typedef struct {
 } cherokee_module_t;
 
 
-#define MODULE(x) ((cherokee_module_t *) (x))
+#define MODULE(x)              ((cherokee_module_t *) (x))
+#define MODULE_INFO_HANDLER(x) ((cherokee_module_info_handler_t *) (x))
 
 #define MODULE_INFO(name) (cherokee_ ## name ## _info)
 #define MODULE_INIT(name) (cherokee_module_ ## name ## _init)

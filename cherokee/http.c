@@ -89,8 +89,7 @@ cherokee_http_version_to_string (cherokee_http_version_t version, const char **s
 	return ret_error;
 }
 
-
-ret_t 
+ret_t
 cherokee_http_code_to_string (cherokee_http_t code, const char **str)
 {
 	switch (code) {
@@ -105,6 +104,7 @@ cherokee_http_code_to_string (cherokee_http_t code, const char **str)
 	case http_moved_temporarily:     *str = http_moved_temporarily_string; break;
 	case http_unauthorized:          *str = http_unauthorized_string; break;
 	case http_not_modified:          *str = http_not_modified_string; break;
+	case http_method_not_allowed:    *str = http_method_not_allowed_string; break;
 	case http_length_required:       *str = http_length_required_string; break;
 	case http_request_uri_too_long:  *str = http_request_uri_too_long_string; break;
 	case http_range_not_satisfiable: *str = http_range_not_satisfiable_string; break;
@@ -122,41 +122,29 @@ cherokee_http_code_to_string (cherokee_http_t code, const char **str)
 ret_t 
 cherokee_http_code_copy (cherokee_http_t code, cherokee_buffer_t *buf)
 {
+#define entry_code(c)    \
+	case http_ ## c: \
+	   return cherokee_buffer_add (buf, http_ ## c ## _string, sizeof(http_ ## c ## _string))
+
 	switch (code) {
-	case http_ok:
-		return cherokee_buffer_add (buf, http_ok_string, 6);
-	case http_accepted:
-		return cherokee_buffer_add (buf, http_accepted_string, 12);
-	case http_partial_content:
-		return cherokee_buffer_add (buf, http_partial_content_string, 19);		
-	case http_bad_request:
-		return cherokee_buffer_add (buf, http_bad_request_string, 15);
-	case http_access_denied:
-		return cherokee_buffer_add (buf, http_access_denied_string, 13);
-	case http_not_found:
-		return cherokee_buffer_add (buf, http_not_found_string, 13);
-	case http_internal_error:
-		return cherokee_buffer_add (buf, http_internal_error_string, 25);
-	case http_moved_permanently: 
-		return cherokee_buffer_add (buf, http_moved_permanently_string, 21);
-	case http_moved_temporarily:
-		return cherokee_buffer_add (buf, http_moved_temporarily_string, 21);	
-	case http_unauthorized:
-		return cherokee_buffer_add (buf, http_unauthorized_string, 26);
-	case http_not_modified:
-		return cherokee_buffer_add (buf, http_not_modified_string, 16);	
-	case http_length_required:
-		return cherokee_buffer_add (buf, http_length_required_string, 19);	
-	case http_request_uri_too_long:
-		return cherokee_buffer_add (buf, http_request_uri_too_long_string, 24);	
-	case http_range_not_satisfiable:
-		return cherokee_buffer_add (buf, http_range_not_satisfiable_string, 37);
-	case http_upgrade_required:
-		return cherokee_buffer_add (buf, http_upgrade_required_string, 20);
-	case http_continue:
-		return cherokee_buffer_add (buf, http_continue_string, 12);
-	case http_switching_protocols:
-		return cherokee_buffer_add (buf, http_switching_protocols_string, 23);
+		entry_code (continue);
+		entry_code (switching_protocols);
+		entry_code (ok);
+		entry_code (accepted);
+		entry_code (partial_content);
+		entry_code (moved_permanently);
+		entry_code (moved_temporarily);
+		entry_code (not_modified);
+		entry_code (bad_request);
+		entry_code (unauthorized);
+		entry_code (access_denied);
+		entry_code (not_found);
+		entry_code (method_not_allowed);
+		entry_code (length_required);
+		entry_code (request_uri_too_long);
+		entry_code (range_not_satisfiable);
+		entry_code (upgrade_required);
+		entry_code (internal_error);
 	default:
 		break;
 	}

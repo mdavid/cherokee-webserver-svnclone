@@ -101,7 +101,9 @@ for f in files:
 objs = []
 for m in mods:
     obj = m.Test()
-    obj.tmp = tmp
+    # Update 'base.py': TestCollection if new
+    # properties are added here!
+    obj.tmp    = tmp
     obj.nobody = nobody
     objs.append(obj)
 

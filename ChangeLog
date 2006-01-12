@@ -1,3 +1,31 @@
+2006-01-12  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* qa/122-Methods.py, qa/Makefile.am (EXTRA_DIST): New test to
+	check non common methods.
+
+	* cherokee/handler_redir.c, cherokee/handler_error_redir.c,
+	cherokee/handler_server_info.c, cherokee/handler_admin.c,
+	cherokee/handler_dirlist.c, cherokee/handler_nn.c,
+	cherokee/handler_common.c, cherokee/config_entry.c,
+	cherokee/module.h, cherokee/config_entry.h, cherokee/thread.c,
+	cherokee/handler_file.c, cherokee/handler.c, cherokee/handler.h,
+	cherokee/handler_fastcgi.c, cherokee/http.c,
+	cherokee/handler_gnomevfs.c, cherokee/http.h,
+	cherokee/logger_ncsa.c, cherokee/handler_cgi.c,
+	cherokee/connection.c, cherokee/server.c,
+	cherokee/handler_phpcgi.c, cherokee/logger_w3c.c,
+	cherokee/connection-protected.h: It will check if the used HTTP
+	method is valid. Each handler has an entry describing which ones
+	are allowed.
+
+	* qa/base.py (TestCollection): New class
+
+	* cherokee/http.h (http_method_with_input): Added new macro. Now
+	http_post isn't the only method with input.
+
+	* cherokee/http.h: Added new http error: 405, method not allowed.
+	We will need it from now on.	
+
 2006-01-11  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cherokee/util.c (cherokee_short_path): There was an out by one

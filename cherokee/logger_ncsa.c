@@ -228,7 +228,7 @@ build_log_string (cherokee_logger_ncsa_t *logger, cherokee_connection_t *cnt, ch
         const char        *version;
 	struct tm         *conn_time;
 	char               ipaddr[CHE_INET_ADDRSTRLEN];
-	static int        *this_timezone = NULL;
+	static long       *this_timezone = NULL;
 	cherokee_buffer_t *combined_info = NULL;
 	cherokee_buffer_t *request;
 

@@ -50,9 +50,10 @@
 #include "list_ext.h"
 
 
-cherokee_module_info_t MODULE_INFO(common) = {
-	cherokee_handler,              /* type     */
-	cherokee_handler_common_new    /* new func */
+cherokee_module_info_handler_t MODULE_INFO(common) = {
+	.module.type     = cherokee_handler,                /* type         */
+	.module.new_func = cherokee_handler_common_new,     /* new func     */
+	.valid_methods   = http_get | http_head             /* http methods */
 };
 
 

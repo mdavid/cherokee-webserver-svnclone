@@ -35,10 +35,12 @@
 #include "util.h"
 
 
-cherokee_module_info_t MODULE_INFO(fastcgi) = {
-	cherokee_handler,               /* type     */
-	cherokee_handler_fastcgi_new    /* new func */
+cherokee_module_info_handler_t MODULE_INFO(fastcgi) = {
+	.module.type     = cherokee_handler,                /* type         */
+	.module.new_func = cherokee_handler_fastcgi_new,    /* new func     */
+	.valid_methods   = http_get | http_post | http_head /* http methods */
 };
+
 
 #define ENTRIES "handler,fastcgi"
 
@@ -236,7 +238,7 @@ add_env_pair_with_id_and_header_ref (cherokee_buffer_t *buf, cuint_t id,
 	fcgi_build_header (&request.header, FCGI_PARAMS, id, len, 0);
 
 	if (req_ref != NULL)
-		*req_ref = buf->buf + buf->len;
+		*req_ref = (FCGI_Header *) buf->buf + buf->len;
 
 	cherokee_buffer_ensure_size (buf, buf->len + key_len + val_len + sizeof(FCGI_Header));
 	cherokee_buffer_add (buf, (void *)&request.header, sizeof(FCGI_Header));

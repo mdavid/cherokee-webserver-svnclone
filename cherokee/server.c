@@ -1081,8 +1081,8 @@ cherokee_server_reinit (cherokee_server_t *srv)
 static void
 update_bogo_now (cherokee_server_t *srv)
 {
-	time_t      prev;
-	static int *this_timezone = NULL;
+	time_t       prev;
+	static long *this_timezone = NULL;
 
 	CHEROKEE_RWLOCK_WRITER (&srv->bogo_now_mutex);      /* 1.- lock as writer */
 
