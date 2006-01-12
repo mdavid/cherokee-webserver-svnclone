@@ -26,9 +26,10 @@
 #include "connection.h"
 
 
-cherokee_module_info_t cherokee_gnomevfs_info = {
-	cherokee_handler,                /* type     */
-	cherokee_handler_gnomevfs_new    /* new func */
+cherokee_module_info_handler_t MODULE_INFO(gnomevfs) = {
+	.module.type     = cherokee_handler,                  /* type         */
+	.module.new_func = cherokee_handler_gnomevfs_new,     /* new func     */
+	.valid_methods   = http_get | http_head               /* http methods */
 };
 
 

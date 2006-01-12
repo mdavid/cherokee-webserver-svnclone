@@ -39,36 +39,29 @@
 typedef struct {
 	/* Parent table_entry
 	 */
-	void                 *parent;
-	cuint_t               priority;
+	void                   *parent;
+	cuint_t                 priority;
 
-	/* Properties table
+	/* Properties
 	 */
-	cherokee_table_t     *validator_properties; 
-	cherokee_table_t     *handler_properties; 
+	cherokee_buffer_t      *document_root;
+	cherokee_boolean_t      only_secure;
+	void                   *access;
 
-	/* Document root
+	/* Handler
 	 */
-	cherokee_buffer_t    *document_root;
+	handler_func_new_t      handler_new_func;
+	cherokee_http_method_t  handler_methods;
+	cherokee_table_t       *handler_properties; 
 
-	/* Function "New"
+	/* Validator
 	 */
-	handler_func_new_t    handler_new_func;
+	validator_func_new_t    validator_new_func;
+	cherokee_table_t       *validator_properties; 
 
-	/* Authentication
-	 */
-	cherokee_buffer_t    *auth_realm;
-	validator_func_new_t  validator_new_func;
-	cherokee_http_auth_t  authentication;
-	cherokee_table_t     *users;
-
-	/* Security
-	 */
-	cherokee_boolean_t    only_secure;
-
-	/* Direction checks: cherokee_access_t
-	 */
-	void                 *access;
+	cherokee_buffer_t      *auth_realm;
+	cherokee_http_auth_t    authentication;
+	cherokee_table_t       *users;
 
 } cherokee_config_entry_t; 
 

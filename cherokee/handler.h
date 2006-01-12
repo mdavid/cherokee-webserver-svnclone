@@ -73,9 +73,9 @@ typedef struct {
 
 	/* Properties
 	 */
-	void *connection;
+	void                      *connection;
 	cherokee_handler_support_t support;
-	   
+
 } cherokee_handler_t;
 
 #define HANDLER(x)                         ((cherokee_handler_t *)(x))
@@ -87,6 +87,7 @@ typedef struct {
 #define HANDLER_SUPPORT_MAYBE_LENGTH(h)    (HANDLER(h)->support & hsupport_maybe_length)
 #define HANDLER_SUPPORT_COMPLEX_HEADERS(h) (HANDLER(h)->support & hsupport_complex_headers)
 #define HANDLER_SUPPORT_ERROR(h)           (HANDLER(h)->support & hsupport_error)
+
 
 ret_t cherokee_handler_init_base   (cherokee_handler_t  *hdl, void *conn);
 ret_t cherokee_handler_free_base   (cherokee_handler_t  *hdl);

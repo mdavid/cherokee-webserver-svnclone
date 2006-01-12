@@ -26,6 +26,7 @@
 #include "config_entry.h"
 
 #include "access.h"
+#include "http.h"
 
 typedef enum {
 	table_handler,
@@ -53,6 +54,7 @@ cherokee_config_entry_init (cherokee_config_entry_t *entry)
 
 	entry->handler_new_func     = NULL;
 	entry->handler_properties   = NULL;
+	entry->handler_methods      = http_unknown;
 
 	entry->validator_new_func   = NULL;
 	entry->validator_properties = NULL;
@@ -175,6 +177,7 @@ cherokee_config_entry_set_handler (cherokee_config_entry_t *entry, cherokee_modu
 	}
 
 	entry->handler_new_func = modinfo->new_func;
+	entry->handler_methods  = MODULE_INFO_HANDLER(modinfo)->valid_methods;
 
 	return ret_ok;
 }
@@ -208,6 +211,7 @@ cherokee_config_entry_complete (cherokee_config_entry_t *entry, cherokee_config_
 
 	if (should_assign (entry, main, handler_new_func, NULL)) {
 		entry->handler_new_func = main->handler_new_func;
+		entry->handler_methods  = main->handler_methods;
 	}
 	
 	if (should_assign (entry, main, authentication, 0))

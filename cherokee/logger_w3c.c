@@ -216,7 +216,7 @@ cherokee_logger_w3c_write_error  (cherokee_logger_w3c_t *logger, cherokee_connec
 	int                len;
 	struct tm         *conn_time;
 	cherokee_buffer_t *request;
-	static int        *this_timezone = NULL;
+	static long       *this_timezone = NULL;
 
 	CHEROKEE_TEMP (tmp, 200);
 
@@ -278,7 +278,7 @@ cherokee_logger_w3c_write_access (cherokee_logger_w3c_t *logger, cherokee_connec
 	int                len;
 	struct tm         *conn_time;
 	cherokee_buffer_t *request;
-	static int        *this_timezone = NULL;
+	static long       *this_timezone = NULL;
 	CHEROKEE_TEMP (tmp, 200);
 
 	/* Read the bogonow value from the server

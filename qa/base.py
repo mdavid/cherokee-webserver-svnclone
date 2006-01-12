@@ -188,6 +188,7 @@ class TestBase:
         return self._check_result()
 
     def __str__ (self):
+
         src = "\tName     = %s\n" % (self.name)
 
         if self.version == 9:
@@ -313,3 +314,70 @@ class TestBase:
             final = md5obj.hexdigest()
 
             return final
+
+
+class TestCollection:
+    def __init__ (self):
+        self.tests = []
+        self.num   = 0
+
+    def Add (self, test):
+        self.num += 1
+
+        if (test.name == None) or len(test.name) == 0:
+            test.name = self.name + ", Part %d" % (self.num)
+
+        test.tmp    = self.tmp
+        test.nobody = self.nobody 
+
+        self.tests.append (test)
+        return test
+
+    def Clean (self):
+        for t in self.tests:
+            self.current_test = t
+            t.Clean()
+
+    def Precondition (self):
+        for t in self.tests:
+            self.current_test = t
+            if t.Precondition() == False:
+                return False
+        return True
+
+    def Prepare (self, www):
+        for t in self.tests:
+            self.current_test = t
+            t.Prepare(www)
+
+    def JustBefore (self, www):
+        for t in self.tests:
+            self.current_test = t
+            t.JustBefore(www)
+        
+    def JustAfter (self, www):
+        current = self.current_test
+
+        for t in self.tests:
+            self.current_test = t
+            t.JustAfter(www)
+
+        self.current_test = current
+
+    def Run (self, port, ssl):
+        for t in self.tests:
+            self.current_test = t
+            r = t.Run(port, ssl)
+
+            if r == -1: return r
+        return r
+
+    def __str__ (self):
+        print "str de", id(self.current_test)
+        return str(self.current_test)
+
+
+    
+
+    
+    

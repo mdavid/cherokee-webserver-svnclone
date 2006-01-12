@@ -36,9 +36,11 @@
 #include "server-protected.h"
 #include "module_loader.h"
 
-cherokee_module_info_t MODULE_INFO(server_info) = {
-	cherokee_handler,                /* type     */
-	cherokee_handler_server_info_new /* new func */
+
+cherokee_module_info_handler_t MODULE_INFO(server_info) = {
+	.module.type     = cherokee_handler,                   /* type         */
+	.module.new_func = cherokee_handler_server_info_new,   /* new func     */
+	.valid_methods   = http_get                            /* http methods */
 };
 
 

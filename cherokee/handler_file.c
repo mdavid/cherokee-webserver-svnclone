@@ -44,9 +44,10 @@
 #include "util.h"
 
 
-cherokee_module_info_t MODULE_INFO(file) = {
-	cherokee_handler,            /* type     */
-	cherokee_handler_file_new    /* new func */
+cherokee_module_info_handler_t MODULE_INFO(file) = {
+	.module.type     = cherokee_handler,            /* type         */
+	.module.new_func = cherokee_handler_file_new,   /* new func     */
+	.valid_methods   = http_get | http_head         /* http methods */
 };
 
 ret_t

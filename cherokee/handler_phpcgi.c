@@ -54,6 +54,13 @@
 #include "connection-protected.h"
 
 
+cherokee_module_info_handler_t MODULE_INFO(phpcgi) = {
+	.module.type     = cherokee_handler,                /* type         */
+	.module.new_func = cherokee_handler_phpcgi_new,     /* new func     */
+	.valid_methods   = http_get | http_post | http_head /* http methods */
+};
+
+
 static char *php_paths[] = {
 	"/usr/lib/cgi-bin/",
 	"/usr/local/bin/",
@@ -69,13 +76,25 @@ static char *php_names[] = {
 };
 
 
-cherokee_module_info_t MODULE_INFO(phpcgi) = {
-	cherokee_handler,           /* type     */
-	cherokee_handler_phpcgi_new /* new func */
-};
+static ret_t
+check_interpreter (char *path)
+{
+	int re;
+	
+	/* Sanity check
+	 */
+	if (path == NULL)
+		return ret_not_found;
 
+	/* Check for the PHP executable 
+	 */
+	re = access (path, R_OK | X_OK);
+	if (re != 0) {
+		return ret_not_found;
+	}
 
-static ret_t check_interpreter (char *path);
+	return ret_ok;
+}
 
 
 static ret_t
@@ -103,27 +122,6 @@ search_php_executable (char **ret_path)
 
 out:
 	cherokee_buffer_mrproper (&tmppath);
-	return ret_ok;
-}
-
-
-static ret_t
-check_interpreter (char *path)
-{
-	int re;
-	
-	/* Sanity check
-	 */
-	if (path == NULL)
-		return ret_not_found;
-
-	/* Check for the PHP executable 
-	 */
-	re = access (path, R_OK | X_OK);
-	if (re != 0) {
-		return ret_not_found;
-	}
-
 	return ret_ok;
 }
 

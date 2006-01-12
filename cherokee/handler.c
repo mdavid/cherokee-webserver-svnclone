@@ -40,8 +40,8 @@ cherokee_handler_init_base (cherokee_handler_t *hdl, void *conn)
 
 	/* Pure virtual methods
 	 */
-	hdl->step        = NULL;
-	hdl->add_headers = NULL;
+	hdl->step          = NULL;
+	hdl->add_headers   = NULL;
 
 	/* Parent reference
 	 */

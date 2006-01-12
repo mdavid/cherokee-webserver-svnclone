@@ -776,6 +776,15 @@ process_active_connections (cherokee_thread_t *thd)
 				}				
 			}			
 
+			/* Check of the HTTP method is supported by the handler
+			 */
+			ret = cherokee_connection_check_http_method (conn, &entry);
+			if (unlikely (ret != ret_ok)) {
+				cherokee_connection_setup_error_handler (conn);
+				conn->phase = phase_init;
+				continue;
+			}			
+
 			/* Check Only-Secure connections
 			 */
 			ret = cherokee_connection_check_only_secure (conn, &entry);

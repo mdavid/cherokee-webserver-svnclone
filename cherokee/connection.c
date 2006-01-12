@@ -1458,7 +1458,7 @@ cherokee_connection_send_switching (cherokee_connection_t *cnt)
 
 
 ret_t 
-cherokee_connection_get_dir_entry (cherokee_connection_t *cnt, cherokee_dirs_table_t *dirs, cherokee_config_entry_t *plugin_entry)
+cherokee_connection_get_dir_entry (cherokee_connection_t *cnt, cherokee_dirs_table_t *dirs, cherokee_config_entry_t *config_entry)
 {
 	ret_t ret;
 
@@ -1466,7 +1466,7 @@ cherokee_connection_get_dir_entry (cherokee_connection_t *cnt, cherokee_dirs_tab
 
 	/* Look for the handler "*_new" function
 	 */
-	ret = cherokee_dirs_table_get (dirs, &cnt->request, plugin_entry, &cnt->web_directory);
+	ret = cherokee_dirs_table_get (dirs, &cnt->request, config_entry, &cnt->web_directory);
 	if (ret != ret_ok) {
 		cnt->error_code = http_internal_error;
 		return ret_error;
@@ -1474,15 +1474,15 @@ cherokee_connection_get_dir_entry (cherokee_connection_t *cnt, cherokee_dirs_tab
 
 	/* Set the refereces
 	 */
-	cnt->realm_ref = plugin_entry->auth_realm;
-	cnt->auth_type = plugin_entry->authentication;
+	cnt->realm_ref = config_entry->auth_realm;
+	cnt->auth_type = config_entry->authentication;
 
 	return ret_ok;
 }
 
 
 ret_t 
-cherokee_connection_get_ext_entry (cherokee_connection_t *cnt, cherokee_exts_table_t *exts, cherokee_config_entry_t *plugin_entry)
+cherokee_connection_get_ext_entry (cherokee_connection_t *cnt, cherokee_exts_table_t *exts, cherokee_config_entry_t *config_entry)
 {
 	ret_t ret;
 
@@ -1490,7 +1490,7 @@ cherokee_connection_get_ext_entry (cherokee_connection_t *cnt, cherokee_exts_tab
 
 	/* Look in the extension table
 	 */
-	ret = cherokee_exts_table_get (exts, &cnt->request, plugin_entry);
+	ret = cherokee_exts_table_get (exts, &cnt->request, config_entry);
 	if (unlikely (ret == ret_error)) {
 		cnt->error_code = http_internal_error;
 		return ret_error;
@@ -1498,15 +1498,15 @@ cherokee_connection_get_ext_entry (cherokee_connection_t *cnt, cherokee_exts_tab
 
 	/* Set the refereces
 	 */
-	cnt->realm_ref = plugin_entry->auth_realm;
-	cnt->auth_type = plugin_entry->authentication;
+	cnt->realm_ref = config_entry->auth_realm;
+	cnt->auth_type = config_entry->authentication;
 
 	return ret_ok;
 }
 
 
 ret_t 
-cherokee_connection_get_req_entry (cherokee_connection_t *cnt, cherokee_reqs_list_t *reqs, cherokee_config_entry_t *plugin_entry)
+cherokee_connection_get_req_entry (cherokee_connection_t *cnt, cherokee_reqs_list_t *reqs, cherokee_config_entry_t *config_entry)
 {
 	ret_t ret;
 
@@ -1515,7 +1515,7 @@ cherokee_connection_get_req_entry (cherokee_connection_t *cnt, cherokee_reqs_lis
 	/* Look in the extension table
 	 */
 #ifndef CHEROKEE_EMBEDDED
-	ret = cherokee_reqs_list_get (reqs, &cnt->request, plugin_entry, cnt);
+	ret = cherokee_reqs_list_get (reqs, &cnt->request, config_entry, cnt);
 #else
 	return ret_ok;
 #endif
@@ -1534,15 +1534,15 @@ cherokee_connection_get_req_entry (cherokee_connection_t *cnt, cherokee_reqs_lis
 
 	/* Set the refereces
 	 */
-	cnt->realm_ref = plugin_entry->auth_realm;
-	cnt->auth_type = plugin_entry->authentication;
+	cnt->realm_ref = config_entry->auth_realm;
+	cnt->auth_type = config_entry->authentication;
 
 	return ret_ok;
 }
 
 
 ret_t 
-cherokee_connection_check_authentication (cherokee_connection_t *cnt, cherokee_config_entry_t *plugin_entry)
+cherokee_connection_check_authentication (cherokee_connection_t *cnt, cherokee_config_entry_t *config_entry)
 {
 	ret_t ret;
 	char *ptr;
@@ -1550,7 +1550,7 @@ cherokee_connection_check_authentication (cherokee_connection_t *cnt, cherokee_c
 
 	/* Return, there is nothing to do here
 	 */
-	if (plugin_entry->validator_new_func == NULL) 
+	if (config_entry->validator_new_func == NULL) 
 		return ret_ok;
 
 	/* Look for authentication in the headers:
@@ -1563,22 +1563,22 @@ cherokee_connection_check_authentication (cherokee_connection_t *cnt, cherokee_c
 	
 	/* Create the validator object
 	 */
-	ret = plugin_entry->validator_new_func ((void **) &cnt->validator, 
-						plugin_entry->validator_properties);
+	ret = config_entry->validator_new_func ((void **) &cnt->validator, 
+						config_entry->validator_properties);
 	if (ret != ret_ok) {
 		goto error;
 	}
 
 	/* Read the header information
 	 */
-	ret = get_authorization (cnt, plugin_entry->authentication, cnt->validator, ptr, len);
+	ret = get_authorization (cnt, config_entry->authentication, cnt->validator, ptr, len);
 	if (ret != ret_ok) {
 		goto unauthorized;
 	}
 
 	/* Check if the user is in the list
 	 */
-	if (plugin_entry->users != NULL)
+	if (config_entry->users != NULL)
 	{
 		void *foo;
 
@@ -1586,7 +1586,7 @@ cherokee_connection_check_authentication (cherokee_connection_t *cnt, cherokee_c
 			goto unauthorized;			
 		}
 
-		ret = cherokee_table_get (plugin_entry->users, cnt->validator->user.buf, &foo);
+		ret = cherokee_table_get (config_entry->users, cnt->validator->user.buf, &foo);
 		if (ret != ret_ok) {
 			goto unauthorized;
 		}
@@ -1621,15 +1621,15 @@ error:
 
 
 ret_t 
-cherokee_connection_check_ip_validation (cherokee_connection_t *cnt, cherokee_config_entry_t *plugin_entry)
+cherokee_connection_check_ip_validation (cherokee_connection_t *cnt, cherokee_config_entry_t *config_entry)
 {
 	ret_t ret;
 
-	if (plugin_entry->access == NULL) {
+	if (config_entry->access == NULL) {
 		return ret_ok;
 	}
 
-	ret = cherokee_access_ip_match (plugin_entry->access, cnt->socket);
+	ret = cherokee_access_ip_match (config_entry->access, cnt->socket);
 	if (ret == ret_ok) {
 		return ret_ok;
 	}
@@ -1640,9 +1640,9 @@ cherokee_connection_check_ip_validation (cherokee_connection_t *cnt, cherokee_co
 
 
 ret_t 
-cherokee_connection_check_only_secure (cherokee_connection_t *cnt, cherokee_config_entry_t *plugin_entry)
+cherokee_connection_check_only_secure (cherokee_connection_t *cnt, cherokee_config_entry_t *config_entry)
 {
-	if (plugin_entry->only_secure == false) {
+	if (config_entry->only_secure == false) {
 		/* No Only-Secure connection..
 		 */
 		return ret_ok;
@@ -1661,15 +1661,26 @@ cherokee_connection_check_only_secure (cherokee_connection_t *cnt, cherokee_conf
 
 
 ret_t 
-cherokee_connection_create_handler (cherokee_connection_t *cnt, cherokee_config_entry_t *plugin_entry)
+cherokee_connection_check_http_method (cherokee_connection_t *cnt, cherokee_config_entry_t *plugin_entry)
+{
+	if (plugin_entry->handler_methods & cnt->header->method)
+		return ret_ok;
+
+	cnt->error_code = http_method_not_allowed;
+	return ret_error;
+}
+
+
+ret_t 
+cherokee_connection_create_handler (cherokee_connection_t *cnt, cherokee_config_entry_t *config_entry)
 {
 	ret_t ret;
 
-	return_if_fail (plugin_entry->handler_new_func != NULL, ret_error);
+	return_if_fail (config_entry->handler_new_func != NULL, ret_error);
 
 	/* Create and assign a handler object
 	 */
-	ret = (plugin_entry->handler_new_func) ((void **)&cnt->handler, cnt, plugin_entry->handler_properties);
+	ret = (config_entry->handler_new_func) ((void **)&cnt->handler, cnt, config_entry->handler_properties);
 	if (ret == ret_eagain) return ret_eagain;
 	if (ret != ret_ok) {
 		if ((cnt->handler == NULL) && (cnt->error_code == http_ok)) {
