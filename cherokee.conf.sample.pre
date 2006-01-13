@@ -91,7 +91,8 @@ Icons %sysconfdir%/cherokee/icons.conf
 ## MimeFile: Mime types file. By default you should leave it 
 ## commented
 ##
-MimeFile %sysconfdir%/cherokee/mime.conf
+MimeFile %sysconfdir%/cherokee/mime.types
+MimeFile %sysconfdir%/cherokee/mime.compression.types
 
 ##
 ## Load the GZip encoder plugin
