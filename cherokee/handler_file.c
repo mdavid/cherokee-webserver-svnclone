@@ -430,13 +430,11 @@ cherokee_handler_file_init (cherokee_handler_file_t *n)
 	/* Look for the mime type
 	 */
 #ifndef CHEROKEE_EMBEDDED
-	ext = strrchr (conn->request.buf, '.');
-	if (ext != NULL) {
-		cherokee_mime_t *m;
-
-		ret = cherokee_mime_get_default (&m);
-		if (ret == ret_ok) {
-			ret = cherokee_mime_get (m, ext+1, &n->mime);
+	if (srv->mime != NULL) {
+		ext = strrchr (conn->request.buf, '.');
+		if (ext != NULL) {
+			ret = cherokee_mime_get_by_suffix (srv->mime, ext+1, &n->mime);
+			printf ("cherokee_mime_get_by_suffix ret=%d\n", ret);
 		}
 	}
 #endif
@@ -548,6 +546,7 @@ ret_t
 cherokee_handler_file_add_headers (cherokee_handler_file_t *fhdl,
 				   cherokee_buffer_t       *buffer)
 {
+	ret_t     ret;
 	off_t     length;
 	struct tm modified_tm;
 
@@ -580,13 +579,17 @@ cherokee_handler_file_add_headers (cherokee_handler_file_t *fhdl,
 	 * "Content-Type:" and "Cache-Control: max-age="
 	 */
 	if (fhdl->mime != NULL) {
+		cherokee_buffer_t *mime;
+		cuint_t            maxage;
+
+		cherokee_mime_entry_get_type (fhdl->mime, &mime);
 		cherokee_buffer_add (buffer, "Content-Type: ", 14);
-		cherokee_buffer_add_buffer (buffer, MIME_ENTRY_NAME(fhdl->mime));
+		cherokee_buffer_add_buffer (buffer, mime);
 		cherokee_buffer_add (buffer, CRLF, 2);
 
-		if (MIME_ENTRY_AGE(fhdl->mime) != -1) {
-			cherokee_buffer_add_va (buffer, "Cache-Control: max-age=%d"CRLF, 
-						MIME_ENTRY_AGE(fhdl->mime));
+		ret = cherokee_mime_entry_get_maxage (fhdl->mime, &maxage);		
+		if (ret == ret_ok) {
+			cherokee_buffer_add_va (buffer, "Cache-Control: max-age=%d"CRLF, maxage);
 		}
 	}
 
@@ -621,9 +624,6 @@ static cherokee_boolean_t _file_is_init = false;
 void
 MODULE_INIT(file) (cherokee_module_loader_t *loader)
 {
-	ret_t ret;
-	cherokee_mime_t *mime;
-
 	/* Init flag
 	 */
 	if (_file_is_init == true) {
@@ -631,14 +631,6 @@ MODULE_INIT(file) (cherokee_module_loader_t *loader)
 	}
 	_file_is_init = true;
 
-
-	/* Library dependences: mime
+	/* Init something more..
 	 */
-#ifndef CHEROKEE_EMBEDDED
-	ret = cherokee_mime_init (&mime);
-	if (ret < ret_ok) {
-		PRINT_ERROR_S ("Can not init MIME module\n");
-		return;
-	}
-#endif
 }

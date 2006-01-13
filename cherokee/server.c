@@ -111,7 +111,11 @@ cherokee_server_new  (cherokee_server_t **srv)
 	 */
 	n->config_file     = NULL;	
 	n->icons_file      = NULL;
+	
+	/* Mime types
+	 */
 	n->mime_file       = NULL;
+	n->mime            = NULL;
 
 	/* Exit related
 	 */
@@ -311,6 +315,11 @@ cherokee_server_free (cherokee_server_t *srv)
 	if (srv->mime_file != NULL) {
 		free (srv->mime_file);
 		srv->mime_file = NULL;
+	}
+
+	if (srv->mime != NULL) {
+		cherokee_mime_free (srv->mime);
+		srv->mime = NULL;
 	}
 
 	cherokee_iocache_free_default (srv->iocache);

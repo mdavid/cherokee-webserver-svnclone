@@ -26,15 +26,10 @@
 
 #include "mime.h"
 #include "mime-protected.h"
+#include "util.h"
 
 
-extern int  yy_mime_restart           (FILE *);
-extern int  yy_mime__create_buffer    (FILE *, int size);
-extern void yy_mime__switch_to_buffer (void *);
-extern void yy_mime__delete_buffer    (void *);
-
-
-static ret_t 
+ret_t 
 cherokee_mime_new (cherokee_mime_t **mime)
 {
 	CHEROKEE_NEW_STRUCT(n, mime);
@@ -49,6 +44,7 @@ cherokee_mime_new (cherokee_mime_t **mime)
 	*mime = n;
 	return ret_ok;
 }
+
 
 ret_t
 cherokee_mime_free (cherokee_mime_t *mime)
@@ -67,111 +63,151 @@ cherokee_mime_free (cherokee_mime_t *mime)
 }
 
 
-ret_t
-cherokee_mime_load (cherokee_mime_t *mime, char *filename)
+ret_t 
+cherokee_mime_set_by_suffix (cherokee_mime_t *mime, char *suffix, cherokee_mime_entry_t *entry)
 {
-	int   error;
-	char *file;
-	void *bufstate;
+	return cherokee_table_add (&mime->mime_table, suffix, (void *)entry);
+}
 
-	extern FILE *yy_mime_in;
-	extern int yy_mime_parse (void *);
+ret_t 
+cherokee_mime_get_by_suffix (cherokee_mime_t *mime, char *suffix, cherokee_mime_entry_t **entry)
+{
+	return cherokee_table_get (&mime->mime_table, suffix, (void **)entry);
+}
 
-	file = (filename) ? filename : CHEROKEE_CONFDIR"/mime.conf";
 
-	yy_mime_in = fopen (file, "r");
-	if (yy_mime_in == NULL) {
-		PRINT_ERROR("Can't read the mime spec file: '%s'\n", file);
-		return ret_error;
+ret_t 
+cherokee_mime_get_by_type (cherokee_mime_t *mime, char *type, cherokee_mime_entry_t **entry)
+{
+	ret_t   ret;
+	list_t *i;
+
+	list_for_each (i, &mime->mime_list) {
+		cherokee_buffer_t *itype;
+
+		ret = cherokee_mime_entry_get_type (MIME_ENTRY(i), &itype);
+		if (ret != ret_ok) continue;
+
+		if (strcmp (type, itype->buf) == 0) {
+			*entry = MIME_ENTRY(i);
+			return ret_ok;
+		}
 	}
 
-	yy_mime_restart(yy_mime_in);
-
-	bufstate = (void *) yy_mime__create_buffer (yy_mime_in, 65535);
-	yy_mime__switch_to_buffer (bufstate);
-	error = yy_mime_parse (mime);
-	yy_mime__delete_buffer (bufstate);
-
-	fclose (yy_mime_in);
-
-	return (error)? ret_error : ret_ok;
-}
-
-
-
-ret_t 
-cherokee_mime_get (cherokee_mime_t *mime, char *suffix, cherokee_mime_entry_t **entry)
-{
-	return cherokee_table_get (MIME_TABLE(mime), suffix, (void **)entry);
+	return ret_not_found;
 }
 
 
 ret_t 
-cherokee_mime_add (cherokee_mime_t *mime, cherokee_mime_entry_t *entry)
+cherokee_mime_add_entry (cherokee_mime_t *mime, cherokee_mime_entry_t *entry)
 {
-	list_add ((list_t *)entry, MIME_LIST(mime));
+	list_add ((list_t *)entry, &mime->mime_list);
 	return ret_ok;
 }
 
 
-
-/* Mime global
- */
-
-static cherokee_mime_t *_mime_global  = NULL;
-
 ret_t 
-cherokee_mime_init (cherokee_mime_t **mime)
+cherokee_mime_load_mime_types (cherokee_mime_t *mime, char *filename)
 {
-	ret_t ret;
+	ret_t              ret;
+	char              *p;
+	char              *end;
+	cherokee_buffer_t  file = CHEROKEE_BUF_INIT;
+	cherokee_buffer_t  ext  = CHEROKEE_BUF_INIT;
+	cherokee_buffer_t  type = CHEROKEE_BUF_INIT;
 
-	if (_mime_global == NULL) {
-		ret = cherokee_mime_new (&_mime_global);
-		if (unlikely(ret < ret_ok)) return ret;
-	}
 
-	*mime = _mime_global;
-	return ret_ok;
-}
-
-ret_t 
-cherokee_mime_get_default (cherokee_mime_t **mime)
-{
-	if (_mime_global == NULL) {
-		return ret_not_found;
-	}
+	ret = cherokee_buffer_read_file (&file, filename);
+	if (ret != ret_ok) goto error;
 	
-	*mime = _mime_global;
-	return ret_ok;
-}
+	p   = file.buf;
+	end = file.buf + file.len;
 
+	while (p < end) {
+		char   *nl, *c1, *c2, *tmp;
+		cuint_t len;
+		cherokee_mime_entry_t *entry;
 
+		cherokee_buffer_clean (&ext);
+		cherokee_buffer_clean (&type);
 
-/* Mime entry methods
- */
+		/* Look for the EOL
+		 */
+		c1 = strchr (p, '\r');
+		c2 = strchr (p, '\n');
 
-ret_t 
-cherokee_mime_entry_new  (cherokee_mime_entry_t **mentry)
-{
-	CHEROKEE_NEW_STRUCT(n, mime_entry);
+		nl  = cherokee_min_str (c1, c2);
+		if (nl == NULL) break;
 
-	INIT_LIST_HEAD(&n->base);
-	n->max_age   = -1;
-	cherokee_buffer_new (&n->mime_name);
+		/* Skip comments and empty lines
+		 */
+		*nl = '\0';
+		if (*p == '#') 
+			goto next_line;
+		
+		len = strlen (p);
+		if (len < 3)
+			goto next_line;
 
-	*mentry = n;
-	return ret_ok;
-}
+		/* Parse the mime type
+		 */
+		c1 = strchr (p, ' ');
+		c2 = strchr (p, '\t');
 
+		tmp  = cherokee_min_str (c1, c2);
+		if (tmp == NULL) goto next_line;
 
-ret_t 
-cherokee_mime_entry_free (cherokee_mime_entry_t *mentry)
-{
-	if (mentry->mime_name != NULL) {
-		cherokee_buffer_free (mentry->mime_name);
-		mentry->mime_name = NULL;
+		/* Create the new MIME entry obj
+		 */
+		cherokee_buffer_add (&type, p, tmp-p);
+
+		ret = cherokee_mime_get_by_type (mime, type.buf, &entry);
+		if (ret != ret_ok) {
+			cherokee_mime_entry_new (&entry);
+			cherokee_mime_add_entry (MIME(mime), entry);
+		}
+
+		cherokee_mime_entry_set_type (entry, type.buf);
+			
+		/* Adds its extensions
+		 */
+		p = tmp;
+		while (p < nl) {
+			cherokee_buffer_clean (&ext);
+			
+			/* Look for the next extension
+			 */
+			while ((*p == ' ') || (*p == '\t')) p++;
+			if (p >= nl) break;
+
+			c1 = strchr (p, ' ');
+			c2 = strchr (p, '\t');
+
+			tmp  = cherokee_min_str (c1, c2);
+			if (tmp == NULL) tmp = nl;
+
+			/* Add it to the table
+			 */
+			cherokee_buffer_add (&ext, p, tmp-p);
+			cherokee_table_add (&mime->mime_table, ext.buf, entry);
+
+			p = tmp;
+		}
+
+	next_line:
+		p = nl + 1;
+		while ((*p == '\r') || (*p == '\n')) p++;
 	}
 
-	free (mentry);
+	cherokee_buffer_mrproper (&ext);
+	cherokee_buffer_mrproper (&type);
+	cherokee_buffer_mrproper (&file);
 	return ret_ok;
+
+error:
+	cherokee_buffer_mrproper (&ext);
+	cherokee_buffer_mrproper (&type);
+	cherokee_buffer_mrproper (&file);
+	return ret_error;
 }
+

@@ -26,33 +26,29 @@
 # error "Only <cherokee/cherokee.h> can be included directly, this file may disappear or change contents."
 #endif
 
-#ifndef CHEROKEE_MIME_H
-#define CHEROKEE_MIME_H
+#ifndef CHEROKEE_MIME_ENTRY_H
+#define CHEROKEE_MIME_ENTRY_H
 
 #include <cherokee/common.h>
 #include <cherokee/table.h>
 #include <cherokee/buffer.h>
 #include <cherokee/list.h>
-#include <cherokee/mime_entry.h>
 
 
 CHEROKEE_BEGIN_DECLS
 
-typedef struct cherokee_mime cherokee_mime_t;
-#define MIME(m) ((cherokee_mime_t *)(m))
+typedef struct cherokee_mime_entry cherokee_mime_entry_t;
+#define MIME_ENTRY(m) ((cherokee_mime_entry_t *)(m))
 
+ret_t cherokee_mime_entry_new  (cherokee_mime_entry_t **mentry);
+ret_t cherokee_mime_entry_free (cherokee_mime_entry_t  *mentry);
 
-ret_t cherokee_mime_new             (cherokee_mime_t **mime);
-ret_t cherokee_mime_free            (cherokee_mime_t  *mime);
+ret_t cherokee_mime_entry_set_type (cherokee_mime_entry_t *mentry, char *type);
+ret_t cherokee_mime_entry_get_type (cherokee_mime_entry_t *mentry, cherokee_buffer_t **name);
 
-ret_t cherokee_mime_add_entry       (cherokee_mime_t *mime, cherokee_mime_entry_t *entry);
-ret_t cherokee_mime_load_mime_types (cherokee_mime_t *mime, char *filename);
-
-ret_t cherokee_mime_get_by_type     (cherokee_mime_t *mime, char *type,   cherokee_mime_entry_t **entry);
-
-ret_t cherokee_mime_set_by_suffix   (cherokee_mime_t *mime, char *suffix, cherokee_mime_entry_t  *entry);
-ret_t cherokee_mime_get_by_suffix   (cherokee_mime_t *mime, char *suffix, cherokee_mime_entry_t **entry);
+ret_t cherokee_mime_entry_set_maxage (cherokee_mime_entry_t *mentry, cuint_t  maxage);
+ret_t cherokee_mime_entry_get_maxage (cherokee_mime_entry_t *mentry, cuint_t *maxage);
 
 CHEROKEE_END_DECLS
 
-#endif /* CHEROKEE_MIME_H */
+#endif /* CHEROKEE_MIME_ENTRY_H */

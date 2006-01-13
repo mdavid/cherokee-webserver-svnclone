@@ -44,6 +44,7 @@ ip4_dir         {ip4_part}\.{ip4_part}\.{ip4_part}\.{ip4_part}
 ip4_mask        [\/\\]({ip4_dir}|[0-9]{1,2})
 ip4             {ip4_dir}{ip4_mask}{0,1}
 domain_name     [\.\-_a-zA-Z0-9]*
+mime_type       [a-z0-9\-]+\/[a-z0-9\-]+
 
 hex_255         [0-9a-fA-F]{1,4}
 ip6_part        {hex_255}":"?
@@ -71,6 +72,7 @@ nl              [\n\r]
 "Directory"             { return T_DIRECTORY; }
 "Extension"             { return T_EXTENSION; }
 "Request"               { return T_REQUEST; }
+"MimeType"              { return T_MIMETYPE; }
 "KeepAlive"             { return T_KEEPALIVE; }
 "MaxKeepAliveRequests"  { return T_KEEPALIVE_MAX_REQUESTS; }
 "ErrorHandler"          { return T_ERROR_HANDLER; }
@@ -111,6 +113,7 @@ nl              [\n\r]
 "policy"                { return T_POLICY; }
 "OnlySecure"            { return T_ONLY_SECURE; }
 "MaxConnectionReuse"    { return T_MAX_CONNECTION_REUSE; }
+"MaxAge"                { return T_MAX_AGE; }
 "Env"                   { return T_ENV; }
 "HeaderFile"            { return T_HEADERFILE; }
 "On"                    { yylval.number = 1; return T_NUMBER; }
@@ -120,6 +123,7 @@ nl              [\n\r]
 {http}           { yylval.string = strdup(yytext); return T_HTTP_URL; }
 {https}          { yylval.string = strdup(yytext); return T_HTTPS_URL; }
 {id}             { yylval.string = strdup(yytext); return T_ID; }
+{mime_type}      { yylval.string = strdup(yytext); return T_MIMETYPE_ID; }
 {ip}             { yylval.string = strdup(yytext); return T_IP; }
 {qstring}        { int len = strlen(yytext);
                    yylval.string = (char *) malloc (len-1);
