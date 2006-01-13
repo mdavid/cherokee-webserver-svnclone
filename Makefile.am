@@ -37,7 +37,8 @@ sites-default.sample.pre \
 sites-example.sample.pre
 
 CONFS_DONE =      \
-mime.conf.sample  \
+mime.types.sample \
+mime.compression.types.sample \
 icons.conf.sample \
 mods-admin.sample
 
@@ -105,10 +106,15 @@ install-data-local: $(CONFS) $(CONFS_DONE) install-data-local-config
 	else \
 		$(INSTALL_DATA) $(top_srcdir)/icons.conf.sample $(DESTDIR)$(cherokeeconfdir)/icons.conf; \
 	fi
-	@if test -f $(DESTDIR)$(cherokeeconfdir)/mime.conf ; then \
-		echo "$@ will not overwrite existing $(cherokeeconfdir)/mime.conf"; \
+	@if test -f $(DESTDIR)$(cherokeeconfdir)/mime.types ; then \
+		echo "$@ will not overwrite existing $(cherokeeconfdir)/mime.types"; \
 	else \
-		$(INSTALL_DATA) $(top_srcdir)/mime.conf.sample $(DESTDIR)$(cherokeeconfdir)/mime.conf; \
+		$(INSTALL_DATA) $(top_srcdir)/mime.types.sample $(DESTDIR)$(cherokeeconfdir)/mime.types; \
+	fi
+	@if test -f $(DESTDIR)$(cherokeeconfdir)/mime.compression.types ; then \
+		echo "$@ will not overwrite existing $(cherokeeconfdir)/mime.compression.types"; \
+	else \
+		$(INSTALL_DATA) $(top_srcdir)/mime.compression.types.sample $(DESTDIR)$(cherokeeconfdir)/mime.compression.types; \
 	fi
 	@if test -d $(DESTDIR)$(sysconfdir)/pam.d && test ! -d $(DESTDIR)$(sysconfdir)/pam.d/cherokee ; then \
 		$(INSTALL_DATA) $(top_srcdir)/pam.d_cherokee $(DESTDIR)$(sysconfdir)/pam.d/cherokee; \
@@ -149,9 +155,13 @@ uninstall-local: uninstall-local-config
 		echo "rm -f $(DESTDIR)$(cherokeeconfdir)/icons.conf"; \
 		$(RM) -f $(DESTDIR)$(cherokeeconfdir)/icons.conf; \
 	fi
-	@if test -f $(DESTDIR)$(cherokeeconfdir)/mime.conf ; then \
-		echo "rm -f $(cherokeeconfdir)/mime.conf"; \
-		$(RM) -f $(DESTDIR)$(cherokeeconfdir)/mime.conf; \
+	@if test -f $(DESTDIR)$(cherokeeconfdir)/mime.types ; then \
+		echo "rm -f $(cherokeeconfdir)/mime.types"; \
+		$(RM) -f $(DESTDIR)$(cherokeeconfdir)/mime.types; \
+	fi
+	@if test -f $(DESTDIR)$(cherokeeconfdir)/mime.compression.types ; then \
+		echo "rm -f $(cherokeeconfdir)/mime.compression.types"; \
+		$(RM) -f $(DESTDIR)$(cherokeeconfdir)/mime.compression.types; \
 	fi
 	@if test -f $(DESTDIR)$(cherokeeconfdir)/mods-available/ssl ; then \
 		$(RM) -f $(DESTDIR)$(cherokeeconfdir)/mods-available/ssl; \

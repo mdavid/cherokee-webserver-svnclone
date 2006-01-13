@@ -1,3 +1,27 @@
+2006-01-13  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/http.c (entry): There was a memory corruption problem
+	here. It came from of the yesterday commits.
+
+	* mime.compression.types.sample, Makefile.am (uninstall-local,
+	install-data-local): Added mime.compression.types.sample
+	containing the mime types we want the server to send but not
+	really MIME types but compressors.
+
+	* cherokee/read_config_grammar.y, cherokee/handler_file.c,
+	cherokee/Makefile.am, cherokee/mime.c, cherokee/mime.h,
+	cherokee/server-protected.h, cherokee/module_read_config.c,
+	cherokee/read_config_scanner.l, cherokee/cherokee.h,
+	cherokee/server.c, cherokee/mime_entry.c, cherokee/mime_entry.h,
+	mime.types.sample: Now it reads the format of the /etc/mime.types
+	file.  It also accepts a new configuration entry in the main
+	grammar: MimeType to replace the old functionality.  This big
+	change shouldn't generate any kind of regression, besides the fact
+	the configuration file format has change slightly.
+
+	* mime.conf.sample, cherokee/mime_grammar.y,
+	cherokee/mime_scanner.l: Removed.
+	
 2006-01-12  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cherokee/connection.c (cherokee_connection_get_request),
