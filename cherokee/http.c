@@ -27,10 +27,10 @@
 
 #include <stdio.h>
 
-#define entry(name,name_str)                       \
-	    case name:	                           \
-	         if (len) *len = sizeof(name_str); \
-	         *str = name_str;                  \
+#define entry(name,name_str)                           \
+	    case name:	                               \
+	         if (len) *len = sizeof(name_str) - 1; \
+	         *str = name_str;                      \
  		 return ret_ok;
 
 ret_t 
@@ -124,7 +124,7 @@ cherokee_http_code_copy (cherokee_http_t code, cherokee_buffer_t *buf)
 {
 #define entry_code(c)    \
 	case http_ ## c: \
-	   return cherokee_buffer_add (buf, http_ ## c ## _string, sizeof(http_ ## c ## _string))
+	   return cherokee_buffer_add (buf, http_ ## c ## _string, sizeof(http_ ## c ## _string)-1)
 
 	switch (code) {
 		entry_code (continue);

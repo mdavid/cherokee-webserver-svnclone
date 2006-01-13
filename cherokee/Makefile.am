@@ -611,6 +611,7 @@ fdpoll.c \
 mime.h \
 mime-protected.h \
 mime.c \
+mime_entry.c \
 matching_list.h \
 matching_list.c \
 iocache.h \
@@ -637,10 +638,7 @@ regex.c \
 resolv_cache.h \
 resolv_cache.c \
 typed_table.h \
-typed_table.c \
-mime_grammar.y \
-mime_scanner.l
-
+typed_table.c 
 
 libcherokee_client_la_SOURCES = \
 url.h \
@@ -759,6 +757,7 @@ fdpoll.h \
 table.h \
 http.h \
 mime.h \
+mime_entry.h \
 list.h \
 list_merge_sort.h \
 url.h \
@@ -789,14 +788,6 @@ icons_scanner.c : icons_scanner.l
 icons_grammar.h : icons_grammar.c
 icons_grammar.c : icons_grammar.y
 	$(YACC) -dv -p yy_icons_ -o $@ $<
-
-# Mime:
-mime_scanner.c : mime_scanner.l
-	$(LEX) -Pyy_mime_ -i -o$@ $<
-
-mime_grammar.h : mime_grammar.c
-mime_grammar.c : mime_grammar.y
-	$(YACC) -dv -p yy_mime_ -o $@ $<
 
 
 #
@@ -894,9 +885,6 @@ read_config_scanner.c \
 icons_grammar.h \
 icons_grammar.c \
 icons_scanner.c \
-mime_grammar.h \
-mime_grammar.c \
-mime_scanner.c \
 config.h
 
 WINDOWS_PORT_FILES = \

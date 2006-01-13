@@ -54,6 +54,7 @@
 #include "iocache.h"
 #include "regex.h"
 #include "nonce.h"
+#include "mime.h"
 
 
 struct cherokee_server {
@@ -150,6 +151,11 @@ struct cherokee_server {
 	char                      *chroot;
 	int                        chrooted;
 
+	/* Mime
+	 */
+	char                      *mime_file;
+	cherokee_mime_t           *mime;
+
 	/* Time
 	 */
 	int                        timeout;
@@ -166,7 +172,6 @@ struct cherokee_server {
 	/* Another config files
 	 */
 	char                      *config_file;
-	char                      *mime_file;
 	char                      *icons_file;
 
 	/* Performance

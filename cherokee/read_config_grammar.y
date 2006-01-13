@@ -94,6 +94,7 @@ static cherokee_virtual_server_t       *current_virtual_server      = NULL;
 static cherokee_encoder_table_entry_t  *current_encoder_entry       = NULL;
 static cherokee_module_info_t          *current_module_info         = NULL;
 static cherokee_fcgi_server_t          *current_fastcgi_server      = NULL;
+static cherokee_mime_entry_t           *current_mime_entry          = NULL;
 static cuint_t                          priority_counter            = 1;
 
 typedef struct {
@@ -331,10 +332,10 @@ yyerror (char* msg)
 %token T_ICONS T_AUTH T_NAME T_METHOD T_PASSWDFILE T_SSL_CA_LIST_FILE T_FROM T_SOCKET T_LOG_FLUSH_INTERVAL
 %token T_HEADERFILE T_PANIC_ACTION T_JUST_ABOUT T_LISTEN_QUEUE_SIZE T_SENDFILE T_MINSIZE T_MAXSIZE T_MAX_FDS
 %token T_SHOW T_CHROOT T_ONLY_SECURE T_MAX_CONNECTION_REUSE T_REWRITE T_POLL_METHOD T_EXTENSION T_IPV6 T_ENV 
-%token T_REQUEST
+%token T_REQUEST T_MIMETYPE T_MAX_AGE
 
 %token <number> T_NUMBER T_PORT T_PORT_TLS
-%token <string> T_QSTRING T_FULLDIR T_ID T_HTTP_URL T_HTTPS_URL T_HOSTNAME T_IP T_DOMAIN_NAME T_ADDRESS_PORT
+%token <string> T_QSTRING T_FULLDIR T_ID T_HTTP_URL T_HTTPS_URL T_HOSTNAME T_IP T_DOMAIN_NAME T_ADDRESS_PORT T_MIMETYPE_ID
 
 %type <name_ptr> directory_option handler
 %type <string> host_name http_generic id_or_path ip_or_domain str_type address_or_path
@@ -365,6 +366,7 @@ common_line : server
             | listen
             | server_tokens
             | mime
+            | mime_entry
             | icons
             | timeout
             | keepalive
@@ -636,6 +638,49 @@ server_tokens : T_SERVER_TOKENS T_ID
 mime : T_MIME_FILE T_FULLDIR
 {
 	   SRV(server)->mime_file = $2;
+};
+
+mime_entry : T_MIMETYPE T_MIMETYPE_ID '{'
+{
+	   ret_t                  ret;
+	   cherokee_mime_entry_t *entry;
+
+	   if (SRV(server)->mime == NULL) {
+			 ret = cherokee_mime_new (&SRV(server)->mime);
+			 if (ret != ret_ok) return 1;
+	   }
+
+	   ret = cherokee_mime_get_by_type (SRV(server)->mime, $2, &entry);
+	   if (ret != ret_ok) {
+			 cherokee_mime_entry_new (&entry);
+			 cherokee_mime_add_entry (SRV(server)->mime, entry);
+	   }
+
+	   current_mime_entry = entry;
+}
+mimetype_options '}'
+{
+	   current_mime_entry = NULL;
+}
+
+mimetype_options : T_MAX_AGE T_NUMBER
+{
+	   cherokee_mime_entry_set_maxage (current_mime_entry, $2);
+};
+
+mimetype_options : T_EXTENSION id_list
+{
+	   ret_t          ret;
+	   linked_list_t *i;
+
+	   i = $2;
+	   while (i != NULL) {			 
+			 ret = cherokee_mime_set_by_suffix (SRV(server)->mime, i->string, current_mime_entry);
+			 if (ret != ret_ok) return ret;
+
+			 free (i->string);
+			 i = i->next;
+	   }
 };
 
 icons : T_ICONS T_FULLDIR
