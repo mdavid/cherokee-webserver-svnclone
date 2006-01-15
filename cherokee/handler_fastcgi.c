@@ -106,6 +106,7 @@ cherokee_handler_fastcgi_new (cherokee_handler_t **hdl, cherokee_connection_t *c
 	n->server_list     = NULL;
 	n->configuration   = NULL;
 	n->phase           = fcgi_phase_init;
+	n->system_env      = NULL;
 
 	n->post_sent       = false;
 	n->post_phase      = fcgi_post_init;
@@ -119,6 +120,7 @@ cherokee_handler_fastcgi_new (cherokee_handler_t **hdl, cherokee_connection_t *c
 	 */
 	if (properties != NULL) {
 		cherokee_typed_table_get_list (properties, "servers", &n->server_list);
+		cherokee_typed_table_get_list (properties, "env", &n->system_env);
 	}
 
 	if ((n->server_list == NULL) || (list_empty (n->server_list))) {
@@ -290,6 +292,24 @@ add_more_env (cherokee_handler_fastcgi_t *fcgi, cherokee_buffer_t *buf, cuint_t 
 			      FCGI_PATH_TRANSLATED_VAR, sizeof (FCGI_PATH_TRANSLATED_VAR) - 1,
 			      buffer.buf, buffer.len);
 
+
+	/* Add the custom define environment variables
+	 */
+	if (fcgi->system_env != NULL) {
+		list_t *i;
+
+		list_for_each (i, fcgi->system_env) {
+			char    *name;
+			cuint_t  name_len;
+			char    *value;
+			
+			name     = LIST_ITEM_INFO(i);
+			name_len = strlen(name);
+			value    = name + name_len + 1;
+			
+			add_env_pair_with_id (buf, fcgi->id, name, name_len, value, strlen(value));
+		}
+	}	
 
 	/* The last package has a special treatment, we need
 	 * to now where the header begins to set the right padding
