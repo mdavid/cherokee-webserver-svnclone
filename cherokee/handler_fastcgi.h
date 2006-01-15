@@ -94,6 +94,8 @@ typedef struct {
 	cherokee_fcgi_server_t       *configuration;
 	list_t                       *server_list;
 	int                           max_manager;
+
+	list_t                       *system_env;
 } cherokee_handler_fastcgi_t;
 
 

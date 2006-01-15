@@ -3,6 +3,11 @@
 	* cherokee/handler_fastcgi.c, cherokee/fcgi_manager.c, ,
 	cherokee/fcgi_manager.h: Some FastCGI fixes by Mohammad DAMT.
 
+	* cherokee/handler_fastcgi.h,
+	cherokee/handler_fastcgi.c (add_more_env): Added "Env" support.
+	It allows to add custom environment variables just like the CGI
+	handler.
+
 2006-01-13  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cherokee/http.c (entry): There was a memory corruption problem
