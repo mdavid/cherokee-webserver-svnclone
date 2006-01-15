@@ -1,5 +1,14 @@
 2006-01-15  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* cherokee/fcgi_manager.c, cherokee/fcgi_manager.h,
+	cherokee/read_config_grammar.y, cherokee/fastcgi-common.c,
+	cherokee/fastcgi-common.h, cherokee/handler_fastcgi.c,
+	cherokee/handler_fastcgi.h: Added support for setting environment
+	variables on the FastCGI process.
+
+	* cherokee/fastcgi-common.c (cherokee_fcgi_server_add_env): Added
+	new function.
+
 	* cherokee/handler_fastcgi.c, cherokee/fcgi_manager.c, ,
 	cherokee/fcgi_manager.h: Some FastCGI fixes by Mohammad DAMT.
 

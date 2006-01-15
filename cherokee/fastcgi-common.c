@@ -33,15 +33,31 @@ init_server (cherokee_fcgi_server_t *n)
 	
 	cherokee_buffer_init (&n->interpreter);
 	cherokee_buffer_init (&n->host);
+
+	n->custom_env     = NULL;
+	n->custom_env_len = 0;
 }
 
 static void
 mrproper_server (cherokee_fcgi_server_t *n)
 {
+	if (n->custom_env != NULL) {
+		cuint_t i = 0;
+
+		while (n->custom_env[i] != NULL) {
+			free (n->custom_env[i]);
+			i++;
+		}
+
+		free (n->custom_env);
+
+		n->custom_env     = NULL;
+		n->custom_env_len = 0;
+	}
+
 	cherokee_buffer_mrproper (&n->interpreter);
 	cherokee_buffer_mrproper (&n->host);
 }
-
 
 static void
 server_free (cherokee_fcgi_server_t *n)
@@ -97,5 +113,41 @@ cherokee_fcgi_server_free (cherokee_fcgi_server_t *server)
 		return ret_error;
 
 	server->free_func(server);
+	return ret_ok;
+}
+
+
+ret_t 
+cherokee_fcgi_server_add_env (cherokee_fcgi_server_t *server, char *env, char *val)
+{
+	char    *entry;
+	cuint_t  env_len;
+	cuint_t  val_len;
+
+	/* Build the env entry
+	 */
+	env_len = strlen (env);
+	val_len = strlen (val);
+
+	entry = (char *) malloc (env_len + val_len + 2);
+	if (entry == NULL) return ret_nomem;
+
+	memcpy (entry, env, env_len);
+	entry[env_len] = '=';
+	memcpy (entry + env_len + 1, val, val_len);
+	entry[env_len + val_len+1] = '\0';
+	
+	/* Add it into the env array
+	 */
+	if (server->custom_env_len == 0) {
+		server->custom_env = malloc (sizeof (char *) * 2);
+	} else {
+		server->custom_env = realloc (server->custom_env, (server->custom_env_len + 2) * sizeof (char *));
+	}
+	server->custom_env_len +=  1;
+
+	server->custom_env[server->custom_env_len - 1] = entry;
+	server->custom_env[server->custom_env_len] = NULL;
+
 	return ret_ok;
 }
