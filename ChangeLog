@@ -1,5 +1,10 @@
 2006-01-15  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* cherokee/handler_fastcgi.c (cherokee_handler_fastcgi_add_headers):
+	If the connection could write the request to the server, but it
+	has an ret_error trying to read the reply, it means it must launch
+	a new one.
+
 	* cherokee/fcgi_manager.c, cherokee/fcgi_manager.h,
 	cherokee/read_config_grammar.y, cherokee/fastcgi-common.c,
 	cherokee/fastcgi-common.h, cherokee/handler_fastcgi.c,

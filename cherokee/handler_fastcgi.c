@@ -335,7 +335,12 @@ build_initial_packages (cherokee_handler_fastcgi_t *fcgi)
 	cherokee_buffer_t        write_tmp   = CHEROKEE_BUF_INIT;
 	cherokee_connection_t   *conn        = HANDLER_CONN (fcgi);;
 
-	cherokee_connection_parse_args (conn);
+	/* Take care, if the connection is reinjected, it shouldn't
+	 * parse the arguments twice.  Check here it they were already
+	 * processed. 
+	 */
+	if (conn->arguments == NULL)
+		cherokee_connection_parse_args (conn);
 
 	/* FCGI_BEGIN_REQUEST
 	 */
@@ -401,6 +406,39 @@ next_server (cherokee_handler_fastcgi_t *fcgi)
 }
 
 
+static ret_t
+manager_connect (cherokee_fcgi_manager_t *fcgim, cherokee_fcgi_server_t *conf)
+{
+	ret_t ret;
+
+	ret = cherokee_fcgi_manager_connect_to_srv (fcgim);
+	if (unlikely (ret != ret_ok)) {
+		
+		TRACE (ENTRIES, "Could not connect to \"%s\"\n", conf->host.buf);
+		
+		if (cherokee_buffer_is_empty (&conf->interpreter)) 
+			return ret_error;
+					
+		/* Spawn a new FastCGI server
+		 */
+		ret = cherokee_fcgi_manager_spawn_srv (fcgim);
+		if (unlikely (ret != ret_ok)) return ret_error;
+		
+		TRACE (ENTRIES, "Spawning \"%s\"\n", conf->interpreter.buf);
+		
+		/* Try to connect again
+		 */
+		ret = cherokee_fcgi_manager_connect_to_srv (fcgim);
+		if (unlikely (ret != ret_ok)) {
+			PRINT_ERROR ("Couldn't connect to FCGI server.\n");
+			return ret_error;
+		}
+	}
+
+	return ret_ok;
+}
+
+
 ret_t 
 cherokee_handler_fastcgi_init (cherokee_handler_fastcgi_t *fcgi)
 {
@@ -434,31 +472,10 @@ cherokee_handler_fastcgi_init (cherokee_handler_fastcgi_t *fcgi)
 		if (unlikely (ret != ret_ok)) return ret;
 		fcgi->manager_ref = n;
 
-		/* Connect to a running serber
+		/* Launch and connect to the server
 		 */
-		ret = cherokee_fcgi_manager_connect_to_srv (n);
-		if (unlikely (ret != ret_ok)) {
-
-			TRACE (ENTRIES, "Could not connect to \"%s\"\n", fcgi->configuration->host.buf);
-
-			if (! cherokee_buffer_is_empty(&fcgi->configuration->interpreter)) {
-
-				/* Spawn a new FastCGI server
-				 */
-				ret = cherokee_fcgi_manager_spawn_srv (n);
-				if (unlikely (ret != ret_ok)) return ret_error;
-
-				TRACE (ENTRIES, "Spawning \"%s\"\n", fcgi->configuration->interpreter.buf);
-
-				/* Try to connect again
-				 */
-				ret = cherokee_fcgi_manager_connect_to_srv (n);
-				if (unlikely (ret != ret_ok)) {
-					PRINT_ERROR ("Couldn't connect to FCGI server.\n");
-					return ret_error;
-				}
-			} else return ret_error;
-		}
+		ret = manager_connect (n, fcgi->configuration);
+		if (ret != ret_ok) return ret;
 	}
 
 
@@ -723,6 +740,25 @@ cherokee_handler_fastcgi_add_headers (cherokee_handler_fastcgi_t *fcgi, cherokee
 		case ret_eof_have_data:
 			break;
 		case ret_error:
+			/* It has sent the request, but it couldn't read..
+			 * lets reset the server and try again
+			 */
+			ret = manager_connect (fcgi->manager_ref, fcgi->configuration);
+			if (ret != ret_ok) return ret;	
+
+			/* Lets reinject the connection
+			 */
+			cherokee_buffer_clean (&fcgi->write_buffer);
+
+			ret = cherokee_fcgi_manager_register_conn (fcgi->manager_ref, HANDLER_CONN(fcgi), &fcgi->id);
+			if (unlikely (ret != ret_ok)) return ret;
+
+			ret = build_initial_packages (fcgi);
+			if (unlikely (ret != ret_ok)) return ret;
+
+			fcgi->phase = fcgi_phase_init;
+
+			return ret_eagain;
 		case ret_eagain:
 			return ret;			
 		default:
