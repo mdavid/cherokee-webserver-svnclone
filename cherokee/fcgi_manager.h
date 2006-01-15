@@ -67,7 +67,7 @@ ret_t cherokee_fcgi_manager_spawn_srv       (cherokee_fcgi_manager_t *fcgim);
 ret_t cherokee_fcgi_manager_register_conn   (cherokee_fcgi_manager_t *fcgim, cherokee_connection_t *conn, cuint_t *id);
 ret_t cherokee_fcgi_manager_unregister_conn (cherokee_fcgi_manager_t *fcgim, cherokee_connection_t *conn);
 
-ret_t cherokee_fcgi_manager_step            (cherokee_fcgi_manager_t *fcgim, cuint_t);
+ret_t cherokee_fcgi_manager_step            (cherokee_fcgi_manager_t *fcgim);
 ret_t cherokee_fcgi_manager_send            (cherokee_fcgi_manager_t *fcgim, cherokee_buffer_t *info, size_t *sent);
 
 #endif /* CHEROKEE_FCGI_MANAGER_H */

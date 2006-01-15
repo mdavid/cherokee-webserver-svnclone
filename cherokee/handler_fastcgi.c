@@ -477,7 +477,7 @@ read_fcgi (cherokee_handler_fastcgi_t *fcgi)
 
 	/* Read info from the FastCGI
 	 */
-	return cherokee_fcgi_manager_step (fcgim, fcgi->id);
+	return cherokee_fcgi_manager_step (fcgim);
 }
 
 
@@ -709,8 +709,11 @@ cherokee_handler_fastcgi_add_headers (cherokee_handler_fastcgi_t *fcgi, cherokee
 			RET_UNKNOWN(ret);
 		}
 
-		if (cherokee_buffer_is_empty (&fcgi->incoming_buffer))
+		if (cherokee_buffer_is_empty (&fcgi->incoming_buffer)) {
+			if (fcgi->phase != fcgi_phase_finished)
+				return ret_eagain;
 			return ret_error;
+		}
 			
 		/* Look the end of headers
 		 */ 
