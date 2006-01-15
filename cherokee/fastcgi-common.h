@@ -38,6 +38,9 @@ typedef struct {
 	cherokee_buffer_t          interpreter;
 	cherokee_buffer_t          host;
 
+	char                     **custom_env;
+	cuint_t                    custom_env_len;
+
 	cherokee_typed_free_func_t free_func;
 } cherokee_fcgi_server_t;
 
@@ -58,8 +61,9 @@ typedef struct {
 
 ret_t cherokee_fcgi_server_new       (cherokee_fcgi_server_t       **server);
 ret_t cherokee_fcgi_server_first_new (cherokee_fcgi_server_first_t **server);
+ret_t cherokee_fcgi_server_free      (cherokee_fcgi_server_t        *server);
 
-ret_t cherokee_fcgi_server_free      (cherokee_fcgi_server_t *server);
+ret_t cherokee_fcgi_server_add_env   (cherokee_fcgi_server_t *server, char *env, char *val);
 
 
 CHEROKEE_END_DECLS

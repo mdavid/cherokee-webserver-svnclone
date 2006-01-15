@@ -291,7 +291,6 @@ handler_redir_add_property (cherokee_config_entry_t *entry, char *regex, char *s
 	   }
 }
 
-
 static void
 handler_redir_add_property_simple (cherokee_config_entry_t *entry, char *subs, int show)
 {
@@ -311,6 +310,41 @@ dirs_table_set_validator_prop (cherokee_config_entry_t *dir_entry, char *prop, c
 	   cherokee_config_entry_set_validator_prop (dir_entry, prop, typed_str, value, NULL);
 }
 
+static int
+add_key_val_entry_in_property (cherokee_table_t *properties, char *prop_name, char *key, char *val)
+{
+	   cuint_t           new_len;
+	   char             *new_str;
+	   list_t           *plist       = NULL;
+	   list_t            nlist       = LIST_HEAD_INIT(nlist);
+	   
+	   /* Build the string:
+	    * VAR \0 VAL \0
+	    */
+	   new_len = strlen(key) + strlen(val) + 2;
+	   new_str = malloc (new_len);
+	   if (new_str == NULL) return 1;
+	   
+	   memset (new_str, 0, new_len);
+	   memcpy (new_str, key, strlen(key));
+	   memcpy (new_str + strlen(key) + 1, val, strlen(val));
+
+	   /* Add it to the list
+	    */
+	   if (properties != NULL) {
+			 cherokee_typed_table_get_list (properties, prop_name, &plist);
+	   }
+	   
+	   if (plist == NULL) {
+			 cherokee_list_add (&nlist, new_str);
+			 cherokee_config_entry_set_handler_prop (current_config_entry, prop_name, typed_list, &nlist, 
+											 (cherokee_typed_free_func_t) cherokee_list_free_item_simple);
+	   } else {
+			 cherokee_list_add_tail (plist, new_str);			 
+	   }
+
+	   return 0;
+}
 
 void
 yyerror (char* msg)
@@ -401,6 +435,9 @@ server_line : directory
             | ssl_ca_list_file
             | userdir
             ;
+
+handler_server_optinal_entries:
+                              | handler_server_optinal_entries handler_server_optinal_entry;
 
 directory_options : 
                   | directory_options directory_option;
@@ -1088,39 +1125,11 @@ handler_option : T_HEADERFILE id_path_list
 
 handler_option : T_ENV T_ID str_type
 {
-	   cuint_t           new_len;
-	   char             *new_str;
-	   cherokee_table_t *properties;
-	   list_t           *plist       = NULL;
-	   list_t            nlist       = LIST_HEAD_INIT(nlist);
-	   
-	   /* Build the string:
-	    * VAR \0 VAL \0
-	    */
-	   new_len = strlen($2) + strlen($3) + 2;
-	   new_str = malloc (new_len);
-	   if (new_str == NULL) return 1;
-	   
-	   memset (new_str, 0, new_len);
-	   memcpy (new_str, $2, strlen($2));
-	   memcpy (new_str + strlen($2) + 1, $3, strlen($3));
+	   int re;
 
-	   /* Add it to the list
-	    */
-	   properties = current_config_entry->handler_properties;
-
-	   if (properties != NULL) {
-			 cherokee_typed_table_get_list (properties, "env", &plist);
-	   }
-
-	   if (plist == NULL) {
-			 cherokee_list_add (&nlist, new_str);
-			 cherokee_config_entry_set_handler_prop (current_config_entry, "env", typed_list, &nlist, 
-												(cherokee_typed_free_func_t) cherokee_list_free_item_simple);
-	   } else {
-			 cherokee_list_add_tail (plist, new_str);			 
-	   }
-}
+	   re = add_key_val_entry_in_property (current_config_entry->handler_properties, "env", $2, $3);
+	   if (re != 0) return re;
+};
 
 handler_option : T_SOCKET T_FULLDIR
 { dirs_table_set_handler_prop (current_config_entry, "socket", $2); };
@@ -1169,12 +1178,21 @@ address_or_path : T_ADDRESS_PORT { $$ = $1; }
                 | T_FULLDIR      { $$ = $1; };
 
 handler_server_optinal : 
-                       | '{' T_ID str_type '}' 
+                       | '{' handler_server_optinal_entries '}';
+
+handler_server_optinal_entry : T_ENV T_ID str_type 
 {
-	   if (strcasecmp($2, "interpreter") != 0) return 1;
-	   cherokee_buffer_add (&current_fastcgi_server->interpreter, $3, strlen($3));
+	   ret_t ret;
+
+	   ret = cherokee_fcgi_server_add_env (current_fastcgi_server, $2, $3);
+	   if (ret != ret_ok) return 1;
 };
 
+handler_server_optinal_entry: T_ID str_type
+{
+	   if (strcasecmp($1, "interpreter") != 0) return 1;
+	   cherokee_buffer_add (&current_fastcgi_server->interpreter, $2, strlen($2));
+};
 
 handler_option : T_NUMBER http_generic
 {

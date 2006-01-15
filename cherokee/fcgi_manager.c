@@ -43,9 +43,7 @@
 pthread_mutex_t __fcgi_managers_sem;
 
 #define LOCK   CHEROKEE_MUTEX_LOCK(&__fcgi_managers_sem);
-// printf ("lock in %s:%d\n", __FILE__, __LINE__);
 #define UNLOCK CHEROKEE_MUTEX_UNLOCK(&__fcgi_managers_sem); 
-// printf ("UNlock in %s:%d\n", __FILE__, __LINE__);
 
 
 ret_t 
@@ -240,10 +238,21 @@ cherokee_fcgi_manager_spawn_srv (cherokee_fcgi_manager_t *fcgim)
 {
 	int                re;
 	int                child;
-	char              *argv[] = {"sh", "-c", NULL, NULL};
-	char              *envp[] = {NULL};
-	cherokee_buffer_t  tmp    = CHEROKEE_BUF_INIT;
+	char             **envp;
+	char              *argv[]       = {"sh", "-c", NULL, NULL};
+	char              *empty_envp[] = {NULL};
+	cherokee_buffer_t  tmp          = CHEROKEE_BUF_INIT;
 
+	/* Set a custom enviroment variable set if it was defined
+	 * on the configuration file
+	 */
+	if (fcgim->configuration_ref && fcgim->configuration_ref->custom_env) 
+		envp = fcgim->configuration_ref->custom_env;
+	else 
+		envp = empty_envp;
+
+	/* Execute the FastCGI server
+	 */
 	LOCK;
 
 	cherokee_buffer_add_va (&tmp, "exec %s", fcgim->configuration_ref->interpreter.buf);
