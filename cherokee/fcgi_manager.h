@@ -61,8 +61,7 @@ typedef struct {
 ret_t cherokee_fcgi_manager_new             (cherokee_fcgi_manager_t **fcgim, cherokee_fcgi_server_t *fcgi);
 ret_t cherokee_fcgi_manager_free            (cherokee_fcgi_manager_t  *fcgim);
 
-ret_t cherokee_fcgi_manager_connect_to_srv  (cherokee_fcgi_manager_t *fcgim);
-ret_t cherokee_fcgi_manager_spawn_srv       (cherokee_fcgi_manager_t *fcgim);
+ret_t cherokee_fcgi_manager_spawn_connect   (cherokee_fcgi_manager_t *fcgim);
 
 ret_t cherokee_fcgi_manager_register_conn   (cherokee_fcgi_manager_t *fcgim, cherokee_connection_t *conn, cuint_t *id);
 ret_t cherokee_fcgi_manager_unregister_conn (cherokee_fcgi_manager_t *fcgim, cherokee_connection_t *conn);
