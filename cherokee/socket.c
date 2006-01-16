@@ -431,6 +431,8 @@ cherokee_socket_close (cherokee_socket_t *socket)
 	re = close (socket->socket);
 #endif
 
+	TRACE (ENTRIES",close", "fd=%d is_tls=%d re=%d\n", socket->socket, socket->is_tls, re);
+
 	socket->socket = -1;
 	socket->status = socket_closed;
 	socket->is_tls = non_TLS;
@@ -1141,7 +1143,6 @@ cherokee_socket_init_client_tls (cherokee_socket_t *socket)
 
 	gnutls_credentials_set (socket->session, GNUTLS_CRD_ANON, anoncred);
 	gnutls_transport_set_ptr (socket->session, (gnutls_transport_ptr)socket->socket);
-
 
 	do {
 		re = gnutls_handshake (socket->session);

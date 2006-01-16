@@ -85,6 +85,9 @@ typedef struct {
 		uint32_t        recalculate;		
 	} accept;
 
+	cherokee_table_t           *fastcgi_servers;
+	cherokee_table_free_item_t  fastcgi_free_func;
+
 } cherokee_thread_t;
 
 #define THREAD(x)         ((cherokee_thread_t *)(x))

@@ -1,5 +1,9 @@
 2006-01-16  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* cherokee/util.c (cherokee_trace): Little improvement. I was
+	calling getenv many times if the TRACE_ENV variable wasn't set.
+	Now, it does it only once.
+
 	* cherokee/fcgi_manager.c (connect_to_srv): Now the socket opened
 	to the FastCGI is set in non-blocking mode.
 

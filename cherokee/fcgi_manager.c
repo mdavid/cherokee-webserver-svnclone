@@ -21,6 +21,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
  * USA
  */
+
 #include "common-internal.h"
 
 #include "connection.h"
@@ -34,16 +35,16 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#define ENTRIES "fastcgi,fastcgi-manager"
+#define ENTRIES "fastcgi,fastcgi-manager,manager"
 
 #define DEFAULT_PORT        8002
 #define CONN_POLL_INCREMENT 16
 
 
-pthread_mutex_t __fcgi_managers_sem;
-
-#define LOCK   CHEROKEE_MUTEX_LOCK(&__fcgi_managers_sem);
-#define UNLOCK CHEROKEE_MUTEX_UNLOCK(&__fcgi_managers_sem); 
+/* The FastCGI manager has to behave like a monitor
+ */
+#define LOCK(fcgim)   CHEROKEE_MUTEX_LOCK(&fcgim->sem)
+#define UNLOCK(fcgim) CHEROKEE_MUTEX_UNLOCK(&fcgim->sem)
 
 
 ret_t 
@@ -99,6 +100,9 @@ cherokee_fcgi_manager_new (cherokee_fcgi_manager_t **fcgim, cherokee_fcgi_server
 		}
 	}
 
+	CHEROKEE_MUTEX_INIT (&n->sem, NULL);
+	TRACE (ENTRIES, "New manager \"%s\"\n", config->host.buf);
+
 	/* Return
 	 */
 	*fcgim = n;
@@ -122,6 +126,8 @@ cherokee_fcgi_manager_free (cherokee_fcgi_manager_t *fcgim)
 		fcgim->conn_poll = NULL;
 	}
 
+	CHEROKEE_MUTEX_DESTROY (&fcgim->sem);
+
 	free (fcgim);
 	return ret_ok;
 }
@@ -141,7 +147,7 @@ unregister_conn (cherokee_fcgi_manager_t *fcgim, cherokee_connection_t *conn)
 		return ret_error;
 	}
 
-	TRACE (ENTRIES, "Manager(%p) unregistered id=%d\n", fcgim, id);
+	TRACE (ENTRIES, "Manager(%p)::unregistered id=%d\n", fcgim, id);
 
 	slot = id - 1;
 	fcgim->conn_poll[slot] = NULL;
@@ -200,7 +206,7 @@ reset_connections (cherokee_fcgi_manager_t *fcgim)
 	/* The LOCK must be set when this function is called.  It uses
 	 * internal functions rather than public functions.
 	 */
-	TRACE (ENTRIES, "Manager(%p) reset connections (poll size: %d)\n", fcgim, fcgim->conn_poll_size);
+	TRACE (ENTRIES, "Manager(%p)::reset connections (poll size: %d)\n", fcgim, fcgim->conn_poll_size);
 
 	connection_poll_clean (fcgim);
 	return connect_to_srv (fcgim);
@@ -229,7 +235,7 @@ spawn_new_srv (cherokee_fcgi_manager_t *fcgim)
 	 */
 	cherokee_buffer_add_va (&tmp, "exec %s", fcgim->configuration_ref->interpreter.buf);
 
-	TRACE (ENTRIES, "Manager(%p) Launching: \"/bin/sh %s\"\n", fcgim, fcgim->configuration_ref->interpreter.buf);
+	TRACE (ENTRIES, "Manager(%p)::spawn \"/bin/sh %s\"\n", fcgim, fcgim->configuration_ref->interpreter.buf);
 
 	child = fork();
 	switch (child) {
@@ -260,141 +266,13 @@ error:
 }
 
 
-ret_t 
-cherokee_fcgi_manager_spawn_connect (cherokee_fcgi_manager_t *fcgim)
-{
-	ret_t ret;
-
-	LOCK;
-
-	/* Try to connect..
-	 */
-	ret = connect_to_srv (fcgim);
-	if (ret == ret_ok) {
-		UNLOCK;
-		return ret_ok;
-	}
-
-	/* If it couldn't connect, spawn a new server
-	 */
-	ret = spawn_new_srv (fcgim);
-	if (unlikely (ret != ret_ok)) 
-		goto error;
-
-	/* Try to connect again
-	 */
-	ret = connect_to_srv (fcgim);
-	if (unlikely (ret != ret_ok))
-		goto error;
-
-
-	UNLOCK;
-	return ret_ok;
-
-error:
-	UNLOCK;
-	return ret_error;
-}
-
-
-
-ret_t 
-cherokee_fcgi_manager_unregister_conn (cherokee_fcgi_manager_t *fcgim, cherokee_connection_t *conn)
-{
-	ret_t ret;
-
-	LOCK;
-	ret = unregister_conn (fcgim, conn);
-	UNLOCK;
-
-	return ret;
-}
-
-
-ret_t 
-cherokee_fcgi_manager_register_conn (cherokee_fcgi_manager_t *fcgim, cherokee_connection_t *conn, cuint_t *id)
-{
-	cuint_t i;
-	cint_t  slot = -1;
-
-	LOCK;
-	
-	/* Look for the first free slot
-	 */
-	for (i=0; i<fcgim->conn_poll_size; i++) {
-		if (fcgim->conn_poll[i] == NULL) {
-			slot = i;
-			break;
-		}
-	}
-
-	/* If there isn't a free slot, get more memory
-	 */
-	if (slot == -1) {
-		/* Get more memory
-		 */
-		fcgim->conn_poll = (cherokee_connection_t **) realloc (
-			fcgim->conn_poll, 
-			(fcgim->conn_poll_size + CONN_POLL_INCREMENT) * sizeof(cherokee_connection_t *));		
-		
-		if (unlikely (fcgim->conn_poll == NULL)) {
-			UNLOCK;
-			return ret_nomem;
-		}
-
-		/* Init the memory
-		 */
-		memset (fcgim->conn_poll + fcgim->conn_poll_size, 0, 
-			CONN_POLL_INCREMENT * sizeof(cherokee_connection_t *));
-
-		slot = fcgim->conn_poll_size;
-		fcgim->conn_poll_size += CONN_POLL_INCREMENT;
-	}
-
-	/* Set the connection reference
-	 */
-	fcgim->conn_poll[slot] = conn;
-
-	TRACE (ENTRIES, "Manager(%p) registered ID=%d\n", fcgim, slot+1);
-
-	*id = slot + 1;
-	UNLOCK;
-	return ret_ok;
-}
-
-
-ret_t 
-cherokee_fcgi_manager_send (cherokee_fcgi_manager_t *fcgim, cherokee_buffer_t *info, size_t *sent)
-{
-	ret_t ret;
-
-	LOCK;
-
-	ret = cherokee_socket_write (fcgim->socket, info, sent);
-
-#if 0
-	cherokee_buffer_print_debug (info, -1);
-#endif
-
-	if (ret != ret_ok) {
-		reset_connections (fcgim);
-
-		UNLOCK;
-		return ret;
-	}
-
-	cherokee_buffer_move_to_begin (info, *sent);
-
-	UNLOCK;
-	return ret_ok;
-}
-
-
 static cherokee_handler_fastcgi_t *
 get_handler_ref (cherokee_fcgi_manager_t *fcgim)
 {
 	cherokee_handler_fastcgi_t *fcgi = NULL;
 	cherokee_connection_t      *conn;
+
+	TRACE (ENTRIES, "Accessing handler for ID=%d\n", fcgim->request_id);
 
 	conn = fcgim->conn_poll [fcgim->request_id - 1];
 	if (conn == NULL) {
@@ -514,7 +392,7 @@ process_read_buffer (cherokee_fcgi_manager_t *fcgim)
    
 
 		fcgi = get_handler_ref (fcgim);
-		if (fcgi == NULL)
+		if (fcgi == NULL) 
 			return ret_error;
 
 		switch (fcgim->request_type) {
@@ -556,14 +434,146 @@ process_read_buffer (cherokee_fcgi_manager_t *fcgim)
 
 
 ret_t 
+cherokee_fcgi_manager_spawn_connect (cherokee_fcgi_manager_t *fcgim)
+{
+	ret_t ret;
+
+	LOCK (fcgim);
+
+	/* Try to connect..
+	 */
+	ret = connect_to_srv (fcgim);
+	if (ret == ret_ok) {
+		UNLOCK (fcgim);
+		return ret_ok;
+	}
+
+	/* Clean the socket
+	 */
+	cherokee_socket_close (fcgim->socket);
+
+	/* If it couldn't connect, spawn a new server
+	 */
+	ret = spawn_new_srv (fcgim);
+	if (unlikely (ret != ret_ok)) 
+		goto error;
+
+	/* Try to connect again
+	 */
+	ret = connect_to_srv (fcgim);
+	if (unlikely (ret != ret_ok))
+		goto error;
+
+
+	UNLOCK (fcgim);
+	return ret_ok;
+
+error:
+	UNLOCK (fcgim);
+	return ret_error;
+}
+
+
+
+ret_t 
+cherokee_fcgi_manager_unregister_conn (cherokee_fcgi_manager_t *fcgim, cherokee_connection_t *conn)
+{
+	ret_t ret;
+
+	LOCK (fcgim);
+	ret = unregister_conn (fcgim, conn);
+	UNLOCK (fcgim);
+
+	return ret;
+}
+
+
+ret_t 
+cherokee_fcgi_manager_register_conn (cherokee_fcgi_manager_t *fcgim, cherokee_connection_t *conn, cuint_t *id)
+{
+	cuint_t i;
+	cint_t  slot = -1;
+
+	LOCK (fcgim);
+	
+	/* Look for the first free slot
+	 */
+	for (i=0; i<fcgim->conn_poll_size; i++) {
+		if (fcgim->conn_poll[i] == NULL) {
+			slot = i;
+			break;
+		}
+	}
+
+	/* If there isn't a free slot, get more memory
+	 */
+	if (slot == -1) {
+		/* Get more memory
+		 */
+		fcgim->conn_poll = (cherokee_connection_t **) realloc (
+			fcgim->conn_poll, 
+			(fcgim->conn_poll_size + CONN_POLL_INCREMENT) * sizeof(cherokee_connection_t *));		
+		
+		if (unlikely (fcgim->conn_poll == NULL)) {
+			UNLOCK (fcgim);
+			return ret_nomem;
+		}
+
+		/* Init the memory
+		 */
+		memset (fcgim->conn_poll + fcgim->conn_poll_size, 0, 
+			CONN_POLL_INCREMENT * sizeof(cherokee_connection_t *));
+
+		slot = fcgim->conn_poll_size;
+		fcgim->conn_poll_size += CONN_POLL_INCREMENT;
+	}
+
+	/* Set the connection reference
+	 */
+	fcgim->conn_poll[slot] = conn;
+	*id = slot + 1;
+
+	TRACE (ENTRIES, "Manager(%p)::registered ID=%d\n", fcgim, slot+1);
+
+	UNLOCK (fcgim);
+	return ret_ok;
+}
+
+
+ret_t 
+cherokee_fcgi_manager_send (cherokee_fcgi_manager_t *fcgim, cherokee_buffer_t *info, size_t *sent)
+{
+	ret_t ret;
+
+	LOCK (fcgim);
+	
+	ret = cherokee_socket_write (fcgim->socket, info, sent);
+#if 0
+	cherokee_buffer_print_debug (info, -1);
+#endif
+
+	if (ret != ret_ok) {
+		reset_connections (fcgim);
+
+		UNLOCK (fcgim);
+		return ret;
+	}
+	UNLOCK (fcgim);
+
+	cherokee_buffer_move_to_begin (info, *sent);
+	return ret_ok;
+}
+
+
+ret_t 
 cherokee_fcgi_manager_step (cherokee_fcgi_manager_t *fcgim)
 {
 	ret_t   ret;
 	size_t  size = 0; 
 
-	LOCK;
+	LOCK (fcgim);
   
-	TRACE (ENTRIES, "Manager(%p) step in_buf.len=%d\n", fcgim, fcgim->read_buffer.len);
+	TRACE (ENTRIES, "Manager(%p)::step in_buf.len=%d\n", fcgim, fcgim->read_buffer.len);
 
 	/* Read from the FastCGI application	
 	 */
@@ -573,20 +583,20 @@ cherokee_fcgi_manager_step (cherokee_fcgi_manager_t *fcgim)
 		case ret_ok:
 			break;
 		case ret_eagain:
-			UNLOCK;
+			UNLOCK (fcgim);
 			return ret;
 		case ret_eof:
 		case ret_error:
 			reset_connections (fcgim);
-			UNLOCK;
+			UNLOCK (fcgim);
 			return ret;
 		default:
 			RET_UNKNOWN(ret);
-			UNLOCK;
+			UNLOCK (fcgim);
 			return ret_error;
 		}
 		
-		TRACE (ENTRIES, "Manager(%p) readed ret=%d size=%d\n", fcgim, ret, size);
+		TRACE (ENTRIES, "Manager(%p)::read ret=%d size=%d\n", fcgim, ret, size);
 	}
 	
 	/* Process the new chunk
@@ -598,12 +608,12 @@ cherokee_fcgi_manager_step (cherokee_fcgi_manager_t *fcgim)
 		break;
 	case ret_error:
 	case ret_eof_have_data:
-		UNLOCK;
+		UNLOCK (fcgim);
 		return ret;
 	default:
 		RET_UNKNOWN(ret);
 	}
 
-	UNLOCK;
+	UNLOCK (fcgim);
 	return ret;
 }

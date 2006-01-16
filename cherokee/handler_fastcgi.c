@@ -50,8 +50,15 @@ cherokee_module_info_handler_t MODULE_INFO(fastcgi) = {
 #define FCGI_PATH_INFO_VAR        "PATH_INFO"
 #define FCGI_PATH_TRANSLATED_VAR  "PATH_TRANSLATED"
 
+/* Managers table
+ */
+#define MANAGERS_LOCK   CHEROKEE_MUTEX_LOCK(&__fcgi_managers_sem);
+#define MANAGERS_UNLOCK CHEROKEE_MUTEX_UNLOCK(&__fcgi_managers_sem); 
 
 static cherokee_table_t __fcgi_managers;
+#ifdef HAVE_PTHREAD
+static pthread_mutex_t  __fcgi_managers_sem;
+#endif
 
 
 static void
@@ -126,6 +133,14 @@ cherokee_handler_fastcgi_new (cherokee_handler_t **hdl, cherokee_connection_t *c
 	if ((n->server_list == NULL) || (list_empty (n->server_list))) {
 		PRINT_ERROR_S ("FastCGI misconfigured\n");
 		return ret_error;
+	}
+
+	/* The first FastCGI handler of each thread must create the
+	 * FastCGI manager container table, and set the freeing func.
+	 */
+	if (CONN_THREAD(cnt)->fastcgi_servers == NULL) {
+		cherokee_table_new (&CONN_THREAD(cnt)->fastcgi_servers);
+		CONN_THREAD(cnt)->fastcgi_free_func = cherokee_fcgi_manager_free;
 	}
 
 	/* Return
@@ -411,17 +426,16 @@ cherokee_handler_fastcgi_init (cherokee_handler_fastcgi_t *fcgi)
 {
 	ret_t                    ret;
 	cherokee_connection_t   *conn      = HANDLER_CONN(fcgi);
-	cherokee_table_t        *managers  = &__fcgi_managers;
+	cherokee_table_t        *managers  = HANDLER_THREAD(fcgi)->fastcgi_servers;
 	
 	/* Read the current server and set the next one
 	 */
 	fcgi->configuration = next_server (fcgi);
 
-	TRACE (ENTRIES, "Using: host \"%s\" and interpreter \"%s\"\n", 
-	       fcgi->configuration->host.buf, fcgi->configuration->interpreter.buf);
-
 	/* FastCGI manager
 	 */
+	MANAGERS_LOCK;
+
 	ret = cherokee_table_get (managers, fcgi->configuration->host.buf, (void **)&fcgi->manager_ref);
 	if (ret == ret_not_found) {
 		cherokee_fcgi_manager_t *n;
@@ -429,24 +443,32 @@ cherokee_handler_fastcgi_init (cherokee_handler_fastcgi_t *fcgi)
 		/* Create a new manager object
 		 */
 		ret = cherokee_fcgi_manager_new (&n, fcgi->configuration);
-		if (unlikely (ret != ret_ok)) return ret;
-
-		TRACE (ENTRIES, "Creating new manager \"%s\"\n", fcgi->configuration->host.buf);
+		if (unlikely (ret != ret_ok)) {
+			MANAGERS_UNLOCK;
+			return ret;
+		}
 		
 		/* Assign the object to that path
 		 */
 		ret = cherokee_table_add (managers, fcgi->configuration->host.buf, n);
-		if (unlikely (ret != ret_ok)) return ret;
+		if (unlikely (ret != ret_ok)) {
+			MANAGERS_UNLOCK;
+			return ret;
+		}
 		fcgi->manager_ref = n;
+
+		MANAGERS_UNLOCK;
 
 		/* Launch and connect to the server
 		 */
 		ret = cherokee_fcgi_manager_spawn_connect (n);
 		if (ret != ret_ok) return ret;
+
+	} else {
+		MANAGERS_UNLOCK;
 	}
 
-
-	TRACE (ENTRIES, "Manager \"%s\" ready, registering conn\n", fcgi->configuration->host.buf);
+	TRACE (ENTRIES",manager", "Manager \"%s\" ready..\n", fcgi->configuration->host.buf);
 
 	/* Register this connection in the FastCGI manager
 	 */
@@ -838,16 +860,12 @@ static cherokee_boolean_t is_init = false;
 void  
 MODULE_INIT(fastcgi) (cherokee_module_loader_t *loader)
 {
-#ifdef HAVE_PTHREAD
-	extern pthread_mutex_t __fcgi_managers_sem;
-#endif
-
 	if (is_init) 
 		return;
 
 	PRINT_ERROR_S ("WARNING: The FastCGI is under development, it isn't ready to be used!\n");
 
-	cherokee_table_init(&__fcgi_managers);
+	cherokee_table_init (&__fcgi_managers);
 	CHEROKEE_MUTEX_INIT (&__fcgi_managers_sem, NULL);
 
 	is_init = true;

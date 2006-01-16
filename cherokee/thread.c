@@ -194,6 +194,9 @@ cherokee_thread_new  (cherokee_thread_t **thd, void *server, cherokee_thread_typ
 	n->server            = server;
 	n->thread_type       = type;
 
+	n->fastcgi_servers   = NULL;
+	n->fastcgi_free_func = NULL;
+
 	/* Bogo now stuff
 	 */
 	n->bogo_now = 0;
@@ -1093,6 +1096,13 @@ cherokee_thread_free (cherokee_thread_t *thd)
 		cherokee_connection_free (CONN(i));
 	}
 
+	/* FastCGI
+	 */
+	if (thd->fastcgi_servers != NULL) {
+		cherokee_table_free2 (thd->fastcgi_servers, thd->fastcgi_free_func);
+		thd->fastcgi_servers = NULL;
+	}
+
 	CHEROKEE_MUTEX_DESTROY (&thd->starting_lock);
 	CHEROKEE_MUTEX_DESTROY (&thd->ownership);
 
@@ -1109,13 +1119,12 @@ __accept_from_server (cherokee_thread_t *thd, int srv_socket, cherokee_socket_ty
 	cherokee_sockaddr_t    new_sa;
 	cherokee_connection_t *new_conn;
 	
-
         /* Return if there're no new connections
          */
         if (cherokee_fdpoll_check (thd->fdpoll, srv_socket, 0) == 0) {
                 return 0;
         }
-
+	
 	/* Try to get a new connection
 	 */
 	ret = cherokee_socket_accept_fd (srv_socket, &new_fd, &new_sa);
