@@ -55,6 +55,10 @@ typedef struct {
 	cuint_t                  conn_poll_size;
 
 	cherokee_fcgi_server_t  *configuration_ref;
+
+#ifdef HAVE_PTHREAD
+	pthread_mutex_t          sem;
+#endif
 } cherokee_fcgi_manager_t;
 
 

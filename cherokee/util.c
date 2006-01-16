@@ -803,6 +803,7 @@ void
 cherokee_trace (const char *entry, const char *file, int line, const char *func, const char *fmt, ...)
 {
 	static char        *env         = NULL;
+	static cuint_t      env_set     = 0;
 	cherokee_boolean_t  do_log      = false;
 	cherokee_buffer_t   entries     = CHEROKEE_BUF_INIT;
 	char               *lentry;
@@ -810,11 +811,17 @@ cherokee_trace (const char *entry, const char *file, int line, const char *func,
 	va_list             args;
 	char               *p;
 	
-	/* Maybe get an update from the environment var 
+	/* Read the environment variable in the first call
+	 */
+	if (env_set == 0) {
+		env     = getenv(TRACE_ENV);
+		env_set = 1;
+	}
+
+	/* Return quickly if there isn't anything to do
 	 */
 	if (env == NULL) {
-		env = getenv(TRACE_ENV);
-		if (env == NULL) return;
+		return;
 	}
        
 	cherokee_buffer_add (&entries, (char *)entry, strlen(entry));
