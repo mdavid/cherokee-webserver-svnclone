@@ -1,3 +1,12 @@
+2006-01-16  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/fcgi_manager.c (connect_to_srv): Now the socket opened
+	to the FastCGI is set in non-blocking mode.
+
+	* cherokee/handler_fastcgi.c (cherokee_handler_fastcgi_step,
+	cherokee_handler_fastcgi_add_headers): Integrated with the
+	connection polling list.
+
 2006-01-15  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cherokee/handler_fastcgi.c (cherokee_handler_fastcgi_add_headers):
