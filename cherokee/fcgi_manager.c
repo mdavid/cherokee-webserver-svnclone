@@ -173,9 +173,7 @@ connect_to_srv (cherokee_fcgi_manager_t *fcgim)
 	ret = cherokee_socket_connect (fcgim->socket);
 	fcgim->connected = (ret == ret_ok);
 	
-#if 0
 	cherokee_fd_set_nonblocking (fcgim->socket->socket);
-#endif
 	return ret;
 }
 
@@ -187,7 +185,7 @@ connection_poll_clean (cherokee_fcgi_manager_t *fcgim)
 	int                    i;
 
 	for (i=0; i<fcgim->conn_poll_size; i++) {
-		conn = fcgim->conn_poll [i];		
+		conn = fcgim->conn_poll[i];		
 		if (conn != NULL)
 			unregister_conn (fcgim, conn);
 	}

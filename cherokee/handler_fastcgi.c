@@ -406,44 +406,6 @@ next_server (cherokee_handler_fastcgi_t *fcgi)
 }
 
 
-/* static ret_t */
-/* manager_connect (cherokee_fcgi_manager_t *fcgim, cherokee_fcgi_server_t *conf) */
-/* { */
-/* 	ret_t ret; */
-
-/* 	ret = cherokee_fcgi_manager_connect_to_srv (fcgim); */
-/* 	if (unlikely (ret != ret_ok)) { */
-		
-/* 		TRACE (ENTRIES, "Could not connect to \"%s\"\n", conf->host.buf); */
-		
-/* 		if (cherokee_buffer_is_empty (&conf->interpreter))  */
-/* 			return ret_error; */
-		
-/* 		/\* Maybe it is reusing a Fcgi manager object, clean it up */
-/* 		 *\/ */
-/* 		ret = cherokee_fcgi_manager_clean (fcgim); */
-/* 		if (unlikely (ret != ret_ok)) return ret_error; */
-
-/* 		/\* Spawn a new FastCGI server */
-/* 		 *\/ */
-/* 		ret = cherokee_fcgi_manager_spawn_srv (fcgim); */
-/* 		if (unlikely (ret != ret_ok)) return ret_error; */
-		
-/* 		TRACE (ENTRIES, "Spawning \"%s\"\n", conf->interpreter.buf); */
-		
-/* 		/\* Try to connect again */
-/* 		 *\/ */
-/* 		ret = cherokee_fcgi_manager_connect_to_srv (fcgim); */
-/* 		if (unlikely (ret != ret_ok)) { */
-/* 			PRINT_ERROR ("Couldn't connect to FCGI server.\n"); */
-/* 			return ret_error; */
-/* 		} */
-/* 	} */
-
-/* 	return ret_ok; */
-/* } */
-
-
 ret_t 
 cherokee_handler_fastcgi_init (cherokee_handler_fastcgi_t *fcgi)
 {
@@ -479,7 +441,6 @@ cherokee_handler_fastcgi_init (cherokee_handler_fastcgi_t *fcgi)
 
 		/* Launch and connect to the server
 		 */
-//		ret = manager_connect (n, fcgi->configuration);
 		ret = cherokee_fcgi_manager_spawn_connect (n);
 		if (ret != ret_ok) return ret;
 	}
@@ -765,8 +726,12 @@ cherokee_handler_fastcgi_add_headers (cherokee_handler_fastcgi_t *fcgi, cherokee
 			fcgi->phase = fcgi_phase_init;
 
 			return ret_eagain;
+
 		case ret_eagain:
-			return ret;			
+			cherokee_thread_deactive_to_polling (HANDLER_THREAD(fcgi), HANDLER_CONN(fcgi), 
+							     fcgi->manager_ref->socket->socket, 0);
+			return ret_eagain;
+
 		default:
 			RET_UNKNOWN(ret);
 		}
@@ -855,6 +820,8 @@ cherokee_handler_fastcgi_step (cherokee_handler_fastcgi_t *fcgi, cherokee_buffer
 
 	case ret_error:
 	case ret_eagain:
+		cherokee_thread_deactive_to_polling (HANDLER_THREAD(fcgi), HANDLER_CONN(fcgi), 
+						     fcgi->manager_ref->socket->socket, 0);
 		return ret;
 	default:
 		RET_UNKNOWN(ret);
