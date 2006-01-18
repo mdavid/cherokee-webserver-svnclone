@@ -1,3 +1,9 @@
+2006-01-18  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* configure.in: It uses printf rather than echo and sed in order
+	to fix a compilation problem in OpenSolaris and BSD machines:
+	http://www.0x50.org/bugs/ticket/10
+	
 2006-01-16  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cherokee/util.c (cherokee_trace): Little improvement. I was
