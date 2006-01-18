@@ -176,8 +176,8 @@ endif
 handler_fastcgi = \
 $(handlerfcgi_cgi) \
 fastcgi.h \
-fastcgi-common.h \
-fastcgi-common.c \
+fcgi_manager.h \
+fcgi_manager.c \
 handler_fastcgi.c \
 handler_fastcgi.h 
 
@@ -734,8 +734,8 @@ nonce.h \
 nonce.c \
 post.h \
 post.c \
-fcgi_manager.h \
-fcgi_manager.c 
+fastcgi-common.h \
+fastcgi-common.c
 
 libcherokee_config_la_SOURCES = \
 $(config_common) \

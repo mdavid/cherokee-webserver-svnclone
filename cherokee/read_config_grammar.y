@@ -1003,7 +1003,7 @@ group2 : T_GROUP T_NUMBER
 	   SRV(server)->group = $2;
 };
 
-handler : T_HANDLER T_ID '{' handler_options '}' 
+handler : T_HANDLER T_ID  '{' handler_options '}' 
 {
 	   $$.name = $2;
 	   $$.ptr = current_config_entry;
