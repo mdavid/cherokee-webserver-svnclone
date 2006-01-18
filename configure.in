@@ -910,8 +910,8 @@ for mod in $modules; do
 	fi
 done
 
-echo "$headers \n\n $add_calls \n\n $init_calls" | sed 's/\\n/\n/g' > ${srcdir}/cherokee/loader.autoconf.inc
-echo "$ext_defs" | sed 's/\\n/\n/g' > ${srcdir}/cherokee/loader.autoconf.h
+printf "$ext_defs"                                 > ${srcdir}/cherokee/loader.autoconf.h
+printf "$headers \n\n $add_calls \n\n $init_calls" > ${srcdir}/cherokee/loader.autoconf.inc
 
 dnl
 dnl Static/Dynamic modules
