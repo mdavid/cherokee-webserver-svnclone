@@ -1245,10 +1245,10 @@ cherokee_server_daemonize (cherokee_server_t *srv)
 		break;
 
 	case 0:
-		setsid();
-		close(2);
-		close(1);
 		close(0);
+		close(1);
+		close(2);
+		setsid();
 		break;
 
 	default:

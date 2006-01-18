@@ -61,8 +61,7 @@ EXTRA_DIST =          \
 TODO                  \
 cherokee.spec         \
 cherokee.spec.in      \
-build_solaris.sh.in   \
-build_solaris.sh      \
+SUNWcherokee.spec     \
 pam.d_cherokee        \
 cherokee.pc.in        \
 $(m4data_DATA)        \
