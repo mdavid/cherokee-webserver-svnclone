@@ -23,15 +23,15 @@ AC_PREREQ(2.56)
 
 dnl Version
 m4_define([cherokee_major_version], [0])
-m4_define([cherokee_minor_version], [5])
-m4_define([cherokee_micro_version], [0])
-m4_define([cherokee_patch_version], [b5])
+m4_define([cherokee_minor_version], [4])
+m4_define([cherokee_micro_version], [30])
+m4_define([cherokee_patch_version], [])
 m4_define([cherokee_version], m4_format('%s.%s.%s%s', cherokee_major_version, cherokee_minor_version, cherokee_micro_version, cherokee_patch_version))
 
 dnl Init autoconf and automake
 AC_INIT([cherokee], [cherokee_version], [http://bugs.0x50.org], [cherokee])
 AC_CONFIG_SRCDIR([cherokee/server.c])
-AM_INIT_AUTOMAKE(no-define)
+AM_INIT_AUTOMAKE([no-define tar-ustar])
 
 AC_CANONICAL_HOST
 AC_DEFINE(PACKAGE_MAJOR_VERSION, "cherokee_major_version", [Version string])
@@ -910,8 +910,8 @@ for mod in $modules; do
 	fi
 done
 
-printf "$ext_defs"                                 > ${srcdir}/cherokee/loader.autoconf.h
-printf "$headers \n\n $add_calls \n\n $init_calls" > ${srcdir}/cherokee/loader.autoconf.inc
+printf "$ext_defs\n"                                 > ${srcdir}/cherokee/loader.autoconf.h
+printf "$headers \n\n $add_calls \n\n $init_calls\n" > ${srcdir}/cherokee/loader.autoconf.inc
 
 dnl
 dnl Static/Dynamic modules

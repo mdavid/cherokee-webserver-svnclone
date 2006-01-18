@@ -140,7 +140,7 @@ cherokee_handler_fastcgi_new (cherokee_handler_t **hdl, cherokee_connection_t *c
 	 */
 	if (CONN_THREAD(cnt)->fastcgi_servers == NULL) {
 		cherokee_table_new (&CONN_THREAD(cnt)->fastcgi_servers);
-		CONN_THREAD(cnt)->fastcgi_free_func = cherokee_fcgi_manager_free;
+		CONN_THREAD(cnt)->fastcgi_free_func = (cherokee_table_free_item_t) cherokee_fcgi_manager_free;
 	}
 
 	/* Return

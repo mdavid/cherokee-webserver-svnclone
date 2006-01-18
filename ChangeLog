@@ -1,5 +1,17 @@
 2006-01-18  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* cherokee/typed_table.h,
+	cherokee/typed_table.c (cherokee_typed_table_set_free): Added new
+	function.
+
+	* configure.in: Added tar-ustar to AM_INIT_AUTOMAKE. It doesn't
+	need to create tar v7.
+
+	* cherokee/fcgi_manager.c (process_buffer): strndup() is
+	unimplemented in both OpenSolaris and BSDes. I have replaced the
+	code which was using strndup() a couple of call to the
+	cherokee_buffer_*() API.
+
 	* configure.in: It uses printf rather than echo and sed in order
 	to fix a compilation problem in OpenSolaris and BSD machines:
 	http://www.0x50.org/bugs/ticket/10

@@ -294,16 +294,15 @@ static void
 process_buffer (cherokee_fcgi_manager_t *fcgim, cherokee_handler_fastcgi_t *fcgi, void *data, cuint_t data_len)
 {
 	cherokee_connection_t *conn;
-	char                  *message;
-  
+	cherokee_buffer_t      tmp = CHEROKEE_BUF_INIT;
+	  
 	conn = fcgim->conn_poll [fcgim->request_id - 1];
 
 	switch (fcgim->request_type) {
-	case FCGI_STDERR:
-		message = (char*) strndup (data, data_len + 1);
-		message [data_len] = 0;
-		cherokee_logger_write_string (CONN_VSRV(conn)->logger, "%s", message);
-		free (message);
+	case FCGI_STDERR: 
+		cherokee_buffer_add (&tmp, data, data_len);
+		cherokee_logger_write_string (CONN_VSRV(conn)->logger, "%s", tmp.buf);
+		cherokee_buffer_mrproper (&tmp);
 		break;
 
 	case FCGI_STDOUT:
