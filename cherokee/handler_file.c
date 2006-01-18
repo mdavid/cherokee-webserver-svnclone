@@ -578,6 +578,7 @@ cherokee_handler_file_add_headers (cherokee_handler_file_t *fhdl,
 	/* Add MIME related headers: 
 	 * "Content-Type:" and "Cache-Control: max-age="
 	 */
+#ifndef CHEROKEE_EMBEDDED
 	if (fhdl->mime != NULL) {
 		cherokee_buffer_t *mime;
 		cuint_t            maxage;
@@ -592,6 +593,7 @@ cherokee_handler_file_add_headers (cherokee_handler_file_t *fhdl,
 			cherokee_buffer_add_va (buffer, "Cache-Control: max-age=%d"CRLF, maxage);
 		}
 	}
+#endif
 
 	/* Etag
 	 */

@@ -1,5 +1,8 @@
 2006-01-18  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* cherokee/handler_file.c (cherokee_handler_file_add_headers):
+	uCherokee compilation fix.
+
 	* cherokee/typed_table.h,
 	cherokee/typed_table.c (cherokee_typed_table_set_free): Added new
 	function.
