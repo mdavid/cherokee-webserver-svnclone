@@ -434,7 +434,6 @@ cherokee_handler_file_init (cherokee_handler_file_t *n)
 		ext = strrchr (conn->request.buf, '.');
 		if (ext != NULL) {
 			ret = cherokee_mime_get_by_suffix (srv->mime, ext+1, &n->mime);
-			printf ("cherokee_mime_get_by_suffix ret=%d\n", ret);
 		}
 	}
 #endif
