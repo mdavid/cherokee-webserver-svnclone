@@ -1059,7 +1059,7 @@ ret_t
 cherokee_socket_gethostbyname (cherokee_socket_t *socket, cherokee_buffer_t *hostname)
 {
 	if (SOCKET_AF(socket) == AF_UNIX) {
-#ifndef _WIN32
+#ifdef _WIN32
 		SHOULDNT_HAPPEN;
 		return ret_no_sys;
 #else

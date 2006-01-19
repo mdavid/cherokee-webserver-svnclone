@@ -1,3 +1,11 @@
+2006-01-19  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/socket.c (cherokee_socket_gethostbyname): Wrong
+	conditional compilation entry fixed.  Reported by
+	olivier-ml1@oleastre.be
+
+	* 0.4.30 released
+
 2006-01-18  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* Makefile.am (EXTRA_DIST): Changed the old Blastwave compilation
