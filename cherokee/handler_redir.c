@@ -121,14 +121,14 @@ substitute_groups (cherokee_buffer_t* url, const char* subject,
 	int               dollar;
 	cherokee_buffer_t buff = CHEROKEE_BUF_INIT;
 	
-	cherokee_buffer_ensure_size (&buff, 1024);
-
 	for(dollar = 0; *subs != '\0'; subs++) {
 
 		if (dollar) {
 			char num = *subs - '0';
 
 			if (num >= 0 && num <= 9) {
+				cherokee_buffer_ensure_size (&buff, 1024);
+
 				pcre_copy_substring (subject, ovector, stringcount, num, buff.buf, buff.size-1);
 				cherokee_buffer_add (url, buff.buf, strlen(buff.buf));
 
@@ -163,7 +163,6 @@ match_and_substitute (cherokee_handler_redir_t *n)
 		int   ovector[OVECTOR_LEN], rc;
 		char *subject     = conn->request.buf + conn->web_directory.len;
 		int   subject_len = strlen (subject);
-
 
 		/* It might be matched previosly in the request parsing..
 		 */

@@ -1,5 +1,20 @@
 2006-01-20  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* cherokee/handler_redir.c, cherokee/virtual_server.c,
+	cherokee/virtual_server.h, cherokee/config_entry.c,
+	cherokee/config_entry.h, cherokee/read_config_grammar.y,
+	cherokee/thread.c, cherokee/connection.c, cherokee/dirs_table.c,
+	cherokee/connection-protected.h, configure.in,
+	qa/117-DomainToDir.py, qa/124-DomainToDir2.py, qa/Makefile.am,
+	qa/123-ImplicitRedit.py, qa/base.py, qa/115-Respin.py: This big
+	commit targets a healthier dirs_table and web_directory
+	management.  It adds a new default handler entry in each virtual
+	host, and takes care about redirect the requests that are equal to
+	any the directory entries if it don't end with a slash.  This
+	patch has also changed the way in which the directories are stored
+	in the table: now they never end with a slash.  A positive side
+	effect of this is that it will do less look-ups in each request.
+	
 	* cherokee/icons_grammar.y: Fixed shift/reduce conflict.  Reported
 	by Rodrigo Fernandez-Vizarra <rfdzvizarra@yahoo.ie>.  This fix
 	allows to generate the scanner using Lex (in addition to Flex).

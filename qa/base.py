@@ -192,11 +192,11 @@ class TestBase:
         src = "\tName     = %s\n" % (self.name)
 
         if self.version == 9:
-            src += "\tVersion  = HTTP/0.9\n"
+            src += "\tProtocol = HTTP/0.9\n"
         elif self.version == 0:
-            src += "\tVersion  = HTTP/1.0\n"
+            src += "\tProtocol = HTTP/1.0\n"
         elif self.version == 1:
-            src += "\tVersion  = HTTP/1.1\n"
+            src += "\tProtocol = HTTP/1.1\n"
 
         if self.conf is not None:
             src += "\tConfig   = %s\n" % (self.conf)

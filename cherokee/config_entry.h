@@ -36,6 +36,10 @@
 #include "typed_table.h"
 
 
+#define CHEROKEE_CONFIG_PRIORITY_NONE    0
+#define CHEROKEE_CONFIG_PRIORITY_DEFAULT 1
+
+
 typedef struct {
 	/* Parent table_entry
 	 */

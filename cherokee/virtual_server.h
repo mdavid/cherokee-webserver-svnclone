@@ -49,25 +49,26 @@
 typedef struct {
 	struct list_head list_entry;
 
-	cherokee_buffer_t           *name;           /* Default name.   Eg: www.0x50.org */
+	cherokee_buffer_t           *name;            /* Default name.   Eg: www.0x50.org */
 
-	cherokee_dirs_table_t        dirs;           /* Eg: (/public, common) */
-	cherokee_exts_table_t       *exts;           /* Eg: (.php,    phpcgi) */
-	cherokee_reqs_list_t         reqs;           /* Eg: ("*.mp3"  auth{}) */
+	cherokee_dirs_table_t        dirs;            /* Eg: (/public, common) */
+	cherokee_exts_table_t       *exts;            /* Eg: (.php,    phpcgi) */
+	cherokee_reqs_list_t         reqs;            /* Eg: ("*.mp3"  auth{}) */
 
-	cherokee_config_entry_t     *error_handler;  /* Default internal error handler   */
+	cherokee_config_entry_t     *default_handler; /* Default handler */
+	cherokee_config_entry_t     *error_handler;   /* Default internal error handler   */
 
-	cherokee_logger_t           *logger;         /* Logger obj              */
-	cherokee_table_t            *logger_props;   /* Logger properties table */
+	cherokee_logger_t           *logger;          /* Logger obj              */
+	cherokee_table_t            *logger_props;    /* Logger properties table */
 
-	cherokee_buffer_t           *root;           /* Document root. Eg: /var/www */
-	cherokee_buffer_t           *userdir;        /* Eg: public_html             */
-	cherokee_dirs_table_t       *userdir_dirs;   /* Eg: (/public, common)       */
+	cherokee_buffer_t           *root;            /* Document root. Eg: /var/www */
+	cherokee_buffer_t           *userdir;         /* Eg: public_html             */
+	cherokee_dirs_table_t       *userdir_dirs;    /* Eg: (/public, common)       */
 
-	list_t                       index_list;     /* Eg: index.html, index.php  */
-	cherokee_boolean_t           relative_paths; /* Allow ".." in the requests */
+	list_t                       index_list;      /* Eg: index.html, index.php  */
+	cherokee_boolean_t           relative_paths;  /* Allow ".." in the requests */
 
-	struct {                                     /* Number of bytes {up,down}loaded */
+	struct {                                      /* Number of bytes {up,down}loaded */
 		size_t tx;
 		size_t rx;
 

@@ -86,16 +86,16 @@ extern int yylex (void);
 extern char *yytext;
 extern int   yylineno;
 
-char                                   *current_yacc_file           = NULL;
-static cherokee_dirs_table_t           *current_dirs_table          = NULL;
-static cherokee_config_entry_t         *current_config_entry        = NULL;
-static list_t                          *current_reqs_list           = NULL;
-static cherokee_virtual_server_t       *current_virtual_server      = NULL;
-static cherokee_encoder_table_entry_t  *current_encoder_entry       = NULL;
-static cherokee_module_info_t          *current_module_info         = NULL;
-static cherokee_fcgi_server_t          *current_fastcgi_server      = NULL;
-static cherokee_mime_entry_t           *current_mime_entry          = NULL;
-static cuint_t                          priority_counter            = 1;
+char                                   *current_yacc_file        = NULL;
+static cherokee_dirs_table_t           *current_dirs_table       = NULL;
+static cherokee_config_entry_t         *current_config_entry     = NULL;
+static list_t                          *current_reqs_list        = NULL;
+static cherokee_virtual_server_t       *current_virtual_server   = NULL;
+static cherokee_encoder_table_entry_t  *current_encoder_entry    = NULL;
+static cherokee_module_info_t          *current_module_info      = NULL;
+static cherokee_fcgi_server_t          *current_fastcgi_server   = NULL;
+static cherokee_mime_entry_t           *current_mime_entry       = NULL;
+static cuint_t                          priority_counter         = CHEROKEE_CONFIG_PRIORITY_DEFAULT + 1;
 
 typedef struct {
 	   void *next;
@@ -149,6 +149,21 @@ free_linked_list (linked_list_t *list, void (*free_func) (void *))
 			 i = i->next;
 			 free (prev);
 	   }	   
+}
+
+static char *
+remove_last_slash (char *str)
+{
+	   cuint_t len = strlen(str);
+	   
+	   if (len <= 2)
+			 return str;
+
+	   if (str[len-1] == '/') {
+			 str[len-1] = '\0';
+	   }
+
+	   return str;
 }
 
 static char *
@@ -1371,7 +1386,7 @@ directory : T_DIRECTORY T_FULLDIR '{'
 {
 	   /* Fill the tmp struct
 	    */
-	   directory_content_tmp.directory_name = $2;
+	   directory_content_tmp.directory_name = remove_last_slash($2);
 	   directory_content_tmp.vserver        = auto_virtual_server;
 	   directory_content_tmp.dirs           = auto_dirs_table;
 	   directory_content_tmp.entry          = config_entry_new (); /* new! */
@@ -1380,7 +1395,7 @@ directory : T_DIRECTORY T_FULLDIR '{'
 } 
 directory_options '}'
 {
-	   ret_t ret;
+	   ret_t                   ret;
 	   cherokee_module_info_t *info;
 
 	   /* Set the document_root in the entry
@@ -1405,24 +1420,35 @@ directory_options '}'
 			 cherokee_config_entry_set_handler (directory_content_tmp.entry, info);	   
 	   }
 	   
-	   /* Add "web_dir -> entry" in the dirs table
+	   /* The root directory is treated as a special case, it is the
+	    * default handler.  All the rest are going to be added into
+	    * the directory table object.
 	    */
-	   ret = cherokee_dirs_table_add (directory_content_tmp.dirs,
-							    directory_content_tmp.directory_name,
-							    directory_content_tmp.entry);
-	   if (ret != ret_ok) {
-			 switch (ret) {
-			 case ret_file_not_found:
-				    PRINT_MSG ("ERROR: Can't load handler '%s': File not found\n",
-							directory_content_tmp.handler_name);
-				    break;
-			 default:
-				    PRINT_MSG ("ERROR: Can't load handler '%s': Unknown error\n",
-							directory_content_tmp.handler_name);
-			 }
-	   }
+	   if (strcmp (directory_content_tmp.directory_name, "/") == 0) {
+			 directory_content_tmp.vserver->default_handler = 
+				    directory_content_tmp.entry;
 
-	   cherokee_dirs_table_relink (directory_content_tmp.dirs);
+			 directory_content_tmp.vserver->default_handler->priority = 
+				    CHEROKEE_CONFIG_PRIORITY_DEFAULT;
+	   } else {
+			 ret = cherokee_dirs_table_add (directory_content_tmp.dirs,
+									  directory_content_tmp.directory_name,
+									  directory_content_tmp.entry);
+
+			 if (ret != ret_ok) {
+				    switch (ret) {
+				    case ret_file_not_found:
+						  PRINT_MSG ("ERROR: Can't load handler '%s': File not found\n",
+								   directory_content_tmp.handler_name);
+						  break;
+				    default:
+						  PRINT_MSG ("ERROR: Can't load handler '%s': Unknown error\n",
+								   directory_content_tmp.handler_name);
+				    }
+			 }
+
+			 cherokee_dirs_table_relink (directory_content_tmp.dirs);
+	   }
 
 	   /* Clean
 	    */

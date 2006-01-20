@@ -698,6 +698,7 @@ process_active_connections (cherokee_thread_t *thd)
 			
 		case phase_setup_connection: {
 			cherokee_config_entry_t entry;
+			cherokee_boolean_t      matched_req;
 
 			TRACE (ENTRIES, "Setup connection begins: request=\"%s\"\n", conn->request.buf);
 
@@ -739,30 +740,39 @@ process_active_connections (cherokee_thread_t *thd)
 			    !cherokee_buffer_is_empty (&conn->userdir))
 			{
 				ret = cherokee_connection_get_dir_entry (conn, CONN_VSRV(conn)->userdir_dirs, &entry);
-				if (unlikely (ret != ret_ok)) {
+				switch (ret) {
+				case ret_not_found:
+					break;
+				case ret_ok:
+					if (cherokee_buffer_is_empty (&conn->local_directory)) {
+						ret = cherokee_connection_build_local_directory_userdir (conn, CONN_VSRV(conn), &entry);
+					}
+					break;
+				default:
 					cherokee_connection_setup_error_handler (conn);
 					conn->phase = phase_init;
 					continue;
 				}
 				
-				if (cherokee_buffer_is_empty (&conn->local_directory)) {
-					ret = cherokee_connection_build_local_directory_userdir (conn, CONN_VSRV(conn), &entry);
-				}
-
 			} else {
 
 				ret = cherokee_connection_get_dir_entry (conn, &CONN_VSRV(conn)->dirs, &entry);
-				if (unlikely (ret != ret_ok)) {
+				switch (ret) {
+				case ret_not_found:
+					break;
+				case ret_ok:
+					if (cherokee_buffer_is_empty (&conn->local_directory)) {
+						ret = cherokee_connection_build_local_directory (conn, CONN_VSRV(conn), &entry);
+					}
+					break;
+				default:
 					cherokee_connection_setup_error_handler (conn);
 					conn->phase = phase_init;
 					continue;
 				}
 
-				if (cherokee_buffer_is_empty (&conn->local_directory)) {
-					ret = cherokee_connection_build_local_directory (conn, CONN_VSRV(conn), &entry);
-				}
 			}
-			if (unlikely (ret != ret_ok)) {
+			if (unlikely (ret == ret_error)) {
 				cherokee_connection_setup_error_handler (conn);
 				conn->phase = phase_init;
 				continue;
@@ -770,15 +780,32 @@ process_active_connections (cherokee_thread_t *thd)
 
 			/* 3.- Read Request configurations
 			 */
+			matched_req = false;
 			if (! list_empty (&CONN_VSRV(conn)->reqs)) 
 			{
 				ret = cherokee_connection_get_req_entry (conn, &CONN_VSRV(conn)->reqs, &entry);
-				if (unlikely (ret != ret_ok)) {
+				switch (ret) {
+				case ret_ok:
+					matched_req = true;
+					break;
+				case ret_not_found:
+					break;
+				default:
 					cherokee_connection_setup_error_handler (conn);
 					conn->phase = phase_init;
 					continue;
 				}				
 			}			
+
+			/* 4.- Default handler check
+			 */
+			if (CONN_VSRV(conn)->default_handler != NULL) {
+				cherokee_config_entry_complete (&entry, CONN_VSRV(conn)->default_handler, false);
+
+				if (cherokee_buffer_is_empty (&conn->web_directory) && (! matched_req)) {
+					cherokee_buffer_add (&conn->web_directory, "/", 1);
+				}
+			}
 
 			/* Check of the HTTP method is supported by the handler
 			 */

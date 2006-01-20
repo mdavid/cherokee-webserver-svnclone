@@ -206,16 +206,16 @@ ret_t cherokee_connection_recv                   (cherokee_connection_t *cnt, ch
 
 /* Internal
  */
-ret_t cherokee_connection_get_dir_entry          (cherokee_connection_t *cnt, cherokee_dirs_table_t *dirs, cherokee_config_entry_t *plugin_entry);
-ret_t cherokee_connection_get_ext_entry          (cherokee_connection_t *cnt, cherokee_exts_table_t *exts, cherokee_config_entry_t *plugin_entry);
-ret_t cherokee_connection_get_req_entry          (cherokee_connection_t *cnt, cherokee_reqs_list_t  *reqs, cherokee_config_entry_t *plugin_entry);
+ret_t cherokee_connection_get_dir_entry          (cherokee_connection_t *cnt, cherokee_dirs_table_t *dirs, cherokee_config_entry_t *config_entry);
+ret_t cherokee_connection_get_ext_entry          (cherokee_connection_t *cnt, cherokee_exts_table_t *exts, cherokee_config_entry_t *config_entry);
+ret_t cherokee_connection_get_req_entry          (cherokee_connection_t *cnt, cherokee_reqs_list_t  *reqs, cherokee_config_entry_t *config_entry);
 
-ret_t cherokee_connection_create_handler         (cherokee_connection_t *cnt, cherokee_config_entry_t *plugin_entry);
+ret_t cherokee_connection_create_handler         (cherokee_connection_t *cnt, cherokee_config_entry_t *config_entry);
 ret_t cherokee_connection_setup_error_handler    (cherokee_connection_t *cnt);
-ret_t cherokee_connection_check_authentication   (cherokee_connection_t *cnt, cherokee_config_entry_t *plugin_entry);
-ret_t cherokee_connection_check_ip_validation    (cherokee_connection_t *cnt, cherokee_config_entry_t *plugin_entry);
-ret_t cherokee_connection_check_only_secure      (cherokee_connection_t *cnt, cherokee_config_entry_t *plugin_entry);
-ret_t cherokee_connection_check_http_method      (cherokee_connection_t *cnt, cherokee_config_entry_t *plugin_entry);
+ret_t cherokee_connection_check_authentication   (cherokee_connection_t *cnt, cherokee_config_entry_t *config_entry);
+ret_t cherokee_connection_check_ip_validation    (cherokee_connection_t *cnt, cherokee_config_entry_t *config_entry);
+ret_t cherokee_connection_check_only_secure      (cherokee_connection_t *cnt, cherokee_config_entry_t *config_entry);
+ret_t cherokee_connection_check_http_method      (cherokee_connection_t *cnt, cherokee_config_entry_t *config_entry);
 
 /* Iteration
  */

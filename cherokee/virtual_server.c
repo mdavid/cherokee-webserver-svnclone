@@ -44,33 +44,34 @@ cherokee_virtual_server_new (cherokee_virtual_server_t **vserver)
 	INIT_LIST_HEAD (&vsrv->list_entry);
 	INIT_LIST_HEAD (&vsrv->index_list);
 
-	vsrv->error_handler  = NULL;
-	vsrv->exts           = NULL;
-	vsrv->logger         = NULL;
-	vsrv->logger_props   = NULL;
+	vsrv->default_handler = NULL;
+	vsrv->error_handler   = NULL;
+	vsrv->exts            = NULL;
+	vsrv->logger          = NULL;
+	vsrv->logger_props    = NULL;
 
 	INIT_LIST_HEAD (&vsrv->reqs);
 
-	vsrv->relative_paths = false;
+	vsrv->relative_paths  = false;
 
-	vsrv->data.rx        = 0;
-	vsrv->data.tx        = 0;
+	vsrv->data.rx         = 0;
+	vsrv->data.tx         = 0;
 	CHEROKEE_MUTEX_INIT(&vsrv->data.rx_mutex, NULL);
 	CHEROKEE_MUTEX_INIT(&vsrv->data.tx_mutex, NULL);
 
-	vsrv->server_cert    = NULL;
-	vsrv->server_key     = NULL;
-	vsrv->ca_cert        = NULL;
+	vsrv->server_cert     = NULL;
+	vsrv->server_key      = NULL;
+	vsrv->ca_cert         = NULL;
 
 #ifdef HAVE_TLS
 	ret = cherokee_session_cache_new (&vsrv->session_cache);
 	if (unlikely(ret < ret_ok)) return ret;
 
 # ifdef HAVE_GNUTLS
-	vsrv->credentials    = NULL;
+	vsrv->credentials     = NULL;
 # endif
 # ifdef HAVE_OPENSSL
-	vsrv->context        = NULL;
+	vsrv->context         = NULL;
 # endif 
 #endif
 
@@ -119,6 +120,11 @@ cherokee_virtual_server_free (cherokee_virtual_server_t *vserver)
 	if (vserver->error_handler != NULL) {
 		cherokee_config_entry_free (vserver->error_handler);
 		vserver->error_handler = NULL;
+	}
+
+	if (vserver->default_handler != NULL) {
+		cherokee_config_entry_free (vserver->default_handler);
+		vserver->default_handler = NULL;
 	}
 
 #ifdef HAVE_TLS
