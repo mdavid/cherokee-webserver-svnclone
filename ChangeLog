@@ -1,5 +1,9 @@
 2006-01-20  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* cherokee/icons_grammar.y: Fixed shift/reduce conflict.  Reported
+	by Rodrigo Fernandez-Vizarra <rfdzvizarra@yahoo.ie>.  This fix
+	allows to generate the scanner using Lex (in addition to Flex).
+
 	* cherokee/handler_dirlist.c (generate_file_entry): Bugfix.  It
 	was using _PC_NAME_MAX like a constant with the maximun length
 	rather than call to pathconf(). It was causing a Segment Fault on

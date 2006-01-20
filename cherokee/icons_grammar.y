@@ -103,8 +103,7 @@ file_entry : T_ID list_ids
 suffixes : T_SUFFIX maybe_nl '{' maybe_nl suffixes_entries maybe_nl '}';
 
 suffixes_entries : suffix_entry
-                 | suffixes_entries suffix_entry
-                 | nl;
+                 | suffixes_entries suffix_entry;
 
 suffix_entry : T_ID list_ids
 {
