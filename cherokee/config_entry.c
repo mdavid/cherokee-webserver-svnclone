@@ -50,7 +50,7 @@ ret_t
 cherokee_config_entry_init (cherokee_config_entry_t *entry)
 {
 	entry->parent               = NULL;
-	entry->priority             = 0;
+	entry->priority             = CHEROKEE_CONFIG_PRIORITY_NONE;
 
 	entry->handler_new_func     = NULL;
 	entry->handler_properties   = NULL;
@@ -186,6 +186,7 @@ cherokee_config_entry_set_handler (cherokee_config_entry_t *entry, cherokee_modu
 ret_t 
 cherokee_config_entry_complete (cherokee_config_entry_t *entry, cherokee_config_entry_t *main, cherokee_boolean_t same_type)
 {
+	cherokee_boolean_t modified  = false;
 	cherokee_boolean_t overwrite = false;
 
 #define should_assign(t,s,prop,nil)  \
@@ -212,6 +213,7 @@ cherokee_config_entry_complete (cherokee_config_entry_t *entry, cherokee_config_
 	if (should_assign (entry, main, handler_new_func, NULL)) {
 		entry->handler_new_func = main->handler_new_func;
 		entry->handler_methods  = main->handler_methods;
+		modified = true;
 	}
 	
 	if (should_assign (entry, main, authentication, 0))
@@ -241,7 +243,7 @@ cherokee_config_entry_complete (cherokee_config_entry_t *entry, cherokee_config_
 		entry->priority = main->priority;
 	}
 
-	return ret_ok;
+	return (modified) ? ret_ok : ret_eagain;
 }
 
 

@@ -72,8 +72,8 @@ ret_t
 cherokee_dirs_table_get (cherokee_dirs_table_t *pt, cherokee_buffer_t *requested_url, 
 			 cherokee_config_entry_t *plugin_entry, cherokee_buffer_t *web_directory)
 {
-	ret_t  ret;
-	char  *slash;
+	ret_t                    ret;
+	char                    *slash;
 	cherokee_config_entry_t *entry = NULL;
 
 	cherokee_buffer_add_buffer (web_directory, requested_url);
@@ -86,22 +86,17 @@ cherokee_dirs_table_get (cherokee_dirs_table_t *pt, cherokee_buffer_t *requested
 		if ((ret == ret_ok) && (entry != NULL))
 			goto go_out;
  
-		if (web_directory->len <= 0)
+		if (web_directory->len <= 1)
 			goto go_out;
 
 		/* Modify url for next loop:
 		 * Find the last / and finish the string there.
 		 */
-		if (cherokee_buffer_is_endding (web_directory, '/')) {
-			cherokee_buffer_drop_endding (web_directory, 1);
+		slash = strrchr (web_directory->buf, '/');
+		if (slash == NULL) goto go_out;
 
-		} else {
-			slash = strrchr (web_directory->buf, '/');
-			if (slash == NULL) goto go_out;
-
-			slash[1] = '\0';
-			web_directory->len -= ((web_directory->buf + web_directory->len) - slash -1);
-		}
+		*slash = '\0';
+		web_directory->len -= ((web_directory->buf + web_directory->len) - slash);
 
 #if 0
 		printf ("cherokee_dirs_table_get(): requested_url: %s\n", requested_url->buf);
@@ -131,7 +126,7 @@ go_out:
 	if (entry) printf ("ptable::GET - entry->validator_properties: %p\n", entry->validator_properties);
 #endif
 
-	return (entry == NULL) ? ret_error : ret_ok;
+	return (entry == NULL) ? ret_not_found : ret_ok;
 }
 
 

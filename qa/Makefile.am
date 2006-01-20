@@ -124,7 +124,9 @@ run-tests.py \
 119-Dotdot2.py \
 120-Dotdot3.py \
 121-NoUserDir.py \
-122-Methods.py
+122-Methods.py \
+123-ImplicitRedit.py \
+124-DomainToDir2.py
 
 test:
 	./run-tests.py

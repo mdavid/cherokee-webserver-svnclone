@@ -5,7 +5,7 @@ MAGIC = "Cherokee_is_pure_magic"
 class Test (TestBase):
     def __init__ (self):
         TestBase.__init__ (self)
-        self.name = "dirlist w/ multiple HeaderFile"
+        self.name = "Redirection to PHP"
 
         self.request           = "GET /respin1/%s/ HTTP/1.0\r\n" % (MAGIC)
         self.expected_error    = 200        

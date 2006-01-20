@@ -1467,10 +1467,30 @@ cherokee_connection_get_dir_entry (cherokee_connection_t *cnt, cherokee_dirs_tab
 	/* Look for the handler "*_new" function
 	 */
 	ret = cherokee_dirs_table_get (dirs, &cnt->request, config_entry, &cnt->web_directory);
-	if (ret != ret_ok) {
+	if (unlikely (ret == ret_error)) {
 		cnt->error_code = http_internal_error;
 		return ret_error;
 	}	
+
+	/* If the request is exactly the directory entry, and it
+	 * doesn't end with a slash, it must be redirected. Eg:
+	 *
+	 * web_directory = "/blog"
+	 * request       = "/blog"
+	 *
+	 * It must be redirected to "/blog/"
+	 */
+	if ((cnt->request.len == cnt->web_directory.len) &&
+	    (cnt->request.buf[cnt->request.len-1] != '/') &&
+	    (strcmp (cnt->request.buf, cnt->web_directory.buf) == 0))
+	{
+		cherokee_buffer_ensure_size (&cnt->redirect, cnt->request.len + 1);
+		cherokee_buffer_add_buffer (&cnt->redirect, &cnt->request);
+		cherokee_buffer_add (&cnt->redirect, "/", 1);
+
+		cnt->error_code = http_moved_permanently;
+		return ret_error;
+	}
 
 	/* Set the refereces
 	 */
@@ -1537,7 +1557,7 @@ cherokee_connection_get_req_entry (cherokee_connection_t *cnt, cherokee_reqs_lis
 	cnt->realm_ref = config_entry->auth_realm;
 	cnt->auth_type = config_entry->authentication;
 
-	return ret_ok;
+	return ret;
 }
 
 
@@ -1661,9 +1681,9 @@ cherokee_connection_check_only_secure (cherokee_connection_t *cnt, cherokee_conf
 
 
 ret_t 
-cherokee_connection_check_http_method (cherokee_connection_t *cnt, cherokee_config_entry_t *plugin_entry)
+cherokee_connection_check_http_method (cherokee_connection_t *cnt, cherokee_config_entry_t *config_entry)
 {
-	if (plugin_entry->handler_methods & cnt->header->method)
+	if (config_entry->handler_methods & cnt->header->method)
 		return ret_ok;
 
 	cnt->error_code = http_method_not_allowed;
