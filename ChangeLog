@@ -1,7 +1,14 @@
+2006-01-20  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/handler_dirlist.c (generate_file_entry): Bugfix.  It
+	was using _PC_NAME_MAX like a constant with the maximun length
+	rather than call to pathconf(). It was causing a Segment Fault on
+	OpenSolaris.
+
 2006-01-19  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cherokee/socket.c (cherokee_socket_gethostbyname): Wrong
-	conditional compilation entry fixed.  Reported by
+	conditional compilation entry fixed.  Patch by
 	olivier-ml1@oleastre.be
 
 	* 0.4.30 released

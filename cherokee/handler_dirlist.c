@@ -80,7 +80,7 @@ generate_file_entry (DIR *dir, cherokee_buffer_t *path, cherokee_handler_dirlist
 
 	/* Get the memory
 	 */
-	n = (file_entry_t *) malloc (sizeof(file_entry_t) + path->len + _PC_NAME_MAX + 3);
+	n = (file_entry_t *) malloc (sizeof(file_entry_t) + path->len + pathconf(path->buf, _PC_NAME_MAX) + 3);
 	if (unlikely(n == NULL)) return ret_nomem;
 
 	/* Read a new directory entry
