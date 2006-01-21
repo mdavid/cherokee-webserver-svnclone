@@ -6,7 +6,7 @@ CHEROKEE_MODS     = "/usr/lib/cherokee"
 
 STRACE_PATH       = "/usr/bin/strace"
 VALGRIND_PATH     = "/usr/bin/valgrind"
-PHPCGI_PATH       = "/usr/lib/cgi-bin/php4"
+PHPCGI_PATH       = "/usr/lib/cgi-bin/php5"
 
 SSL_CERT_FILE     = "/etc/cherokee/ssl/cherokee.pem"
 SSL_CERT_KEY_FILE = "/etc/cherokee/ssl/cherokee.pem"
