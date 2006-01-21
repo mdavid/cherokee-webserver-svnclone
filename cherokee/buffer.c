@@ -795,19 +795,17 @@ cherokee_buffer_encode_base64 (cherokee_buffer_t *buf)
 ret_t 
 cherokee_buffer_escape_html (cherokee_buffer_t *buf, cherokee_buffer_t **maybe_new)
 {
-	int i, j;
-	int extra = 0;
-	ret_t ret;
+	ret_t   ret;
+	cuint_t i;
+	cuint_t j;
+	cuint_t extra = 0;
 
 	/* Count extra characters
 	 */
 	for (i=0; i<buf->len; i++) {
-		if ((buf->buf[i] == '<') ||
-		    (buf->buf[i] == '>')) 
-		{
+		if ((buf->buf[i] == '<') || (buf->buf[i] == '>')) {
 			extra += 3;
-		} else 	if (buf->buf[i] == '&') 
-		{
+		} else 	if (buf->buf[i] == '&') {
 			extra += 4;
 		}
 	}
@@ -819,10 +817,10 @@ cherokee_buffer_escape_html (cherokee_buffer_t *buf, cherokee_buffer_t **maybe_n
 	ret = cherokee_buffer_new (maybe_new);
 	if (unlikely(ret != ret_ok)) return ret;
 
-	ret = cherokee_buffer_add_buffer (*maybe_new, buf);
+	ret = cherokee_buffer_ensure_size (*maybe_new, buf->len + extra + 1);
 	if (unlikely(ret != ret_ok)) return ret;
 
-	ret = cherokee_buffer_ensure_size (*maybe_new, buf->len + extra);
+	ret = cherokee_buffer_add_buffer (*maybe_new, buf);
 	if (unlikely(ret != ret_ok)) return ret;
 
 	buf = *maybe_new;

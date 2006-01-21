@@ -1,5 +1,8 @@
 2006-01-21  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* cherokee/buffer.c (cherokee_buffer_escape_html): It was an out
+	by one here. Seems to be fixed now.
+
 	* cherokee/util.c (cherokee_short_path): After each removed block
 	it was coming back too much, which in some cases was causing it go
 	out of the buffer. Fixed.
