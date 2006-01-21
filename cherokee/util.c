@@ -928,7 +928,7 @@ cherokee_short_path (cherokee_buffer_t *path)
 		cherokee_buffer_remove_chunk (path, (prev_slash - path->buf), len);
 
 		end = path->buf + path->len;
-		p -= len;
+		p -= (len - (dots_end - p));
 	}
 
 	return ret_ok;
