@@ -25,7 +25,7 @@ dnl Version
 m4_define([cherokee_major_version], [0])
 m4_define([cherokee_minor_version], [4])
 m4_define([cherokee_micro_version], [31])
-m4_define([cherokee_patch_version], [b1])
+m4_define([cherokee_patch_version], [b2])
 m4_define([cherokee_version], m4_format('%s.%s.%s%s', cherokee_major_version, cherokee_minor_version, cherokee_micro_version, cherokee_patch_version))
 
 dnl Init autoconf and automake
@@ -665,6 +665,44 @@ else
     fi
 fi
 
+dnl 
+dnl Test whether SO_RCVTIMEO is broken
+dnl 
+AC_CACHE_CHECK([whether setsockopt(SO_RCVTIMEO) is broken],
+  ac_cv_so_rcvtimeo_broken, [dnl
+    AC_RUN_IFELSE([AC_LANG_SOURCE([[
+#if defined(HAVE_SYS_TYPES_H)
+#include <sys/types.h>
+#endif
+
+#if defined(HAVE_SYS_SOCKET_H)
+#include <sys/socket.h>
+#endif
+
+#if defined(HAVE_SYS_TIME_H)
+#include <sys/time.h>
+#endif
+
+int main(void) {
+        int fd;
+        int ret;
+        struct timeval new_tv;
+
+        /* Open the socket (INET/TCP).*/
+        fd = socket(AF_INET, SOCK_STREAM, 0);
+
+        /* set the timeout for the incoming queue */
+        /* 1 second for example */
+        new_tv.tv_sec = 1;
+        new_tv.tv_usec = 0;
+
+        ret = setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &new_tv, sizeof(new_tv)); 
+        return ret;
+}
+]])],[ac_cv_so_rcvtimeo_broken=no],[ac_cv_so_rcvtimeo_broken=yes],[ac_cv_so_rcvtimeo_broken=cross])])
+if test x"$ac_cv_so_rcvtimeo_broken" = x"yes"; then
+  AC_DEFINE(HAVE_BROKEN_SO_RCVTIMEO, 1, [Define if setsockopt(SO_RCVTIMEO) is broken])
+fi
 
 dnl
 dnl Check for pcre library

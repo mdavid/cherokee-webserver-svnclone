@@ -1,5 +1,9 @@
 2006-01-21  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* configure.in, cherokee/socket.c: Added a check for systems with
+	a broken version of setsockopt (SO_RCVTIMEO): SO_RCVTIMEO is
+	defined but unimplemented.
+
 	* cherokee/buffer.c (cherokee_buffer_escape_html): It was an out
 	by one here. Seems to be fixed now.
 
