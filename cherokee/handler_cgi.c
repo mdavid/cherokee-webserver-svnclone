@@ -755,7 +755,7 @@ parse_header (cherokee_handler_cgi_t *cgi, cherokee_buffer_t *buffer)
 	if ((buffer->len > 4) &&
 	    (strncmp (CRLF CRLF, buffer->buf + buffer->len - 4, 4) == 0))
 	{
-		cherokee_buffer_drop_endding (&conn->header_buffer, 2);
+		cherokee_buffer_drop_endding (buffer, 2);
 	}
 	
 	/* Process the header line by line

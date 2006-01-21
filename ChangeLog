@@ -1,5 +1,14 @@
 2006-01-21  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* cherokee/util.c (cherokee_short_path): After each removed block
+	it was coming back too much, which in some cases was causing it go
+	out of the buffer. Fixed.
+
+	* cherokee/handler_cgi.c (parse_header): It should access directly
+	to conn->header_buffer. There is local variable called "buffer"
+	for that. Actually, is the same buffer, but it is cleaner in this
+	way.
+
 	* qa/run-tests.py: Now the -d option (pause for attach a debugger)
 	accepts a number as argument.. it is really handy :-)
 
