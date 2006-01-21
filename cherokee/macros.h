@@ -60,14 +60,6 @@
 #  endif /* !__cplusplus */
 #endif
 
-#if defined (__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
-#define CHEROKEE_FUNCTION_NAME __func__
-#elif defined(__GNUC__)
-#define CHEROKEE_FUNCTION_NAME __FUNCTION__
-#else
-#define CHEROKEE_FUNCTION_NAME "unknown function"
-#endif
-
 #if defined(__GNUC__) && (__GNUC__ > 2) && defined(__OPTIMIZE__)
 # define likely(x)   __builtin_expect((x),1)
 # define unlikely(x) __builtin_expect((x),0)
@@ -109,7 +101,7 @@
        		         "file %s: line %d (%s): assertion `%s' failed\n",  \
                           __FILE__,                                         \
                           __LINE__,                                         \
-                          CHEROKEE_FUNCTION_NAME,                           \
+                          __func__,                                         \
                           #expr);                                           \
 	        return (ret);                                               \
 	}
@@ -117,12 +109,12 @@
 
 #define SHOULDNT_HAPPEN \
 	do { fprintf (stderr, "file %s:%d (%s): this shouldn't happend\n",  \
-		      __FILE__, __LINE__, CHEROKEE_FUNCTION_NAME);          \
+		      __FILE__, __LINE__, __func__);                        \
 	} while (0)
 
 #define RET_UNKNOWN(ret) \
 	do { fprintf (stderr, "file %s:%d (%s): ret code unknown ret=%d\n", \
-		      __FILE__, __LINE__, CHEROKEE_FUNCTION_NAME, ret);     \
+		      __FILE__, __LINE__, __func__, ret);                   \
 	} while (0)
 
 
@@ -191,9 +183,9 @@
 # define TRACE_ENV "CHEROKEE_TRACE"
 
 # ifdef __GNUC__
-#  define TRACE(fmt,arg...) cherokee_trace (fmt, __FILE__, __LINE__, CHEROKEE_FUNCTION_NAME, ##arg)
+#  define TRACE(fmt,arg...) cherokee_trace (fmt, __FILE__, __LINE__, __func__, ##arg)
 # else
-#  define TRACE(fmt,...) cherokee_trace (fmt, __FILE__, __LINE__, CHEROKEE_FUNCTION_NAME, __VA_ARGS__)
+#  define TRACE(fmt,...) cherokee_trace (fmt, __FILE__, __LINE__, __func__, __VA_ARGS__)
 # endif
 #else
 # ifdef __GNUC__
