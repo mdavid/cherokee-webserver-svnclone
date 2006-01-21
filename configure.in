@@ -24,8 +24,8 @@ AC_PREREQ(2.56)
 dnl Version
 m4_define([cherokee_major_version], [0])
 m4_define([cherokee_minor_version], [4])
-m4_define([cherokee_micro_version], [30])
-m4_define([cherokee_patch_version], [])
+m4_define([cherokee_micro_version], [31])
+m4_define([cherokee_patch_version], [b1])
 m4_define([cherokee_version], m4_format('%s.%s.%s%s', cherokee_major_version, cherokee_minor_version, cherokee_micro_version, cherokee_patch_version))
 
 dnl Init autoconf and automake
@@ -941,8 +941,8 @@ AC_OUTPUT(Makefile cherokee/Makefile.MingW m4/Makefile cherokee/Makefile cget/Ma
 methods=""
 if test "$have_epoll"  = yes; then methods="${methods}epoll ";  fi
 if test "$have_kqueue" = yes; then methods="${methods}kqueue "; fi
-if test "$have_port"   = yes; then methods="${methods}port ";   fi
 if test "$have_poll"   = yes; then methods="${methods}poll ";   fi
+if test "$have_port"   = yes; then methods="${methods}port ";   fi
 if test "$have_select" = yes; then methods="${methods}select";  fi
 
 crypt_type="no"
