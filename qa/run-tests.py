@@ -16,8 +16,8 @@ from conf import *
 # Configuration parameters
 num      = 1
 thds     = 1
+pause    = 0
 ssl      = False
-pause    = False
 clean    = True
 kill     = True
 quiet    = False
@@ -52,8 +52,7 @@ if len(files) == 0:
 
 # Process the parameters
 for p in param:
-    if   p     == '-d': pause    = True
-    elif p     == '-c': clean    = False
+    if   p     == '-c': clean    = False
     elif p     == '-k': kill     = False
     elif p     == '-q': quiet    = True
     elif p     == '-v': valgrind = True
@@ -63,8 +62,16 @@ for p in param:
     elif p[:2] == '-n': num      = int(p[2:])
     elif p[:2] == '-t': thds     = int(p[2:])
     elif p[:2] == '-p': port     = int(p[2:])
+    elif p[:2] == '-d': pause    = p[2:]
     elif p[:2] == '-m': method   = p[2:]
     elif p[:2] == '-e': server   = p[2:]
+
+# Fix up pause
+if type(pause) == types.StringType:
+    if len(pause) > 0:
+        pause = int(pause)
+    else:
+        pause = sys.maxint
 
 # Configuration file base
 CONF_BASE = """# Cherokee QA tests
@@ -165,6 +172,7 @@ def clean_up():
 
 def mainloop_iterator(objs):
     global port
+    global pause
     global its_clean
 
     time.sleep (.2)
@@ -173,9 +181,10 @@ def mainloop_iterator(objs):
         for obj in objs:
             go_ahead = obj.Precondition()
 
-            if go_ahead and pause:
+            if go_ahead and pause > 0:
                 print "Press <Enter> to continue.."
                 sys.stdin.readline()
+                pause = pause - 1
 
             if not quiet:
                 if ssl: print "SSL:",
