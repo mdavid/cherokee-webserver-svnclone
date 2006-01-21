@@ -23,8 +23,12 @@ class Test (TestBase):
            Directory / { Handler common }
            DirectoryIndex index.php, /super_test_index.php
            DocumentRoot %s
-           Extension php { Handler phpcgi }
-        }""" % (self.dr)
+           Extension php {
+              Handler phpcgi {
+                 Interpreter %s
+              }
+           }
+        }""" % (self.dr, PHPCGI_PATH)
 
     def JustBefore (self, www):
         self.WriteFile (self.dr, "super_test_index.php", 0666, """<?php
@@ -34,7 +38,7 @@ class Test (TestBase):
                         ?>""")
 
     def Precondition (self):
-        if os.path.exists (PHPCGI_PATH) is False:
+        if not os.path.exists (PHPCGI_PATH):
             return False
 
         f = os.popen("ps -p %d -L | wc -l" % (os.getpid()))
