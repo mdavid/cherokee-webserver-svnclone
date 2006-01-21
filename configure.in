@@ -705,6 +705,24 @@ if test x"$ac_cv_so_rcvtimeo_broken" = x"yes"; then
 fi
 
 dnl
+dnl Check of __func__ and co..
+dnl
+AC_MSG_CHECKING([whether our compiler supports __func__])
+AC_TRY_COMPILE([],
+ [const char *cp = __func__;],
+ AC_MSG_RESULT([yes]),
+ AC_MSG_RESULT([no])
+ AC_MSG_CHECKING([whether our compiler supports __FUNCTION__])
+ AC_TRY_COMPILE([],
+   [const char *cp = __FUNCTION__;],
+   AC_MSG_RESULT([yes])
+   AC_DEFINE(__func__, __FUNCTION__,
+         [Define to appropriate substitue if compiler doesnt have __func__]),
+   AC_MSG_RESULT([no])
+   AC_DEFINE(__func__, __FILE__,
+         [Define to appropriate substitue if compiler doesnt have __func__])))
+
+dnl
 dnl Check for pcre library
 dnl
 AC_CHECK_LIB(pcre, pcre_compile, have_pcre_lib=yes, have_pcre_lib=no)

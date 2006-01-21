@@ -1,5 +1,10 @@
 2006-01-21  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* cherokee/macros.h: CHEROKEE_FUNCTION_NAME macro removed in favor
+	of the C99 __func__ variable.
+
+	* configure.in: Added checks for __func__ and __FUNCTION__.
+
 	* qa/067-PathInfo.py: Added a comment about a bug in the current
 	version of PHP5 which affects this test.
 
