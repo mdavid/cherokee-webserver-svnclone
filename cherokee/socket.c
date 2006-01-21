@@ -1248,13 +1248,16 @@ cherokee_socket_set_timeout (cherokee_socket_t *socket, cuint_t timeout)
 
 		/* Set the send / receive timeouts
 		 */
-#ifdef SO_RCVTIMEO
+#if defined(SO_RCVTIMEO) && \
+   !defined(HAVE_BROKEN_SO_RCVTIMEO)
 		tv.tv_sec  = timeout / 1000;
 		tv.tv_usec = timeout % 1000;
 
 		re = setsockopt (socket->socket, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
 		if (re < 0) {
-			PRINT_ERROR ("Couldn't set SO_RCVTIMEO, fd=%d, timeout=%d\n", socket->socket, timeout);
+			int err = errno;
+			PRINT_ERROR ("Couldn't set SO_RCVTIMEO, fd=%d, timeout=%d: %s\n", 
+				     socket->socket, timeout, strerror(err));
 		}
 #endif
 
