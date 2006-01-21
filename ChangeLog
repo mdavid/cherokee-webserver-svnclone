@@ -1,5 +1,12 @@
 2006-01-21  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* qa/067-PathInfo.py: Added a comment about a bug in the current
+	version of PHP5 which affects this test.
+
+	* qa/066-DirectoryIndex3.py (Test.Prepare, Test.Precondition): It
+	wasn't using the Interpreter entry in the test configuration. It
+	is mandatory for the tests. Fixed.
+
 	* cherokee/handler_phpcgi.c (cherokee_handler_phpcgi_new): Fixed a
 	potential SEGFAULT printing the error message.
 
