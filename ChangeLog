@@ -1,5 +1,11 @@
 2006-01-21  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* qa/run-tests.py (mainloop_iterator): Little fix. It was failing
+	to test the preconditions in quiet mode (-q).
+
+	* qa/045-Home2.py (Test.Precondition): There was a little typo
+	here: f.close rather f.close(). It wasn't closing the descriptor.
+
 	* configure.in, cherokee/socket.c: Added a check for systems with
 	a broken version of setsockopt (SO_RCVTIMEO): SO_RCVTIMEO is
 	defined but unimplemented.

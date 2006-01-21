@@ -25,10 +25,10 @@ class Test (TestBase):
         # Read the /etc/passwd file
         f = open ("/etc/passwd", "r")
         pwuser = filter(lambda x: x.find(self.user) == 0, f.readlines())
-        f.close
+        f.close()
 
         # Sanity check
-        if len(pwuser) is not 1:
+        if len(pwuser) <= 1:
             return False
 
         # Get the home directory
