@@ -877,6 +877,9 @@ cherokee_admin_LDADD = libcherokee-config.la libcherokee-base.la libcherokee-cli
 #cherokee_hex_SOURCES = cherokee_hex.c
 #cherokee_hex_LDADD = libcherokee-base.la
 
+#cherokee_short_path = cherokee_short_path.c
+#cherokee_short_path_LDADD = libcherokee-base.la
+
 
 CLEANFILES = \
 read_config_grammar.h \
