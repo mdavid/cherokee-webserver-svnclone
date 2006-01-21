@@ -153,7 +153,8 @@ cherokee_handler_phpcgi_new  (cherokee_handler_t **hdl, void *cnt, cherokee_tabl
 	/* Check the interpreter
 	 */
 	if (check_interpreter(interpreter) != ret_ok) {
-		PRINT_ERROR ("ERROR: PHP interpreter not found (%s). Please install it.\n", interpreter);
+		PRINT_ERROR ("ERROR: PHP interpreter not found (%s). Please install it.\n", 
+			     interpreter ? interpreter : "");
 		return ret_error;
 	}
 
