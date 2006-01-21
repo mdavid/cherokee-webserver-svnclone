@@ -1,5 +1,8 @@
 2006-01-21  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* qa/run-tests.py: Now the -d option (pause for attach a debugger)
+	accepts a number as argument.. it is really handy :-)
+
 	* configure.in: poll() took over port event in Solaris time ago,
 	but the configure information wasn't showing it like that.
 
