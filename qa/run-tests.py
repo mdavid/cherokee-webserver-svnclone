@@ -191,8 +191,9 @@ def mainloop_iterator(objs):
                 print "%s: " % (obj.name) + " "*(40 - len(obj.name)),
                 sys.stdout.flush()
 
-            if not go_ahead and not quiet:
-                print "Skipped"
+            if not go_ahead:
+                if not quiet:
+                    print "Skipped"
                 continue
     
             if port is None:
