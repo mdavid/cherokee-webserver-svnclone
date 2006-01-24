@@ -89,7 +89,7 @@ cherokee_connection_new  (cherokee_connection_t **cnt)
 {
 	CHEROKEE_NEW_STRUCT(n, connection);
 	   
-	INIT_LIST_HEAD(&n->list_entry);
+	cherokee_connection_base_init (CONN_BASE(n));
 
 	n->tcp_cork          = 0;
 	n->error_code        = http_ok;
@@ -213,13 +213,14 @@ cherokee_connection_clean (cherokee_connection_t *cnt)
 	}
 #endif
 
+	CONN_BASE(cnt)->timeout = -1;
+
 	cnt->phase             = phase_reading_header;
 	cnt->phase_return      = phase_nothing;
 	cnt->auth_type         = http_auth_nothing;
 	cnt->req_auth_type     = http_auth_nothing;
 	cnt->upgrade           = http_upgrade_nothing;
 	cnt->error_code        = http_ok;
-	cnt->timeout           = -1;
 	cnt->range_start       = 0;
 	cnt->range_end         = 0;
 	cnt->logger_ref        = NULL;

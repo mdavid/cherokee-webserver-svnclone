@@ -1080,14 +1080,18 @@ cherokee_socket_connect (cherokee_socket_t *socket)
 	int r;
 
 	if (SOCKET_AF(socket) == AF_UNIX) {
-#ifdef _WIN32
+#ifndef _WIN32
+		r = connect (SOCKET_FD(socket), (struct sockaddr *) &SOCKET_ADDR_UNIX(socket), sizeof(SOCKET_ADDR_UNIX(socket)));
+#else
 		SHOULDNT_HAPPEN;
 		return ret_no_sys;
-#else
-		r = connect (SOCKET_FD(socket), (struct sockaddr *) &SOCKET_ADDR_UNIX(socket), sizeof(SOCKET_ADDR_UNIX(socket)));
 #endif
 	} else {
-		r = connect (SOCKET_FD(socket), (struct sockaddr *) &SOCKET_ADDR(socket), sizeof(cherokee_sockaddr_t));
+#ifdef HAVE_IPV6
+		r = connect (SOCKET_FD(socket), (struct sockaddr *) &SOCKET_ADDR(socket), sizeof(struct sockaddr_in6));
+#else
+		r = connect (SOCKET_FD(socket), (struct sockaddr *) &SOCKET_ADDR(socket), sizeof(struct sockaddr_in));
+#endif
 	}
 
 	if (r < 0) {

@@ -410,7 +410,7 @@ maybe_purge_closed_connection (cherokee_thread_t *thread, cherokee_connection_t 
 
 	/* Update the timeout value
 	 */
-	conn->timeout = thread->bogo_now + srv->timeout;	
+	CONN_BASE(conn)->timeout = thread->bogo_now + srv->timeout;	
 }
 
 
@@ -424,9 +424,13 @@ process_polling_connections (cherokee_thread_t *thd)
 	list_for_each_safe (i, tmp, (list_t*)&thd->polling_list) {
 		conn = CONN(i);
 
+		if (CONN_BASE (conn)->type == conn_base_group) {
+			printf ("un grupoooooooooo\n");
+		}
+
 		/* Has it been too much without any work?
 		 */
-		if (conn->timeout < thd->bogo_now) {
+		if (CONN_BASE(conn)->timeout < thd->bogo_now) {
 			purge_closed_polling_connection (thd, conn);
 			continue;
 		}
@@ -474,7 +478,7 @@ process_active_connections (cherokee_thread_t *thd)
 
 		/* Has the connection been too much time w/o any work
 		 */
-		if (conn->timeout < thd->bogo_now) {
+		if (CONN_BASE(conn)->timeout < thd->bogo_now) {
 			purge_closed_connection (thd, conn);
 			continue;
 		}
@@ -523,7 +527,7 @@ process_active_connections (cherokee_thread_t *thd)
 
 		/* The connection has work to do, so..
 		 */
-		conn->timeout = thd->bogo_now + srv->timeout;
+		CONN_BASE(conn)->timeout = thd->bogo_now + srv->timeout;
 
 		TRACE (ENTRIES, "conn on phase n=%d: %s\n", conn->phase, phase_to_str(conn->phase));
 
@@ -1638,7 +1642,8 @@ cherokee_thread_get_new_connection (cherokee_thread_t *thd, cherokee_connection_
 	new_connection->server    = server;
 	new_connection->vserver   = server->vserver_default;
 	new_connection->keepalive = server->keepalive_max;
-	new_connection->timeout   = thd->bogo_now + THREAD_SRV(thd)->timeout;
+
+	CONN_BASE(new_connection)->timeout = thd->bogo_now + THREAD_SRV(thd)->timeout;
 
 	*conn = new_connection;
 	return ret_ok;
