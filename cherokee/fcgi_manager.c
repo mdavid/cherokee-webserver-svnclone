@@ -166,6 +166,7 @@ connect_to_srv (cherokee_fcgi_manager_t *fcgim)
 
 		ret = cherokee_socket_gethostbyname (fcgim->socket, &fcgim->hostname);
 		if (ret != ret_ok) return ret;
+
 	} else {
 		ret = cherokee_socket_set_client (fcgim->socket, AF_INET);
 		if (ret != ret_ok) return ret;

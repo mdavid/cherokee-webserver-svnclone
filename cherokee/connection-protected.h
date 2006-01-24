@@ -62,7 +62,7 @@
 #include "encoder_table.h"
 #include "post.h"
 #include "reqs_list.h"
-
+#include "connection_base.h"
 
 typedef enum {
 	phase_nothing,
@@ -79,8 +79,9 @@ typedef enum {
 	phase_lingering
 } cherokee_connection_phase_t;
 
+
 struct cherokee_connection {
-	struct list_head              list_entry;
+	cherokee_connection_base_t    base;
 
 	/* References
 	 */
@@ -138,6 +139,7 @@ struct cherokee_connection {
 	cherokee_buffer_t             userdir;             /* 'alo' in http://www.alobbs.com/~alo/thing */
 	cherokee_buffer_t             host;
 	cherokee_buffer_t             effective_directory;
+	cherokee_buffer_t             redirect;
 
 	/* Espace versions
 	 */
@@ -163,10 +165,6 @@ struct cherokee_connection {
 	/* Post info
 	 */
 	cherokee_post_t               post;
-
-	cherokee_buffer_t             redirect;
-	
-	time_t                        timeout;
 	uint32_t                      keepalive;
 
 	off_t                         range_start;

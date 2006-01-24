@@ -888,22 +888,11 @@ encoder_option : T_DENY id_list
 
 pidfile : T_PIDFILE T_FULLDIR
 {
-	   FILE *file;
-	   CHEROKEE_TEMP(buffer, 10);
-
-	   file = fopen ($2, "w");
-	   if (file == NULL) {
-			 PRINT_MSG ("ERROR: Can't write PID file '%s': %s\n", $2, strerror(errno));
-			 return 0;
-	   }
-
-	   snprintf (buffer, buffer_size, "%d\n", getpid());
-	   fwrite (buffer, 1, strlen(buffer), file);
-	   fclose (file);
+	   cherokee_buffer_clean (&SRV(server)->pidfile);
+	   cherokee_buffer_add (&SRV(server)->pidfile, $2, strlen($2));
 
 	   free ($2);
 };
-
 
 panic_action : T_PANIC_ACTION T_FULLDIR
 {

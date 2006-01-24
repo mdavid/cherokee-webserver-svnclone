@@ -1,4 +1,15 @@
+2006-01-24  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/read_config_grammar.y (pidfile), cherokee/server.h,
+	cherokee/server.c (cherokee_server_write_pidfile),
+	cherokee/main.c (common_server_initialization): Now it writes down
+	the pid file after forking as a daemon.
+
 2006-01-21  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/socket.c (cherokee_socket_connect): Now there are two
+	cases for the connect call: with and without IPv6.  Solaris was
+	failing (EINVAL) because the last argument (the size) was too big.
 
 	* cherokee/macros.h: CHEROKEE_FUNCTION_NAME macro removed in favor
 	of the C99 __func__ variable.

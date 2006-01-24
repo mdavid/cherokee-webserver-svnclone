@@ -247,6 +247,10 @@ cherokee_server_new  (cherokee_server_t **srv)
 		return ret;
 	}
 
+	/* PID
+	 */
+	cherokee_buffer_init (&n->pidfile);
+	
 	/* Return the object
 	 */
 	*srv = n;
@@ -361,6 +365,8 @@ cherokee_server_free (cherokee_server_t *srv)
 		free (srv->panic_action);
 		srv->panic_action = NULL;
 	}
+
+	cherokee_buffer_mrproper (&srv->pidfile);
 
 	/* Module loader:
 	 * It must be the last action to perform because
@@ -1430,6 +1436,29 @@ cherokee_server_get_backup_mode (cherokee_server_t *srv, cherokee_boolean_t *act
 		cherokee_logger_get_backup_mode (logger, active);
 		if (*active == true) return ret_ok;
 	}
+
+	return ret_ok;
+}
+
+
+ret_t 
+cherokee_server_write_pidfile (cherokee_server_t *srv)
+{
+	FILE *file;
+	CHEROKEE_TEMP(buffer, 10);
+
+	if (cherokee_buffer_is_empty (&srv->pidfile))
+		return ret_not_found;
+
+	file = fopen (srv->pidfile.buf, "w");
+	if (file == NULL) {
+		PRINT_MSG ("ERROR: Can't write PID file '%s': %s\n", srv->pidfile.buf, strerror(errno));
+		return ret_error;
+	}
+
+	snprintf (buffer, buffer_size, "%d\n", getpid());
+	fwrite (buffer, 1, strlen(buffer), file);
+	fclose (file);
 
 	return ret_ok;
 }

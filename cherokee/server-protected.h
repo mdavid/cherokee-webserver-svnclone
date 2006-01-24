@@ -177,6 +177,10 @@ struct cherokee_server {
 	/* Performance
 	 */
 	int                        max_conn_reuse;
+
+	/* PID
+	 */
+	cherokee_buffer_t          pidfile;
 };
 
 
