@@ -37,6 +37,7 @@ Requires: SUNWcherokee
 #export MSGFMT="/usr/bin/msgfmt"
 export CFLAGS="%optflags -I%{_includedir}"
 export RPM_OPT_FLAGS="$CFLAGS"
+export LDFLAGS="%_ldflags"
 
 ./configure --prefix=%{_prefix}                 \
             --enable-os-string="OpenSolaris"    \
@@ -58,7 +59,54 @@ rm -f $RPM_BUILD_ROOT%{_libdir}/lib*.la
 rm -f $RPM_BUILD_ROOT%{_libdir}/cherokee/lib*.a
 rm -f $RPM_BUILD_ROOT%{_libdir}/cherokee/lib*.la
 
+mkdir -p ${RPM_BUILD_ROOT}/var/svc/manifest/network/
+cp http-cherokee.xml ${RPM_BUILD_ROOT}/var/svc/manifest/network/http-cherokee.xml
+
 %{?pkgbuild_postprocess: %pkgbuild_postprocess -v -c "%{version}:%{jds_version}:%{name}:$RPM_ARCH:%(date +%%Y-%%m-%%d):%{support_level}" $RPM_BUILD_ROOT}
+
+
+
+%post -n SUNWcherokee-root
+
+if [ -f /lib/svc/share/smf_include.sh ] ; then
+    . /lib/svc/share/smf_include.sh
+    smf_present
+    if [ $? -eq 0 ]; then
+	/usr/sbin/svccfg import /var/svc/manifest/network/http-cherokee.xml
+    fi
+fi
+
+exit 0
+
+%preun -n SUNWcherokee-root
+if [  -f /lib/svc/share/smf_include.sh ] ; then
+    . /lib/svc/share/smf_include.sh
+    smf_present
+    if [ $? -eq 0 ]; then
+	if [ `svcs  -H -o STATE svc:/network/http:cherokee` != "disabled" ]; then
+	    svcadm disable svc:/network/http:cherokee
+	fi
+    fi
+fi
+
+
+%postun -n SUNWcherokee-root
+
+if [ -f /lib/svc/share/smf_include.sh ] ; then
+    . /lib/svc/share/smf_include.sh
+    smf_present
+    if [ $? -eq 0 ] ; then
+	/usr/sbin/svccfg export svc:/network/http > /dev/null 2>&1
+	if [ $? -eq 0 ] ; then
+	    /usr/sbin/svccfg delete -f svc:/network/http:cherokee
+	fi
+    fi
+fi
+
+exit 0
+
+
+
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -80,13 +128,15 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/cherokee
 %{_datadir}/doc
 
+
 %files root
 %defattr (-, root, other)
 %attr (0755, root, sys) %dir %{_sysconfdir}
 %{_sysconfdir}/*
 %dir %attr (0755, root, sys) %{_localstatedir}
-%{_localstatedir}/*
+%{_localstatedir}/cherokee/*
 %defattr (0755, root, sys)
+%attr(0444, root, sys)/var/svc/manifest/network/http-cherokee.xml
 
 %files devel
 %dir %attr (0755, root, bin) %dir %{_libdir}
@@ -97,5 +147,8 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Wed Jan 25 2006 - rodrigo.fernandez-vizarra@sun.com
+- Added SMF definition file install/removal
+
 * Tue Jan 17 2006 - damien.carbery@sun.com
 - Created.

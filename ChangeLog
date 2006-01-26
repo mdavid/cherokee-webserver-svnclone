@@ -1,3 +1,14 @@
+2006-01-26  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* http-cherokee.xml: Added SMF support, by Rodrigo
+	Fernandez-Vizarra <rfdzvizarra@yahoo.ie>
+
+	* SUNWcherokee.spec: Updated. by Rodrigo Fernandez-Vizarra
+	<rfdzvizarra@yahoo.ie>
+
+	* contrib/cherokee: Bugfix by Alex del Pozo Peralta
+	<jdep0016@almez.pntic.mec.es>
+
 2006-01-24  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cherokee/read_config_grammar.y (pidfile), cherokee/server.h,
