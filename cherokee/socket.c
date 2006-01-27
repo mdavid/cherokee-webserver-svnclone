@@ -577,7 +577,7 @@ cherokee_socket_accept_fd (int server_socket, int *new_fd, cherokee_sockaddr_t *
 	 */
 	len = sizeof (cherokee_sockaddr_t);
 	new_socket = accept (server_socket, &sa->sa, &len);
-	if (new_socket <= 0) {
+	if (new_socket < 0) {
 		return ret_error;
 	}		
 

@@ -583,6 +583,8 @@ reswitch:
 			len += 30; 
 			base = 10;
 			goto number;			
+		case 'p':
+			len += 2; /* Pointer: "0x" + hex value */
 		case 'x':
 			ul = lflag ? va_arg(ap, culong_t) : va_arg(ap, int);
 			base = 16;
@@ -804,8 +806,10 @@ cherokee_trace (const char *entry, const char *file, int line, const char *func,
 {
 	static char        *env         = NULL;
 	static cuint_t      env_set     = 0;
+	static cuint_t      use_syslog  = 0;
 	cherokee_boolean_t  do_log      = false;
 	cherokee_buffer_t   entries     = CHEROKEE_BUF_INIT;
+	cherokee_buffer_t   output      = CHEROKEE_BUF_INIT;
 	char               *lentry;
 	char               *lentry_end;
 	va_list             args;
@@ -816,6 +820,9 @@ cherokee_trace (const char *entry, const char *file, int line, const char *func,
 	if (env_set == 0) {
 		env     = getenv(TRACE_ENV);
 		env_set = 1;
+
+		if (env != NULL) 
+			use_syslog = (strstr (env, "syslog") != NULL);
 	}
 
 	/* Return quickly if there isn't anything to do
@@ -854,12 +861,19 @@ cherokee_trace (const char *entry, const char *file, int line, const char *func,
 
 	/* Print the trace
 	 */
-	printf ("%18s:%04d (%30s): ", file, line, func);
+	cherokee_buffer_add_va (&output, "%18s:%04d (%30s): ", file, line, func);
+
 	va_start (args, fmt);
-	vprintf (fmt, args);
+	cherokee_buffer_add_va_list (&output, (char *)fmt, args);
 	va_end (args);
 
+	if (use_syslog) 
+		syslog (LOG_DEBUG, "%s", output.buf);
+	else
+		printf ("%s", output.buf);
+
 out:
+	cherokee_buffer_mrproper (&output);
 	cherokee_buffer_mrproper (&entries);
 }
 
