@@ -1,3 +1,16 @@
+2006-01-27  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/socket.c (cherokee_socket_accept_fd): 0 is a valid file
+	descriptor. There is no problem if accept() returns it. Fixed. It
+	fixes bug #12: http://www.0x50.org/bugs/ticket/12
+
+	* cherokee/util.c (cherokee_trace): Now, it can log the debugging
+	information in syslog.  It is handy for debugging the server when
+	it has been launched as daemon (-b switch).
+
+	* cherokee/util.c (cherokee_estimate_va_length): Added support for
+	%p entries.
+
 2006-01-26  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* http-cherokee.xml: Added SMF support, by Rodrigo
