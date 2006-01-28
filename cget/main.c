@@ -187,7 +187,7 @@ do_download__has_headers (cherokee_downloader_t *downloader, void *param)
 	if (global_fd == UNSET_FD) {
 		char *name;
 		
-		name = rindex (req->buf, '/');
+		name = strrchr (req->buf, '/');
 		if (name == NULL) {
 			name = "index.html";
 		}
