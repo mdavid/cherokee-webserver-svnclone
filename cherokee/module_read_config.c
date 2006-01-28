@@ -201,7 +201,7 @@ error:
 }
 
 
-ret_t
+CHEROKEE_EXPORT ret_t
 read_config_file (cherokee_server_t *srv, char *filename)
 {
 	ret_t             ret;

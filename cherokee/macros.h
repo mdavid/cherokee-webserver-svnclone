@@ -257,4 +257,10 @@
 #endif
 
 
+#ifdef _WIN32
+# define CHEROKEE_EXPORT __declspec(dllexport)
+#else
+# define CHEROKEE_EXPORT
+#endif
+
 #endif /* CHEROKEE_MACROS_H */
