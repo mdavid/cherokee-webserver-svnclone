@@ -1,5 +1,8 @@
 2006-01-28  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* cget/main.c (do_download__has_headers): It has to use strrchr()
+	instead of rindex(). Fixed.
+
 	* cherokee/server.c (initialize_server_socket6,
 	initialize_server_socket4): Socket #0 is okay. The check was
 	wrong.
