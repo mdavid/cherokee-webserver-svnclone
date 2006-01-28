@@ -114,7 +114,7 @@ int dcc_ncpus(int *ncpus)
     }
 }
 
-#else /* every other system */
+#elif !defined (_WIN32) /* every other system but Windows */
 
 /*
   http://www.opengroup.org/onlinepubs/007904975/functions/sysconf.html
