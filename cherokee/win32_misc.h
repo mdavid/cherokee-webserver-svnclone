@@ -36,7 +36,8 @@
 #define pipe(h)           _pipe(h,0,0)
 
 
-char      *win_strerror (int err);
-struct tm *localtime_r (const time_t *time, struct tm *tm);
+char         *win_strerror (int err);
+struct tm    *localtime_r  (const time_t *time, struct tm *tm);
+unsigned int  sleep        (unsigned int seconds);
 
 #endif /* CHEROKEE_WIN32_MISC_H */

@@ -1,5 +1,8 @@
 2006-01-28  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* cherokee/win32_misc.h, cherokee/win32_misc.c (sleep):
+	Implemented sleep() system call for Win32.
+
 	* cherokee/handler_dirlist.c (generate_file_entry): User PATH_MAX
 	is _PC_NAME_MAX is undefined (in Win32).
 
