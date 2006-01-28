@@ -76,11 +76,17 @@ generate_file_entry (DIR *dir, cherokee_buffer_t *path, cherokee_handler_dirlist
 	int            re;
 	file_entry_t  *n;
 	char          *name;
+	cuint_t        extra;
 	struct dirent *entry;
-
+	
 	/* Get the memory
 	 */
-	n = (file_entry_t *) malloc (sizeof(file_entry_t) + path->len + pathconf(path->buf, _PC_NAME_MAX) + 3);
+#ifdef _PC_NAME_MAX
+	extra = pathconf(path->buf, _PC_NAME_MAX);
+#else
+	extra = PATH_MAX;
+#endif
+	n = (file_entry_t *) malloc (sizeof(file_entry_t) + path->len + extra + 3);
 	if (unlikely(n == NULL)) return ret_nomem;
 
 	/* Read a new directory entry
