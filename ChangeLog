@@ -1,5 +1,9 @@
 2006-01-28  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* cherokee/server.c (initialize_server_socket6,
+	initialize_server_socket4): Socket #0 is okay. The check was
+	wrong.
+
 	* cherokee/macros.h (CHEROKEE_EXPORT): New macho for Win32
 	defining __declspec(dllexport).
 

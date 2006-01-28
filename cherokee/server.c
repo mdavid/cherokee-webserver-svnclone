@@ -86,6 +86,8 @@
 #include "connection-protected.h"
 #include "nonce.h"
 
+#define ENTRIES "core,server"
+
 
 ret_t
 cherokee_server_new  (cherokee_server_t **srv)
@@ -509,7 +511,7 @@ initialize_server_socket4 (cherokee_server_t *srv, unsigned short port, int *srv
 	struct sockaddr_in sockaddr;
 
 	srv_socket = socket (AF_INET, SOCK_STREAM, 0);
-	if (srv_socket <= 0) {
+	if (srv_socket < 0) {
 		PRINT_ERROR_S ("Error creating IPv4 server socket\n");
 		exit(EXIT_CANT_CREATE_SERVER_SOCKET4);
 	}
@@ -553,7 +555,7 @@ initialize_server_socket6 (cherokee_server_t *srv, unsigned short port, int *srv
 	/* Create the socket
 	 */
 	srv_socket = socket (AF_INET6, SOCK_STREAM, 0);
-	if (srv_socket <= 0) {
+	if (srv_socket < 0) {
 		PRINT_ERROR_S ("Error creating IPv6 server socket.. switching to IPv4\n");
 		srv->ipv6 = 0;
 		return ret_error;
@@ -1245,15 +1247,19 @@ cherokee_server_daemonize (cherokee_server_t *srv)
 #ifndef _WIN32
         pid_t child_pid;
 
-        switch (child_pid = fork()) {
+	TRACE (ENTRIES, "server (%p) about to become evil", srv);
+
+	child_pid = fork();
+        switch (child_pid) {
 	case -1:
                 PRINT_ERROR_S ("Could not fork\n");
 		break;
 
 	case 0:
-		close(0);
-		close(1);
 		close(2);
+		close(1);
+		close(0);
+
 		setsid();
 		break;
 
