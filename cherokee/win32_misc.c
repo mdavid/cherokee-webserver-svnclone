@@ -926,3 +926,10 @@ static const char *inet_ntop6 (const u_char *src, char *dst, size_t size)
 }
 #endif  /* HAVE_IPV6 */
 
+
+unsigned int
+sleep (unsigned int seconds)
+{
+	   Sleep (seconds * 1000);
+	   return 0;
+}
