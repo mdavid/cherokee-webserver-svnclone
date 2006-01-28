@@ -1,5 +1,13 @@
 2006-01-28  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* cherokee/macros.h (CHEROKEE_EXPORT): New macho for Win32
+	defining __declspec(dllexport).
+
+	* cherokee/module_read_config.c (read_config_file): Use
+	CHEROKEE_EXPORT.  The server has to be able to discover this
+	symbol at run time.  In Win32 it is mandatory to use a flag for
+	this.
+	
 	* cherokee/win32_misc.h, cherokee/win32_misc.c (sleep):
 	Implemented sleep() system call for Win32.
 
