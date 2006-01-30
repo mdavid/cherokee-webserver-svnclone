@@ -537,15 +537,18 @@ void *win_dlsym (const void *dll_handle, const char *func_name)
 
   if (!hnd)
      hnd = GetModuleHandle (NULL);
-  last_func = "win_dlsym";
+
+  last_error = 0;
+  last_func  = "win_dlsym";
+
   rc = (void*) GetProcAddress (hnd, func_name);
-  if (rc)
-       last_error = 0;
-  else last_error = GetLastError();
+  if (rc == NULL)
+       last_error = GetLastError();
 
-  TRACE ("dlfcn", "%s, %s\n", func_name, rc ? "ok" : "fail");
+  TRACE ("dlfcn", "func=%s result=%s error=%d\n",
+	    func_name, rc ? "ok" : "fail", last_error);  
 
-  return (rc);
+  return rc;
 }
 
 int win_dlclose (const void *dll_handle)

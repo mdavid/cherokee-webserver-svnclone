@@ -144,7 +144,7 @@ cherokee_handler_common_new (cherokee_handler_t **hdl, void *cnt, cherokee_table
 		 */
 		begin = conn->local_directory.len - conn->request.len;
 		
-		ret = cherokee_split_pathinfo (&conn->local_directory, begin, &pathinfo, &pathinfo_len);
+		ret = cherokee_split_pathinfo (&conn->local_directory, begin, true, &pathinfo, &pathinfo_len);
 		if ((ret == ret_not_found) || (pathinfo_len <= 0)) {
 			conn->error_code = http_not_found;
 			return ret_error;

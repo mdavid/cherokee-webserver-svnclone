@@ -34,57 +34,74 @@
 
 #include "buffer.h"
 #include "handler.h"
-#include "cgi.h"
 #include "list.h"
+#include "handler_cgi_base.h"
+
 
 #define ENV_VAR_NUM 30
 
+/* typedef enum { */
+/* 	hcgi_phase_init, */
+/* 	hcgi_phase_sent_post */
+/* } cgi_init_phase_t; */
 
-typedef enum {
-	hcgi_phase_init,
-	hcgi_phase_sent_post
-} cgi_init_phase_t;
+
+/* typedef struct { */
+/* 	cherokee_handler_t handler; */
+
+/* 	int     pipeInput;         /\* read from the CGI *\/ */
+/* 	int     pipeOutput;        /\* write to the CGI *\/ */
+/* 	int     post_data_sent;    /\* amount POSTed to the CGI *\/ */
+/* 	pid_t   pid;               /\* CGI pid *\/ */
+
+/* 	char   *script_alias; */
+/* 	char   *extra_param; */
+/* 	list_t *system_env; */
+/* 	size_t  content_length; */
+/* 	cuint_t is_error_handler; */
+/* 	cuint_t change_user; */
+
+/* 	char *envp[ENV_VAR_NUM]; /\* Environ variables for execve() *\/ */
+/* 	int   envp_last; */
+
+/* 	cgi_init_phase_t   init_phase; */
+/* 	cherokee_boolean_t cgi_fd_in_poll; */
+
+/* 	cherokee_buffer_t *filename; */
+/* 	cherokee_buffer_t *parameter;  */
+/* 	cherokee_buffer_t *data;  */
+
+/* } cherokee_handler_cgi_t_OLD; */
 
 
 typedef struct {
-	cherokee_handler_t handler;
+	cherokee_handler_cgi_base_t base;
+
+	cgi_init_phase_t init_phase;
 
 	int     pipeInput;         /* read from the CGI */
 	int     pipeOutput;        /* write to the CGI */
 	int     post_data_sent;    /* amount POSTed to the CGI */
 	pid_t   pid;               /* CGI pid */
-	char   *script_alias;
-	char   *extra_param;
-	list_t *system_env;
-	size_t  content_length;
-	cuint_t is_error_handler;
-	cuint_t change_user;
 
-	char *envp[ENV_VAR_NUM]; /* Environ variables for execve() */
-	int   envp_last;
-
-	cgi_init_phase_t   init_phase;
-	cherokee_boolean_t cgi_fd_in_poll;
-
-	cherokee_buffer_t *filename;
-	cherokee_buffer_t *parameter; 
-	cherokee_buffer_t *data; 
+	char   *envp[ENV_VAR_NUM]; /* Environ variables for execve() */
+	int     envp_last;
 
 } cherokee_handler_cgi_t;
 
-#define CGIHANDLER(x)  ((cherokee_handler_cgi_t *)(x))
+#define HANDLER_CGI(x)  ((cherokee_handler_cgi_t *)(x))
+
 
 /* Library init function
  */
 void cgi_init ();
 
-
-ret_t cherokee_handler_cgi_new   (cherokee_handler_t **hdl, void *cnt, cherokee_table_t *properties);
-
-/* virtual methods implementation
+/* Methods
  */
-ret_t cherokee_handler_cgi_init        (cherokee_handler_cgi_t *hdl);
+ret_t cherokee_handler_cgi_new         (cherokee_handler_t    **hdl, void *cnt, cherokee_table_t *properties);
 ret_t cherokee_handler_cgi_free        (cherokee_handler_cgi_t *hdl);
+
+ret_t cherokee_handler_cgi_init        (cherokee_handler_cgi_t *hdl);
 ret_t cherokee_handler_cgi_step        (cherokee_handler_cgi_t *hdl, cherokee_buffer_t *buffer);
 ret_t cherokee_handler_cgi_add_headers (cherokee_handler_cgi_t *hdl, cherokee_buffer_t *buffer);
 
@@ -92,14 +109,9 @@ ret_t cherokee_handler_cgi_add_headers (cherokee_handler_cgi_t *hdl, cherokee_bu
 /* This handler export these extra functions to allow phpcgi
  * set enviroment variables, work with pathinfo, etc..
  */
-ret_t cherokee_handler_cgi_split_pathinfo (cherokee_handler_cgi_t *cgi, 
-					   cherokee_buffer_t      *buf, 
-					   int                     pos);
 
-void  cherokee_handler_cgi_add_parameter  (cherokee_handler_cgi_t *cgi, char *name);
-
-void  cherokee_handler_cgi_add_env_pair   (cherokee_handler_cgi_t *cgi, 
-				          char *name,    int name_len,
-					  char *content, int content_len);
+void  cherokee_handler_cgi_add_env_pair   (cherokee_handler_cgi_base_t *cgi, 
+					   char *name,    int name_len,
+					   char *content, int content_len);
 
 #endif /* CHEROKEE_HANDLER_CGI_H */

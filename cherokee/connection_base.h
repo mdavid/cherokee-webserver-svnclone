@@ -39,11 +39,14 @@ typedef struct {
 	cherokee_connectio_types_t type;
 
 	time_t                     timeout;
+	int                        extra_polling_fd;
 } cherokee_connection_base_t;
 
 #define CONN_BASE(c) ((cherokee_connection_base_t *)(c))
 
-ret_t cherokee_connection_base_init (cherokee_connection_base_t *conn);
+
+ret_t cherokee_connection_base_init  (cherokee_connection_base_t *conn, cherokee_connectio_types_t type);
+ret_t cherokee_connection_base_clean (cherokee_connection_base_t *conn);
 
 
 #endif /* CHEROKEE_CONNECTION_BASE_H */

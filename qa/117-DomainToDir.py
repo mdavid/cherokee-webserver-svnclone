@@ -21,7 +21,7 @@ class Test (TestBase):
                                        DocumentRoot %s
                                        Directory / {
                                           Handler redir {
-                                             Show Rewrite "^(.*)$" "%s$1"
+                                             Show Rewrite "^/(.*)$" "%s$1"
                                           }
                                        }
                                   }

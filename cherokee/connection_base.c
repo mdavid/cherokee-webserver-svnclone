@@ -25,15 +25,32 @@
 #include "common-internal.h"
 #include "connection_base.h"
 
+#include <unistd.h>
+
 
 ret_t 
-cherokee_connection_base_init (cherokee_connection_base_t *conn)
+cherokee_connection_base_init (cherokee_connection_base_t *conn, cherokee_connectio_types_t type)
 {
-	   INIT_LIST_HEAD(&conn->list_entry);
+	INIT_LIST_HEAD(&conn->list_entry);
 
-	   conn->type    = conn_base_group;
-	   conn->timeout = -1;
-	   
-	   return ret_ok;
+	conn->type             = type;
+	conn->timeout          = -1;
+	conn->extra_polling_fd = -1;
+
+	return ret_ok;
+}
+
+
+ret_t 
+cherokee_connection_base_clean (cherokee_connection_base_t *conn)
+{
+	if (conn->extra_polling_fd != -1) {
+		close (conn->extra_polling_fd);
+		conn->extra_polling_fd = -1;
+	}
+
+	conn->timeout = -1;
+
+	return ret_ok;
 }
 

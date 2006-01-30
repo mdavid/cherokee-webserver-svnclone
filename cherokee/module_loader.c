@@ -470,6 +470,9 @@ cherokee_module_loader_get_sym  (cherokee_module_loader_t *loader, char *modname
 	ret = cherokee_table_get (loader, modname, (void **)&entry);
 	if (ret != ret_ok) return ret;
 
+	/* Even if we're trying to look for symbols in the executable,
+	 * using dlopen(NULL), the handler pointer should not be nil.
+	 */
 	if (entry->dlopen_ref == NULL) 
 		return ret_not_found;
 
