@@ -33,9 +33,9 @@
 #include "connection.h"
 #include "socket.h"
 #include "fastcgi.h"
-#include "fastcgi-common.h"
-#include "cgi.h"
+#include "ext_source.h"
 #include "fcgi_manager.h"
+#include "handler_cgi_base.h"
 
 #include <unistd.h>
 #include <stdio.h>
@@ -91,7 +91,7 @@ typedef struct {
 	cherokee_boolean_t            post_sent;
 	cherokee_fcgi_post_phase_t    post_phase;
 
-	cherokee_fcgi_server_t       *configuration;
+	cherokee_ext_source_t        *configuration;
 	list_t                       *server_list;
 	int                           max_manager;
 

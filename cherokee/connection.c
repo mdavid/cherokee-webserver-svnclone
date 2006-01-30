@@ -89,7 +89,8 @@ cherokee_connection_new  (cherokee_connection_t **cnt)
 {
 	CHEROKEE_NEW_STRUCT(n, connection);
 	   
-	cherokee_connection_base_init (CONN_BASE(n));
+	cherokee_connection_base_init (CONN_BASE(n), conn_base_connection);
+	
 
 	n->tcp_cork          = 0;
 	n->error_code        = http_ok;
@@ -111,7 +112,6 @@ cherokee_connection_new  (cherokee_connection_t **cnt)
 	n->mmaped            = NULL;
 	n->io_entry_ref      = NULL;
 	n->thread            = NULL;
-	n->extra_polling_fd  = -1;
 	n->rx                = 0;	
 	n->tx                = 0;
 	n->rx_partial        = 0;
@@ -213,7 +213,7 @@ cherokee_connection_clean (cherokee_connection_t *cnt)
 	}
 #endif
 
-	CONN_BASE(cnt)->timeout = -1;
+	cherokee_connection_base_clean (CONN_BASE(cnt));
 
 	cnt->phase             = phase_reading_header;
 	cnt->phase_return      = phase_nothing;
@@ -243,11 +243,6 @@ cherokee_connection_clean (cherokee_connection_t *cnt)
 	if (cnt->encoder != NULL) {
 		cherokee_encoder_free (cnt->encoder);
 		cnt->encoder = NULL;
-	}
-
-	if (cnt->extra_polling_fd != -1) {
-		close (cnt->extra_polling_fd);
-		cnt->extra_polling_fd = -1;
 	}
 
 	cherokee_post_mrproper (&cnt->post);
@@ -293,6 +288,9 @@ cherokee_connection_clean (cherokee_connection_t *cnt)
 	if (! cherokee_buffer_is_empty (&cnt->incoming_header)) {
 		CONN_THREAD(cnt)->pending_conns_num++;
 	}
+
+	TRACE (ENTRIES, "conn %p, has headers %d\n", cnt, 
+	       !cherokee_buffer_is_empty (&cnt->incoming_header));
 
 	return ret_ok;
 }

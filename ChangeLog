@@ -1,3 +1,18 @@
+2006-01-30  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/ext_source.h, cherokee/ext_source.c: Many changes to
+	share code between the FastCGI and SCGI handlers.
+
+	* cherokee/handler_cgi.c, cherokee/handler_cgi.h: This handler is
+	now based on handler_cgi_base.
+
+	* cherokee/handler_cgi_base.c, cherokee/handler_cgi_base.h: New
+	class.  It is the base for the handler CGI and SCGI.
+
+	* cherokee/handler_cgi.h, cherokee/handler_cgi.c,
+	cherokee/Makefile.am: New handler for SCGI!
+
+	
 2006-01-28  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cget/main.c (do_download__has_headers): It has to use strrchr()

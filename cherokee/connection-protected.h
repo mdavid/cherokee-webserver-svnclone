@@ -97,7 +97,6 @@ struct cherokee_connection {
 	 */
 	cherokee_socket_t            *socket;
 	int                           tcp_cork;
-	int                           extra_polling_fd;
 		
 	cherokee_buffer_t             query_string;	
 	cherokee_table_t             *arguments;

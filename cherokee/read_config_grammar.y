@@ -53,7 +53,7 @@
 #include "list_ext.h"
 #include "reqs_list.h"
 #include "reqs_list_entry.h"
-#include "fastcgi-common.h"
+#include "ext_source.h"
 
 
 /* Define the parameter name of the yyparse() argument
@@ -93,7 +93,7 @@ static list_t                          *current_reqs_list        = NULL;
 static cherokee_virtual_server_t       *current_virtual_server   = NULL;
 static cherokee_encoder_table_entry_t  *current_encoder_entry    = NULL;
 static cherokee_module_info_t          *current_module_info      = NULL;
-static cherokee_fcgi_server_t          *current_fastcgi_server   = NULL;
+static cherokee_ext_source_t           *current_ext_source       = NULL;
 static cherokee_mime_entry_t           *current_mime_entry       = NULL;
 static cuint_t                          priority_counter         = CHEROKEE_CONFIG_PRIORITY_DEFAULT + 1;
 
@@ -359,6 +359,40 @@ add_key_val_entry_in_property (cherokee_table_t *properties, char *prop_name, ch
 	   }
 
 	   return 0;
+}
+
+static ret_t
+split_address_or_path (char *str, cherokee_buffer_t *hostname, cint_t *port_num, cherokee_buffer_t *unix_socket)
+{
+	   char    *p;
+	   cuint_t  len;
+
+	   len = strlen(str);
+	   if (len <= 0) return ret_error;
+
+	   /* Unix socket
+	    */
+	   if (str[0] == '/') {
+			 cherokee_buffer_add (unix_socket, str, len);
+			 return ret_ok;
+	   } 
+
+	   /* Host name
+	    */
+	   p = strchr(str, ':');
+	   if (p == NULL) {
+			 cherokee_buffer_add (hostname, str, len);
+			 return ret_ok;
+	   } 
+
+	   /* Host name + port
+	    */
+	   *p = '\0';
+	   *port_num = atoi (p+1);
+	   cherokee_buffer_add (hostname, str, p - str);
+	   *p = ':';
+
+	   return ret_ok;
 }
 
 void
@@ -1143,10 +1177,11 @@ handler_option : T_JUST_ABOUT
 
 handler_option : T_SERVER address_or_path 
 { 
-	   list_t                  nlist        = LIST_HEAD_INIT(nlist);
-	   list_t                 *plist        = NULL;
-	   cherokee_table_t       *properties;
-	   cherokee_fcgi_server_t *server_entry = NULL;
+	   ret_t                  ret;
+	   list_t                 nlist        = LIST_HEAD_INIT(nlist);
+	   list_t                *plist        = NULL;
+	   cherokee_table_t      *properties;
+	   cherokee_ext_source_t *server_entry = NULL;
 	   
 	   /* Add the new entry to the list
 	    */
@@ -1159,21 +1194,26 @@ handler_option : T_SERVER address_or_path
 	   /* The list is new
 	    */
 	   if (plist == NULL) {
-			 cherokee_fcgi_server_first_new (&server_entry);
+			 cherokee_ext_source_head_t *head = NULL;
+			 
+			 ret = cherokee_ext_source_head_new (&head);
+			 if (ret != ret_ok) return 1;
+
+			 server_entry = EXT_SOURCE(head);
 
 			 list_add ((list_t *)server_entry, &nlist);
 			 cherokee_config_entry_set_handler_prop (current_config_entry, "servers", typed_list, &nlist, 
-											 (cherokee_typed_free_func_t) cherokee_fcgi_server_free);
+											 (cherokee_typed_free_func_t) cherokee_ext_source_free);
 	   } 
 	   /* Add to an existing list
 	    */
 	   else {
-			 cherokee_fcgi_server_new (&server_entry);
+			 cherokee_ext_source_new (&server_entry);
 			 list_add_tail ((list_t *)server_entry, plist);
 	   }
 
-	   current_fastcgi_server = server_entry;
-	   cherokee_buffer_add (&server_entry->host, $2, strlen($2));
+	   current_ext_source = server_entry;
+	   split_address_or_path ($2, &server_entry->host, &server_entry->port, &server_entry->unix_socket);
 
 } handler_server_optinal;
 
@@ -1188,14 +1228,14 @@ handler_server_optinal_entry : T_ENV T_ID str_type
 {
 	   ret_t ret;
 
-	   ret = cherokee_fcgi_server_add_env (current_fastcgi_server, $2, $3);
+	   ret = cherokee_ext_source_add_env (current_ext_source, $2, $3);
 	   if (ret != ret_ok) return 1;
 };
 
 handler_server_optinal_entry: T_ID str_type
 {
 	   if (strcasecmp($1, "interpreter") != 0) return 1;
-	   cherokee_buffer_add (&current_fastcgi_server->interpreter, $2, strlen($2));
+	   cherokee_buffer_add (&current_ext_source->interpreter, $2, strlen($2));
 };
 
 handler_option : T_NUMBER http_generic

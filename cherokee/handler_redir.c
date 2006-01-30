@@ -161,8 +161,22 @@ match_and_substitute (cherokee_handler_redir_t *n)
 	list = (struct cre_list*)n->regex_list_cre;
 	while (list != NULL) {	
 		int   ovector[OVECTOR_LEN], rc;
-		char *subject     = conn->request.buf + conn->web_directory.len;
-		int   subject_len = strlen (subject);
+		char *subject; 
+		int   subject_len;
+
+		/* The subject usually begins with a slash. Lets imagine a request "/dir/thing". 
+		 * If it matched with a "/dir" directory entry, the subject have to be "/thing", 
+		 * so the way to extract it is to remove the directory from the beginning.
+		 *
+		 * There is an special case though. When a connection is using the default 
+		 * directory ("/"), it has to remove one character less. 
+		 */
+		if (conn->web_directory.len == 1)
+			subject = conn->request.buf + (conn->web_directory.len - 1);
+		else 
+			subject = conn->request.buf + conn->web_directory.len;
+
+		subject_len = strlen (subject);
 
 		/* It might be matched previosly in the request parsing..
 		 */
@@ -176,7 +190,8 @@ match_and_substitute (cherokee_handler_redir_t *n)
 				PRINT_ERROR_S("Too many groups in the regex\n");
 			}
 
-			TRACE (ENTRIES, "subject = \"%s\" + len(\"%s\")\n", conn->request.buf, conn->web_directory.buf);
+			TRACE (ENTRIES, "subject = \"%s\" + len(\"%s\")-1=%d\n", 
+			       conn->request.buf, conn->web_directory.buf, conn->web_directory.len - 1);
 			TRACE (ENTRIES, "pcre_exec: subject=\"%s\" -> %d\n", subject, rc);
 
 			if (rc <= 0) {

@@ -26,9 +26,8 @@
 
 #include "connection.h"
 #include "connection-protected.h"
-#include "common-internal.h"
 #include "handler_fastcgi.h"
-#include "fcgi_manager.h"
+#include "ext_source.h"
 #include "fastcgi.h"
 #include "util.h"
 
@@ -48,7 +47,7 @@
 
 
 ret_t 
-cherokee_fcgi_manager_new (cherokee_fcgi_manager_t **fcgim, cherokee_fcgi_server_t *config)
+cherokee_fcgi_manager_new (cherokee_fcgi_manager_t **fcgim, cherokee_ext_source_t *config)
 {
 	int   i;
 	ret_t ret;
@@ -160,30 +159,18 @@ connect_to_srv (cherokee_fcgi_manager_t *fcgim)
 {
 	ret_t ret;
 
-	if (fcgim->hostname.buf[0] == '/') {
-		ret = cherokee_socket_set_client (fcgim->socket, AF_UNIX);
-		if (ret != ret_ok) return ret;
+	fcgim->connected = true;
 
-		ret = cherokee_socket_gethostbyname (fcgim->socket, &fcgim->hostname);
-		if (ret != ret_ok) return ret;
-
-	} else {
-		ret = cherokee_socket_set_client (fcgim->socket, AF_INET);
-		if (ret != ret_ok) return ret;
-
-		ret = cherokee_socket_gethostbyname (fcgim->socket, &fcgim->hostname);
-		if (ret != ret_ok) return ret;
-
-		SOCKET_SIN_PORT(fcgim->socket) = htons(fcgim->port);
+	ret = cherokee_ext_source_connect (fcgim->configuration_ref, fcgim->socket);
+	if (ret != ret_ok) {
+		fcgim->connected = false;
+		return ret;
 	}
 
-	ret = cherokee_socket_connect (fcgim->socket);
-	fcgim->connected = (ret == ret_ok);
-
-#if 0	
+#if 1	
 	cherokee_fd_set_nonblocking (fcgim->socket->socket);
 #endif
-	return ret;
+	return ret_ok;
 }
 
 
@@ -498,7 +485,7 @@ cherokee_fcgi_manager_register_conn (cherokee_fcgi_manager_t *fcgim, cherokee_co
 	
 	/* Look for the first free slot
 	 */
-	for (i=0; i<fcgim->conn_poll_size; i++) {
+	for (i=0; i < fcgim->conn_poll_size; i++) {
 		if (fcgim->conn_poll[i] == NULL) {
 			slot = i;
 			break;
@@ -616,4 +603,47 @@ cherokee_fcgi_manager_step (cherokee_fcgi_manager_t *fcgim)
 
 	UNLOCK (fcgim);
 	return ret;
+}
+
+static ret_t
+connection_group_reactived (void *grp, void *param)
+{
+	cherokee_connection_group_t *group = CONN_GROUP (grp);
+
+	/* We want to do nothing that destroy the damn group! :-p
+	 */
+	return cherokee_connection_group_free (group);
+}
+
+ret_t 
+cherokee_fcgi_manager_move_conns_to_poll (cherokee_fcgi_manager_t *fcgim, cherokee_thread_t *thd)
+{
+	ret_t                        ret;
+	cuint_t                      i;
+	cherokee_connection_group_t *group;
+
+	/* Crate a new group
+	 */
+	ret = cherokee_connection_group_new (&group);	
+	if (unlikely (ret != ret_ok)) return ret;
+	
+	cherokee_connection_group_set_reactive (group, connection_group_reactived, fcgim);
+
+	/* Add the connections
+	 */
+	for (i=0; i < fcgim->conn_poll_size; i++) {
+		if (fcgim->conn_poll[i] == NULL)
+			continue;
+
+		cherokee_connection_group_add (group, fcgim->conn_poll[i]);
+		printf ("Group=%p Adding conn %p\n", group, fcgim->conn_poll[i]);
+	}
+
+	/* Reparent the group
+	 */
+	ret = cherokee_thread_move_conn_group_to_polling (thd, group, fcgim->socket->socket, 0);
+	if (unlikely (ret != ret_ok)) return ret;
+
+	printf ("reparented group: fd %d\n", fcgim->socket->socket);
+	return ret_ok;
 }

@@ -160,16 +160,16 @@ cherokee_handler_phpcgi_new  (cherokee_handler_t **hdl, void *cnt, cherokee_tabl
 
 	/* Set it up in the CGI handler
 	 */
-	if (CGIHANDLER(*hdl)->filename == NULL) {
-		cherokee_buffer_new (&CGIHANDLER(*hdl)->filename);
-		cherokee_buffer_add ( CGIHANDLER(*hdl)->filename, interpreter, strlen(interpreter));
+	if (CGI_BASE(*hdl)->filename == NULL) {
+		cherokee_buffer_new (&CGI_BASE(*hdl)->filename);
+		cherokee_buffer_add ( CGI_BASE(*hdl)->filename, interpreter, strlen(interpreter));
 	}	
 	
 	/* If it has to fake the effective directory, set the -C paramter:
 	 * Do not chdir to the script's directory
 	 */
 	if (!cherokee_buffer_is_empty (&CONN(cnt)->effective_directory)) {
-		cherokee_handler_cgi_add_parameter (CGIHANDLER(*hdl), "-C");
+		cherokee_handler_cgi_base_add_parameter (CGI_BASE(*hdl), "-C");
 	}
 
 	return ret_ok;
@@ -186,29 +186,30 @@ cherokee_handler_phpcgi_init (cherokee_handler_t *hdl)
 	 * will keep trying call this funcion.  The right action on this case
 	 * is to call again the CGI handler
 	 */
-	if (CGIHANDLER(hdl)->init_phase != hcgi_phase_init) {
-		return cherokee_handler_cgi_init (CGIHANDLER(hdl));
+	if (HANDLER_CGI(hdl)->init_phase != hcgi_phase_init) {
+		return cherokee_handler_cgi_init (HANDLER_CGI(hdl));
 	}
 
 	/* Add parameter to CGI handler
 	*/
-	if (CGIHANDLER(hdl)->parameter == NULL) {
+	if (CGI_BASE(hdl)->parameter == NULL) {
 		cherokee_buffer_t *ld = &conn->local_directory;
 		
-		cherokee_buffer_new (&CGIHANDLER(hdl)->parameter);
-		cherokee_buffer_add (CGIHANDLER(hdl)->parameter, ld->buf, ld->len - 1);
-		cherokee_buffer_add_buffer (CGIHANDLER(hdl)->parameter, &conn->request);
+		cherokee_buffer_new (&CGI_BASE(hdl)->parameter);
+		cherokee_buffer_add (CGI_BASE(hdl)->parameter, ld->buf, ld->len - 1);
+		cherokee_buffer_add_buffer (CGI_BASE(hdl)->parameter, &conn->request);
 		
-		cherokee_handler_cgi_split_pathinfo (CGIHANDLER(hdl), 
-						     CGIHANDLER(hdl)->parameter,
-						     ld->len + 1);
+		cherokee_handler_cgi_base_split_pathinfo (CGI_BASE(hdl), 
+							  CGI_BASE(hdl)->parameter,
+							  ld->len + 1,
+							  false);
 	}
 	
-	cherokee_handler_cgi_add_env_pair (CGIHANDLER(hdl), "REDIRECT_STATUS", 15, "200", 3); 
-	cherokee_handler_cgi_add_env_pair (CGIHANDLER(hdl), "SCRIPT_FILENAME", 15,
-					   CGIHANDLER(hdl)->parameter->buf, CGIHANDLER(hdl)->parameter->len);	
+	cherokee_handler_cgi_add_env_pair (CGI_BASE(hdl), "REDIRECT_STATUS", 15, "200", 3); 
+	cherokee_handler_cgi_add_env_pair (CGI_BASE(hdl), "SCRIPT_FILENAME", 15,
+					   CGI_BASE(hdl)->parameter->buf, CGI_BASE(hdl)->parameter->len);	
 
-	return cherokee_handler_cgi_init (CGIHANDLER(hdl));
+	return cherokee_handler_cgi_init (HANDLER_CGI(hdl));
 }
 
 

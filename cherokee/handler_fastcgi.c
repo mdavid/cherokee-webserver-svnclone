@@ -33,6 +33,7 @@
 #include "thread.h"
 #include "list_ext.h"
 #include "util.h"
+#include "ext_source.h"
 
 
 cherokee_module_info_handler_t MODULE_INFO(fastcgi) = {
@@ -294,7 +295,7 @@ add_more_env (cherokee_handler_fastcgi_t *fcgi, cherokee_buffer_t *buf, cuint_t 
 		cherokee_buffer_add_buffer (&tmp, &conn->local_directory);
 		cherokee_buffer_add (&tmp, conn->request.buf + 1, conn->request.len - 1);
 
-		ret = cherokee_split_pathinfo (&tmp, conn->local_directory.len, &pathinfo, &pathinfo_len); 
+		ret = cherokee_split_pathinfo (&tmp, conn->local_directory.len, true, &pathinfo, &pathinfo_len); 
 		if (ret == ret_ok) {
 			add_env_pair_with_id (buf,  fcgi->id,
 					      FCGI_PATH_INFO_VAR, sizeof (FCGI_PATH_INFO_VAR) - 1,
@@ -371,8 +372,8 @@ build_initial_packages (cherokee_handler_fastcgi_t *fcgi)
 	params[0] = (void *) &write_tmp;
 	params[1] = (void *) INT_TO_POINTER(fcgi->id);
 
-	ret = cherokee_cgi_build_basic_env (conn, (cherokee_cgi_set_env_pair_t) add_env_pair_2_params, &tmp, params);
-	if (unlikely (ret != ret_ok)) return ret; 
+/* 	ret = cherokee_cgi_build_basic_env (conn, (cherokee_cgi_set_env_pair_t) add_env_pair_2_params, &tmp, params); */
+/* 	if (unlikely (ret != ret_ok)) return ret;  */
 
 	add_more_env (fcgi, &write_tmp, &last_header_offset);
 	fixup_padding (&write_tmp, fcgi->id, last_header_offset);
@@ -395,30 +396,30 @@ build_initial_packages (cherokee_handler_fastcgi_t *fcgi)
 }
 
 
-static cherokee_fcgi_server_t *
-next_server (cherokee_handler_fastcgi_t *fcgi)
-{
-	cherokee_fcgi_server_t       *current_config;
-	cherokee_fcgi_server_first_t *first_config = FCGI_FIRST_SERVER(fcgi->server_list->next);
+/* static cherokee_fcgi_server_t * */
+/* next_server (cherokee_handler_fastcgi_t *fcgi) */
+/* { */
+/* 	cherokee_fcgi_server_t       *current_config; */
+/* 	cherokee_fcgi_server_first_t *first_config = FCGI_FIRST_SERVER(fcgi->server_list->next); */
 
-	CHEROKEE_MUTEX_LOCK (&first_config->current_server_lock);
+/* 	CHEROKEE_MUTEX_LOCK (&first_config->current_server_lock); */
 	
-	/* Set the next server
-	 */
-	current_config               = first_config->current_server;
-	first_config->current_server = FCGI_SERVER(((list_t *)current_config)->next);
+/* 	/\* Set the next server */
+/* 	 *\/ */
+/* 	current_config               = first_config->current_server; */
+/* 	first_config->current_server = FCGI_SERVER(((list_t *)current_config)->next); */
 
-	/* This is a special case: if the next is the base of the list, we have to
-	 * skip the entry and point to the next one
-	 */
-	if ((list_t*)first_config->current_server == fcgi->server_list) {
-		current_config = first_config->current_server;
-		first_config->current_server = FCGI_SERVER(((list_t *)current_config)->next);
-	}		
+/* 	/\* This is a special case: if the next is the base of the list, we have to */
+/* 	 * skip the entry and point to the next one */
+/* 	 *\/ */
+/* 	if ((list_t*)first_config->current_server == fcgi->server_list) { */
+/* 		current_config = first_config->current_server; */
+/* 		first_config->current_server = FCGI_SERVER(((list_t *)current_config)->next); */
+/* 	}		 */
 
-	CHEROKEE_MUTEX_UNLOCK (&first_config->current_server_lock);
-	return first_config->current_server;
-}
+/* 	CHEROKEE_MUTEX_UNLOCK (&first_config->current_server_lock); */
+/* 	return first_config->current_server; */
+/* } */
 
 
 ret_t 
@@ -430,7 +431,8 @@ cherokee_handler_fastcgi_init (cherokee_handler_fastcgi_t *fcgi)
 	
 	/* Read the current server and set the next one
 	 */
-	fcgi->configuration = next_server (fcgi);
+	ret = cherokee_ext_source_get_next (EXT_SOURCE_HEAD(fcgi->server_list->next), fcgi->server_list, &fcgi->configuration);
+	if (unlikely (ret != ret_ok)) return ret;
 
 	/* FastCGI manager
 	 */
@@ -750,8 +752,7 @@ cherokee_handler_fastcgi_add_headers (cherokee_handler_fastcgi_t *fcgi, cherokee
 			return ret_eagain;
 
 		case ret_eagain:
-			cherokee_thread_deactive_to_polling (HANDLER_THREAD(fcgi), HANDLER_CONN(fcgi), 
-							     fcgi->manager_ref->socket->socket, 0);
+			cherokee_fcgi_manager_move_conns_to_poll (fcgi->manager_ref, HANDLER_THREAD(fcgi));
 			return ret_eagain;
 
 		default:

@@ -5,7 +5,7 @@
 
 NAME=cherokee
 PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/local/lib/cherokee
-DAEMON=/usr/local/bin/cherokee
+DAEMON=/usr/local/sbin/cherokee
 PIDFILE=/var/run/$NAME.pid
 CONF=/usr/local/etc/cherokee/cherokee.conf
 
@@ -14,7 +14,6 @@ export LANG=C
 export PATH
 
 test -f $DAEMON || exit 0
-test -f $APACHECTL || exit 0
 
 case "$1" in
   start)

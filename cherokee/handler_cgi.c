@@ -66,71 +66,74 @@ cherokee_module_info_handler_t MODULE_INFO(cgi) = {
 
 
 #define ENTRIES "handler,cgi"
-#define dbg PRINT_DEBUG
 
-#define set_env_pair(c,n,l,v,l2) cherokee_handler_cgi_add_env_pair(c,n,l,v,l2) 
+
+static ret_t
+read_from_cgi (cherokee_handler_cgi_base_t *cgi_base, cherokee_buffer_t *buffer)
+{
+	ret_t                   ret;
+ 	size_t                  readed;
+	cherokee_handler_cgi_t *cgi = HANDLER_CGI(cgi_base);
+
+	/* Read the data from the pipe:
+	 */
+	ret = cherokee_buffer_read_from_fd (buffer, cgi->pipeInput, 4096, &readed);
+	TRACE (ENTRIES, "cherokee_buffer_read_from_fd => ret = %d\n", ret);
+
+	switch (ret) {
+	case ret_eagain:
+		cherokee_thread_deactive_to_polling (HANDLER_THREAD(cgi), HANDLER_CONN(cgi), cgi->pipeInput, 0);
+		return ret_eagain;
+
+	case ret_ok:
+		TRACE (ENTRIES, "%d bytes read\n", readed);
+		return ret_ok;
+
+	case ret_eof:
+	case ret_error:
+		return ret;
+
+	default:
+		RET_UNKNOWN(ret);
+	}
+
+	SHOULDNT_HAPPEN;
+	return ret_error;
+}
 
 
 ret_t
 cherokee_handler_cgi_new  (cherokee_handler_t **hdl, void *cnt, cherokee_table_t *properties)
 {
-	int   i;
-	ret_t ret;
+	int i;
 	CHEROKEE_NEW_STRUCT (n, handler_cgi);
 	
-	/* Init the base class object
+	/* Init the base class
 	 */
-	cherokee_handler_init_base (HANDLER(n), cnt);
+	cherokee_handler_cgi_base_init (CGI_BASE(n), cnt, properties, 
+					cherokee_handler_cgi_add_env_pair, read_from_cgi);
 
+	/* Virtual methods
+	 */
 	MODULE(n)->init         = (handler_func_init_t) cherokee_handler_cgi_init;
 	MODULE(n)->free         = (handler_func_free_t) cherokee_handler_cgi_free;
-	HANDLER(n)->step        = (handler_func_step_t) cherokee_handler_cgi_step;
-	HANDLER(n)->add_headers = (handler_func_add_headers_t) cherokee_handler_cgi_add_headers;
-
-	/* Supported features
+	
+	/* Virtual methods: implemented by handler_cgi_base
 	 */
-	HANDLER(n)->support     = hsupport_maybe_length;
+	HANDLER(n)->step        = (handler_func_step_t) cherokee_handler_cgi_base_step;
+	HANDLER(n)->add_headers = (handler_func_add_headers_t) cherokee_handler_cgi_base_add_headers;
 
-	/* Process the request_string, and build the arguments table..
-	 * We'll need it later
-	 */
-	ret = cherokee_connection_parse_args (cnt);
-	if (unlikely(ret < ret_ok)) return ret;
-		
 	/* Init
 	 */
+	n->init_phase        = hcgi_phase_init;
 	n->pipeInput         = -1;
 	n->pipeOutput        = -1;
 	n->post_data_sent    = 0;
 	n->pid               = -1;
-	n->filename          = NULL;
-	n->data              = NULL;
-	n->parameter         = NULL;
-	n->cgi_fd_in_poll    = false;
-	n->script_alias      = NULL;
-	n->extra_param       = NULL;
-	n->init_phase        = hcgi_phase_init;
-	n->system_env        = NULL;
-	n->content_length    = 0;
-	n->is_error_handler  = 0;
-	n->change_user       = 0;
-	
+
 	n->envp_last = 0;	
 	for (i=0; i<ENV_VAR_NUM; i++)
 		n->envp[i] = NULL;
-
-	/* Get properties
-	 */
-	if (properties) {
-		cherokee_typed_table_get_str (properties, "scriptalias", &n->script_alias);
-		cherokee_typed_table_get_list (properties, "env", &n->system_env);
-		cherokee_typed_table_get_int (properties, "error_handler", &n->is_error_handler);
-		cherokee_typed_table_get_int (properties, "changeuser", &n->change_user);		
-	}
-
-	if (n->is_error_handler) {
-		HANDLER(n)->support |= hsupport_error;		
-	}
 
 	/* Return the object
 	 */
@@ -172,7 +175,11 @@ do_reap (void)
 ret_t
 cherokee_handler_cgi_free (cherokee_handler_cgi_t *cgi)
 {
-	int i;
+ 	int i; 
+
+	/* Free the rest of the handler CGI memory
+	 */
+	cherokee_handler_cgi_base_free (CGI_BASE(cgi));
 
 	/* Close the connection with the CGI
 	 */
@@ -202,23 +209,6 @@ cherokee_handler_cgi_free (cherokee_handler_cgi_t *cgi)
 	}
 #endif
 
-	/* Free the rest of the handler CGI memory
-	 */
-	if (cgi->data != NULL) {
-		cherokee_buffer_free (cgi->data);
-		cgi->data = NULL;
-	}
-
-	if (cgi->filename != NULL) {
-		cherokee_buffer_free (cgi->filename);
-		cgi->filename = NULL;
-	}
-	
-	if (cgi->parameter != NULL) {
-		cherokee_buffer_free (cgi->parameter);
-		cgi->parameter = NULL;
-	}
-
 	for (i=0; i<cgi->envp_last; i++) {
 		free (cgi->envp[i]);
 		cgi->envp[i] = NULL;
@@ -237,19 +227,13 @@ cherokee_handler_cgi_free (cherokee_handler_cgi_t *cgi)
 }
 
 
-void 
-cherokee_handler_cgi_add_parameter (cherokee_handler_cgi_t *cgi, char *param)
-{
-	cgi->extra_param = param;
-}
-
-
 void
-cherokee_handler_cgi_add_env_pair (cherokee_handler_cgi_t *cgi,
+cherokee_handler_cgi_add_env_pair (cherokee_handler_cgi_base_t *cgi_base,
 				   char *name,    int name_len,
 				   char *content, int content_len)
 {
-	char *entry;
+	char                   *entry;
+	cherokee_handler_cgi_t *cgi = HANDLER_CGI(cgi_base);
 
 	/* Build the new envp entry
 	 */
@@ -272,183 +256,6 @@ cherokee_handler_cgi_add_env_pair (cherokee_handler_cgi_t *cgi,
 	if (cgi->envp_last >= ENV_VAR_NUM) {
 		SHOULDNT_HAPPEN;
 	}
-}
-
-
-static ret_t
-build_envp (cherokee_connection_t *conn, cherokee_handler_cgi_t* cgi)
-{
-	ret_t              ret;
-	list_t            *i;
-	char              *p;
-	cherokee_buffer_t  tmp = CHEROKEE_BUF_INIT;
-
-	/* Add user defined variables at the beginning,
-	 * these have precedence..
-	 */
-	if (cgi->system_env != NULL) {
-		list_for_each (i, cgi->system_env) {
-			char    *name;
-			cuint_t  name_len;
-			char    *value;
-			
-			name     = LIST_ITEM_INFO(i);
-			name_len = strlen(name);
-			value    = name + name_len + 1;
-			
-			cherokee_handler_cgi_add_env_pair (cgi, name, name_len, value, strlen(value));
-		}
-	}
-
-	/* Add the basic enviroment variables
-	 */
-	ret = cherokee_cgi_build_basic_env (conn, 
-					    (cherokee_cgi_set_env_pair_t) cherokee_handler_cgi_add_env_pair, 
-					    &tmp, cgi);
-	if (unlikely (ret != ret_ok)) return ret;
-
-	/* SCRIPT_NAME:
-	 * It is the request without the pathinfo if it exists
-	 */
-	if (cgi->parameter == NULL) {
-		cherokee_buffer_clean (&tmp);
-		cherokee_header_copy_request (conn->header, &tmp);
-
-		if (conn->pathinfo.len > 0) {
-			set_env_pair (cgi, "SCRIPT_NAME", 11, tmp.buf, tmp.len - conn->pathinfo.len);
-		} else {
-			set_env_pair (cgi, "SCRIPT_NAME", 11, tmp.buf, tmp.len);
-		}
-	} else {
-		p = cgi->parameter->buf + conn->local_directory.len -1;
-		set_env_pair (cgi, "SCRIPT_NAME", 11, p, (cgi->parameter->buf + cgi->parameter->len) - p);
-	}
-
-	/* SCRIPT_FILENAME
-	 */
-	if (cgi->filename) {
-		set_env_pair (cgi, "SCRIPT_FILENAME", 16, cgi->filename->buf, cgi->filename->len);
-	}
-
-	/* TODO: Fill the others CGI environment variables
-	 * 
-	 * http://hoohoo.ncsa.uiuc.edu/cgi/env.html
-	 * http://cgi-spec.golux.com/cgi-120-00a.html
-	 */
-	cherokee_buffer_mrproper (&tmp);
-	return ret_ok;
-}
-
-
-ret_t
-cherokee_handler_cgi_split_pathinfo (cherokee_handler_cgi_t *cgi, cherokee_buffer_t *buf, int init_pos) 
-{
-	ret_t                  ret;
-	char                  *pathinfo;
-	int                    pathinfo_len;
-	cherokee_connection_t *conn = HANDLER_CONN(cgi);
-
-	/* Look for the pathinfo
-	 */
-	ret = cherokee_split_pathinfo (buf, init_pos, &pathinfo, &pathinfo_len);
-	if (ret == ret_not_found) {
-		conn->error_code = http_not_found;
-		return ret_error;
-	}
-
-	/* Build the PathInfo string 
-	 */
-	cherokee_buffer_add (&conn->pathinfo, pathinfo, pathinfo_len);
-	
-	/* Drop it out from the original string
-	 */
-	cherokee_buffer_drop_endding (buf, pathinfo_len);
-
-	TRACE (ENTRIES, "Pathinfo '%s'\n", conn->pathinfo.buf);
-
-	return ret_ok;
-}
-
-
-static ret_t
-_extract_path (cherokee_handler_cgi_t *cgi)
-{
-	struct stat            st;
-	ret_t                  ret  = ret_ok;
-	cherokee_connection_t *conn = HANDLER_CONN(cgi);
-
-	/* ScriptAlias: If there is a ScriptAlias directive, it
-	 * doesn't need to find the executable file..
-	 */
-	if (cgi->script_alias != NULL) {
-		TRACE (ENTRIES, "Script alias '%s'\n", cgi->script_alias);
-
-		if (stat(cgi->script_alias, &st) == -1) {
-			conn->error_code = http_not_found;
-			return ret_error;
-		}
-
-		cherokee_buffer_new (&cgi->filename);
-		cherokee_buffer_add (cgi->filename, cgi->script_alias, strlen(cgi->script_alias));
-
-		/* Check the path_info even if it uses a
-		 * scriptalias. the PATH_INFO is the rest of the
-		 * substraction * of request - configured directory.
-		 */
-		if (cgi->script_alias != NULL) {
-			cherokee_buffer_add (&conn->pathinfo, 
-					     conn->request.buf + conn->web_directory.len, 
-					     conn->request.len - conn->web_directory.len);
-		}
-
-		return ret_ok;
-	}
-
-	/* Maybe the request contains pathinfo
-	 */
-	if ((cgi->parameter == NULL) &&
-	    cherokee_buffer_is_empty (&conn->pathinfo)) 
-	{
-		int req_len;
-		int local_len;
-
-		/* It is going to concatenate two paths like:
-		 * local_directory = "/usr/share/cgi-bin/", and
-		 * request = "/thing.cgi", so there will be two
-		 * slashes in the middle of the request.
-		 */
-		req_len   = conn->request.len;
-		local_len = conn->local_directory.len;
-
-		if (conn->request.len > 0)
-			cherokee_buffer_add (&conn->local_directory, 
-					     conn->request.buf + 1, 
-					     conn->request.len - 1); 
-
-		ret = cherokee_handler_cgi_split_pathinfo (cgi, &conn->local_directory, local_len +1);
-		if (unlikely(ret < ret_ok)) goto bye;
-		
-		/* Is the filename set? 
-		 */
-		if (cgi->filename == NULL) {		
-			/* We have to check if the file exists 
-			 */
-			if (stat (conn->local_directory.buf, &st) == -1) {
-				conn->error_code = http_not_found;
-				return ret_error;
-			}
-			
-			cherokee_buffer_new (&cgi->filename);
-			cherokee_buffer_add_buffer (cgi->filename, &conn->local_directory);
-			
-			TRACE (ENTRIES, "Filename: '%s'\n", cgi->filename->buf);
-		}
-		
-	bye:
-		cherokee_buffer_drop_endding (&conn->local_directory, req_len - 1);
-	}
-
-	return ret;
 }
 
 
@@ -520,21 +327,8 @@ cherokee_handler_cgi_init (cherokee_handler_cgi_t *cgi)
 
 	/* Extracts PATH_INFO and filename from request uri 
 	 */
-	ret = _extract_path(cgi);
-	if (ret < ret_ok) { 
-		return ret;
-	}
-
-	/* Check is the CGI is accessible
-	 */
-/* 	if (access(cgi->filename->buf, R_OK) != 0) { */
-/* 		if (errno == ENOENT) */
-/* 			conn->error_code = http_not_found; */
-/* 		else */
-/* 			conn->error_code = http_access_denied; */
-		
-/* 		return ret_error; */
-/* 	} */
+	ret = cherokee_handler_cgi_base_extract_path (CGI_BASE(cgi), true);
+	if (unlikely (ret < ret_ok)) return ret;
 
 	/* Creates the pipes ...
 	 */
@@ -560,9 +354,10 @@ cherokee_handler_cgi_init (cherokee_handler_cgi_t *cgi)
 	{
 		/* Child process
 		 */
-		int     re;
-		char   *absolute_path = cgi->filename->buf;
-		char   *argv[4]       = { NULL, NULL, NULL };
+		int                          re;
+		cherokee_handler_cgi_base_t *cgi_base      = CGI_BASE(cgi);
+		char                        *absolute_path = cgi_base->filename->buf;
+		char                        *argv[4]       = { NULL, NULL, NULL };
 
 		/* Close useless sides
 		 */
@@ -596,7 +391,7 @@ cherokee_handler_cgi_init (cherokee_handler_cgi_t *cgi)
 
 		/* Sets the new environ. 
 		 */			
-		build_envp (conn, cgi);
+		cherokee_handler_cgi_base_build_envp (CGI_BASE(cgi), conn);
 
 		/* Change the directory 
 		 */
@@ -613,16 +408,16 @@ cherokee_handler_cgi_init (cherokee_handler_cgi_t *cgi)
 		/* Build de argv array
 		 */
 		argv[0] = absolute_path;
-		if (cgi->parameter != NULL) {
-			argv[1] = cgi->parameter->buf;
-			argv[2] = cgi->extra_param;
+		if (cgi_base->parameter != NULL) {
+			argv[1] = cgi_base->parameter->buf;
+			argv[2] = cgi_base->extra_param;
 		} else {
-			argv[1] = cgi->extra_param;
+			argv[1] = cgi_base->extra_param;
 		}
 
 		/* Change the execution user?
 		 */
-		if (cgi->change_user) {
+		if (cgi_base->change_user) {
 			struct stat info;
 			
 			re = stat (argv[1], &info);
@@ -665,7 +460,7 @@ cherokee_handler_cgi_init (cherokee_handler_cgi_t *cgi)
 	/* Win32: TODO
 	 */
 #endif
-	dbg("CGI: pid %d\n", pid);
+	TRACE (ENTRIES, "pid %d\n", pid);
 
 	close (pipes.server[0]);
 	close (pipes.cgi[1]);
@@ -679,11 +474,6 @@ cherokee_handler_cgi_init (cherokee_handler_cgi_t *cgi)
 #ifndef _WIN32
 	_fd_set_properties (cgi->pipeInput, O_NDELAY|O_NONBLOCK, 0);
 #endif
-
-	/* TODO: Yeah, I know, this is not a perfect solution
-	 */
-	cherokee_buffer_new (&cgi->data);
-	cherokee_buffer_ensure_size (cgi->data, 2 * 1024); /* 2 kb for headers */
 
 	/* POST management
 	 */
@@ -701,230 +491,6 @@ cherokee_handler_cgi_init (cherokee_handler_cgi_t *cgi)
 
 	return ret_ok;
 }
-
-
-static ret_t
-_read_from_cgi (cherokee_handler_cgi_t *cgi, cherokee_buffer_t *buffer)
-{
-	ret_t  ret;
- 	size_t readed;
-
-	/* Read the data from the pipe:
-	 */
-	ret = cherokee_buffer_read_from_fd (buffer, cgi->pipeInput, 4096, &readed);
-	dbg ("CGI: _read_from_cgi - cherokee_buffer_read_from_fd => ret = %d\n", ret);
-
-	switch (ret) {
-	case ret_eagain:
-		cherokee_thread_deactive_to_polling (HANDLER_THREAD(cgi), HANDLER_CONN(cgi), cgi->pipeInput, 0);
-		return ret_eagain;
-
-	case ret_ok:
-		dbg("CGI: _read_from_cgi - %d bytes read.\n", readed);
-		return ret_ok;
-
-	case ret_eof:
-	case ret_error:
-		return ret;
-
-	default:
-		RET_UNKNOWN(ret);
-	}
-
-	SHOULDNT_HAPPEN;
-	return ret_error;
-}
-
-
-static ret_t
-parse_header (cherokee_handler_cgi_t *cgi, cherokee_buffer_t *buffer)
-{
-	char                  *end;
-	char                  *end1;
-	char                  *end2;
-	char                  *begin;
-	cherokee_connection_t *conn = HANDLER_CONN(cgi);
-
-	
-	if (cherokee_buffer_is_empty (buffer) || buffer->len <= 5)
-		return ret_ok;
-
-	/* It is possible that the header ends with CRLF CRLF
-	 * In this case, we have to remove the last two characters
-	 */
-	if ((buffer->len > 4) &&
-	    (strncmp (CRLF CRLF, buffer->buf + buffer->len - 4, 4) == 0))
-	{
-		cherokee_buffer_drop_endding (buffer, 2);
-	}
-	
-	/* Process the header line by line
-	 */
-	begin = buffer->buf;
-	while (begin != NULL) {
-		end1 = strchr (begin, '\r');
-		end2 = strchr (begin, '\n');
-
-		end = cherokee_min_str (end1, end2);
-		if (end == NULL) break;
-
-		end2 = end;
-		while (((*end2 == '\r') || (*end2 == '\n')) && (*end2 != '\0')) end2++;
-
-		if (strncasecmp ("Status: ", begin, 8) == 0) {
-			int  code;
-			char status[4];
-
-			memcpy (status, begin+8, 3);
-			status[3] = '\0';
-		
-			code = atoi (status);
-			if (code <= 0) {
-				conn->error_code = http_internal_error;
-				return ret_error;
-			}
-
-			cherokee_buffer_remove_chunk (buffer, begin - buffer->buf, end2 - begin);
-
-			conn->error_code = code;			
-			continue;
-		}
-
-		else if (strncasecmp ("Content-length: ", begin, 16) == 0) {
-			cherokee_buffer_t tmp = CHEROKEE_BUF_INIT;
-
-			cherokee_buffer_add (&tmp, begin+16, end - (begin+16));
-			cgi->content_length = atoll (tmp.buf);
-			cherokee_buffer_mrproper (&tmp);
-
-			cherokee_buffer_remove_chunk (buffer, begin - buffer->buf, end2 - begin);
-		}
-
-		else if (strncasecmp ("Location: ", begin, 10) == 0) {
-			cherokee_buffer_add (&conn->redirect, begin+10, end - (begin+10));
-			cherokee_buffer_remove_chunk (buffer, begin - buffer->buf, end2 - begin);
-		}
-
-		begin = end2;
-	}
-	
-	return ret_ok;
-}
-
-
-ret_t
-cherokee_handler_cgi_add_headers (cherokee_handler_cgi_t *cgi, cherokee_buffer_t *buffer)
-{
-	ret_t  ret;
-	int    len;
-	char  *content;
-	int    end_len;
-
-	/* Sanity check
-	 */
-	return_if_fail (buffer != NULL, ret_error);
-
-	/* Read information from the CGI
-	 */
-	ret = _read_from_cgi (cgi, cgi->data);
-
-	switch (ret) {
-	case ret_ok:
-	case ret_eof:
-		break;
-
-	case ret_error:
-	case ret_eagain:
-		return ret;
-
-	default:
-		RET_UNKNOWN(ret);
-		return ret_error;
-	}
-
-	/* Look the end of headers
-	 */
-	content = strstr (cgi->data->buf, CRLF CRLF);
-	if (content != NULL) {
-		end_len = 4;
-	} else {
-		content = strstr (cgi->data->buf, "\n\n");
-		end_len = 2;
-	}
-
-	if (content == NULL) {
-		return (ret == ret_eof) ? ret_eof : ret_eagain;
-	}
-
-	/* Copy the header
-	 */
-	len = content - cgi->data->buf;	
-
-	cherokee_buffer_ensure_size (buffer, len+6);
-	cherokee_buffer_add (buffer, cgi->data->buf, len);
-	cherokee_buffer_add (buffer, CRLF CRLF, 4);
-	
-	/* Drop out the headers, we already have a copy
-	 */
-	cherokee_buffer_move_to_begin (cgi->data, len + end_len);
-
-	/* Parse the header.. it is likely we will have something to do with it.
-	 */
-	return parse_header (cgi, buffer);
-}
-
-
-ret_t
-cherokee_handler_cgi_step (cherokee_handler_cgi_t *cgi, cherokee_buffer_t *buffer)
-{
-	ret_t ret;
-
-	/* Maybe it has some stored data to be send
-	 */
-	if (cgi->data != NULL) {
-		ret_t ret;
-		
-		dbg("CGI: sending stored data: %d bytes\n", cgi->data->len);
-		
-		/* Flush this buffer 
-		 */
-		if (! cherokee_buffer_is_empty (cgi->data)) {
-			cherokee_buffer_add_buffer (buffer, cgi->data);
-			ret = ret_ok;
-		} else {
-			ret = ret_eagain;
-		}
-		
-		/* Free the data buffer
-		 */
-		cherokee_buffer_free (cgi->data);
-		cgi->data = NULL;
-
-		return ret;
-	}
-	
-
-	/* Read some information from the CGI
-	 */
-	ret = _read_from_cgi (cgi, buffer);
-	if (ret == ret_eof) goto finish;
-	
-	return ret;
-
-finish:
-	/* If it is the 'End of file', we have to remove the 
-	 * pipe file descriptor from the thread's fdpoll
-	 */
-	if (cgi->cgi_fd_in_poll == true) {
-		ret = cherokee_fdpoll_del (HANDLER_THREAD(cgi)->fdpoll, cgi->pipeInput);
-		if (unlikely(ret != ret_ok)) return ret;
-		
-		cgi->cgi_fd_in_poll = false;
-	}
-	
-	return ret_eof;
-}
-
 
 
 

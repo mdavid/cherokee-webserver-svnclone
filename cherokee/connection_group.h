@@ -27,17 +27,37 @@
 
 #include "common-internal.h"
 
-#include "connection_base.h"
 #include "list.h"
+#include "connection_base.h"
+#include "connection.h"
+
+
+typedef void  (* cherokee_connection_group_foreach_t)  (cherokee_connection_t *, void *param);
+typedef ret_t (* cherokee_connection_group_reactive_t) (void *group, void *param);
 
 
 typedef struct {
 	cherokee_connection_base_t  base;
-	list_t                      group;
+
+	cherokee_connection_t     **group;
+	cuint_t                     group_last;
+	cuint_t                     group_size;
+
+	cherokee_connection_group_reactive_t  reactive_cb;
+	void                                 *reactive_param;
 } cherokee_connection_group_t;
+
+#define CONN_GROUP(g) ((cherokee_connection_group_t *)(g))
 
 
 ret_t cherokee_connection_group_new  (cherokee_connection_group_t **group);
 ret_t cherokee_connection_group_free (cherokee_connection_group_t  *group);
+
+ret_t cherokee_connection_group_add      (cherokee_connection_group_t *group, cherokee_connection_t *conn);
+ret_t cherokee_connection_group_foreach  (cherokee_connection_group_t *group, cherokee_connection_group_foreach_t func, void *param);
+
+ret_t cherokee_connection_group_set_reactive (cherokee_connection_group_t *group, cherokee_connection_group_reactive_t, void *param);
+ret_t cherokee_connection_group_reactive     (cherokee_connection_group_t *group);
+
 
 #endif /* CHEROKEE_CONNECTION_GROUP_H */

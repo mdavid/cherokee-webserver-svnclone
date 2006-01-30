@@ -448,11 +448,13 @@ cherokee_readdir (DIR *dirstream, struct dirent *entry, struct dirent **result)
 ret_t 
 cherokee_split_pathinfo (cherokee_buffer_t  *path, 
 			 int                 init_pos,
+			 int                 allow_dirs,
 			 char              **pathinfo,
 			 int                *pathinfo_len)
 {
 	char        *cur;
 	struct stat  st;
+	char        *last_dir = NULL;
 	
 	for (cur = path->buf + init_pos; *cur; ++cur) {
 		if (*cur != '/') continue;		
@@ -462,6 +464,12 @@ cherokee_split_pathinfo (cherokee_buffer_t  *path,
 		 */
 		if (stat (path->buf, &st) == -1) {
 			*cur = '/';
+			
+			if ((allow_dirs) && (last_dir != NULL)) {
+				*pathinfo = last_dir;
+				*pathinfo_len = (path->buf + path->len) - last_dir;
+				return ret_ok;
+			}
 			return ret_not_found;
 		}
 
@@ -469,6 +477,7 @@ cherokee_split_pathinfo (cherokee_buffer_t  *path,
 		 */
 		if (S_ISDIR(st.st_mode)) {
 			*cur = '/';
+			last_dir = cur;
 			continue;
 		}
 		

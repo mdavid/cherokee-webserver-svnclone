@@ -25,26 +25,83 @@
 #include "common-internal.h"
 #include "connection_group.h"
 
+#define DEFAULT_CHUNK_SIZE 10
+
 
 ret_t 
 cherokee_connection_group_new (cherokee_connection_group_t **group)
 {
-	   CHEROKEE_NEW_STRUCT(n, connection_group);
+	CHEROKEE_NEW_STRUCT(n, connection_group);
 
-	   cherokee_connection_base_init (CONN_BASE(n));
+	cherokee_connection_base_init (CONN_BASE(n), conn_base_group);
+	
+	n->group = (cherokee_connection_t **) malloc (sizeof (cherokee_connection_t *) * DEFAULT_CHUNK_SIZE);
+	n->group_last = 0;
+	n->group_size = DEFAULT_CHUNK_SIZE;
+	
+	n->reactive_cb    = NULL;
+	n->reactive_param = NULL;
 
-	   INIT_LIST_HEAD(&n->base.list_entry);
-	   INIT_LIST_HEAD(&n->group);	   
-
-	   *group = n;
-	   return ret_ok;
+	*group = n;
+	return ret_ok;
 }
 
 
 ret_t 
 cherokee_connection_group_free (cherokee_connection_group_t *group)
 {
-	   free (group);
-	   return ret_ok;
+	if (group->group != NULL) 
+		free (group->group);
+	
+	free (group);
+	return ret_ok;
+}
+
+
+ret_t 
+cherokee_connection_group_add (cherokee_connection_group_t *group, cherokee_connection_t *conn)
+{
+	if (group->group_last >= group->group_size) {
+		group->group = realloc (group->group, group->group_size + DEFAULT_CHUNK_SIZE);
+		group->group_size += DEFAULT_CHUNK_SIZE;
+	}
+
+	group->group[group->group_last] = conn;
+	group->group_last++;
+
+	return ret_ok;
+}
+
+
+ret_t 
+cherokee_connection_group_foreach (cherokee_connection_group_t *group, cherokee_connection_group_foreach_t func, void *param)
+{
+	cuint_t i;
+
+	for (i=0; i < group->group_last; i++) {
+		func (group->group[i], param);
+	}
+	
+	return ret_ok;
+}
+
+
+ret_t 
+cherokee_connection_group_reactive (cherokee_connection_group_t *group)
+{
+	if (group->reactive_cb == NULL)
+		return ret_error;
+
+	return group->reactive_cb (group, group->reactive_param);
+}
+
+
+ret_t 
+cherokee_connection_group_set_reactive (cherokee_connection_group_t *group, cherokee_connection_group_reactive_t func, void *param)
+{
+	group->reactive_cb    = func;
+	group->reactive_param = param;
+
+	return ret_ok;
 }
 

@@ -167,10 +167,54 @@ endif
 
 
 #
+# Handler cgi
+#
+if !STATIC_HANDLER_CGI
+handlercgi_cgi = handler_cgi_base.h handler_cgi_base.c
+endif
+
+handler_cgi = \
+$(handlercgi_cgi) \
+handler_cgi.c \
+handler_cgi.h
+
+libplugin_cgi_la_LDFLAGS = $(module_ldflags)  
+libplugin_cgi_la_SOURCES = $(handler_cgi)
+
+if STATIC_HANDLER_CGI
+static_handler_cgi_src = $(handler_cgi)
+else
+dynamic_handler_cgi_lib = libplugin_cgi.la
+endif
+
+
+#
+# Handler scgi
+#
+if !STATIC_HANDLER_SCGI
+handlerscgi_cgi = handler_cgi_base.h handler_cgi_base.c
+endif
+
+handler_scgi = \
+$(handlerscgi_cgi) \
+handler_scgi.h \
+handler_scgi.c
+
+libplugin_scgi_la_LDFLAGS = $(module_ldflags)  
+libplugin_scgi_la_SOURCES = $(handler_scgi)
+
+if STATIC_HANDLER_SCGI
+static_handler_scgi_src = $(handler_scgi)
+else
+dynamic_handler_scgi_lib = libplugin_scgi.la
+endif
+
+
+#
 # Handler fastcgi
 #
 if !STATIC_HANDLER_FASTCGI
-handlerfcgi_cgi = cgi.h cgi.c
+handlerfcgi_cgi = handler_cgi_base.h handler_cgi_base.c
 endif
 
 handler_fastcgi = \
@@ -188,6 +232,23 @@ if STATIC_HANDLER_FASTCGI
 static_handler_fastcgi_src = $(handler_fastcgi)
 else
 dynamic_handler_fastcgi_lib = libplugin_fastcgi.la
+endif
+
+
+#
+# Handler phpcgi
+#
+handler_phpcgi = \
+handler_phpcgi.c \
+handler_phpcgi.h
+
+libplugin_phpcgi_la_LDFLAGS = $(module_ldflags)  
+libplugin_phpcgi_la_SOURCES = $(handler_phpcgi)
+
+if STATIC_HANDLER_PHPCGI
+static_handler_phpcgi_src = $(handler_phpcgi)
+else
+dynamic_handler_phpcgi_lib = libplugin_phpcgi.la
 endif
 
 
@@ -222,45 +283,6 @@ if STATIC_HANDLER_ERROR_REDIR
 static_handler_error_redir_src = $(handler_error_redir)
 else
 dynamic_handler_error_redir_lib = libplugin_error_redir.la
-endif
-
-
-#
-# Handler cgi
-#
-if !STATIC_HANDLER_CGI
-handlercgi_cgi = cgi.h cgi.c
-endif
-
-handler_cgi = \
-$(handlercgi_cgi) \
-handler_cgi.c \
-handler_cgi.h
-
-libplugin_cgi_la_LDFLAGS = $(module_ldflags)  
-libplugin_cgi_la_SOURCES = $(handler_cgi)
-
-if STATIC_HANDLER_CGI
-static_handler_cgi_src = $(handler_cgi)
-else
-dynamic_handler_cgi_lib = libplugin_cgi.la
-endif
-
-
-#
-# Handler phpcgi
-#
-handler_phpcgi = \
-handler_phpcgi.c \
-handler_phpcgi.h
-
-libplugin_phpcgi_la_LDFLAGS = $(module_ldflags)  
-libplugin_phpcgi_la_SOURCES = $(handler_phpcgi)
-
-if STATIC_HANDLER_PHPCGI
-static_handler_phpcgi_src = $(handler_phpcgi)
-else
-dynamic_handler_phpcgi_lib = libplugin_phpcgi.la
 endif
 
 
@@ -651,14 +673,20 @@ downloader.c
 
 
 if STATIC_HANDLER_FASTCGI
-   common_cgi = cgi.h \
-	     	 cgi.c
+   common_cgi = handler_cgi_base.h \
+	     	 handler_cgi_base.c
 endif
 
 if STATIC_HANDLER_CGI
-   common_cgi = cgi.h \
-	     	 cgi.c
+   common_cgi = handler_cgi_base.h \
+	     	 handler_cgi_base.c
 endif
+
+if STATIC_HANDLER_SCGI
+   common_cgi = handler_cgi_base.h \
+	     	 handler_cgi_base.c
+endif
+
 
 libcherokee_server_la_SOURCES = \
 icons_grammar.y \
@@ -668,6 +696,7 @@ $(static_module_read_config_src) \
 $(static_handler_file_src) \
 $(static_handler_admin_src) \
 $(static_handler_dirlist_src) \
+$(static_handler_scgi_src) \
 $(static_handler_fastcgi_src) \
 $(static_handler_redir_src) \
 $(static_handler_error_redir_src) \
@@ -738,8 +767,8 @@ nonce.h \
 nonce.c \
 post.h \
 post.c \
-fastcgi-common.h \
-fastcgi-common.c
+ext_source.h \
+ext_source.c
 
 libcherokee_config_la_SOURCES = \
 $(config_common) \

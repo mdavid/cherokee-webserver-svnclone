@@ -28,7 +28,8 @@
 #include "common.h"
 #include "connection.h"
 #include "socket.h"
-#include "fastcgi-common.h"
+#include "ext_source.h"
+#include "thread.h"
 
 
 typedef struct {
@@ -54,15 +55,17 @@ typedef struct {
 	cherokee_connection_t  **conn_poll;
 	cuint_t                  conn_poll_size;
 
-	cherokee_fcgi_server_t  *configuration_ref;
+	cherokee_ext_source_t   *configuration_ref;
 
 #ifdef HAVE_PTHREAD
 	pthread_mutex_t          sem;
 #endif
 } cherokee_fcgi_manager_t;
 
+#define FCGI_MANAGER(f) ((cherokee_fcgi_manager_t *)(f))
 
-ret_t cherokee_fcgi_manager_new             (cherokee_fcgi_manager_t **fcgim, cherokee_fcgi_server_t *fcgi);
+
+ret_t cherokee_fcgi_manager_new             (cherokee_fcgi_manager_t **fcgim, cherokee_ext_source_t *fcgi);
 ret_t cherokee_fcgi_manager_free            (cherokee_fcgi_manager_t  *fcgim);
 
 ret_t cherokee_fcgi_manager_spawn_connect   (cherokee_fcgi_manager_t *fcgim);
@@ -72,5 +75,7 @@ ret_t cherokee_fcgi_manager_unregister_conn (cherokee_fcgi_manager_t *fcgim, che
 
 ret_t cherokee_fcgi_manager_step            (cherokee_fcgi_manager_t *fcgim);
 ret_t cherokee_fcgi_manager_send            (cherokee_fcgi_manager_t *fcgim, cherokee_buffer_t *info, size_t *sent);
+
+ret_t cherokee_fcgi_manager_move_conns_to_poll (cherokee_fcgi_manager_t *fcgim, cherokee_thread_t *thd);
 
 #endif /* CHEROKEE_FCGI_MANAGER_H */
