@@ -1,3 +1,11 @@
+2006-01-31  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/win32_misc.c (win_dlopen): Patch for dlopen(NULL) on
+	Windows. By Gorka Eguileor Gimeno <gorka@eguileor.com>
+
+	* qa/126-SCGI.py, qa/127-SCGI-Post.py, qa/Makefile.am: Added new
+	couple of QA tests for SCGI.
+
 2006-01-30  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cherokee/ext_source.h, cherokee/ext_source.c: Many changes to
@@ -11,7 +19,6 @@
 
 	* cherokee/handler_cgi.h, cherokee/handler_cgi.c,
 	cherokee/Makefile.am: New handler for SCGI!
-
 	
 2006-01-28  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 

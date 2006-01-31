@@ -63,6 +63,7 @@ cherokee_handler_cgi_base_init (cherokee_handler_cgi_base_t              *cgi,
 
 	/* Init to default values
 	 */
+	cgi->init_phase        = hcgi_phase_build_headers;
 	cgi->filename          = NULL;
 	cgi->parameter         = NULL;
 	cgi->script_alias      = NULL;

@@ -40,44 +40,9 @@
 
 #define ENV_VAR_NUM 30
 
-/* typedef enum { */
-/* 	hcgi_phase_init, */
-/* 	hcgi_phase_sent_post */
-/* } cgi_init_phase_t; */
-
-
-/* typedef struct { */
-/* 	cherokee_handler_t handler; */
-
-/* 	int     pipeInput;         /\* read from the CGI *\/ */
-/* 	int     pipeOutput;        /\* write to the CGI *\/ */
-/* 	int     post_data_sent;    /\* amount POSTed to the CGI *\/ */
-/* 	pid_t   pid;               /\* CGI pid *\/ */
-
-/* 	char   *script_alias; */
-/* 	char   *extra_param; */
-/* 	list_t *system_env; */
-/* 	size_t  content_length; */
-/* 	cuint_t is_error_handler; */
-/* 	cuint_t change_user; */
-
-/* 	char *envp[ENV_VAR_NUM]; /\* Environ variables for execve() *\/ */
-/* 	int   envp_last; */
-
-/* 	cgi_init_phase_t   init_phase; */
-/* 	cherokee_boolean_t cgi_fd_in_poll; */
-
-/* 	cherokee_buffer_t *filename; */
-/* 	cherokee_buffer_t *parameter;  */
-/* 	cherokee_buffer_t *data;  */
-
-/* } cherokee_handler_cgi_t_OLD; */
-
 
 typedef struct {
 	cherokee_handler_cgi_base_t base;
-
-	cgi_init_phase_t init_phase;
 
 	int     pipeInput;         /* read from the CGI */
 	int     pipeOutput;        /* write to the CGI */
@@ -109,7 +74,6 @@ ret_t cherokee_handler_cgi_add_headers (cherokee_handler_cgi_t *hdl, cherokee_bu
 /* This handler export these extra functions to allow phpcgi
  * set enviroment variables, work with pathinfo, etc..
  */
-
 void  cherokee_handler_cgi_add_env_pair   (cherokee_handler_cgi_base_t *cgi, 
 					   char *name,    int name_len,
 					   char *content, int content_len);

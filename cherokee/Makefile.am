@@ -841,6 +841,7 @@ $(dynamic_handler_server_info_lib) \
 $(dynamic_handler_file_lib) \
 $(dynamic_handler_admin_lib) \
 $(dynamic_handler_dirlist_lib) \
+$(dynamic_handler_scgi_lib) \
 $(dynamic_handler_fastcgi_lib) \
 $(dynamic_handler_redir_lib) \
 $(dynamic_handler_error_redir_lib) \

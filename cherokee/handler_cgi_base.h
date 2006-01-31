@@ -43,13 +43,15 @@ typedef ret_t (* cherokee_handler_cgi_base_read_from_cgi_t) (cherokee_handler_cg
 							     cherokee_buffer_t *buffer);
 
 typedef enum {
-	hcgi_phase_init,
-	hcgi_phase_sent_post
-} cgi_init_phase_t;
+	hcgi_phase_build_headers,
+	hcgi_phase_send_headers,
+	hcgi_phase_send_post
+} cherokee_handler_cgi_base_phase_t;
 
 
 struct cherokee_handler_cgi_base {
-	cherokee_handler_t handler;
+	cherokee_handler_t                handler;
+	cherokee_handler_cgi_base_phase_t init_phase;
 	
 	char              *script_alias;
 	char              *extra_param;
@@ -66,7 +68,7 @@ struct cherokee_handler_cgi_base {
 	 */
 	cherokee_handler_cgi_base_add_env_pair_t  add_env_pair;
 	cherokee_handler_cgi_base_read_from_cgi_t read_from_cgi;
-};
+} ;
 
 #define CGI_BASE(c)  ((cherokee_handler_cgi_base_t *)(c))
 

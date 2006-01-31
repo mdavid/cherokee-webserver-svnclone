@@ -24,6 +24,12 @@
 
 #include "common-internal.h"
 #include "ext_source.h"
+#include "util.h"
+
+#include <sys/types.h>
+#include <unistd.h>
+
+#define ENTRIES "extsrc"
 
 
 static void
@@ -213,3 +219,51 @@ cherokee_ext_source_get_next (cherokee_ext_source_head_t *head_config, list_t *s
 	return ret_ok;
 }
 
+
+ret_t 
+cherokee_ext_source_spawn_srv (cherokee_ext_source_t *server)
+{
+	int                re;
+	int                child;
+	char             **envp;
+	char              *argv[]       = {"sh", "-c", NULL, NULL};
+	char              *empty_envp[] = {NULL};
+	cherokee_buffer_t  tmp          = CHEROKEE_BUF_INIT;
+
+	/* Maybe set a custom enviroment variable set 
+	 */
+	envp = (server->custom_env) ? server->custom_env : empty_envp;
+
+	/* Execute the FastCGI server
+	 */
+	cherokee_buffer_add_va (&tmp, "exec %s", server->interpreter.buf);
+
+	TRACE (ENTRIES, "Spawn \"/bin/sh %s\"\n", server->interpreter.buf);
+
+	child = fork();
+	switch (child) {
+	case 0:
+		argv[2] = (char *)tmp.buf;
+
+		re = execve ("/bin/sh", argv, envp);
+		if (re < 0) {
+			PRINT_ERROR ("ERROR: Could spawn %s\n", tmp.buf);
+			exit (1);
+		}
+
+	case -1:
+		goto error;
+		
+	default:
+		sleep (1);
+		break;
+		
+	}
+
+	cherokee_buffer_mrproper (&tmp);
+	return ret_ok;
+
+error:
+	cherokee_buffer_mrproper (&tmp);
+	return ret_error;
+}
