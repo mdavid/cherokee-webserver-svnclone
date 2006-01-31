@@ -69,14 +69,15 @@ typedef struct {
  */
 ret_t cherokee_ext_source_new       (cherokee_ext_source_t **server);
 ret_t cherokee_ext_source_free      (cherokee_ext_source_t  *server);
+
 ret_t cherokee_ext_source_add_env   (cherokee_ext_source_t  *server, char *env, char *val);
 ret_t cherokee_ext_source_connect   (cherokee_ext_source_t  *server, cherokee_socket_t *socket);
+ret_t cherokee_ext_source_spawn_srv (cherokee_ext_source_t  *server);
 
 /* External source head
  */
 ret_t cherokee_ext_source_head_new  (cherokee_ext_source_head_t **serverf);
 ret_t cherokee_ext_source_get_next  (cherokee_ext_source_head_t  *serverf, list_t *server_list, cherokee_ext_source_t **next);
-
 
 CHEROKEE_END_DECLS
 

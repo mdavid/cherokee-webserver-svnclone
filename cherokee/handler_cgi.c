@@ -125,7 +125,6 @@ cherokee_handler_cgi_new  (cherokee_handler_t **hdl, void *cnt, cherokee_table_t
 
 	/* Init
 	 */
-	n->init_phase        = hcgi_phase_init;
 	n->pipeInput         = -1;
 	n->pipeOutput        = -1;
 	n->post_data_sent    = 0;
@@ -280,6 +279,141 @@ _fd_set_properties (int fd, int add_flags, int remove_flags)
 }
 
 
+static ret_t
+send_post (cherokee_handler_cgi_t *cgi)
+{
+	ret_t                  ret;
+	int                    eagain_fd = -1;
+	int                    mode      =  0;
+	cherokee_connection_t *conn      = HANDLER_CONN(cgi);
+	
+	TRACE (ENTRIES",post", "Sending POST fd=%d\n", cgi->pipeOutput);
+	
+	ret = cherokee_post_walk_to_fd (&conn->post, cgi->pipeOutput, &eagain_fd, &mode);
+	
+	switch (ret) {
+	case ret_ok:
+		close (cgi->pipeOutput);
+		cgi->pipeOutput = -1;
+		return ret_ok;
+		
+	case ret_eagain:
+		if (eagain_fd != -1) {
+			cherokee_thread_deactive_to_polling (HANDLER_THREAD(cgi), conn, eagain_fd, mode);
+		}
+		
+		return ret_eagain;
+		
+	default:
+		return ret;
+	}
+}
+
+
+#ifndef _WIN32
+
+static void 
+manage_child_cgi_process (cherokee_handler_cgi_t *cgi, int pipe_cgi[2], int pipe_server[2])
+{
+	/* Child process
+	 */
+	int                          re;
+	cherokee_connection_t       *conn          = HANDLER_CONN(cgi);
+	cherokee_handler_cgi_base_t *cgi_base      = CGI_BASE(cgi);
+	char                        *absolute_path = cgi_base->filename->buf;
+	char                        *argv[4]       = { NULL, NULL, NULL };
+
+	/* Close useless sides
+	 */
+	close (pipe_cgi[0]);
+	close (pipe_server[1]);
+		
+	/* Change stdin and out
+	 */
+	dup2 (pipe_server[0], STDIN_FILENO);
+	close (pipe_server[0]);
+
+	dup2 (pipe_cgi[1], STDOUT_FILENO);
+	close (pipe_cgi[1]);
+
+# if 0
+	/* Set unbuffered
+	 */
+	setvbuf (stdin,  NULL, _IONBF, 0);
+	setvbuf (stdout, NULL, _IONBF, 0);
+# endif
+
+	/* Enable blocking mode
+	 */
+	_fd_set_properties (STDIN_FILENO,  0, O_NONBLOCK);
+	_fd_set_properties (STDOUT_FILENO, 0, O_NONBLOCK);
+	_fd_set_properties (STDERR_FILENO, 0, O_NONBLOCK);
+
+	/* Set SIGPIPE
+	 */
+	signal (SIGPIPE, SIG_DFL);
+
+	/* Sets the new environ. 
+	 */			
+	cherokee_handler_cgi_base_build_envp (CGI_BASE(cgi), conn);
+
+	/* Change the directory 
+	 */
+	if (! cherokee_buffer_is_empty (&conn->effective_directory)) {
+		chdir (conn->effective_directory.buf);
+	} else {
+		char *file = strrchr (absolute_path, '/');
+
+		*file = '\0';
+		chdir (absolute_path);
+		*file = '/';
+	}
+
+	/* Build de argv array
+	 */
+	argv[0] = absolute_path;
+	if (cgi_base->parameter != NULL) {
+		argv[1] = cgi_base->parameter->buf;
+		argv[2] = cgi_base->extra_param;
+	} else {
+		argv[1] = cgi_base->extra_param;
+	}
+
+	/* Change the execution user?
+	 */
+	if (cgi_base->change_user) {
+		struct stat info;
+			
+		re = stat (argv[1], &info);
+		if (re >= 0) {
+			setuid (info.st_uid);
+		}
+	}
+
+	/* Lets go.. execute it!
+	 */
+	re = execve (absolute_path, argv, cgi->envp);
+	if (re < 0) {
+		switch (errno) {
+		case ENOENT:
+			printf ("Status: 404" CRLF CRLF);
+			break;
+		default:
+			printf ("Status: 500" CRLF CRLF);
+		}
+
+		exit(1);
+	}
+
+	/* OH MY GOD!!! an error is here 
+	 */
+	SHOULDNT_HAPPEN;
+	exit(1);
+}
+
+#endif
+
+
 ret_t 
 cherokee_handler_cgi_init (cherokee_handler_cgi_t *cgi)
 {
@@ -294,201 +428,85 @@ cherokee_handler_cgi_init (cherokee_handler_cgi_t *cgi)
 
 	cherokee_connection_t *conn = HANDLER_CONN(cgi);
 
-	/* It might be trying to send the post information to the CGI:
-	 * In the previus call to this function it could send
-	 * everything so it returned a ret_eagain to continue, and
-	 * here we are.
-	 */
-	if (cgi->init_phase == hcgi_phase_sent_post) {
-		int eagain_fd = -1;
-		int mode      =  0;
+	switch (CGI_BASE(cgi)->init_phase) {
+	case hcgi_phase_build_headers:
 
-		TRACE (ENTRIES",post", "Sending POST fd=%d\n", cgi->pipeOutput);
+		/* Extracts PATH_INFO and filename from request uri 
+		 */
+		ret = cherokee_handler_cgi_base_extract_path (CGI_BASE(cgi), true);
+		if (unlikely (ret < ret_ok)) return ret;
 
-		ret = cherokee_post_walk_to_fd (&conn->post, cgi->pipeOutput, &eagain_fd, &mode);
+		/* Creates the pipes ...
+		 */
+		re   = pipe (pipes.cgi);
+		ret |= pipe (pipes.server);
 
-		switch (ret) {
-		case ret_ok:
-			close (cgi->pipeOutput);
-			cgi->pipeOutput = -1;
-			return ret_ok;
-
-		case ret_eagain:
-			if (eagain_fd != -1) {
-				cherokee_thread_deactive_to_polling (HANDLER_THREAD(cgi), HANDLER_CONN(cgi), eagain_fd, mode);
-			}
-
-			return ret_eagain;
-
-		default:
-			return ret;
+		if (re != 0) {
+			conn->error_code = http_internal_error;
+			return ret_error;
 		}
-	}
+	
+		/* It has to update the timeout of the connection,
+		 * otherwhise the server will drop it for the CGI
+		 * isn't fast enough
+		 */
+		CONN_BASE(conn)->timeout = CONN_THREAD(conn)->bogo_now + CGI_TIMEOUT;
 
-	/* Extracts PATH_INFO and filename from request uri 
-	 */
-	ret = cherokee_handler_cgi_base_extract_path (CGI_BASE(cgi), true);
-	if (unlikely (ret < ret_ok)) return ret;
+		/* .. and fork the process 
+		 */
+#ifndef _WIN32
+		pid = fork();
+		if (pid == 0) {
+			/* CGI process
+			 */
+			manage_child_cgi_process (cgi, pipes.cgi, pipes.server);
 
-	/* Creates the pipes ...
-	 */
-	re   = pipe (pipes.cgi);
-	ret |= pipe (pipes.server);
+		} else if (pid < 0) {
+			/* Error
+			 */
+			close (pipes.cgi[0]);
+			close (pipes.cgi[1]);
 
-	if (re != 0) {
-		conn->error_code = http_internal_error;
-		return ret_error;
+			close (pipes.server[0]);
+			close (pipes.server[1]);
+		
+			conn->error_code = http_internal_error;
+			return ret_error;
+		}
+#endif
+
+		TRACE (ENTRIES, "pid %d\n", pid);
+
+		close (pipes.server[0]);
+		close (pipes.cgi[1]);
+
+		cgi->pid        = pid;
+		cgi->pipeInput  = pipes.cgi[0];
+		cgi->pipeOutput = pipes.server[1];
+
+		/* Set to Input to NON-BLOCKING
+		 */
+#ifndef _WIN32
+		_fd_set_properties (cgi->pipeInput, O_NDELAY|O_NONBLOCK, 0);
+#endif
+
+		if (! cherokee_post_is_empty (&conn->post)) {
+			cherokee_post_walk_reset (&conn->post);
+		}
+
+		CGI_BASE(cgi)->init_phase = hcgi_phase_send_headers;
+
+	case hcgi_phase_send_headers:
+		/* There is nothing to do here, so move on!
+		 */
+		CGI_BASE(cgi)->init_phase = hcgi_phase_send_post;
+
+	case hcgi_phase_send_post:
+		if (! cherokee_post_is_empty (&conn->post)) {
+			return send_post (cgi);
+		}
 	}
 	
-	/* It has to update the timeout of the connection,
-	 * otherwhise the server will drop it for the CGI
-	 * isn't fast enough
-	 */
-	CONN_BASE(conn)->timeout = CONN_THREAD(conn)->bogo_now + CGI_TIMEOUT;
-
-	/* .. and fork the process 
-	 */
-#ifndef _WIN32
-	pid = fork();
-	if (pid == 0) 
-	{
-		/* Child process
-		 */
-		int                          re;
-		cherokee_handler_cgi_base_t *cgi_base      = CGI_BASE(cgi);
-		char                        *absolute_path = cgi_base->filename->buf;
-		char                        *argv[4]       = { NULL, NULL, NULL };
-
-		/* Close useless sides
-		 */
-		close (pipes.cgi[0]);
-		close (pipes.server[1]);
-		
-		/* Change stdin and out
-		 */
-		dup2 (pipes.server[0], STDIN_FILENO);
-		close (pipes.server[0]);
-
-		dup2 (pipes.cgi[1], STDOUT_FILENO);
-		close (pipes.cgi[1]);
-
-# if 0
-		/* Set unbuffered
-		 */
-		setvbuf (stdin,  NULL, _IONBF, 0);
-		setvbuf (stdout, NULL, _IONBF, 0);
-# endif
-
-		/* Enable blocking mode
-		 */
-		_fd_set_properties (STDIN_FILENO,  0, O_NONBLOCK);
-		_fd_set_properties (STDOUT_FILENO, 0, O_NONBLOCK);
-		_fd_set_properties (STDERR_FILENO, 0, O_NONBLOCK);
-
-		/* Set SIGPIPE
-		 */
-		signal (SIGPIPE, SIG_DFL);
-
-		/* Sets the new environ. 
-		 */			
-		cherokee_handler_cgi_base_build_envp (CGI_BASE(cgi), conn);
-
-		/* Change the directory 
-		 */
-		if (! cherokee_buffer_is_empty (&conn->effective_directory)) {
-			chdir (conn->effective_directory.buf);
-		} else {
-			char *file = strrchr (absolute_path, '/');
-
-			*file = '\0';
-			chdir (absolute_path);
-			*file = '/';
-		}
-
-		/* Build de argv array
-		 */
-		argv[0] = absolute_path;
-		if (cgi_base->parameter != NULL) {
-			argv[1] = cgi_base->parameter->buf;
-			argv[2] = cgi_base->extra_param;
-		} else {
-			argv[1] = cgi_base->extra_param;
-		}
-
-		/* Change the execution user?
-		 */
-		if (cgi_base->change_user) {
-			struct stat info;
-			
-			re = stat (argv[1], &info);
-			if (re >= 0) {
-				setuid (info.st_uid);
-			}
-		}
-
-		/* Lets go.. execute it!
-		 */
-		re = execve (absolute_path, argv, cgi->envp);
-		if (re < 0) {
-			switch (errno) {
-			case ENOENT:
-				printf ("Status: 404" CRLF CRLF);
-				break;
-			default:
-				printf ("Status: 500" CRLF CRLF);
-			}
-
-			exit(1);
-		}
-
-		/* OH MY GOD!!! an error is here 
-		 */
-		SHOULDNT_HAPPEN;
-		exit(1);
-
-	} else if (pid < 0) {
-		close (pipes.cgi[0]);
-		close (pipes.cgi[1]);
-
-		close (pipes.server[0]);
-		close (pipes.server[1]);
-		
-		conn->error_code = http_internal_error;
-		return ret_error;
-	}
-#else
-	/* Win32: TODO
-	 */
-#endif
-	TRACE (ENTRIES, "pid %d\n", pid);
-
-	close (pipes.server[0]);
-	close (pipes.cgi[1]);
-
-	cgi->pid        = pid;
-	cgi->pipeInput  = pipes.cgi[0];
-	cgi->pipeOutput = pipes.server[1];
-
-	/* Set to Input to NON-BLOCKING
-	 */
-#ifndef _WIN32
-	_fd_set_properties (cgi->pipeInput, O_NDELAY|O_NONBLOCK, 0);
-#endif
-
-	/* POST management
-	 */
-	if (! cherokee_post_is_empty (&conn->post)) {
-		cgi->init_phase = hcgi_phase_sent_post;
-		cherokee_post_walk_reset (&conn->post);
-		
-		/* It returns eagain to send the POST information in
-		 * the next call to this function.  It can not be send
-		 * in the step() method because we need to get it done
-		 * before call to add_headers().
-		 */
-		return ret_eagain;
-	}
-
 	return ret_ok;
 }
 

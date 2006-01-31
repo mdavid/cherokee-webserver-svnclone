@@ -186,7 +186,7 @@ cherokee_handler_phpcgi_init (cherokee_handler_t *hdl)
 	 * will keep trying call this funcion.  The right action on this case
 	 * is to call again the CGI handler
 	 */
-	if (HANDLER_CGI(hdl)->init_phase != hcgi_phase_init) {
+	if (CGI_BASE(hdl)->init_phase != hcgi_phase_build_headers) {
 		return cherokee_handler_cgi_init (HANDLER_CGI(hdl));
 	}
 

@@ -126,7 +126,10 @@ run-tests.py \
 121-NoUserDir.py \
 122-Methods.py \
 123-ImplicitRedit.py \
-124-DomainToDir2.py
+124-DomainToDir2.py \
+125-domain-redir1.py \
+126-SCGI.py \
+127-SCGI-Post.py
 
 test:
 	./run-tests.py

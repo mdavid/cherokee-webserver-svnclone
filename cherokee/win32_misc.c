@@ -518,13 +518,18 @@ void *win_dlopen (const char *dll_name, int flags)
 {
   void *rc;
 
-  last_func = "win_dlopen";
-  rc = (void*) LoadLibrary (dll_name);
-  if (rc)
-       last_error = 0;
-  else last_error = GetLastError();
+  last_error = 0;
+  last_func  = "win_dlopen";
 
- TRACE ("dlfcn", "%s, %s\n", dll_name, rc ? "ok" : "fail");
+  if (dll_name == NULL)
+		rc = (void *) GetModuleHandle (NULL);
+  else 
+		rc = (void *) LoadLibrary (dll_name);
+  
+  if (rc == NULL)
+		last_error = GetLastError();
+
+  TRACE ("dlfcn", "%s, %s\n", dll_name, rc ? "ok" : "fail");
 
   (void) flags;
   return (rc);

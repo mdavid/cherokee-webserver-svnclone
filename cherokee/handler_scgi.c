@@ -138,7 +138,9 @@ cherokee_handler_scgi_free (cherokee_handler_scgi_t *hdl)
 
 	/* SCGI stuff
 	 */
+	cherokee_socket_close (hdl->socket);
 	cherokee_socket_free (hdl->socket);
+
 	cherokee_buffer_mrproper (&hdl->header);
 
 	return ret_ok;
@@ -189,8 +191,22 @@ connect_to_server (cherokee_handler_scgi_t *hdl)
 
 	ret = cherokee_ext_source_connect (src, hdl->socket);
 	if (ret != ret_ok) {
-		TRACE (ENTRIES, "Couldn't connect: %s\n", src->host.buf ? src->host.buf : src->unix_socket.buf);
-		return ret;
+		int try = 0;
+
+		ret = cherokee_ext_source_spawn_srv (src);
+		if (ret != ret_ok) {
+			TRACE (ENTRIES, "Couldn't spawn: %s\n", src->host.buf ? src->host.buf : src->unix_socket.buf);
+			return ret;
+		}
+		
+		for (try = 0; try < 3; try ++) {
+			ret = cherokee_ext_source_connect (src, hdl->socket);
+			if (ret == ret_ok) break;
+
+			TRACE (ENTRIES, "Couldn't connect: %s, try %d\n", src->host.buf ? src->host.buf : src->unix_socket.buf, try);
+			sleep (1);
+		}
+		
 	}
 
 	TRACE (ENTRIES, "connected fd=%d\n", hdl->socket->socket);
@@ -204,7 +220,7 @@ send_header (cherokee_handler_scgi_t *hdl)
 {
 	ret_t  ret;
 	size_t written = 0;
-
+	
 	ret = cherokee_socket_write (hdl->socket, &hdl->header, &written);
 	if (ret != ret_ok) return ret;
 	
@@ -218,47 +234,82 @@ send_header (cherokee_handler_scgi_t *hdl)
 	return ret_ok;
 }
 
+
+static ret_t
+send_post (cherokee_handler_scgi_t *hdl)
+{
+	ret_t                  ret;
+	int                    e_fd = -1;
+	int                    mode =  0;
+	cherokee_connection_t *conn = HANDLER_CONN(hdl);
+	
+	ret = cherokee_post_walk_to_fd (&conn->post, hdl->socket->socket, &e_fd, &mode);
+	
+	switch (ret) {
+	case ret_ok:
+		break;
+	case ret_eagain:
+		if (e_fd != -1)
+			cherokee_thread_deactive_to_polling (HANDLER_THREAD(hdl), conn, e_fd, mode);
+		return ret_eagain;
+	default:
+		return ret;
+	}
+
+	return ret_ok;
+}
+
+
 ret_t 
 cherokee_handler_scgi_init (cherokee_handler_scgi_t *hdl)
 {
 	ret_t                  ret;
 	cherokee_connection_t *conn = HANDLER_CONN(hdl);
 
-	/* The headers is already built. Sent it to the scgi.
-	 */
-	if (!cherokee_buffer_is_empty (&hdl->header)) {
-		return send_header (hdl);
-	}
+	switch (CGI_BASE(hdl)->init_phase) {
+	case hcgi_phase_build_headers:
+		/* Extracts PATH_INFO and filename from request uri 
+		 */
+		ret = cherokee_handler_cgi_base_extract_path (CGI_BASE(hdl), false);
+		if (unlikely (ret < ret_ok)) return ret;
+		
+		/* Build the headers
+		 */
+		ret = build_header (hdl);
+		if (unlikely (ret != ret_ok)) return ret;
 
-	/* Extracts PATH_INFO and filename from request uri 
-	 */
-	ret = cherokee_handler_cgi_base_extract_path (CGI_BASE(hdl), false);
-	if (unlikely (ret < ret_ok)) return ret;
+		/* Connect	
+		 */
+		ret = connect_to_server (hdl);
+		if (unlikely (ret != ret_ok)) return ret;
+		
+		/* Prepare Post
+		 */
+		if (! cherokee_post_is_empty (&conn->post)) {
+			cherokee_post_walk_reset (&conn->post);
+		}
 
-	/* Build the headers
-	 */
-	ret = build_header (hdl);
-	if (unlikely (ret != ret_ok)) return ret;
+		CGI_BASE(hdl)->init_phase = hcgi_phase_send_headers;
 
-	/* Connect
-	 */
-	ret = connect_to_server (hdl);
-	if (unlikely (ret != ret_ok)) return ret;
+	case hcgi_phase_send_headers:
+		/* Send the header
+		 */
+		ret = send_header (hdl);
+		if (ret != ret_ok) return ret;
 
-	/* Send the header
-	 */
-	ret = send_header (hdl);
-	if (ret != ret_ok) return ret;
+		CGI_BASE(hdl)->init_phase = hcgi_phase_send_post;
 
-	/* Sent post
-	 */
-	if (! cherokee_post_is_empty (&conn->post)) {
-		printf ("todo: send post\n");
+	case hcgi_phase_send_post:
+		/* Send the Post
+		 */
+		if (! cherokee_post_is_empty (&conn->post)) {
+			return send_post (hdl);
+		}
+		break;
 	}
 
 	return ret_ok;
 }
-
 
 
 void

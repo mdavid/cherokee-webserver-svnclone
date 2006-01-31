@@ -201,57 +201,57 @@ reset_connections (cherokee_fcgi_manager_t *fcgim)
 }
 
 
-static ret_t 
-spawn_new_srv (cherokee_fcgi_manager_t *fcgim)
-{
-	int                re;
-	int                child;
-	char             **envp;
-	char              *argv[]       = {"sh", "-c", NULL, NULL};
-	char              *empty_envp[] = {NULL};
-	cherokee_buffer_t  tmp          = CHEROKEE_BUF_INIT;
+/* static ret_t  */
+/* spawn_new_srv (cherokee_fcgi_manager_t *fcgim) */
+/* { */
+/* 	int                re; */
+/* 	int                child; */
+/* 	char             **envp; */
+/* 	char              *argv[]       = {"sh", "-c", NULL, NULL}; */
+/* 	char              *empty_envp[] = {NULL}; */
+/* 	cherokee_buffer_t  tmp          = CHEROKEE_BUF_INIT; */
 
-	/* Set a custom enviroment variable set if it was defined
-	 * on the configuration file
-	 */
-	if (fcgim->configuration_ref && fcgim->configuration_ref->custom_env) 
-		envp = fcgim->configuration_ref->custom_env;
-	else 
-		envp = empty_envp;
+/* 	/\* Set a custom enviroment variable set if it was defined */
+/* 	 * on the configuration file */
+/* 	 *\/ */
+/* 	if (fcgim->configuration_ref && fcgim->configuration_ref->custom_env)  */
+/* 		envp = fcgim->configuration_ref->custom_env; */
+/* 	else  */
+/* 		envp = empty_envp; */
 
-	/* Execute the FastCGI server
-	 */
-	cherokee_buffer_add_va (&tmp, "exec %s", fcgim->configuration_ref->interpreter.buf);
+/* 	/\* Execute the FastCGI server */
+/* 	 *\/ */
+/* 	cherokee_buffer_add_va (&tmp, "exec %s", fcgim->configuration_ref->interpreter.buf); */
 
-	TRACE (ENTRIES, "Manager(%p)::spawn \"/bin/sh %s\"\n", fcgim, fcgim->configuration_ref->interpreter.buf);
+/* 	TRACE (ENTRIES, "Manager(%p)::spawn \"/bin/sh %s\"\n", fcgim, fcgim->configuration_ref->interpreter.buf); */
 
-	child = fork();
-	switch (child) {
-	case 0:
-		argv[2] = (char *)tmp.buf;
+/* 	child = fork(); */
+/* 	switch (child) { */
+/* 	case 0: */
+/* 		argv[2] = (char *)tmp.buf; */
 
-		re = execve ("/bin/sh", argv, envp);
-		if (re < 0) {
-			PRINT_ERROR ("ERROR: Could spawn %s\n", tmp.buf);
-			exit (1);
-		}
+/* 		re = execve ("/bin/sh", argv, envp); */
+/* 		if (re < 0) { */
+/* 			PRINT_ERROR ("ERROR: Could spawn %s\n", tmp.buf); */
+/* 			exit (1); */
+/* 		} */
 
-	case -1:
-		goto error;
+/* 	case -1: */
+/* 		goto error; */
 		
-	default:
-		sleep (1);
-		break;
+/* 	default: */
+/* 		sleep (1); */
+/* 		break; */
 		
-	}
+/* 	} */
 
-	cherokee_buffer_mrproper (&tmp);
-	return ret_ok;
+/* 	cherokee_buffer_mrproper (&tmp); */
+/* 	return ret_ok; */
 
-error:
-	cherokee_buffer_mrproper (&tmp);
-	return ret_error;
-}
+/* error: */
+/* 	cherokee_buffer_mrproper (&tmp); */
+/* 	return ret_error; */
+/* } */
 
 
 static cherokee_handler_fastcgi_t *
@@ -441,7 +441,7 @@ cherokee_fcgi_manager_spawn_connect (cherokee_fcgi_manager_t *fcgim)
 
 	/* If it couldn't connect, spawn a new server
 	 */
-	ret = spawn_new_srv (fcgim);
+	ret = cherokee_ext_source_spawn_srv (fcgim->configuration_ref);
 	if (unlikely (ret != ret_ok)) 
 		goto error;
 
