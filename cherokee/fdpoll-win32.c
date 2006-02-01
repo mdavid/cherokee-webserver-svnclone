@@ -112,11 +112,6 @@ _del (cherokee_fdpoll_select_t *fdp, int fd)
 	cherokee_fdpoll_t *nfd = FDPOLL(fdp);
 	int                i;
 
-        if (fd >= FDPOLL(fdp)->nfiles) {
-                PRINT_ERROR ("Bad fd %d in select_del_fd!\n", fd);
-                return ret_error;
-        }
-
 	for (i=0; i < nfd->npollfds; i++) {
 		if (fdp->select_fds[i] != fd) 
 			continue;
@@ -134,7 +129,8 @@ _del (cherokee_fdpoll_select_t *fdp, int fd)
 		
 		return ret_ok;
 	}
-	
+
+	PRINT_ERROR ("Couldn't remove fd %d\n", fd);
 	return ret_error;
 }
 

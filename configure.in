@@ -31,7 +31,7 @@ m4_define([cherokee_version], m4_format('%s.%s.%s%s', cherokee_major_version, ch
 dnl Init autoconf and automake
 AC_INIT([cherokee], [cherokee_version], [http://bugs.0x50.org], [cherokee])
 AC_CONFIG_SRCDIR([cherokee/server.c])
-AM_INIT_AUTOMAKE([no-define tar-ustar])
+AM_INIT_AUTOMAKE([no-define])
 
 AC_CANONICAL_HOST
 AC_DEFINE(PACKAGE_MAJOR_VERSION, "cherokee_major_version", [Version string])
@@ -343,7 +343,7 @@ fi
 AM_CONDITIONAL(COMPILE_POLL, test x"$have_poll" = "xyes")
 
 if test "$have_win32_select" = yes; then
-	AC_DEFINE(HAVE_SELECT, 1, [Have Win32 select])
+	AC_DEFINE(HAVE_WIN32_SELECT, 1, [Have Win32 select])
 fi
 AM_CONDITIONAL(COMPILE_WIN32_SELECT, test x"$have_win32_select" = "xyes")
 

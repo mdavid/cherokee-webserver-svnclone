@@ -130,11 +130,16 @@ process_parameters (int argc, char **argv)
 	}
 }
 
+
 int
 main (int argc, char **argv)
 {
 	ret_t ret;
-	
+
+#ifdef _WIN32
+	init_win32();
+#endif	
+
 	ret = cherokee_server_new (&srv);
 	if (ret < ret_ok) return 1;
 	

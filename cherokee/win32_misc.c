@@ -65,7 +65,8 @@ exit_function (void)
    WSACleanup();
 }
 
-static _ctor void win_init (void)
+void 
+init_win32 (void)
 {
   int re;
 
@@ -86,7 +87,7 @@ static _ctor void win_init (void)
 BOOL APIENTRY DllMain (HANDLE dll_handle, DWORD reason, LPVOID reserved)
 {
   if (reason == DLL_PROCESS_ATTACH)
-     win_init();
+	init_win32();
 
   (void) dll_handle;
   (void) reserved;

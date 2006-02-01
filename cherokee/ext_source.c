@@ -224,9 +224,9 @@ ret_t
 cherokee_ext_source_spawn_srv (cherokee_ext_source_t *server)
 {
 	int                re;
-	int                child;
 	char             **envp;
 	char              *argv[]       = {"sh", "-c", NULL, NULL};
+	int                child        = -1;
 	char              *empty_envp[] = {NULL};
 	cherokee_buffer_t  tmp          = CHEROKEE_BUF_INIT;
 
@@ -240,7 +240,9 @@ cherokee_ext_source_spawn_srv (cherokee_ext_source_t *server)
 
 	TRACE (ENTRIES, "Spawn \"/bin/sh %s\"\n", server->interpreter.buf);
 
+#ifndef _WIN32
 	child = fork();
+#endif
 	switch (child) {
 	case 0:
 		argv[2] = (char *)tmp.buf;
