@@ -579,6 +579,10 @@ if COMPILE_SELECT
 poll_select_src = fdpoll-select.c
 endif
 
+if COMPILE_WIN32_SELECT
+poll_win32_src = fdpoll-win32.c
+endif
+
 if PLATFORM_WIN32
 win32_src = \
 unix4win32.h \
@@ -598,6 +602,7 @@ $(poll_epoll_src) \
 $(poll_kqueue_src) \
 $(poll_port_src) \
 $(poll_select_src) \
+$(poll_win32_src) \
 $(win32_src) \
 cherokee.h \
 http.h \

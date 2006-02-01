@@ -25,7 +25,7 @@ dnl Version
 m4_define([cherokee_major_version], [0])
 m4_define([cherokee_minor_version], [4])
 m4_define([cherokee_micro_version], [31])
-m4_define([cherokee_patch_version], [b5])
+m4_define([cherokee_patch_version], [b6])
 m4_define([cherokee_version], m4_format('%s.%s.%s%s', cherokee_major_version, cherokee_minor_version, cherokee_micro_version, cherokee_patch_version))
 
 dnl Init autoconf and automake
@@ -263,7 +263,7 @@ if test "x-$have_select" != "x-yes" -a "x-$ac_cv_header_winsock2_h" = "x-yes"; t
      AC_TRY_LINK([#include <winsock2.h>],
 				[select(0,0,0,0,0)],
 				[AC_MSG_RESULT(yes)
-				 have_select=yes],
+				 have_win32_select=yes],
 				[AC_MSG_RESULT(no)])
 fi
 
@@ -346,6 +346,11 @@ if test "$have_select" = yes; then
 	AC_DEFINE(HAVE_SELECT, 1, [Have select])
 fi
 AM_CONDITIONAL(COMPILE_SELECT, test x"$have_select" = "xyes")
+
+if test "$have_win32_select" = yes; then
+	AC_DEFINE(HAVE_SELECT, 1, [Have select])
+fi
+AM_CONDITIONAL(COMPILE_WIN32_SELECT, test x"$have_win32_select" = "xyes")
 
 
 dnl

@@ -1,3 +1,14 @@
+2006-02-01  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/fdpoll-win32.c, cherokee/Makefile.am,
+	cherokee/fdpoll.c (cherokee_fdpoll_new, cherokee_fdpoll_best_new):
+	Added new I/O backend for Windows.
+
+	* cherokee/fdpoll.c (cherokee_fdpoll_has_method): Removed.
+
+	* cherokee/win32_misc.c (win_init): Added atexit to call
+	WSACleanup().  Is it really needed? I have no idea!
+
 2006-01-31  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cherokee/win32_misc.c (win_dlopen): Patch for dlopen(NULL) on

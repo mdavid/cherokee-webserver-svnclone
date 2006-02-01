@@ -56,6 +56,13 @@ cherokee_fdpoll_new (cherokee_fdpoll_t **fdp, cherokee_poll_type_t type, int sys
 #else			
 		return ret_no_sys;
 #endif	
+
+	case cherokee_poll_win32:
+#if HAVE_WIN32_SELECT
+		return fdpoll_win32_new (fdp, sys_limit, limit);
+#else			
+		return ret_no_sys;
+#endif
 		
 	case cherokee_poll_select:
 #if HAVE_SELECT	
@@ -90,6 +97,9 @@ cherokee_fdpoll_best_new (cherokee_fdpoll_t **fdp, int sys_limit, int limit)
 	ret = cherokee_fdpoll_new (fdp, cherokee_poll_port, sys_limit, limit);
 	if (ret == ret_ok) return ret_ok;
 	
+	ret = cherokee_fdpoll_new (fdp, cherokee_poll_win32, sys_limit, limit);
+	if (ret == ret_ok) return ret_ok;
+
 	ret = cherokee_fdpoll_new (fdp, cherokee_poll_select, sys_limit, limit);
 	if (ret == ret_ok) return ret_ok;
 	
@@ -121,6 +131,9 @@ cherokee_fdpoll_get_method_str (cherokee_fdpoll_t *fdp, char **str)
 	case cherokee_poll_poll:
 		*str = "poll";
 		break;
+	case cherokee_poll_win32:
+		* str = "win32";
+		break;
 	case cherokee_poll_select:
 		* str = "select";
 		break;
@@ -130,47 +143,6 @@ cherokee_fdpoll_get_method_str (cherokee_fdpoll_t *fdp, char **str)
 	}
 
 	return ret_ok;
-}
-
-
-ret_t 
-cherokee_fdpoll_has_method (cherokee_fdpoll_t *fdp, cherokee_poll_type_t type)
-{
-	switch (type) {
-	case cherokee_poll_epoll:
-#ifdef HAVE_EPOLL
-		return ret_ok;
-#else
-		return ret_not_found;
-#endif
-	case cherokee_poll_kqueue:
-#ifdef HAVE_KQUEUE
-		return ret_ok;
-#else
-		return ret_not_found;
-#endif
-	case cherokee_poll_port:
-#ifdef HAVE_PORT
-		return ret_ok;
-#else
-		return ret_not_found;
-#endif
-	case cherokee_poll_poll:
-#ifdef HAVE_POLL
-		return ret_ok;
-#else
-		return ret_not_found;
-#endif
-	case cherokee_poll_select:
-#ifdef HAVE_SELECT
-		return ret_ok;
-#else
-		return ret_not_found;
-#endif
-	default:
-		SHOULDNT_HAPPEN;
-		return ret_error;
-	}
 }
 
 

@@ -173,6 +173,7 @@ ret_t
 cherokee_thread_new  (cherokee_thread_t **thd, void *server, cherokee_thread_type_t type, 
 		      cherokee_poll_type_t fdpoll_type, int system_fd_num, int fd_num)
 {
+	ret_t              ret;
 	cherokee_server_t *srv = SRV(server);
 	CHEROKEE_NEW_STRUCT (n, thread);
 
@@ -184,10 +185,13 @@ cherokee_thread_new  (cherokee_thread_t **thd, void *server, cherokee_thread_typ
 	INIT_LIST_HEAD((list_t*)&n->polling_list);
 	
 	if (fdpoll_type == cherokee_poll_UNSET)
-		cherokee_fdpoll_best_new (&n->fdpoll, system_fd_num, fd_num);
+		ret = cherokee_fdpoll_best_new (&n->fdpoll, system_fd_num, fd_num);
 	else
-		cherokee_fdpoll_new (&n->fdpoll, fdpoll_type, system_fd_num, fd_num);
+		ret = cherokee_fdpoll_new (&n->fdpoll, fdpoll_type, system_fd_num, fd_num);
 
+	if (unlikely (ret != ret_ok)) 
+		return ret;
+	
 	n->active_list_num   = 0;
 	n->polling_list_num  = 0;
 	n->reuse_list_num    = 0;
