@@ -33,8 +33,9 @@
 ws              [ \t]+
 integer         [-+]?[0-9]+
 comment         #.*$
-fpath           \/[^\"\n ]*
-qstring         \"[^\"\{\}\n]*\"
+fpath_win       ([a-zA-Z]:[^\"\n\r ]*)
+fpath           (\/[^\"\n\r ]*)|{fpath_win}
+qstring         \"[^\"\{\}\n\r]*\"
 http            http\:\/{fpath}
 https           https\:\/{fpath}
 id              [_\-\.a-zA-Z][\.\-_a-zA-Z0-9]*

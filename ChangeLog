@@ -1,5 +1,7 @@
 2006-02-01  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* cherokee/macros.h: Added SLASH macro.
+
 	* cherokee/fdpoll.c (cherokee_fdpoll_new): If it has Win32 select,
 	don't try to use the common select as well.
 

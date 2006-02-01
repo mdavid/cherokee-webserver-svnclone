@@ -263,4 +263,10 @@
 # define CHEROKEE_EXPORT
 #endif
 
+#ifdef _WIN32
+# define SLASH '\\'
+#else
+# define SLASH '/'
+#endif
+
 #endif /* CHEROKEE_MACROS_H */
