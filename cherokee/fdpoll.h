@@ -40,6 +40,7 @@ typedef enum {
 	cherokee_poll_port,
 	cherokee_poll_poll,
 	cherokee_poll_select,
+	cherokee_poll_win32,
 	cherokee_poll_UNSET
 } cherokee_poll_type_t;
 
@@ -51,7 +52,6 @@ ret_t cherokee_fdpoll_new        (cherokee_fdpoll_t **fdp, cherokee_poll_type_t 
 ret_t cherokee_fdpoll_best_new   (cherokee_fdpoll_t **fdp, int sys_limit, int limit);
 ret_t cherokee_fdpoll_free       (cherokee_fdpoll_t  *fdp);
 
-ret_t cherokee_fdpoll_has_method     (cherokee_fdpoll_t *fdp, cherokee_poll_type_t  type);
 ret_t cherokee_fdpoll_get_method     (cherokee_fdpoll_t *fdp, cherokee_poll_type_t *type);
 ret_t cherokee_fdpoll_get_method_str (cherokee_fdpoll_t *fdp, char **name);
 

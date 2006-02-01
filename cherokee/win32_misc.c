@@ -59,13 +59,24 @@ static WSADATA wsa_data;
 /*
  * Constructor/DllMain
  */
+static void 
+exit_function (void)
+{
+   WSACleanup();
+}
+
 static _ctor void win_init (void)
 {
-  if (WSAStartup (MAKEWORD(1,1), &wsa_data) != 0)
-  {
+  int re;
+
+  re = WSAStartup (MAKEWORD(1,1), &wsa_data);
+  if (re != 0) {
     PRINT_ERROR ("WSAStartup failed; %s\n", win_strerror(GetLastError()));
     exit (-1);
   }
+
+  atexit (exit_function);
+
   first_sock_num = socket (AF_INET, SOCK_STREAM, 0);
   assert (first_sock_num > 0);
   closesocket (first_sock_num);

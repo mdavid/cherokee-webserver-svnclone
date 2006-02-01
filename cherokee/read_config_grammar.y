@@ -628,6 +628,8 @@ poll_method : T_POLL_METHOD T_ID
 			 SRV(server)->fdpoll_method = cherokee_poll_kqueue;
 	   } else if (strcmp($2, "poll") == 0) {
 			 SRV(server)->fdpoll_method = cherokee_poll_poll;
+	   } else if (strcmp($2, "win32") == 0) {
+			 SRV(server)->fdpoll_method = cherokee_poll_win32;
 	   } else if (strcmp($2, "select") == 0) {
 			 SRV(server)->fdpoll_method = cherokee_poll_select;
 	   } else {
