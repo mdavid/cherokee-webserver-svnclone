@@ -1,5 +1,8 @@
 2006-02-01  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* cherokee/fdpoll.c (cherokee_fdpoll_new): If it has Win32 select,
+	don't try to use the common select as well.
+
 	* configure.in: Added check for the new Win32 select.
 
 	* cherokee/fdpoll-win32.c, cherokee/Makefile.am,

@@ -78,7 +78,7 @@ endif
 # LDFLAGS for libraries
 #
 if PLATFORM_WIN32
-no_undefined = -no-undefined
+no_undefined = -no-undefined -Wl,--export-all-symbols
 endif
 
 common_ldflags = \

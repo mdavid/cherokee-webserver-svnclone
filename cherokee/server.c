@@ -660,7 +660,7 @@ print_banner (cherokee_server_t *srv)
 
 	/* Print it!
 	 */
-	for (p = n->buf+TERMINAL_WIDTH; p < n->buf+n->len; p+=80) {
+	for (p = n->buf+TERMINAL_WIDTH; p < n->buf+n->len; p+=75) {
 		while (*p != ',') p--;
 		*p = '\n';
 	}
