@@ -342,15 +342,15 @@ if test "$have_poll" = yes; then
 fi
 AM_CONDITIONAL(COMPILE_POLL, test x"$have_poll" = "xyes")
 
-if test "$have_select" = yes; then
-	AC_DEFINE(HAVE_SELECT, 1, [Have select])
-fi
-AM_CONDITIONAL(COMPILE_SELECT, test x"$have_select" = "xyes")
-
 if test "$have_win32_select" = yes; then
-	AC_DEFINE(HAVE_SELECT, 1, [Have select])
+	AC_DEFINE(HAVE_SELECT, 1, [Have Win32 select])
 fi
 AM_CONDITIONAL(COMPILE_WIN32_SELECT, test x"$have_win32_select" = "xyes")
+
+if test "$have_select" = yes; then
+     AC_DEFINE(HAVE_SELECT, 1, [Have select])
+fi
+AM_CONDITIONAL(COMPILE_SELECT, test x"$have_select" = "xyes" -a x"$have_win32_select" != "xyes")
 
 
 dnl
@@ -1001,11 +1001,12 @@ AC_OUTPUT(Makefile cherokee/Makefile.MingW m4/Makefile cherokee/Makefile cget/Ma
 
 
 methods=""
-if test "$have_epoll"  = yes; then methods="${methods}epoll ";  fi
-if test "$have_kqueue" = yes; then methods="${methods}kqueue "; fi
-if test "$have_poll"   = yes; then methods="${methods}poll ";   fi
-if test "$have_port"   = yes; then methods="${methods}port ";   fi
-if test "$have_select" = yes; then methods="${methods}select";  fi
+if test "$have_epoll"        = yes; then methods="${methods}epoll ";  fi
+if test "$have_kqueue"       = yes; then methods="${methods}kqueue "; fi
+if test "$have_poll"         = yes; then methods="${methods}poll ";   fi
+if test "$have_port"         = yes; then methods="${methods}port ";   fi
+if test "$have_win32_select" = yes; then methods="${methods}win32 ";  fi
+if test "$have_select"       = yes; then methods="${methods}select";  fi
 
 crypt_type="no"
 if test "$have_crypt_lib" = "yes" && test "$have_crypt_r_lib" = "yes"; then
