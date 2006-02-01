@@ -1,5 +1,7 @@
 2006-02-01  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* configure.in: Added check for the new Win32 select.
+
 	* cherokee/fdpoll-win32.c, cherokee/Makefile.am,
 	cherokee/fdpoll.c (cherokee_fdpoll_new, cherokee_fdpoll_best_new):
 	Added new I/O backend for Windows.

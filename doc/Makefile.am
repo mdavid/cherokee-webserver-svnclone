@@ -32,6 +32,7 @@ Validators.html \
 W3C_logger.html \
 WebApplications.html \
 cherokee.png \
+images/Cherokee-icono.png \
 images/Server-conf-small.png 
 
 EXTRA_DIST=\
