@@ -31,6 +31,7 @@
 #include "buffer.h"
 #include "list_merge_sort.h"
 #include "server-protected.h"
+#include "util.h"
 
 #ifdef HAVE_SYS_MMAN_H
 # include <sys/mman.h>
@@ -231,7 +232,7 @@ iocache_entry_update_stat (cherokee_iocache_entry_t *entry, char *filename, cher
 {
 	int re;
 
-	re = stat (filename, &entry->state);
+	re = cherokee_stat (filename, &entry->state);
 	if (re < 0) {
 		switch (errno) {
 		case EACCES: 

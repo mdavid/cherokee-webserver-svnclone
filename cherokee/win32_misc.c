@@ -3,6 +3,7 @@
 /* Cherokee
  *
  * Authors:
+ *      Alvaro Lopez Ortega <alvaro@alobbs.com>
  *      Gisle Vanem <giva@bgnett.no>
  *
  * Copyright (C) 2001-2006 Alvaro Lopez Ortega
@@ -952,4 +953,28 @@ sleep (unsigned int seconds)
 {
 	   Sleep (seconds * 1000);
 	   return 0;
+}
+
+int 
+cherokee_win32_stat (const char *path, struct stat *buf)
+{
+	   int e = 0;
+	   int len;
+	   int re;
+	   char *p = (char *)path;
+
+	   len = strlen(p);
+	   while ((p[len-(e+1)] == '/') &&  (len - e > 3))
+	   {
+			 p[len-(e+1)] = '\0';
+			 e++;
+	   }
+
+	   re = stat ((const char *)p, buf);
+
+	   for (e-=1; e>0; e--) {
+			 p[len-(e+1)] = '/';
+	   }
+
+	   return re;
 }
