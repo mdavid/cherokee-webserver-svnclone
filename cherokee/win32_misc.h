@@ -35,9 +35,11 @@
 #define strerror(e)       win_strerror(e)
 #define pipe(h)           _pipe(h,0,0)
 
-void          init_win32   (void);
-char         *win_strerror (int err);
-struct tm    *localtime_r  (const time_t *time, struct tm *tm);
-unsigned int  sleep        (unsigned int seconds);
+void          init_win32          (void);
+char         *win_strerror        (int err);
+struct tm    *localtime_r         (const time_t *time, struct tm *tm);
+unsigned int  sleep               (unsigned int seconds);
+
+int           cherokee_win32_stat (const char *path, struct stat *buf);
 
 #endif /* CHEROKEE_WIN32_MISC_H */

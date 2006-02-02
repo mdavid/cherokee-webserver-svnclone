@@ -47,6 +47,12 @@
 
 CHEROKEE_BEGIN_DECLS
 
+#ifdef _WIN32
+# define cherokee_stat(path,buf) cherokee_win32_stat(path,buf)
+#else
+# define cherokee_stat(path,buf) stat(path,buf)
+#endif
+
 /* Some global information
  */
 const extern char *cherokee_months[]; 
@@ -66,6 +72,7 @@ int   cherokee_estimate_va_length (char *format, va_list ap);
 
 /* Time management functions
  */
+
 struct tm *cherokee_gmtime           (const time_t *timep, struct tm *result);
 struct tm *cherokee_localtime        (const time_t *timep, struct tm *result);
 long      *cherokee_get_timezone_ref (void);

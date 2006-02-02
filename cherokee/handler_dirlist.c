@@ -111,7 +111,7 @@ generate_file_entry (DIR *dir, cherokee_buffer_t *path, cherokee_handler_dirlist
 
 	/* Path
 	 */
- 	re = stat (path->buf, &n->stat);
+ 	re = cherokee_stat (path->buf, &n->stat);
 	if (re < 0) {
 		cherokee_buffer_drop_endding (path, n->name_len);
 		free (n);

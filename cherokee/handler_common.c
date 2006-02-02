@@ -49,6 +49,8 @@
 #include "handler_dirlist.h"
 #include "list_ext.h"
 
+#define ENTRIES "handler,common"
+
 
 cherokee_module_info_handler_t MODULE_INFO(common) = {
 	.module.type     = cherokee_handler,                /* type         */
@@ -67,7 +69,10 @@ stat_file (cherokee_boolean_t useit, cherokee_iocache_t *iocache, struct stat *n
 	/* Without cache
 	 */
 	if (!useit) {
-		re = stat (path, nocache_info);
+		re = cherokee_stat (path, nocache_info);
+
+		TRACE (ENTRIES, "%s, use_iocache=%d re=%d\n", path, useit, re);
+
 		if (re < 0) {
 			switch (errno) {
 			case ENOENT: 
@@ -86,6 +91,9 @@ stat_file (cherokee_boolean_t useit, cherokee_iocache_t *iocache, struct stat *n
 	/* I/O cache
 	 */
 	ret = cherokee_iocache_stat_get (iocache, path, io_entry);
+
+	TRACE (ENTRIES, "%s, use_iocache=%d re=%d\n", path, useit, re);
+
 	if (ret != ret_ok) {
 		switch (ret) {
 		case ret_not_found:
@@ -114,11 +122,6 @@ cherokee_handler_common_new (cherokee_handler_t **hdl, void *cnt, cherokee_table
  	cherokee_boolean_t        use_iocache = true;
 	cherokee_connection_t    *conn        = CONN(cnt);
 
-#if 0
-	PRINT_DEBUG ("request: '%s'\n", conn->request->buf);
-	PRINT_DEBUG ("local:   '%s'\n", conn->local_directory->buf);
-#endif
-
 	/* Check some properties
 	 */
 	if (properties != NULL) {
@@ -132,6 +135,9 @@ cherokee_handler_common_new (cherokee_handler_t **hdl, void *cnt, cherokee_table
 	cherokee_iocache_get_default (&iocache);
 	ret = stat_file (use_iocache, iocache, &nocache_info, conn->local_directory.buf, &file, &info);
 	exists = (ret == ret_ok);
+
+	TRACE (ENTRIES, "request: '%s', local: '%s', exists %d\n", 
+	       conn->request.buf, conn->local_directory.buf, exists);
 	
 	if (!exists) {
 		ret_t  ret;
@@ -164,11 +170,16 @@ cherokee_handler_common_new (cherokee_handler_t **hdl, void *cnt, cherokee_table
 
 	cherokee_buffer_drop_endding (&conn->local_directory, conn->request.len);
 
+	printf ("1\n");
+	
 	/* Is it a file?
 	 */
 	if (S_ISREG(info->st_mode)) {
+		TRACE (ENTRIES, "going for %s\n", "handler_file");
 		return cherokee_handler_file_new (hdl, cnt, properties);
 	}
+
+	printf ("2\n");
 
 	/* Is it a directory
 	 */
@@ -178,6 +189,7 @@ cherokee_handler_common_new (cherokee_handler_t **hdl, void *cnt, cherokee_table
 		/* Maybe it has to be redirected
 		 */
 		if (conn->request.buf[conn->request.len-1] != '/') {
+			TRACE (ENTRIES, "going for %s\n", "handler_dir");
 			return cherokee_handler_dirlist_new (hdl, cnt, properties);
 		}
 

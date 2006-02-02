@@ -421,7 +421,7 @@ yyerror (char* msg)
 %token <string> T_QSTRING T_FULLDIR T_ID T_HTTP_URL T_HTTPS_URL T_HOSTNAME T_IP T_DOMAIN_NAME T_ADDRESS_PORT T_MIMETYPE_ID
 
 %type <name_ptr> directory_option handler
-%type <string> host_name http_generic id_or_path ip_or_domain str_type address_or_path
+%type <string> host_name http_generic id_or_path ip_or_domain str_type address_or_path fulldir
 %type <list> id_list ip_list domain_list id_path_list
 
 %%
@@ -510,10 +510,24 @@ directories :
             | directories directory;
 
 
+/* Path fix up
+ */
+fulldir : T_FULLDIR
+{
+#ifdef _WIN32
+	   char *i = $1;
+	   while (*i) {
+			 if (*i == '\\') *i='/';
+			 i++;
+	   }
+#endif 
+	   $$ = $1;
+};
+
 /* ID/Path List
  */
-id_or_path : T_ID      { $$ = $1; }
-           | T_FULLDIR { $$ = $1; };
+id_or_path : T_ID    { $$ = $1; }
+           | fulldir { $$ = $1; };
 
 id_path_list : id_or_path
 {
@@ -638,7 +652,7 @@ poll_method : T_POLL_METHOD T_ID
 	   }
 };
 
-document_root : T_DOCUMENT_ROOT T_FULLDIR
+document_root : T_DOCUMENT_ROOT fulldir
 {
 	   char                      *root;
 	   int                        root_len;
@@ -692,7 +706,7 @@ tuple_list :
            | tuple_list tuple
            ;
 
-tuple : T_ID T_FULLDIR
+tuple : T_ID fulldir
 {
 	   cherokee_virtual_server_t *vserver;
 	   vserver = auto_virtual_server;
@@ -723,7 +737,7 @@ server_tokens : T_SERVER_TOKENS T_ID
 	   }
 };
 
-mime : T_MIME_FILE T_FULLDIR
+mime : T_MIME_FILE fulldir
 {
 	   SRV(server)->mime_file = $2;
 };
@@ -771,7 +785,7 @@ mimetype_options : T_EXTENSION id_list
 	   }
 };
 
-icons : T_ICONS T_FULLDIR
+icons : T_ICONS fulldir
 {
 	   SRV(server)->icons_file = $2;
 };
@@ -794,7 +808,7 @@ keepalive_max_requests : T_KEEPALIVE_MAX_REQUESTS T_NUMBER
 	   SRV(server)->keepalive_max = $2;
 };
 
-ssl_file : T_SSL_CERT_FILE T_FULLDIR
+ssl_file : T_SSL_CERT_FILE fulldir
 {
 #ifdef HAVE_TLS
 	   cherokee_virtual_server_t *vsrv = auto_virtual_server;
@@ -811,7 +825,7 @@ ssl_file : T_SSL_CERT_FILE T_FULLDIR
 #endif
 };
 
-ssl_key_file : T_SSL_CERT_KEY_FILE T_FULLDIR
+ssl_key_file : T_SSL_CERT_KEY_FILE fulldir
 {
 #ifdef HAVE_TLS
 	   cherokee_virtual_server_t *vsrv = auto_virtual_server;
@@ -828,7 +842,7 @@ ssl_key_file : T_SSL_CERT_KEY_FILE T_FULLDIR
 #endif
 };
 
-ssl_ca_list_file : T_SSL_CA_LIST_FILE T_FULLDIR
+ssl_ca_list_file : T_SSL_CA_LIST_FILE fulldir
 {
 #ifdef HAVE_TLS
 	   cherokee_virtual_server_t *vsrv = auto_virtual_server;
@@ -922,7 +936,7 @@ encoder_option : T_DENY id_list
 	   }
 };
 
-pidfile : T_PIDFILE T_FULLDIR
+pidfile : T_PIDFILE fulldir
 {
 	   cherokee_buffer_clean (&SRV(server)->pidfile);
 	   cherokee_buffer_add (&SRV(server)->pidfile, $2, strlen($2));
@@ -930,7 +944,7 @@ pidfile : T_PIDFILE T_FULLDIR
 	   free ($2);
 };
 
-panic_action : T_PANIC_ACTION T_FULLDIR
+panic_action : T_PANIC_ACTION fulldir
 {
 	   if (SRV(server)->panic_action != NULL) {
 			 PRINT_MSG ("WARNING: Overwriting panic action '%s' by '%s'\n", SRV(server)->panic_action, $2);
@@ -967,7 +981,7 @@ maxconnectionreuse : T_MAX_CONNECTION_REUSE T_NUMBER
 	   SRV(server)->max_conn_reuse = $2;
 };
 
-chroot : T_CHROOT T_FULLDIR
+chroot : T_CHROOT fulldir
 {
 	   SRV(server)->chroot = $2;
 };
@@ -1082,7 +1096,7 @@ handler_option : T_REWRITE T_QSTRING
 
 
 str_type : T_ID
-         | T_FULLDIR
+         | fulldir
          | T_ADDRESS_PORT
          | T_QSTRING
          | T_HTTP_URL
@@ -1171,7 +1185,7 @@ handler_option : T_ENV T_ID str_type
 	   if (re != 0) return re;
 };
 
-handler_option : T_SOCKET T_FULLDIR
+handler_option : T_SOCKET fulldir
 { dirs_table_set_handler_prop (current_config_entry, "socket", $2); };
 
 handler_option : T_JUST_ABOUT
@@ -1221,7 +1235,7 @@ handler_option : T_SERVER address_or_path
 
 
 address_or_path : T_ADDRESS_PORT { $$ = $1; }
-                | T_FULLDIR      { $$ = $1; };
+                | fulldir        { $$ = $1; };
 
 handler_server_optinal : 
                        | '{' handler_server_optinal_entries '}';
@@ -1413,7 +1427,7 @@ directory_options '}'
 };
 
 
-directory : T_DIRECTORY T_FULLDIR '{' 
+directory : T_DIRECTORY fulldir '{' 
 {
 	   /* Fill the tmp struct
 	    */
@@ -1550,7 +1564,7 @@ directory_option : handler
 };
 
 
-directory_option : T_DOCUMENT_ROOT T_FULLDIR
+directory_option : T_DOCUMENT_ROOT fulldir
 {
 	   if (directory_content_tmp.document_root != NULL) {
 			 PRINT_MSG ("WARNING: Overwriting DocumentRoot '%s' by '%s'\n",
@@ -1680,7 +1694,7 @@ auth_option_params :
                    | auth_option_params auth_option_param
                    ;
 
-auth_option_param : T_PASSWDFILE T_FULLDIR 
+auth_option_param : T_PASSWDFILE fulldir 
 { dirs_table_set_validator_prop (current_config_entry, "file", $2); };
 
 
