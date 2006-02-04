@@ -1,3 +1,9 @@
+2006-02-03  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* handler_gnomevfs.h handler_gnomevfs.c, cherokee/Makefile.am,
+	configure.in: Gnome-VFS stuff removed.  We are not longer
+	supporting it.
+
 2006-02-01  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cherokee/macros.h: Added SLASH macro.

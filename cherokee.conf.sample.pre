@@ -77,6 +77,15 @@ MaxKeepAliveRequests 500
 ServerTokens Full
 
 ##
+## Load the GZip encoder plugin
+## only used if the client support the encoding ("Accept-Encoding:")
+##
+Encoder gzip {
+   Allow html, htm, txt
+   Deny jpg, png, gz
+}
+
+##
 ## PidFile: The file in which the server should record its process
 ## identification number when it starts.
 ##
@@ -93,15 +102,6 @@ Icons %sysconfdir%/cherokee/icons.conf
 ##
 MimeFile %sysconfdir%/cherokee/mime.types
 MimeFile %sysconfdir%/cherokee/mime.compression.types
-
-##
-## Load the GZip encoder plugin
-## only used if the client support the encoding ("Accept-Encoding:")
-##
-# Encoder gzip {
-#	   Allow html, htm, txt
-#	   Deny jpg, png, gz
-# }
 
 ##
 ## Advanced settings, do not change if you are not sure..

@@ -889,37 +889,6 @@ fi
 
 
 dnl
-dnl GNOME-VFS handler
-dnl
-AC_ARG_ENABLE(gnomevfs, AC_HELP_STRING([--enable-gnomevfs],[compile the gnomevfs handler]))
-if test "x$enable_gnomevfs" = "xyes"
-then
-	   AC_CHECK_PROG(PKGCONFIG, "pkg-config", yes, no)
-	   if test "$PKGCONFIG" != "no"
-	   then
-	    AC_MSG_CHECKING(GNOMEVFS CFLAGS)
-	    GNOMEVFS_CFLAGS=`pkg-config gnome-vfs-2.0 --cflags 2>/dev/null`
-	    if test "x$GNOMEVFS_CFLAGS" != "x"; then
-	    	    AC_MSG_RESULT(${GNOMEVFS_CFLAGS})
-		    AC_SUBST(GNOMEVFS_CFLAGS)
-	    else 	
-	    	    AC_MSG_RESULT(no)
-	    fi    
-
-	    AC_MSG_CHECKING(GNOMEVFS LIBS)
-	    GNOMEVFS_LIBS=`pkg-config gnome-vfs-2.0 --libs 2>/dev/null`
-	    if test "x$GNOMEVFS_LIBS" != "x"; then
-	    	    AC_MSG_RESULT(${GNOMEVFS_LIBS})
-		    AC_SUBST(GNOMEVFS_LIBS)
-	    else 	
-	    	    AC_MSG_RESULT(no)
-	    fi    
-	   fi
-fi
-AM_CONDITIONAL(HAVE_GNOMEVFS, test "x$GNOMEVFS_LIBS" != "x")
-
-
-dnl
 dnl WWW root directory
 dnl
 AC_ARG_WITH(wwwroot, AC_HELP_STRING([--with-wwwroot=DIR], [Set the WWW root directory]),
