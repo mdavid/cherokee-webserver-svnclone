@@ -1,4 +1,8 @@
 ##
+## Please, visit http://www.0x50.org/doc for further information  
+##
+
+##
 ## DirectoryIndex: Name of the file or files to use as a pre-written HTML
 ## directory index.  Separate multiple entries with commas.
 ##
@@ -24,15 +28,14 @@ DocumentRoot %wwwroot%
 ##
 UserDir public_html {
     Directory / {
-	   Handler common
+       Handler common
     }
 
     Directory /cgi-bin/ {
-	   Handler cgi
-	   DocumentRoot /usr/lib/cgi-bin/
+	  Handler cgi
+	  DocumentRoot /usr/lib/cgi-bin/
     }
 }
-
 
 ##
 ## Log: Turn On/Off the logging in to syslog
@@ -47,11 +50,6 @@ Log combined {
     ErrorLog  /var/log/cherokee.error
 }
 
-#Log w3c {
-#    LogFile /var/log/cherokee.w3c.log
-#}
-
-
 ##
 ## ErrorHandler:
 ## In the event of a problem or error.
@@ -59,7 +57,6 @@ Log combined {
 # ErrorHandler error_redir {
 #    404 http://www.alobbs.com/error.php?op=404
 # }
-
 
 ##
 ## These Directory entries define the server behaviour.  Each entry
@@ -70,47 +67,26 @@ Log combined {
 ## inherit configuration form its parents..
 ##
 Directory / {
-		Handler common
+    Handler common
 }
 
 Directory /about {
-		## Justabout:
-		## It will inhibit the server to show server information
-		Handler server_info	{
-			   JustAbout
-		}
+    ## Justabout:
+    ## It will inhibit the server to show server information
+    Handler server_info	{
+        JustAbout
+    }
 }
 
 Directory /icons {
-		Handler file
-		DocumentRoot %prefix%/share/cherokee/icons/
+    Handler file
+    DocumentRoot %prefix%/share/cherokee/icons/
 }
 
 Directory /cgi-bin {
-		Handler cgi
-		DocumentRoot %prefix%/lib/cgi-bin/
+    Handler cgi
+    DocumentRoot %prefix%/lib/cgi-bin/
 }
-
-# Directory /google {
-#		Handler redir {
-#			   URL http://www.google.com/search?sourceid=cherokee-search&q=
-#		}
-# }
-
-# Directory /public {
-#		Handler dirlist {
-#			   # Look parameters:
-#			   # bgcolor, text, link, vlink, alink, background
-#			   bgcolor FFCCCC
-#
-#			   # Show extra information
-#			   # Possible parameters: date, size, owner
-#			   show size, date
-#			   
-#			   # Include file if present as page header
-#			   HeaderFile README
-#		}
-# }
 
 
 ## Redirections:
@@ -121,15 +97,15 @@ Directory /cgi-bin {
 ## same URL untouched)
 
 # Directory /pic1 {
-#		Handler redir {
-#			   Show Rewrite "(.*)$" "/showpic.php?pic=$1&full=1"
-#		}
+#     Handler redir {
+#	     Show Rewrite "/(.*)$" "/showpic.php?pic=$1&full=1"
+#	 }
 # }
 
 # Directory /pic2 {
-#		Handler redir {
-#			   Rewrite "(.*)$" "/showpic.php?pic=$1&full=1"
-#		}
+#	 Handler redir {
+#	     Rewrite "/(.*)$" "/showpic.php?pic=$1&full=1"
+#	 }
 # }
 
 
@@ -146,42 +122,38 @@ Directory /cgi-bin {
 ## digest authentication provides an alternate method for protecting
 ## your web content.
 
-
 ##
 ## Basic authentication example
 ##
 # Directory /private {
-#          Handler common
-#          Auth Basic {
-#                  Name "My private data"
-#                  Method pam
-#          }
+#     Auth Basic {
+#         Name "My private data"
+#         Method pam
+#     }
 # }
 
 ##
 ## Digest authentication example
 ##
 # Directory /private2 {
-#          Handler common
-#          Auth Digest {
-#                  Name "My private data 2"
-#                  Method htpasswd {
-#					PasswdFile /var/www/private2/.htpasswd
-#			   }
-#          }
+#     Auth Digest {
+#         Name "My private data 2"
+#         Method htpasswd {
+#             PasswdFile /var/www/private2/.htpasswd
+#         }
+#     }
 # }
 
 ##
 ## Basic OR Digest authentication
 ##
 # Directory /private3 {
-#          Handler common
-#          Auth Basic, Digest {
-#                  Name "My private data 3"
-#                  Method plain {
-#					PasswdFile /var/www/private3/.plain_passwds
-#			   }
-#          }
+#     Auth Basic, Digest {
+#         Name "My private data 3"
+#         Method plain {
+#             PasswdFile /var/www/private3/.plain_passwds
+#         }
+#     }
 # }
 
 
@@ -190,7 +162,7 @@ Directory /cgi-bin {
 ## Set some basic extensions
 ##
 ## NOTE: Probably it is a good idea to keep these definitions
-##       at the end of the file.
+##       at the end of the file (higher priority)
 ##
 
 Extension php, php3, php4 {

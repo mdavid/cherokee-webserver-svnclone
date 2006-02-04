@@ -5,7 +5,6 @@
 INCLUDES = \
 $(TLS_CFLAGS) \
 $(PTHREAD_CFLAGS) \
-$(GNOMEVFS_CFLAGS) \
 -I$(top_srcdir) \
 -DCHEROKEE_COMPILATION \
 -DCHEROKEE_PLUGINDIR="\"$(plugindir)\"" \
@@ -344,16 +343,6 @@ static_handler_admin_src = $(handler_admin) $(config_common)
 else
 dynamic_handler_admin_lib = libplugin_admin.la
 endif
-
-
-#
-# Handler GNOME VFS
-#
-libplugin_gnomevfs_la_LDFLAGS = $(module_ldflags)  
-libplugin_gnomevfs_la_LIBADD  = $(GNOMEVFS_LIBS) 
-libplugin_gnomevfs_la_SOURCES = \
-handler_gnomevfs.c \
-handler_gnomevfs.h
 
 
 #
@@ -831,14 +820,8 @@ icons_grammar.c : icons_grammar.y
 #
 # Cherokee plugins
 #
-if HAVE_GNOMEVFS
-gnomevfs_lib = libplugin_gnomevfs.la
-endif
-
-
 plugindir = "$(libdir)/cherokee"
 plugin_LTLIBRARIES = \
-$(gnomevfs_lib) \
 $(dynamic_module_read_config_lib) \
 $(dynamic_handler_cgi_lib) \
 $(dynamic_handler_phpcgi_lib) \
