@@ -1,5 +1,8 @@
 2006-02-06  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* qa/122-Methods.py: There were some wrong paths in these
+	requests. Fixed.
+
 	* qa/128-ValidMethod-common.py, qa/Makefile.am (EXTRA_DIST): Added
 	a new test case to cover the previous bug fix.
 

@@ -12,7 +12,7 @@ class Test (TestCollection):
         TestCollection.__init__ (self)
 
         self.name = "HTTP Methods"
-        self.conf = "Directory /methods_group { Handler common } "
+        self.conf = "Directory /methods_group { Handler file } "
 
     def Prepare (self, www):
 
@@ -32,30 +32,30 @@ class Test (TestCollection):
                       "Host: www.example.com\r\n"
 
         obj = self.Add (TestEntry())
-        obj.request = "POLL /public/subtest/ HTTP/1.1\r\n" +\
+        obj.request = "POLL /methods_group/subtest/ HTTP/1.1\r\n" +\
                       "Host: www.example.com\r\n" +\
                       "Subscription-ID: 8,9,10,11,12\r\n" +\
                       "Content-Length: 0\r\n"
 
         obj = self.Add (TestEntry())
-        obj.request = "SUBSCRIBE /public/subtest HTTP/1.1\r\n" +\
+        obj.request = "SUBSCRIBE /methods_group/subtest HTTP/1.1\r\n" +\
                       "Host: www.example.com\r\n" +\
                       "Notification-type: Update\r\n" +\
                       "Call-Back: httpu://www.example.com:8080/510\r\n"
 
         obj = self.Add (TestEntry())
-        obj.request = "UNSUBSCRIBE /public/subtest HTTP/1.1\r\n" +\
+        obj.request = "UNSUBSCRIBE /methods_group/subtest HTTP/1.1\r\n" +\
                       "Host: www.example.com\r\n" +\
                       "Subscription-id: 16\r\n"
 
         obj = self.Add (TestEntry())
-        obj.request = "LOCK /public/docs/myfile.doc HTTP/1.1\r\n" +\
+        obj.request = "LOCK /methods_group/docs/myfile.doc HTTP/1.1\r\n" +\
                       "Host: www.example.com\r\n" +\
                       "Timeout: Infinite, Second-4100000000\r\n" +\
                       "If: (<opaquelocktoken:e71df4fae-5dec-22d6-fea5-00a0c91e6be4>)\r\n"
 
         obj = self.Add (TestEntry())
-        obj.request = "UNLOCK /docs/myfile.doc HTTP/1.1\r\n" +\
+        obj.request = "UNLOCK /methods_group/myfile.doc HTTP/1.1\r\n" +\
                       "Host: www.contoso.com\r\n" +\
                       "Lock-Token: <opaquelocktoken:e71d4fae-5dec-22df-fea5-00a0c93bd5eb1>\r\n"
 

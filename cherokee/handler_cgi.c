@@ -328,7 +328,6 @@ ret_t
 cherokee_handler_cgi_init (cherokee_handler_cgi_t *cgi)
 {
 	ret_t ret;
-	int   re;
 
 	cherokee_connection_t *conn = HANDLER_CONN(cgi);
 
@@ -395,64 +394,6 @@ _fd_set_properties (int fd, int add_flags, int remove_flags)
 		PRINT_ERROR ("ERROR: Setting pipe properties fd=%d: %s\n", fd, strerror(errno));
 		return ret_error;
 	}	
-
-	return ret_ok;
-}
-
-static ret_t
-fork_and_execute_cgi_unix (cherokee_handler_cgi_t *cgi)
-{
-	int                    pid;
-	cherokee_connection_t *conn = HANDLER_CONN(cgi);
-
-	struct {
-		int cgi[2];
-		int server[2];
-	} pipes;
-
-	/* Creates the pipes ...
-	 */
-	re   = pipe (pipes.cgi);
-	ret |= pipe (pipes.server);
-
-	if (re != 0) {
-		conn->error_code = http_internal_error;
-		return ret_error;
-	}	
-
-	/* .. and fork the process 
-	 */
-	pid = fork();
-	if (pid == 0) {
-		/* CGI process
-		 */
-		manage_child_cgi_process (cgi, pipes.cgi, pipes.server);
-
-	} else if (pid < 0) {
-		/* Error
-		 */
-		close (pipes.cgi[0]);
-		close (pipes.cgi[1]);
-
-		close (pipes.server[0]);
-		close (pipes.server[1]);
-		
-		conn->error_code = http_internal_error;
-		return ret_error;
-	}
-
-	TRACE (ENTRIES, "pid %d\n", pid);
-
-	close (pipes.server[0]);
-	close (pipes.cgi[1]);
-
-	cgi->pid        = pid;
-	cgi->pipeInput  = pipes.cgi[0];
-	cgi->pipeOutput = pipes.server[1];
-
-	/* Set to Input to NON-BLOCKING
-	 */
-	_fd_set_properties (cgi->pipeInput, O_NDELAY|O_NONBLOCK, 0);
 
 	return ret_ok;
 }
@@ -556,9 +497,69 @@ manage_child_cgi_process (cherokee_handler_cgi_t *cgi, int pipe_cgi[2], int pipe
 	exit(1);
 }
 
+static ret_t
+fork_and_execute_cgi_unix (cherokee_handler_cgi_t *cgi)
+{
+	int                    re;
+	int                    pid;
+	cherokee_connection_t *conn = HANDLER_CONN(cgi);
+
+	struct {
+		int cgi[2];
+		int server[2];
+	} pipes;
+
+	/* Creates the pipes ...
+	 */
+	re  = pipe (pipes.cgi);
+	re |= pipe (pipes.server);
+
+	if (re != 0) {
+		conn->error_code = http_internal_error;
+		return ret_error;
+	}	
+
+	/* .. and fork the process 
+	 */
+	pid = fork();
+	if (pid == 0) {
+		/* CGI process
+		 */
+		manage_child_cgi_process (cgi, pipes.cgi, pipes.server);
+
+	} else if (pid < 0) {
+		/* Error
+		 */
+		close (pipes.cgi[0]);
+		close (pipes.cgi[1]);
+
+		close (pipes.server[0]);
+		close (pipes.server[1]);
+		
+		conn->error_code = http_internal_error;
+		return ret_error;
+	}
+
+	TRACE (ENTRIES, "pid %d\n", pid);
+
+	close (pipes.server[0]);
+	close (pipes.cgi[1]);
+
+	cgi->pid        = pid;
+	cgi->pipeInput  = pipes.cgi[0];
+	cgi->pipeOutput = pipes.server[1];
+
+	/* Set to Input to NON-BLOCKING
+	 */
+	_fd_set_properties (cgi->pipeInput, O_NDELAY|O_NONBLOCK, 0);
+
+	return ret_ok;
+}
+
 
 
 #else
+
 
 
 /*******************************
