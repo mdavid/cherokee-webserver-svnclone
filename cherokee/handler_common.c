@@ -55,7 +55,7 @@
 cherokee_module_info_handler_t MODULE_INFO(common) = {
 	.module.type     = cherokee_handler,                /* type         */
 	.module.new_func = cherokee_handler_common_new,     /* new func     */
-	.valid_methods   = http_get | http_head             /* http methods */
+	.valid_methods   = http_all_methods                 /* http methods */
 };
 
 
@@ -170,16 +170,12 @@ cherokee_handler_common_new (cherokee_handler_t **hdl, void *cnt, cherokee_table
 
 	cherokee_buffer_drop_endding (&conn->local_directory, conn->request.len);
 
-	printf ("1\n");
-	
 	/* Is it a file?
 	 */
 	if (S_ISREG(info->st_mode)) {
 		TRACE (ENTRIES, "going for %s\n", "handler_file");
 		return cherokee_handler_file_new (hdl, cnt, properties);
 	}
-
-	printf ("2\n");
 
 	/* Is it a directory
 	 */

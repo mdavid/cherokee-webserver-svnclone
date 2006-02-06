@@ -129,7 +129,8 @@ run-tests.py \
 124-DomainToDir2.py \
 125-domain-redir1.py \
 126-SCGI.py \
-127-SCGI-Post.py
+127-SCGI-Post.py \
+128-ValidMethod-common.py
 
 test:
 	./run-tests.py
