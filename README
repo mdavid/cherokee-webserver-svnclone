@@ -38,6 +38,10 @@ openssl req -days 1000 -new -x509 -nodes -out /etc/cherokee/ssl/cherokee.pem -ke
 ./configure --prefix=/usr --sysconfdir=/etc --disable-pthread --disable-tls --disable-largefile --disable-pcre
 cd cherokee && make -f Makefile.embedded 
 
+8.- Windows compilation
+-----------------------
+./configure --prefix=/usr --sysconfdir=/etc --enable-trace --enable-static-module=all --enable-static --enable-shared=no
+
 
 --
 Alvaro Lopez Ortega

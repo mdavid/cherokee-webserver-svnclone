@@ -107,7 +107,6 @@
 # define CHEROKEE_RWLOCK_DESTROY(m)
 #endif
 
-
 #ifdef _WIN32
 # define SOCK_ERRNO()      WSAGetLastError()
 # define CLOSE_ON_EXEC(h)  ((void)0)
@@ -115,6 +114,5 @@
 # define SOCK_ERRNO()      errno
 # define CLOSE_ON_EXEC(h)  fcntl (h, F_SETFD, FD_CLOEXEC, 1)
 #endif
-
 
 #endif /* CHEROKEE_COMMON_INTERNAL_H */

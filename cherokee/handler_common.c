@@ -240,6 +240,8 @@ cherokee_handler_common_new (cherokee_handler_t **hdl, void *cnt, cherokee_table
 			ret = stat_file (use_iocache, iocache, &nocache_info, conn->local_directory.buf, &file, &info);
 			exists = (ret == ret_ok);
 
+			TRACE (ENTRIES, "trying index '%s', exists %d\n", index, exists);
+
 			cherokee_buffer_drop_endding (&conn->local_directory, index_len);
 
 			/* If the file doesn't exist or it is a directory, try with the next one

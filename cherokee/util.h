@@ -49,9 +49,13 @@ CHEROKEE_BEGIN_DECLS
 
 #ifdef _WIN32
 # define cherokee_stat(path,buf) cherokee_win32_stat(path,buf)
+# define cherokee_error          GetLastError()
 #else
 # define cherokee_stat(path,buf) stat(path,buf)
+# define cherokee_error          errno
 #endif
+
+
 
 /* Some global information
  */
