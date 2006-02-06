@@ -395,6 +395,20 @@ split_address_or_path (char *str, cherokee_buffer_t *hostname, cint_t *port_num,
 	   return ret_ok;
 }
 
+static char *
+fix_win32_path (char *str)
+{
+#ifdef _WIN32
+	   char *i = str;
+	   while (*i) {
+			 if (*i == '\\') *i='/';
+			 i++;
+	   }
+#endif 
+	   return str;
+}
+
+
 void
 yyerror (char* msg)
 {
@@ -514,20 +528,14 @@ directories :
  */
 fulldir : T_FULLDIR
 {
-#ifdef _WIN32
-	   char *i = $1;
-	   while (*i) {
-			 if (*i == '\\') *i='/';
-			 i++;
-	   }
-#endif 
-	   $$ = $1;
+	   $$ = fix_win32_path($1);
 };
 
 /* ID/Path List
  */
-id_or_path : T_ID    { $$ = $1; }
-           | fulldir { $$ = $1; };
+id_or_path : T_QSTRING { $$ = $1; }
+           | T_ID      { $$ = $1; }
+           | fulldir   { $$ = $1; };
 
 id_path_list : id_or_path
 {
@@ -652,13 +660,17 @@ poll_method : T_POLL_METHOD T_ID
 	   }
 };
 
-document_root : T_DOCUMENT_ROOT fulldir
+document_root : T_DOCUMENT_ROOT id_or_path
 {
 	   char                      *root;
 	   int                        root_len;
 	   cherokee_virtual_server_t *vserver;
 
 	   vserver = auto_virtual_server;
+
+	   /* It might need to fix the path
+	    */
+	   fix_win32_path($2);
 
 	   root     = $2;
 	   root_len = strlen($2);
@@ -1120,13 +1132,13 @@ handler_option : T_ID str_type
 	   } else if (!strcasecmp ($1, "alink")) {
 			 dirs_table_set_handler_prop (current_config_entry, "alink", $2);
 	   } else if (!strcasecmp ($1, "interpreter")) {
-			 dirs_table_set_handler_prop (current_config_entry, "interpreter", $2);
+			 dirs_table_set_handler_prop (current_config_entry, "interpreter", fix_win32_path($2));
 	   } else if (!strcasecmp ($1, "scriptalias")) {
-			 dirs_table_set_handler_prop (current_config_entry, "scriptalias", $2);
+			 dirs_table_set_handler_prop (current_config_entry, "scriptalias", fix_win32_path($2));
 	   } else if (!strcasecmp ($1, "url")) {
 			 dirs_table_set_handler_prop (current_config_entry, "url", $2);
 	   } else if (!strcasecmp ($1, "filedir")) {
-			 dirs_table_set_handler_prop (current_config_entry, "filedir", $2);
+			 dirs_table_set_handler_prop (current_config_entry, "filedir", fix_win32_path($2));
 	   } else if (!strcasecmp ($1, "changeuser")) {
 			 cherokee_config_entry_set_handler_prop (current_config_entry, "changeuser", typed_int, INT_TO_POINTER($2), NULL);
 	   } else {
@@ -1251,6 +1263,7 @@ handler_server_optinal_entry : T_ENV T_ID str_type
 handler_server_optinal_entry: T_ID str_type
 {
 	   if (strcasecmp($1, "interpreter") != 0) return 1;
+	   fix_win32_path($2);
 	   cherokee_buffer_add (&current_ext_source->interpreter, $2, strlen($2));
 };
 

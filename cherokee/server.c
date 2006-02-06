@@ -1229,7 +1229,7 @@ cherokee_server_read_config_file (cherokee_server_t *srv, char *path)
  	if (path == NULL) { 
  		path = CHEROKEE_CONFDIR"/cherokee.conf"; 
  	} 
-
+	
 	return config_module_execute_function (srv, path, "read_config_file");
 }
 

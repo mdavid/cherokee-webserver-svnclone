@@ -84,7 +84,6 @@ _add (cherokee_fdpoll_select_t *fdp, int fd, int rw)
                 return ret_error;
         }
 
-
         fdp->select_fds[nfd->npollfds] = fd;
         switch (rw) {
         case fdp_read: 
@@ -186,20 +185,23 @@ select_get_maxfd (cherokee_fdpoll_select_t *fdp)
 static int   
 _watch (cherokee_fdpoll_select_t *fdp, int timeout_msecs)
 {
-        int mfd;
-        int r;
+        int            mfd, r;
+	struct timeval timeout;
 
         fdp->working_rfdset = fdp->master_rfdset;
         fdp->working_wfdset = fdp->master_wfdset;
 
         mfd = select_get_maxfd(fdp);
 
+	if (mfd < 0) 
+		sleep(1);
+	
         if (timeout_msecs == INFTIM) {
                 r = select (mfd + 1, &fdp->working_rfdset, &fdp->working_wfdset, NULL, NULL);
         } else {
-                struct timeval timeout;
                 timeout.tv_sec = timeout_msecs / 1000L;
                 timeout.tv_usec = ( timeout_msecs % 1000L ) * 1000L;
+
                 r = select (mfd + 1, &fdp->working_rfdset, &fdp->working_wfdset, NULL, &timeout);
         }
 

@@ -353,6 +353,14 @@ cherokee_connection_setup_error_handler (cherokee_connection_t *cnt)
 	if ((entry != NULL) && (entry->handler_new_func != NULL)) {
 		ret = entry->handler_new_func ((void **) &cnt->handler, cnt, entry->handler_properties);
 		if (ret == ret_ok) goto out;
+
+#ifdef TRACE_ENABLED
+		{ 
+			const char *name = NULL;
+			cherokee_module_get_name (MODULE(cnt->handler), &name);
+			TRACE(ENTRIES, "New handler %s\n", name);
+		}
+#endif
 	} 
 
 	/* If something was wrong, try with the default error handler
