@@ -362,13 +362,18 @@ add_key_val_entry_in_property (cherokee_table_t *properties, char *prop_name, ch
 }
 
 static ret_t
-split_address_or_path (char *str, cherokee_buffer_t *hostname, cint_t *port_num, cherokee_buffer_t *unix_socket)
+split_address_or_path (char *str, cherokee_buffer_t *hostname, cint_t *port_num, 
+				   cherokee_buffer_t *unix_socket, cherokee_buffer_t *original)
 {
 	   char    *p;
 	   cuint_t  len;
 
 	   len = strlen(str);
 	   if (len <= 0) return ret_error;
+
+	   /* Original
+	    */
+	   cherokee_buffer_add (original, str, len);
 
 	   /* Unix socket
 	    */
@@ -1241,7 +1246,8 @@ handler_option : T_SERVER address_or_path
 	   }
 
 	   current_ext_source = server_entry;
-	   split_address_or_path ($2, &server_entry->host, &server_entry->port, &server_entry->unix_socket);
+	   split_address_or_path ($2, &server_entry->host, &server_entry->port,
+						 &server_entry->unix_socket, &server_entry->original_server);
 
 } handler_server_optinal;
 

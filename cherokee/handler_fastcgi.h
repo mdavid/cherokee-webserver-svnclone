@@ -27,93 +27,51 @@
 
 #include "common-internal.h"
 
-#include "buffer.h"
 #include "handler.h"
+#include "buffer.h"
 #include "module_loader.h"
-#include "connection.h"
 #include "socket.h"
-#include "fastcgi.h"
-#include "ext_source.h"
-#include "fcgi_manager.h"
 #include "handler_cgi_base.h"
+#include "fcgi_manager.h"
 
-#include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>	
-#include <errno.h>	
-#include <string.h>	
-#include <sys/types.h>
-
-#ifdef HAVE_SYS_SOCKET_H
-# include <sys/socket.h>	
-#endif
-
-#ifdef HAVE_SYS_UN_H
-# include <sys/un.h>	
-#endif
-
-typedef union {
-	cherokee_sockaddr_t tcp;
-} cherokee_fcgi_sockaddr_t;
 
 typedef enum {
-	fcgi_post_init,
-	fcgi_post_read,
-	fcgi_post_send,
-	fcgi_post_finished
-} cherokee_fcgi_post_phase_t;
-
-typedef enum {
-	fcgi_phase_init,
-	fcgi_phase_send_post,
-	fcgi_phase_send_header,
-	fcgi_phase_read_fcgi,
-	fcgi_phase_finished
-} cherokee_fcgi_phase_t;
-
+	fcgi_init_unknown,
+	fcgi_init_get_manager,
+	fcgi_init_build_header,
+	fcgi_init_send_header,
+	fcgi_init_send_post
+} cherokee_handler_fastcgi_init_t;
 
 typedef struct {
-	cherokee_handler_t  handler;
-	
-	/* FastCGI manager
-	 */
-	cherokee_fcgi_manager_t      *manager_ref;
-	cuint_t                       id;
+	cherokee_handler_cgi_base_t base;
 
-	/* FastCGI protocol stuff
-	 */
-	cherokee_buffer_t             environment;
-	cherokee_buffer_t             write_buffer;
-	cherokee_buffer_t             incoming_buffer;
-	cherokee_buffer_t             data;
-	cherokee_fcgi_phase_t         phase;
+	list_t                  *fastcgi_env_ref;
+	list_t                  *server_list;	
 
-	cherokee_boolean_t            post_sent;
-	cherokee_fcgi_post_phase_t    post_phase;
+	cuint_t                  id;
+	cherokee_fcgi_manager_t *manager;
 
-	cherokee_ext_source_t        *configuration;
-	list_t                       *server_list;
-	int                           max_manager;
+	cherokee_buffer_t        header;	
+	cherokee_buffer_t        write_buffer;	
 
-	list_t                       *fcgi_env_ref;
+	cherokee_handler_fastcgi_init_t init_phase;
+
 } cherokee_handler_fastcgi_t;
 
+#define HANDLER_FASTCGI(x)  ((cherokee_handler_fastcgi_t *)(x))
 
-#define FCGI(x)                ((cherokee_handler_fastcgi_t *)(x))
-#define FCGI_SOCKADD_LOCAL(x)  (FCGI(x)->addr.local)
-#define FCGI_SOCKADD_TCP(x)    (FCGI(x)->addr.tcp)
-
-
+ 
 /* Library init function
  */
-void  fastcgi_init (cherokee_module_loader_t *loader);
-ret_t cherokee_handler_fastcgi_new (cherokee_handler_t **hdl, cherokee_connection_t *cnt, cherokee_table_t *properties);
+void  MODULE_INIT(fastcgi) (cherokee_module_loader_t *loader);
 
-/* Virtual methods
+/* Methods
  */
-ret_t cherokee_handler_fastcgi_init        (cherokee_handler_fastcgi_t *hdl);
+ret_t cherokee_handler_fastcgi_new         (cherokee_handler_t        **hdl, void *cnt, cherokee_table_t *properties);
 ret_t cherokee_handler_fastcgi_free        (cherokee_handler_fastcgi_t *hdl);
-ret_t cherokee_handler_fastcgi_step        (cherokee_handler_fastcgi_t *hdl, cherokee_buffer_t *buffer);
+ret_t cherokee_handler_fastcgi_init        (cherokee_handler_fastcgi_t *hdl);
 ret_t cherokee_handler_fastcgi_add_headers (cherokee_handler_fastcgi_t *hdl, cherokee_buffer_t *buffer);
+ret_t cherokee_handler_fastcgi_step        (cherokee_handler_fastcgi_t *hdl, cherokee_buffer_t *buffer);
 
-#endif /* CHEROKEE_HANDLER_FASTCGI_H */
+#endif /* CHEROKEE_HANDLER_CGI_H */

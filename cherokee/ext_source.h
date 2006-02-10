@@ -38,6 +38,7 @@ typedef struct {
 
 	cherokee_buffer_t          interpreter;
 
+	cherokee_buffer_t          original_server;
 	cherokee_buffer_t          host;
 	cint_t                     port;
 	cherokee_buffer_t          unix_socket;

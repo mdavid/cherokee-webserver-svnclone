@@ -59,6 +59,7 @@ struct cherokee_handler_cgi_base {
 	size_t             content_length;
 	cuint_t            is_error_handler;
 	cuint_t            change_user;
+	cuint_t            eof_reading_headers;
 
 	cherokee_buffer_t *filename;
 	cherokee_buffer_t *parameter; 
@@ -82,7 +83,6 @@ ret_t cherokee_handler_cgi_base_init           (cherokee_handler_cgi_base_t     
 ret_t cherokee_handler_cgi_base_free           (cherokee_handler_cgi_base_t *hdl);
 
 void  cherokee_handler_cgi_base_add_parameter  (cherokee_handler_cgi_base_t *cgi, char *name);
-ret_t cherokee_handler_cgi_base_build_envp     (cherokee_handler_cgi_base_t *cgi, cherokee_connection_t *conn);
 ret_t cherokee_handler_cgi_base_extract_path   (cherokee_handler_cgi_base_t *cgi, cherokee_boolean_t check_filename);
 
 ret_t cherokee_handler_cgi_base_add_headers    (cherokee_handler_cgi_base_t *cgi, cherokee_buffer_t *buffer);
@@ -93,6 +93,11 @@ ret_t cherokee_handler_cgi_base_split_pathinfo (cherokee_handler_cgi_base_t *cgi
 						int                          pos,
 						int                          allow_dirs);
 
+ret_t cherokee_handler_cgi_base_build_envp      (cherokee_handler_cgi_base_t *cgi, cherokee_connection_t *conn);
+ret_t cherokee_handler_cgi_base_build_basic_env (cherokee_handler_cgi_base_t              *cgi, 
+						 cherokee_handler_cgi_base_add_env_pair_t  set_env_pair,
+						 cherokee_connection_t                    *conn,
+						 cherokee_buffer_t                        *tmp);
 
 #endif /* CHEROKEE_HANDLER_CGI_BASE_H */
 

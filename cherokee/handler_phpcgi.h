@@ -27,14 +27,15 @@
 
 #include "common-internal.h"
 #include "handler.h"
+#include "module_loader.h"
 
 
 /* Library init function
  */
-void phpcgi_init ();
+void MODULE_INIT(phpcgi) (cherokee_module_loader_t *loader);
+
 
 ret_t cherokee_handler_phpcgi_new  (cherokee_handler_t **hdl, void *cnt, cherokee_table_t *properties);
 ret_t cherokee_handler_phpcgi_init (cherokee_handler_t  *hdl);
-
 
 #endif /* CHEROKEE_CONNECTION_HANDLER_PHPCGI_H */

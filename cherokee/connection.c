@@ -89,8 +89,7 @@ cherokee_connection_new  (cherokee_connection_t **cnt)
 {
 	CHEROKEE_NEW_STRUCT(n, connection);
 	   
-	cherokee_connection_base_init (CONN_BASE(n), conn_base_connection);
-	
+	INIT_LIST_HEAD(&n->list_entry);
 
 	n->tcp_cork          = 0;
 	n->error_code        = http_ok;
@@ -119,6 +118,8 @@ cherokee_connection_new  (cherokee_connection_t **cnt)
 	n->traffic_next      = 0;
 	n->validator         = NULL;
 	n->req_matched_ref   = NULL;
+	n->timeout           = -1;
+	n->extra_polling_fd  = -1;
 
 	cherokee_buffer_init (&n->buffer);
 	cherokee_buffer_init (&n->header_buffer);
@@ -194,6 +195,11 @@ cherokee_connection_free (cherokee_connection_t  *cnt)
 		cherokee_table_free2 (cnt->arguments, free);
 		cnt->arguments = NULL;
 	}
+
+        if (cnt->extra_polling_fd != -1) {
+                close (cnt->extra_polling_fd);
+                cnt->extra_polling_fd = -1;
+        }
 	
 	free (cnt);
 	return ret_ok;
@@ -213,8 +219,7 @@ cherokee_connection_clean (cherokee_connection_t *cnt)
 	}
 #endif
 
-	cherokee_connection_base_clean (CONN_BASE(cnt));
-
+	cnt->timeout           = -1;
 	cnt->phase             = phase_reading_header;
 	cnt->phase_return      = phase_nothing;
 	cnt->auth_type         = http_auth_nothing;
@@ -244,6 +249,11 @@ cherokee_connection_clean (cherokee_connection_t *cnt)
 		cherokee_encoder_free (cnt->encoder);
 		cnt->encoder = NULL;
 	}
+
+        if (cnt->extra_polling_fd != -1) {
+                close (cnt->extra_polling_fd);
+                cnt->extra_polling_fd = -1;
+        }
 
 	cherokee_post_mrproper (&cnt->post);
 

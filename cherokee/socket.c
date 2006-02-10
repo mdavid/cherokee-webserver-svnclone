@@ -614,19 +614,6 @@ cherokee_socket_set_client (cherokee_socket_t *sock, int type)
 }
 
 
-ret_t       
-cherokee_socket_set_status (cherokee_socket_t *socket, cherokee_socket_status_t status)
-{
-	socket->status = status;
-
-	if (status == socket_closed) {
-		cherokee_socket_close (socket);
-	}
-
-	return ret_ok;
-}
-
-
 ret_t 
 cherokee_write (cherokee_socket_t *socket, const char *buf, int buf_len, size_t *written)
 {
@@ -644,6 +631,7 @@ cherokee_write (cherokee_socket_t *socket, const char *buf, int buf_len, size_t 
 			case GNUTLS_E_PUSH_ERROR:
 			case GNUTLS_E_INTERRUPTED:
 			case GNUTLS_E_INVALID_SESSION: 
+				socket->status = socket_closed;
 				return ret_eof;
 			case GNUTLS_E_AGAIN:           
 				return ret_eagain;
@@ -656,6 +644,7 @@ cherokee_write (cherokee_socket_t *socket, const char *buf, int buf_len, size_t 
 			return ret_error;
 
 		} else if (len == 0) {
+			socket->status = socket_closed;
 			return ret_eof;
 		}
 #endif
@@ -679,6 +668,7 @@ cherokee_write (cherokee_socket_t *socket, const char *buf, int buf_len, size_t 
 			return ret_error;
 
 		} else if (len == 0) {
+			socket->status = socket_closed;
 			return ret_eof;
 		}
 #endif		
@@ -701,6 +691,7 @@ cherokee_write (cherokee_socket_t *socket, const char *buf, int buf_len, size_t 
 		case ETIMEDOUT:
 		case ECONNRESET:  
 		case EHOSTUNREACH:
+			socket->status = socket_closed;
 			return ret_eof;
 		}
 	
@@ -711,6 +702,7 @@ cherokee_write (cherokee_socket_t *socket, const char *buf, int buf_len, size_t 
 		return ret_error;
 
 	}  else if (len == 0) {
+		socket->status = socket_closed;
 		return ret_eof;
 	}
 
@@ -742,6 +734,7 @@ cherokee_read (cherokee_socket_t *socket, char *buf, int buf_size, size_t *done)
 			case GNUTLS_E_INTERRUPTED:              
 			case GNUTLS_E_INVALID_SESSION:
 			case GNUTLS_E_UNEXPECTED_PACKET_LENGTH:
+				socket->status = socket_closed;
 				return ret_eof;
 			case GNUTLS_E_AGAIN:
 				return ret_eagain;
@@ -754,6 +747,7 @@ cherokee_read (cherokee_socket_t *socket, char *buf, int buf_size, size_t *done)
 			return ret_error;
 			
 		} else if (len == 0) {
+			socket->status = socket_closed;
 			return ret_eof;
 		}
 #endif
@@ -771,9 +765,13 @@ cherokee_read (cherokee_socket_t *socket, char *buf, int buf_size, size_t *done)
 
 			re = SSL_get_error (socket->session, len);
 			switch (re) {
-			case SSL_ERROR_WANT_READ:   return ret_eagain;
-			case SSL_ERROR_ZERO_RETURN: return ret_eof;
-			case SSL_ERROR_SSL:         return ret_error;
+			case SSL_ERROR_WANT_READ:   
+				return ret_eagain;
+			case SSL_ERROR_ZERO_RETURN: 
+				socket->status = socket_closed;
+				return ret_eof;
+			case SSL_ERROR_SSL:         
+				return ret_error;
 			}
 
 			PRINT_ERROR ("ERROR: OpenSSL: SSL_read (%d, ..) -> err=%d '%s'\n", 
@@ -783,6 +781,7 @@ cherokee_read (cherokee_socket_t *socket, char *buf, int buf_size, size_t *done)
 			return ret_error;
 
 		} else if (len == 0) {
+			socket->status = socket_closed;
 			return ret_eof;
 		}
 #endif
@@ -814,6 +813,7 @@ cherokee_read (cherokee_socket_t *socket, char *buf, int buf_size, size_t *done)
 		case ETIMEDOUT:
 		case ECONNRESET:
 		case EHOSTUNREACH:
+			socket->status = socket_closed;
 			return ret_eof;
 		}
 
@@ -824,6 +824,7 @@ cherokee_read (cherokee_socket_t *socket, char *buf, int buf_size, size_t *done)
 		return ret_error;
 
 	} else if (len == 0) {
+		socket->status = socket_closed;
 		return ret_eof;
 	}
 	
@@ -871,6 +872,7 @@ cherokee_writev (cherokee_socket_t *socket, const struct iovec *vector, uint16_t
 		case EPIPE:
 		case ETIMEDOUT:
 		case ECONNRESET:
+			socket->status = socket_closed;
 			return ret_eof;
 		}
 	       
@@ -1243,27 +1245,35 @@ cherokee_socket_set_timeout (cherokee_socket_t *socket, cuint_t timeout)
 	re = ioctlsocket (socket->socket, FIONBIO, &block);	
 	if (re == SOCKET_ERROR) {
 #else	
-		re = ioctl (socket->socket, FIONBIO, &block);	
-		if (re < 0) {
+	re = ioctl (socket->socket, FIONBIO, &block);	
+	if (re < 0) {
 #endif
-			PRINT_ERROR ("ioctl (%d, FIONBIO, &%d) = %d\n", socket->socket, block, re);
-			return ret_error;
-		}
-
-		/* Set the send / receive timeouts
-		 */
-#if defined(SO_RCVTIMEO) && \
-   !defined(HAVE_BROKEN_SO_RCVTIMEO)
-		tv.tv_sec  = timeout / 1000;
-		tv.tv_usec = timeout % 1000;
-
-		re = setsockopt (socket->socket, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
-		if (re < 0) {
-			int err = errno;
-			PRINT_ERROR ("Couldn't set SO_RCVTIMEO, fd=%d, timeout=%d: %s\n", 
-				     socket->socket, timeout, strerror(err));
-		}
-#endif
-
-		return ret_ok;		      
+		PRINT_ERROR ("ioctl (%d, FIONBIO, &%d) = %d\n", socket->socket, block, re);
+		return ret_error;
 	}
+
+	/* Set the send / receive timeouts
+	 */
+#if defined(SO_RCVTIMEO) && !defined(HAVE_BROKEN_SO_RCVTIMEO)
+	tv.tv_sec  = timeout / 1000;
+	tv.tv_usec = timeout % 1000;
+	
+	re = setsockopt (socket->socket, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+	if (re < 0) {
+		int err = errno;
+		PRINT_ERROR ("Couldn't set SO_RCVTIMEO, fd=%d, timeout=%d: %s\n", 
+			     socket->socket, timeout, strerror(err));
+	}
+#endif
+	
+	return ret_ok;		      
+}
+
+
+ret_t       
+cherokee_socket_set_status (cherokee_socket_t *socket, cherokee_socket_status_t status)
+{
+	socket->status = status;
+	return ret_ok;
+}
+

@@ -716,10 +716,6 @@ $(common_cgi) \
 connection.h \
 connection-protected.h \
 connection.c \
-connection_base.h \
-connection_base.c \
-connection_group.h \
-connection_group.c \
 handler.h \
 handler.c \
 config_entry.h \

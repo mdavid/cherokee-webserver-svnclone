@@ -28,6 +28,8 @@
 #include "common-internal.h"
 #include "handler.h"
 #include "connection.h"
+#include "module_loader.h"
+
 
 typedef struct {
 	   cherokee_handler_t handler;
@@ -39,7 +41,7 @@ typedef struct {
 
 /* Library init function
  */
-void  error_redir_init ();
+void MODULE_INIT(error_redir) (cherokee_module_loader_t *loader);
 ret_t cherokee_handler_error_redir_new (cherokee_handler_t **hdl, cherokee_connection_t *cnt, cherokee_table_t *properties);
 
 #endif /* CHEROKEE_HANDLER_ERROR_REDIR_H */

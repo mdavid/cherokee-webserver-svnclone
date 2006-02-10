@@ -47,7 +47,6 @@
 #define ENTRIES "core,thread"
 
 static ret_t reactive_conn_from_polling  (cherokee_thread_t *thd, cherokee_connection_t *conn);
-static ret_t reactive_group_from_polling (cherokee_thread_t *thd, cherokee_connection_group_t *group);
 
 
 static char *
@@ -276,21 +275,21 @@ add_connection (cherokee_thread_t *thd, cherokee_connection_t *conn)
 }
 
 static void
-add_connection_polling (cherokee_thread_t *thd, cherokee_connection_base_t *conn)
+add_connection_polling (cherokee_thread_t *thd, cherokee_connection_t *conn)
 {
 	list_add ((list_t *)conn, &thd->polling_list);
 	thd->polling_list_num++;
 }
 
 static void
-del_connection (cherokee_thread_t *thd, cherokee_connection_base_t *conn)
+del_connection (cherokee_thread_t *thd, cherokee_connection_t *conn)
 {
 	list_del ((list_t *)conn);
 	thd->active_list_num--;
 }
 
 static void
-del_connection_polling (cherokee_thread_t *thd, cherokee_connection_base_t *conn)
+del_connection_polling (cherokee_thread_t *thd, cherokee_connection_t *conn)
 {
 	list_del ((list_t *)conn);
 	thd->polling_list_num--;
@@ -339,27 +338,18 @@ purge_connection (cherokee_thread_t *thread, cherokee_connection_t *conn)
 static void
 purge_closed_polling_connection (cherokee_thread_t *thread, cherokee_connection_t *conn)
 {
-	printf ("purge_closed_polling_connection %p\n", conn);
-
 	/* Delete from file descriptors poll
 	 */
-	cherokee_fdpoll_del (thread->fdpoll, CONN_BASE(conn)->extra_polling_fd);
+	cherokee_fdpoll_del (thread->fdpoll, conn->extra_polling_fd);
 
 	/* Remove from the polling list
 	 */
-	del_connection_polling (thread, CONN_BASE(conn));
+	del_connection_polling (thread, conn);
 	
 	/* The connection hasn't the main fd in the file descriptor poll
 	 * so, we just have to remove the connection.
 	 */
 	purge_connection (thread, conn);
-}
-
-
-static void
-purge_closed_polling_group (cherokee_thread_t *thread, cherokee_connection_group_t *group)
-{
-	printf ("purge_closed_polling_group %p\n", group);
 }
 
 
@@ -372,7 +362,7 @@ purge_closed_connection (cherokee_thread_t *thread, cherokee_connection_t *conn)
 
 	/* Remove from active connections list
 	 */
-	del_connection (thread, CONN_BASE(conn));
+	del_connection (thread, conn);
 
 	/* Finally, purge connection
 	 */
@@ -426,7 +416,7 @@ maybe_purge_closed_connection (cherokee_thread_t *thread, cherokee_connection_t 
 
 	/* Update the timeout value
 	 */
-	CONN_BASE(conn)->timeout = thread->bogo_now + srv->timeout;	
+	conn->timeout = thread->bogo_now + srv->timeout;	
 }
 
 
@@ -435,19 +425,15 @@ process_polling_connections (cherokee_thread_t *thd)
 {
 	int     re;
 	list_t *tmp, *i;
-	cherokee_connection_base_t *conn;
+	cherokee_connection_t *conn;
 
 	list_for_each_safe (i, tmp, (list_t*)&thd->polling_list) {
-		conn = CONN_BASE(i);
+		conn = CONN(i);
 
 		/* Has it been too much without any work?
 		 */
 		if (conn->timeout < thd->bogo_now) {
-			if (conn->type == conn_base_connection) {
-				purge_closed_polling_connection (thd, CONN(conn));
-			} else {
-				purge_closed_polling_group (thd, CONN_GROUP(conn));
-			}
+			purge_closed_polling_connection (thd, CONN(conn));
 			continue;
 		}
 		
@@ -458,11 +444,7 @@ process_polling_connections (cherokee_thread_t *thd)
 		case -1:
 			/* Error, move back the connection
 			 */
-			if (conn->type == conn_base_connection) {
-				purge_closed_polling_connection (thd, CONN(conn));
-			} else {
-				purge_closed_polling_group (thd, CONN_GROUP(conn));
-			}
+			purge_closed_polling_connection (thd, CONN(conn));
 			continue;
 		case 0:			
 			/* Nothing to do.. wait longer
@@ -472,11 +454,7 @@ process_polling_connections (cherokee_thread_t *thd)
 
 		/* Move from the 'polling' to the 'active' list:
 		 */
-		if (conn->type == conn_base_connection) {
-			reactive_conn_from_polling (thd, CONN(conn));
-		} else {
-			reactive_group_from_polling (thd, CONN_GROUP(conn));			
-		}
+		reactive_conn_from_polling (thd, CONN(conn));
 	}
 
 	return ret_ok;
@@ -494,7 +472,6 @@ process_active_connections (cherokee_thread_t *thd)
 	cherokee_connection_t *conn = NULL;
 	cherokee_server_t     *srv  = SRV(thd->server);
 
-
 	/* Process active connections
 	 */
 	list_for_each_safe (i, tmp, (list_t*)&thd->active_list) {
@@ -504,7 +481,7 @@ process_active_connections (cherokee_thread_t *thd)
 
 		/* Has the connection been too much time w/o any work
 		 */
-		if (CONN_BASE(conn)->timeout < thd->bogo_now) {
+		if (conn->timeout < thd->bogo_now) {
 			purge_closed_connection (thd, conn);
 			continue;
 		}
@@ -553,7 +530,7 @@ process_active_connections (cherokee_thread_t *thd)
 
 		/* The connection has work to do, so..
 		 */
-		CONN_BASE(conn)->timeout = thd->bogo_now + srv->timeout;
+		conn->timeout = thd->bogo_now + srv->timeout;
 
 		TRACE (ENTRIES, "conn on phase n=%d: %s\n", conn->phase, phase_to_str(conn->phase));
 
@@ -1673,7 +1650,7 @@ cherokee_thread_get_new_connection (cherokee_thread_t *thd, cherokee_connection_
 	new_connection->vserver   = server->vserver_default;
 	new_connection->keepalive = server->keepalive_max;
 
-	CONN_BASE(new_connection)->timeout = thd->bogo_now + THREAD_SRV(thd)->timeout;
+	new_connection->timeout   = thd->bogo_now + THREAD_SRV(thd)->timeout;
 
 	*conn = new_connection;
 	return ret_ok;
@@ -1721,8 +1698,8 @@ cherokee_thread_close_all_connections (cherokee_thread_t *thd)
 static ret_t 
 move_connection_to_polling (cherokee_thread_t *thd, cherokee_connection_t *conn)
 {
-	del_connection (thd, CONN_BASE(conn));
-	add_connection_polling (thd, CONN_BASE(conn));	
+	del_connection (thd, conn);
+	add_connection_polling (thd, conn);	
 
 	return ret_ok;
 }
@@ -1735,7 +1712,7 @@ cherokee_thread_deactive_to_polling (cherokee_thread_t *thd, cherokee_connection
 
 	/* Set the information in the connection
 	 */
-	CONN_BASE(conn)->extra_polling_fd = fd;
+	conn->extra_polling_fd = fd;
 
 	/* Remove the connection file descriptor and add the new one
 	 */
@@ -1749,7 +1726,7 @@ cherokee_thread_deactive_to_polling (cherokee_thread_t *thd, cherokee_connection
 static ret_t 
 move_connection_to_active (cherokee_thread_t *thd, cherokee_connection_t *conn)
 {
-	del_connection_polling (thd, CONN_BASE(conn));
+	del_connection_polling (thd, conn);
 	add_connection (thd, conn);
 
 	return ret_ok;
@@ -1763,84 +1740,13 @@ reactive_conn_from_polling (cherokee_thread_t *thd, cherokee_connection_t *conn)
 
 	/* Set the connection file descriptor and remove the old one
 	 */
-	cherokee_fdpoll_del (thd->fdpoll, CONN_BASE(conn)->extra_polling_fd);
+	cherokee_fdpoll_del (thd->fdpoll, conn->extra_polling_fd);
 	cherokee_fdpoll_add (thd->fdpoll, socket->socket, socket->status);
 
 	/* Remove the polling fd from the connection
 	 */
-	CONN_BASE(conn)->extra_polling_fd = -1;
+	conn->extra_polling_fd = -1;
 
 	return move_connection_to_active (thd, conn);
 }
 
-
-static void 
-group_remove_connections_foreach (cherokee_connection_t *conn, void *param)
-{
-	cherokee_thread_t *thd    = THREAD(param);
-	cherokee_socket_t *socket = CONN_SOCK(conn);
-
-	printf ("active:remove %p\n", conn);
-
-	del_connection (thd, CONN_BASE(conn));
-	cherokee_fdpoll_del (thd->fdpoll, SOCKET_FD(socket));
-}
-
-
-static void 
-group_add_connections_foreach (cherokee_connection_t *conn, void *param)
-{
-	cherokee_thread_t *thd    = THREAD(param);
-	cherokee_socket_t *socket = CONN_SOCK(conn);
-
-	printf ("active:add %p\n", conn);
-
-	add_connection (thd, conn);
-	cherokee_fdpoll_add (thd->fdpoll, SOCKET_FD(socket), 1);
-}
-
-
-ret_t 
-cherokee_thread_move_conn_group_to_polling (cherokee_thread_t *thd, cherokee_connection_group_t *group, int fd, int rw)
-{
-	/* Add the common descriptor to the polling
-	 */
-	cherokee_fdpoll_add (thd->fdpoll, fd, rw);
-	CONN_BASE(group)->extra_polling_fd = fd;
-
-	/* Remove the connections from the active list
-	 */
-	cherokee_connection_group_foreach (group, group_remove_connections_foreach, thd);
-
-	/* Add the group to polling
-	 */
-	add_connection_polling (thd, CONN_BASE(group));	
-
-	/* Refresh the timeout of the group 
-	 */
-	CONN_BASE(group)->timeout = thd->bogo_now + THREAD_SRV(thd)->timeout;
-
-	return ret_ok;
-}
-
-static ret_t
-reactive_group_from_polling (cherokee_thread_t *thd, cherokee_connection_group_t *group)
-{
-	printf ("reactive_group_from_polling g=%p\n", group);
-
-	/* Add the common descriptor to the polling
-	 */
-	cherokee_fdpoll_del (thd->fdpoll, CONN_BASE(group)->extra_polling_fd);
-
-	/* Add the group to polling
-	 */
-	del_connection_polling (thd, CONN_BASE(group));	
-
-	/* Remove the connections from the active list
-	 */
-	cherokee_connection_group_foreach (group, group_add_connections_foreach, thd);
-
-	/* Now is everything in place, triger the cb
-	 */
-	return cherokee_connection_group_reactive (group);
-}

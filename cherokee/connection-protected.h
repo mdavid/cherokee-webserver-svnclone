@@ -62,7 +62,7 @@
 #include "encoder_table.h"
 #include "post.h"
 #include "reqs_list.h"
-#include "connection_base.h"
+
 
 typedef enum {
 	phase_nothing,
@@ -81,7 +81,7 @@ typedef enum {
 
 
 struct cherokee_connection {
-	cherokee_connection_base_t    base;
+	struct list_head              list_entry;
 
 	/* References
 	 */
@@ -165,6 +165,8 @@ struct cherokee_connection {
 	 */
 	cherokee_post_t               post;
 	uint32_t                      keepalive;
+	time_t                        timeout;
+	int                           extra_polling_fd;
 
 	off_t                         range_start;
 	off_t                         range_end;
