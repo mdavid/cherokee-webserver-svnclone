@@ -36,7 +36,6 @@
 #include "connection.h"
 #include "fdpoll.h"
 #include "table.h"
-#include "connection_group.h"
 
 
 typedef enum {
@@ -116,7 +115,6 @@ ret_t cherokee_thread_get_new_connection         (cherokee_thread_t *thd, cherok
 ret_t cherokee_thread_set_reusable_connection    (cherokee_thread_t *thd, cherokee_connection_t  *conn);
 
 ret_t cherokee_thread_deactive_to_polling        (cherokee_thread_t *thd, cherokee_connection_t *conn, int fd, int rw);
-ret_t cherokee_thread_move_conn_group_to_polling (cherokee_thread_t *thd, cherokee_connection_group_t *group, int fd, int rw);
 
 int   cherokee_thread_connection_num             (cherokee_thread_t *thd);
 ret_t cherokee_thread_close_all_connections      (cherokee_thread_t *thd);

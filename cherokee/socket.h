@@ -182,8 +182,8 @@ ret_t cherokee_socket_set_timeout   (cherokee_socket_t *socket, cuint_t timeout)
 
 ret_t cherokee_socket_ntop          (cherokee_socket_t *socket, char *buf, size_t buf_size);
 ret_t cherokee_socket_pton          (cherokee_socket_t *socket, cherokee_buffer_t *buf);
-ret_t cherokee_socket_set_status    (cherokee_socket_t *socket, cherokee_socket_status_t);
 ret_t cherokee_socket_gethostbyname (cherokee_socket_t *socket, cherokee_buffer_t *hostname);
+ret_t cherokee_socket_set_status    (cherokee_socket_t *socket, cherokee_socket_status_t status);
 
 
 /* Low level functions

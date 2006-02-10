@@ -29,6 +29,7 @@
 #include "buffer.h"
 #include "handler.h"
 #include "connection.h"
+#include "module_loader.h"
 
 
 typedef struct {
@@ -47,6 +48,7 @@ typedef struct {
 #define SRVINFOHANDLER(x)  ((cherokee_handler_server_info_t *)(x))
 
 
+void MODULE_INIT(server_info) (cherokee_module_loader_t *loader);
 ret_t cherokee_handler_server_info_new   (cherokee_handler_t **hdl, cherokee_connection_t *cnt, cherokee_table_t *properties);
 
 /* virtual methods implementation

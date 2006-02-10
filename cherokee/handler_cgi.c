@@ -292,6 +292,25 @@ cherokee_handler_cgi_add_env_pair (cherokee_handler_cgi_base_t *cgi_base,
 #endif
 }
 
+static ret_t
+add_environment (cherokee_handler_cgi_t *cgi, cherokee_connection_t *conn)
+{
+	ret_t                        ret;
+	cherokee_handler_cgi_base_t *cgi_base = CGI_BASE(cgi);
+
+	ret = cherokee_handler_cgi_base_build_envp (CGI_BASE(cgi), conn);
+	if (unlikely (ret != ret_ok)) return ret;
+
+	/* SCRIPT_FILENAME
+	 */
+	if (cgi_base->filename) {
+		cherokee_handler_cgi_add_env_pair (cgi_base, "SCRIPT_FILENAME", 16, 
+						   cgi_base->filename->buf, cgi_base->filename->len);
+	}
+
+	return ret_ok;
+}
+
 
 static ret_t
 send_post (cherokee_handler_cgi_t *cgi)
@@ -343,7 +362,7 @@ cherokee_handler_cgi_init (cherokee_handler_cgi_t *cgi)
 		 * otherwhise the server will drop it for the CGI
 		 * isn't fast enough
 		 */
-		CONN_BASE(conn)->timeout = CONN_THREAD(conn)->bogo_now + CGI_TIMEOUT;
+		conn->timeout = CONN_THREAD(conn)->bogo_now + CGI_TIMEOUT;
 		
 		/* Launch the CGI
 		 */
@@ -441,7 +460,7 @@ manage_child_cgi_process (cherokee_handler_cgi_t *cgi, int pipe_cgi[2], int pipe
 
 	/* Sets the new environ. 
 	 */			
-	cherokee_handler_cgi_base_build_envp (CGI_BASE(cgi), conn);
+	add_environment (cgi, conn);
 
 	/* Change the directory 
 	 */
@@ -584,7 +603,7 @@ fork_and_execute_cgi_win32 (cherokee_handler_cgi_t *cgi)
 	HANDLE hChildStdinRd  = INVALID_HANDLE_VALUE;
 	HANDLE hChildStdoutWr = INVALID_HANDLE_VALUE;
 
-	cherokee_handler_cgi_base_build_envp (CGI_BASE(cgi), conn);
+	add_environment (cgi, conn);
 
 	/* envp: Add the end of array mark
 	 */

@@ -89,7 +89,7 @@ typedef struct {
 
 /* Library init function
  */
-void dirlist_init                  (cherokee_module_loader_t *loader);
+void MODULE_INIT(dirlist)          (cherokee_module_loader_t *loader);
 ret_t cherokee_handler_dirlist_new (cherokee_handler_t **hdl, void *cnt, cherokee_table_t *properties);
 
 /* virtual methods implementation

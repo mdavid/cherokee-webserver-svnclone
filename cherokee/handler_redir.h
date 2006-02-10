@@ -47,8 +47,7 @@ typedef struct {
 #define REHANDLER(x)  ((cherokee_handler_redir_t *)(x))
 
 
-void init_redir (cherokee_module_loader_t *loader);
-
+void MODULE_INIT(redir) (cherokee_module_loader_t *loader);
 ret_t cherokee_handler_redir_new (cherokee_handler_t **hdl, void *cnt, cherokee_table_t *properties);
 
 /* virtual methods implementation

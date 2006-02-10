@@ -49,7 +49,7 @@ typedef struct {
  
 /* Library init function
  */
-void  scgi_init (cherokee_module_loader_t *loader);
+void MODULE_INIT(scgi) (cherokee_module_loader_t *loader);
 
 /* Methods
  */

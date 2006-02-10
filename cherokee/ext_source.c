@@ -40,6 +40,7 @@ init_server (cherokee_ext_source_t *n)
 	cherokee_buffer_init (&n->interpreter);
 	cherokee_buffer_init (&n->host);
 	cherokee_buffer_init (&n->unix_socket);
+	cherokee_buffer_init (&n->original_server);
 
 	n->port           = -1;
 	n->custom_env     = NULL;
@@ -66,6 +67,7 @@ mrproper_server (cherokee_ext_source_t *n)
 	cherokee_buffer_mrproper (&n->interpreter);
 	cherokee_buffer_mrproper (&n->host);
 	cherokee_buffer_mrproper (&n->unix_socket);
+	cherokee_buffer_mrproper (&n->original_server);
 }
 
 static void
@@ -213,9 +215,9 @@ cherokee_ext_source_get_next (cherokee_ext_source_head_t *head_config, list_t *s
 		head_config->current_server = EXT_SOURCE(((list_t *)current_config)->next);
 	}		
 
-	CHEROKEE_MUTEX_UNLOCK (&head_config->current_server_lock);
-
 	*next = head_config->current_server;
+
+	CHEROKEE_MUTEX_UNLOCK (&head_config->current_server_lock);
 	return ret_ok;
 }
 

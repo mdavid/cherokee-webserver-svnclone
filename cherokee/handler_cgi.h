@@ -36,6 +36,7 @@
 #include "handler.h"
 #include "list.h"
 #include "handler_cgi_base.h"
+#include "module_loader.h"
 
 
 #define ENV_VAR_NUM 30
@@ -67,7 +68,7 @@ typedef struct {
 
 /* Library init function
  */
-void cgi_init ();
+void MODULE_INIT(cgi) (cherokee_module_loader_t *loader);
 
 /* Methods
  */
