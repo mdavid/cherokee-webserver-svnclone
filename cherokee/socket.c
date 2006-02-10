@@ -1115,6 +1115,7 @@ cherokee_socket_connect (cherokee_socket_t *socket)
 		}
 	}
 
+	socket->status = socket_reading;
 	return ret_ok;
 }
 
