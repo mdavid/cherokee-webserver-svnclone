@@ -24,10 +24,13 @@
 
 #include "common-internal.h"
 #include "post.h"
+#include "util.h"
 
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
+
+#define ENTRIES "post"
 
 
 ret_t 
@@ -181,8 +184,14 @@ cherokee_post_walk_to_fd (cherokee_post_t *post, int fd, int *eagain_fd, int *mo
 		r = write (fd, post->info.buf + post->walk_offset,
 			   post->info.len - post->walk_offset);
 		if (r < 0) {
-			return (errno == EAGAIN) ? ret_eagain : ret_error; 			
+			if (errno == EAGAIN)
+				return ret_eagain;
+
+			TRACE(ENTRIES, "errno %d\n", errno);
+			return  ret_error; 			
 		}
+
+		TRACE(ENTRIES, "wrote %d\n", r);
 
 		post->walk_offset += r;
 		if (post->walk_offset >= post->info.len)

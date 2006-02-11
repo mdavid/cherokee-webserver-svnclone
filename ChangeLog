@@ -1,5 +1,8 @@
 2006-02-11  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* cherokee/handler_cgi.c (fork_and_execute_cgi_win32): A few bug
+	were fixed.
+
 	* cherokee/handler_redir.h, cherokee/handler_redir.c: is_hidden
 	must be a property of each regex entry rather than a global
 	property to the handler. It fixes bug #42.
