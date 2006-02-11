@@ -1,3 +1,9 @@
+2006-02-11  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/handler_redir.h, cherokee/handler_redir.c: is_hidden
+	must be a property of each regex entry rather than a global
+	property to the handler. It fixes bug #42.
+
 2006-02-06  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* qa/122-Methods.py: There were some wrong paths in these

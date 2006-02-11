@@ -48,9 +48,10 @@ cherokee_module_info_handler_t MODULE_INFO(redir) = {
 #ifndef CHEROKEE_EMBEDDED
 
 struct cre_list {
-	pcre* re;
-	char* subs;
+	pcre            *re;
+	char            *subs;
 	struct cre_list *next;
+	char             hidden;
 };
 
 
@@ -72,10 +73,11 @@ build_regexs_list (cherokee_handler_redir_t *n, cherokee_connection_t *cnt, list
 		pcre            *re;
 		struct cre_list *new_regex;
 		char            *tmp = LIST_ITEM_INFO(i);
+		char             hidden;
 
 		/* Read the values
 		 */
-		n->is_hidden = (tmp[0] == 0);
+		hidden = (tmp[0] == 0);
 
 		pattern = tmp+1;
 		pattern_len = strlen(pattern);
@@ -102,9 +104,10 @@ build_regexs_list (cherokee_handler_redir_t *n, cherokee_connection_t *cnt, list
 		/* Add to the list in the same order that they are read
 		 */
 		new_regex = (struct cre_list*)malloc(sizeof(struct cre_list));
-		new_regex->re = re;
-		new_regex->subs = subs;
-		new_regex->next = NULL;
+		new_regex->re     = re;
+		new_regex->hidden = hidden;
+		new_regex->subs   = subs;
+		new_regex->next   = NULL;
 
 		/* Add entry to the list
 		 */
@@ -206,7 +209,7 @@ match_and_substitute (cherokee_handler_redir_t *n)
 
 		/* Internal redirect
 		 */
-		if (n->is_hidden == true) {
+		if (list->hidden == true) {
 			char *args;
 			int   len;
 			char *subject_copy = strdup (subject);
@@ -267,7 +270,6 @@ cherokee_handler_redir_new (cherokee_handler_t **hdl, void *cnt, cherokee_table_
 	n->regex_list_cre       = NULL;
 	n->target_url           = NULL;
 	n->target_url_len       = 0;
-	n->is_hidden            = false;
 	n->use_previous_match   = false;
 
 	/* It needs at least the "URL" configuration parameter..

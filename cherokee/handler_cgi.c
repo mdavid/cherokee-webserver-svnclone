@@ -277,8 +277,6 @@ cherokee_handler_cgi_add_env_pair (cherokee_handler_cgi_base_t *cgi_base,
 
 	entry[name_len+content_len+1] = '\0';
 
-	TRACE(ENTRIES, "%s\n", entry);
-
 	/* Set it in the table
 	 */
 	cgi->envp[cgi->envp_last] = entry;
