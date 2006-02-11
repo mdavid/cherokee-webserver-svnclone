@@ -80,12 +80,15 @@ static ret_t
 read_from_cgi (cherokee_handler_cgi_base_t *cgi_base, cherokee_buffer_t *buffer)
 {
 	ret_t                   ret;
- 	size_t                  readed;
-	cherokee_handler_cgi_t *cgi = HANDLER_CGI(cgi_base);
+ 	size_t                  readed = 0;
+	cherokee_handler_cgi_t *cgi    = HANDLER_CGI(cgi_base);
 
 	/* Read the data from the pipe:
 	 */
 	ret = cherokee_buffer_read_from_fd (buffer, cgi->pipeInput, 4096, &readed);
+
+	TRACE (ENTRIES, "read... ret=%d %d\n", ret, readed);
+
 	switch (ret) {
 	case ret_eagain:
 		cherokee_thread_deactive_to_polling (HANDLER_THREAD(cgi), HANDLER_CONN(cgi), cgi->pipeInput, 0);
@@ -317,13 +320,15 @@ send_post (cherokee_handler_cgi_t *cgi)
 	int                    eagain_fd = -1;
 	int                    mode      =  0;
 	cherokee_connection_t *conn      = HANDLER_CONN(cgi);
-	
-	TRACE (ENTRIES",post", "Sending POST fd=%d\n", cgi->pipeOutput);
-	
+		
 	ret = cherokee_post_walk_to_fd (&conn->post, cgi->pipeOutput, &eagain_fd, &mode);
+
+	TRACE (ENTRIES",post", "Sending POST fd=%d, ret=%d\n", cgi->pipeOutput, ret);
 	
 	switch (ret) {
 	case ret_ok:
+		TRACE (ENTRIES",post", "%s\n", "finished");
+
 		close (cgi->pipeOutput);
 		cgi->pipeOutput = -1;
 		return ret_ok;
@@ -596,53 +601,15 @@ fork_and_execute_cgi_win32 (cherokee_handler_cgi_t *cgi)
 
 	SECURITY_ATTRIBUTES saSecAtr;
 	HANDLE hProc; 
-	HANDLE hChildStdoutRd = INVALID_HANDLE_VALUE;
-	HANDLE hChildStdinWr  = INVALID_HANDLE_VALUE;
 	HANDLE hChildStdinRd  = INVALID_HANDLE_VALUE;
+	HANDLE hChildStdinWr  = INVALID_HANDLE_VALUE;
+	HANDLE hChildStdoutRd = INVALID_HANDLE_VALUE;
 	HANDLE hChildStdoutWr = INVALID_HANDLE_VALUE;
 
+	/* Create the environment for the process
+	 */
 	add_environment (cgi, conn);
-
-	/* envp: Add the end of array mark
-	 */
 	cherokee_buffer_add (&cgi->envp, "\0", 1);
-
-	/* Set the bInheritHandle flag so pipe handles are inherited. 
-	 */
-	memset(&saSecAtr, 0, sizeof(SECURITY_ATTRIBUTES));
-	saSecAtr.nLength = sizeof(SECURITY_ATTRIBUTES);
-	saSecAtr.lpSecurityDescriptor = NULL;
-	saSecAtr.bInheritHandle = TRUE;
-
-	/* Create the pipes
-	 */
-	hProc = GetCurrentProcess();
-
-	re = CreatePipe (&hChildStdoutRd, &hChildStdoutWr, &saSecAtr, 0);
-	if (!re) return ret_error;
-
-	re = CreatePipe (&hChildStdinWr, &hChildStdoinRd, &saSecAtr, 0);
-	if (!re) return ret_error;
-
-//	SetHandleInformation (cgi->hChildStdoutRd, HANDLE_FLAG_INHERIT, 0);
-
-	DuplicateHandle (hProc,  hChildStdoutRd, 
-			 hProc, &hChildStdoutRd, 
-			 0, TRUE,
-			 DUPLICATE_CLOSE_SOURCE | DUPLICATE_SAME_ACCESS); 
-
-/* 		re = CreatePipe(&hChildStdinRd, &cgi->hChildStdinWr, &saSecAtr, 0); */
-/* 		if (!re) return ret_error; */
-/* 		SetHandleInformation (cgi->hChildStdinWr, HANDLE_FLAG_INHERIT, 0); */
-
-	/* Starting information
-	 */
-	ZeroMemory (&si, sizeof(STARTUPINFO));
-	si.cb = sizeof(STARTUPINFO); 
-	si.hStdInput  = hChildStdinRd;
-	si.hStdOutput = hChildStdoutWr;
-	si.hStdError  = hChildStdoutWr;
-	si.dwFlags   |= STARTF_USESTDHANDLES;
 
 	/* Command line
 	 */
@@ -662,6 +629,47 @@ fork_and_execute_cgi_win32 (cherokee_handler_cgi_t *cgi)
 				     CGI_BASE(cgi)->filename->len - (end - file));
 	}
 
+	/* Set the bInheritHandle flag so pipe handles are inherited. 
+	 */
+	memset(&saSecAtr, 0, sizeof(SECURITY_ATTRIBUTES));
+	saSecAtr.nLength = sizeof(SECURITY_ATTRIBUTES);
+	saSecAtr.lpSecurityDescriptor = NULL;
+	saSecAtr.bInheritHandle       = TRUE;
+
+	/* Create the pipes
+	 */
+	hProc = GetCurrentProcess();
+
+	re = CreatePipe (&hChildStdoutRd, &hChildStdoutWr, &saSecAtr, 0);
+	if (!re) return ret_error;
+
+	re = CreatePipe (&hChildStdinRd, &hChildStdinWr, &saSecAtr, 0);
+	if (!re) return ret_error;
+
+	/* Make them inheritable
+	 */
+	re = DuplicateHandle (hProc,  hChildStdoutRd, 
+			      hProc, &hChildStdoutRd, 
+			      0, TRUE,
+			      DUPLICATE_CLOSE_SOURCE | DUPLICATE_SAME_ACCESS); 
+	if (!re) return ret_error;
+
+	re = DuplicateHandle (hProc,  hChildStdinWr,
+			      hProc, &hChildStdinWr,
+			      0, TRUE,
+			      DUPLICATE_CLOSE_SOURCE | DUPLICATE_SAME_ACCESS);
+	if (!re) return ret_error;
+
+
+	/* Starting information
+	 */
+	ZeroMemory (&si, sizeof(STARTUPINFO));
+	si.cb         = sizeof(STARTUPINFO); 
+	si.hStdOutput = hChildStdoutWr;
+	si.hStdError  = hChildStdoutWr;
+	si.hStdInput  = hChildStdinRd;
+	si.dwFlags   |= STARTF_USESTDHANDLES;
+
 	TRACE (ENTRIES, "exec %s dir %s\n", cmd_line.buf, exec_dir.buf);
 
 	/* Launch the child process
@@ -680,16 +688,18 @@ fork_and_execute_cgi_win32 (cherokee_handler_cgi_t *cgi)
 	CloseHandle (hChildStdinRd);
 	CloseHandle (hChildStdoutWr);
 
-	cherokee_buffer_mrproper (&cmd_line);
-	cherokee_buffer_mrproper (&exec_dir);
-
-	TRACE (ENTRIES, "The process is%s running\n", (re)? "" : "n't");
-
 	if (!re) {
 		PRINT_ERROR ("CreateProcess error: error=%d\n", GetLastError());
+
+		CloseHandle (pi.hProcess);
+		CloseHandle (pi.hThread);
+
 		conn->error_code = http_internal_error;
 		return ret_error;
 	}
+
+	cherokee_buffer_mrproper (&cmd_line);
+	cherokee_buffer_mrproper (&exec_dir);
 
 	cgi->thread  = pi.hThread;
 	cgi->process = pi.hProcess;
@@ -698,12 +708,16 @@ fork_and_execute_cgi_win32 (cherokee_handler_cgi_t *cgi)
 	 */
 	WaitForInputIdle (pi.hProcess, INFINITE);
 
-	// TMP !
-	CloseHandle(hChildStdinWr);
-
 	/* Extract the file descriptors
 	 */
-	cgi->pipeInput  = _open_osfhandle((LONG)hChildStdoutRd, _O_RDONLY|O_BINARY); 
+	cgi->pipeInput  = _open_osfhandle((LONG)hChildStdoutRd, O_BINARY|_O_RDONLY); 
+	
+	if (cherokee_post_is_empty (&conn->post)) {
+		CloseHandle (hChildStdinWr);
+	} else {
+		cgi->pipeOutput = _open_osfhandle((LONG)hChildStdinWr,  O_BINARY|_O_WRONLY);
+	}
+
 	TRACE (ENTRIES, "In fd %d, Out fd %d\n", cgi->pipeInput, cgi->pipeOutput); 
 
 	return ret_ok;
