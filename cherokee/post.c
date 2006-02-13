@@ -267,6 +267,9 @@ cherokee_post_walk_read (cherokee_post_t *post, cherokee_buffer_t *buf, cuint_t 
 
 	switch (post->type) {
 	case post_in_memory:
+		if (len > (post->info.len - post->walk_offset))
+			len = post->info.len - post->walk_offset;
+
 		cherokee_buffer_add (buf, post->info.buf + post->walk_offset, len);
 		post->walk_offset += len;
 

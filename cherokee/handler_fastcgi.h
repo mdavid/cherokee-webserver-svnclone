@@ -43,6 +43,14 @@ typedef enum {
 	fcgi_init_send_post
 } cherokee_handler_fastcgi_init_t;
 
+typedef enum {
+	fcgi_post_unknown,
+	fcgi_post_init,
+	fcgi_post_read,
+	fcgi_post_write
+} cherokee_handler_fastcgi_post_t;
+
+
 typedef struct {
 	cherokee_handler_cgi_base_t base;
 
@@ -56,6 +64,7 @@ typedef struct {
 	cherokee_buffer_t        write_buffer;	
 
 	cherokee_handler_fastcgi_init_t init_phase;
+	cherokee_handler_fastcgi_post_t post_phase;
 
 } cherokee_handler_fastcgi_t;
 

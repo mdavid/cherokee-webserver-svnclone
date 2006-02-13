@@ -230,6 +230,8 @@ cherokee_handler_common_new (cherokee_handler_t **hdl, void *cnt, cherokee_table
 				cherokee_buffer_clean (&conn->request);
 				cherokee_buffer_add (&conn->request, index, index_len);				
 
+				TRACE (ENTRIES, "top level index matched %s\n", index);
+
 				return ret_eagain;
 			}
 
