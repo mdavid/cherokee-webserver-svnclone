@@ -271,17 +271,17 @@ static ret_t
 downloader_send_buffer (cherokee_downloader_t *downloader, cherokee_buffer_t *buf)
 {
 	ret_t              ret;
-	size_t             writed;
 	cherokee_socket_t *sock;
+	size_t             written = 0;
 
 	sock = downloader->socket;
 	
-	ret = cherokee_socket_write (sock, buf, &writed);
+	ret = cherokee_socket_write (sock, buf, &written);
 	switch (ret) {
 	case ret_ok:
 		/* Drop the header that has been sent
 		 */
-		cherokee_buffer_drop_endding (buf, writed);
+		cherokee_buffer_drop_endding (buf, written);
 		if (cherokee_buffer_is_empty (buf)) {
 			return ret_ok;
 		}
@@ -301,7 +301,7 @@ static ret_t
 downloader_header_read (cherokee_downloader_t *downloader)
 {
 	ret_t               ret;
-	size_t              readed;
+	size_t              readed = 0;
 	cherokee_socket_t  *sock;
 
 	sock = downloader->socket;
@@ -408,7 +408,7 @@ static ret_t
 downloader_step (cherokee_downloader_t *downloader)
 {
 	ret_t               ret;
-	size_t              readed;
+	size_t              readed = 0;
 	cherokee_socket_t  *sock;
 
 	sock = downloader->socket;

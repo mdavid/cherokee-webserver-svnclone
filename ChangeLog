@@ -1,3 +1,7 @@
+2006-02-13  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/socket.c: A few little problem were fixed.
+
 2006-02-11  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cherokee/handler_cgi.c (fork_and_execute_cgi_win32): A few bug
