@@ -65,7 +65,7 @@ static ret_t
 read_from_scgi (cherokee_handler_cgi_base_t *cgi_base, cherokee_buffer_t *buffer)
 {
 	ret_t                    ret;
-	size_t                   read;
+	size_t                   read = 0;
 	cherokee_handler_scgi_t *scgi = HANDLER_SCGI(cgi_base);
 	
 	ret = cherokee_socket_read (scgi->socket, buffer, 4096, &read);

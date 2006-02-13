@@ -639,8 +639,6 @@ cherokee_write (cherokee_socket_t *socket, const char *buf, int buf_len, size_t 
 
 			PRINT_ERROR ("ERROR: GNUTLS: gnutls_record_send(%d, ..) -> err=%d '%s'\n", 
 				     SOCKET_FD(socket), (int)len, gnutls_strerror(len));
-
-			*written = 0;
 			return ret_error;
 
 		} else if (len == 0) {
@@ -663,8 +661,6 @@ cherokee_write (cherokee_socket_t *socket, const char *buf, int buf_len, size_t 
 
 			PRINT_ERROR ("ERROR: SSL_write (%d, ..) -> err=%d '%s'\n", 
 				     SOCKET_FD(socket), len, ERR_error_string(re, NULL));
-
-			*written = 0;
 			return ret_error;
 
 		} else if (len == 0) {
@@ -697,8 +693,6 @@ cherokee_write (cherokee_socket_t *socket, const char *buf, int buf_len, size_t 
 	
 		PRINT_ERROR ("ERROR: write(%d, ..) -> errno=%d '%s'\n", 
 			     SOCKET_FD(socket), err, strerror(err));
-
-		*written = 0;
 		return ret_error;
 
 	}  else if (len == 0) {
@@ -719,15 +713,9 @@ cherokee_read (cherokee_socket_t *socket, char *buf, int buf_size, size_t *done)
 {
 	ssize_t len;
 
-	if (socket->is_tls == TLS) {
+	if ((socket->is_tls == TLS) && (buf != NULL)) {
 #ifdef HAVE_GNUTLS
-		if (unlikely (buf == NULL)) {
-			char tmp[buf_size+1];
-			len = gnutls_record_recv (socket->session, tmp, buf_size);
-		} else {
-			len = gnutls_record_recv (socket->session, buf, buf_size);
-		}
-
+		len = gnutls_record_recv (socket->session, buf, buf_size);
 		if (len < 0) {
 			switch (len) {
 			case GNUTLS_E_PUSH_ERROR:
@@ -742,8 +730,6 @@ cherokee_read (cherokee_socket_t *socket, char *buf, int buf_size, size_t *done)
 			
 			PRINT_ERROR ("ERROR: GNUTLS: gnutls_record_recv(%d, ..) -> err=%d '%s'\n", 
 				     SOCKET_FD(socket), (int)len, gnutls_strerror(len));
-
-			*done = 0;
 			return ret_error;
 			
 		} else if (len == 0) {
@@ -753,13 +739,7 @@ cherokee_read (cherokee_socket_t *socket, char *buf, int buf_size, size_t *done)
 #endif
 
 #ifdef HAVE_OPENSSL
-		if (unlikely (buf == NULL)) {
-			char tmp[buf_size+1];
-			len = SSL_read (socket->session, tmp, buf_size);
-		} else {
-			len = SSL_read (socket->session, buf, buf_size);
-		}
-		
+		len = SSL_read (socket->session, buf, buf_size);
 		if (len < 0) {
 			int re;
 
@@ -776,8 +756,6 @@ cherokee_read (cherokee_socket_t *socket, char *buf, int buf_size, size_t *done)
 
 			PRINT_ERROR ("ERROR: OpenSSL: SSL_read (%d, ..) -> err=%d '%s'\n", 
 				     SOCKET_FD(socket), len, ERR_error_string(re, NULL));
-
-			*done = 0;
 			return ret_error;
 
 		} else if (len == 0) {
@@ -791,8 +769,8 @@ cherokee_read (cherokee_socket_t *socket, char *buf, int buf_size, size_t *done)
 	/* Plain read
 	 */
 	if (unlikely (buf == NULL)) {
-		char tmp[buf_size+1];
-		len = recv (SOCKET_FD(socket), tmp, buf_size, 0);
+		static char trash[256];
+		len = recv (SOCKET_FD(socket), trash, 256, 0);
 	} else {
 		len = recv (SOCKET_FD(socket), buf, buf_size, 0);
 	}
@@ -819,8 +797,6 @@ cherokee_read (cherokee_socket_t *socket, char *buf, int buf_size, size_t *done)
 
 		PRINT_ERROR ("ERROR: read(%d, ..) -> errno=%d '%s'\n", 
 			     SOCKET_FD(socket), err, strerror(err));
-		
-		*done = 0;
 		return ret_error;
 
 	} else if (len == 0) {
@@ -878,9 +854,6 @@ cherokee_writev (cherokee_socket_t *socket, const struct iovec *vector, uint16_t
 	       
 		PRINT_ERROR ("ERROR: writev(%d, ..) -> errno=%d '%s'\n", 
 			     SOCKET_FD(socket), err, strerror(err));
-
-		
-		*written = 0;
 		return ret_error;
 	}
 	

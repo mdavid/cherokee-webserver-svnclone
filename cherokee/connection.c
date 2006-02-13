@@ -800,7 +800,7 @@ ret_t
 cherokee_connection_pre_lingering_close (cherokee_connection_t *cnt)
 {
 	ret_t  ret;
-	size_t readed;
+	size_t readed = 0;
 
 	/* At this point, we don't want to follow the TLS protocol
 	 * any longer.
