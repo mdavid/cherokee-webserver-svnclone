@@ -254,15 +254,15 @@ cherokee_handler_redir_new (cherokee_handler_t **hdl, void *cnt, cherokee_table_
 {
 	ret_t ret;
 	CHEROKEE_NEW_STRUCT (n, handler_redir);
-
+	
 	/* Init the base class object
 	 */
 	cherokee_handler_init_base(HANDLER(n), cnt);
-
+	
 	MODULE(n)->init         = (handler_func_init_t) cherokee_handler_redir_init;
 	MODULE(n)->free         = (handler_func_free_t) cherokee_handler_redir_free;
 	HANDLER(n)->add_headers = (handler_func_add_headers_t) cherokee_handler_redir_add_headers;
-
+	
 	HANDLER(n)->connection  = cnt;
 	HANDLER(n)->support     = hsupport_nothing;
 

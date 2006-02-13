@@ -170,6 +170,7 @@ cherokee_handler_fastcgi_new (cherokee_handler_t **hdl, void *cnt, cherokee_tabl
 	n->id         = 0xDEADBEEF;
 	n->manager    = NULL;
 	n->init_phase = fcgi_init_get_manager;
+	n->post_phase = fcgi_post_init;
 
 	cherokee_buffer_init (&n->header);
 	cherokee_buffer_init (&n->write_buffer);
@@ -363,6 +364,80 @@ build_header (cherokee_handler_fastcgi_t *hdl)
 }
 
 
+static ret_t
+send_post (cherokee_handler_fastcgi_t *hdl, cherokee_buffer_t *buf)
+{
+	ret_t                    ret;
+	size_t                   size;
+	cherokee_connection_t   *conn = HANDLER_CONN(hdl);
+
+	switch (hdl->post_phase) {
+	case fcgi_post_init: {
+		FCGI_BeginRequestRecord request;
+	
+		/* Fetch the POST data
+		 */
+		cherokee_post_walk_reset (&conn->post);
+		cherokee_post_get_len (&conn->post, &size);
+
+		TRACE (ENTRIES, "Post %d bytes\n", size);
+
+		/* Add some data about it
+		 */
+		fcgi_build_header (&request.header, FCGI_STDIN, hdl->id, size, 0);
+		cherokee_buffer_add (buf, (void *)&request.header, sizeof(FCGI_Header));
+		
+		hdl->post_phase = fcgi_post_read;
+	}
+	case fcgi_post_read:
+		ret = cherokee_post_walk_read (&conn->post, buf, DEFAULT_READ_SIZE);
+		switch (ret) {
+		case ret_ok:
+                case ret_eagain:
+                        break;
+		case ret_error:
+                        return ret;
+		default:
+                        RET_UNKNOWN(ret);
+                        return ret_error;
+		}
+
+		hdl->post_phase = fcgi_post_write;
+
+	case fcgi_post_write:
+		if (! cherokee_buffer_is_empty (buf)) {
+			ret = cherokee_fcgi_manager_send_and_remove (hdl->manager, buf);
+			switch (ret) {
+                        case ret_ok:
+                                break;
+                        case ret_eagain:
+                                return ret_eagain;
+                        case ret_eof:
+                        case ret_error:
+                                return ret_error;
+                        default:
+				RET_UNKNOWN(ret);
+				return ret_error;
+                        }
+		}
+		
+		if (! cherokee_buffer_is_empty (buf))
+			return ret_eagain;
+		
+		if (! cherokee_post_got_all (&conn->post)) {
+			hdl->post_phase = fcgi_post_read;
+			return ret_eagain;
+		}
+
+		return ret_ok;
+
+	default:
+		SHOULDNT_HAPPEN;
+	}
+
+	return ret_error;
+}
+
 ret_t 
 cherokee_handler_fastcgi_init (cherokee_handler_fastcgi_t *hdl)
 {
@@ -404,6 +479,9 @@ cherokee_handler_fastcgi_init (cherokee_handler_fastcgi_t *hdl)
 
 	case fcgi_init_send_post:
 		TRACE (ENTRIES, "Phase = %s\n", "send post");
+
+		ret = send_post (hdl, &hdl->write_buffer);
+		if (ret != ret_ok) return ret;
 
 		add_empty_packet (hdl, FCGI_STDIN);
 		
