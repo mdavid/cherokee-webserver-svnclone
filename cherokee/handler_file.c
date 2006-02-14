@@ -76,7 +76,12 @@ cherokee_handler_file_new  (cherokee_handler_t **hdl, cherokee_connection_t *cnt
 	n->mime           = NULL;
 	n->using_sendfile = false;
 	n->info           = NULL;
+
+#ifdef CHEROKEE_EMBEDDED
+	n->nocache        = true;
+#else
 	n->nocache        = false;
+#endif
 
 	/* Check some properties
 	 */
@@ -276,6 +281,7 @@ stat_local_directory (cherokee_handler_file_t *n, cherokee_connection_t *conn, c
 
 	/* I/O cache
 	 */
+#ifndef CHEROKEE_EMBEDDED
 	ret = cherokee_iocache_stat_get (srv->iocache, conn->local_directory.buf, io_entry);
 	if (ret != ret_ok) {
 		switch (ret) {
@@ -295,6 +301,9 @@ stat_local_directory (cherokee_handler_file_t *n, cherokee_connection_t *conn, c
 
 	*info = &(*io_entry)->state;
 	return ret_ok;
+#endif 
+
+	return ret_error;
 }
 
 
