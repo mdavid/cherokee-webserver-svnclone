@@ -1,5 +1,14 @@
 2006-02-14  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* cherokee/read_config_embedded.c, cherokee/handler_common.c,
+	cherokee/handler_file.c, cherokee/Makefile.embedded: There were
+	some problem with the IOCache in the embedded version.  This patch
+	fixes them.
+
+	* cherokee/read_config_embedded.c (cherokee_embedded_read_config):
+	I must use the default handler entry in the virtual server
+	structrure rather than the "/" directory.  Fixed.
+
 	* config.h.win32: Patch by Gisle Vanem <giva@bgnett.no>
 
 2006-02-13  Alvaro Lopez Ortega  <alvaro@alobbs.com>

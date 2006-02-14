@@ -90,6 +90,7 @@ stat_file (cherokee_boolean_t useit, cherokee_iocache_t *iocache, struct stat *n
 
 	/* I/O cache
 	 */
+#ifndef CHEROKEE_EMBEDDED
 	ret = cherokee_iocache_stat_get (iocache, path, io_entry);
 
 	TRACE (ENTRIES, "%s, use_iocache=%d re=%d\n", path, useit, re);
@@ -107,6 +108,9 @@ stat_file (cherokee_boolean_t useit, cherokee_iocache_t *iocache, struct stat *n
 
 	*info = &(*io_entry)->state;
 	return ret_ok;
+#endif
+
+	return ret_error;
 }
 
 
@@ -117,8 +121,8 @@ cherokee_handler_common_new (cherokee_handler_t **hdl, void *cnt, cherokee_table
 	int                       exists;
 	struct stat               nocache_info;
 	struct stat              *info;
-	cherokee_iocache_t       *iocache;
 	cherokee_iocache_entry_t *file;
+	cherokee_iocache_t       *iocache     = NULL;
  	cherokee_boolean_t        use_iocache = true;
 	cherokee_connection_t    *conn        = CONN(cnt);
 
@@ -132,7 +136,12 @@ cherokee_handler_common_new (cherokee_handler_t **hdl, void *cnt, cherokee_table
 	 */
 	cherokee_buffer_add_buffer (&conn->local_directory, &conn->request);
 
+#ifdef CHEROKEE_EMBEDDED
+	use_iocache = false;
+#else
 	cherokee_iocache_get_default (&iocache);
+#endif
+
 	ret = stat_file (use_iocache, iocache, &nocache_info, conn->local_directory.buf, &file, &info);
 	exists = (ret == ret_ok);
 

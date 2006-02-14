@@ -3,7 +3,6 @@ LDFLAGS=-lc -ldl
 
 OBJS = \
 md5.o \
-cgi.o \
 main.o \
 http.o \
 util.o \
@@ -21,7 +20,6 @@ logger.o \
 handler.o \
 avl/avl.o \
 encoder.o \
-iocache.o \
 list_ext.o \
 validator.o \
 exts_table.o \
@@ -41,6 +39,7 @@ module_loader.o \
 virtual_server.o \
 validator_htdigest.o \
 config_entry.o \
+handler_cgi_base.o \
 handler_cgi.o \
 handler_file.o \
 handler_redir.o \
@@ -69,7 +68,7 @@ all: u-cherokee
 
 u-cherokee: $(OBJS)
 	$(CC) -o $@ $(LDFLAGS) $(OBJS) 
-	strip -R .note -R .comment $@
+#	strip -R .note -R .comment $@
 #	if [ `type -p upx | wc -c` != 0 ]; then \
 #	   upx -9 $@; \
 #	fi

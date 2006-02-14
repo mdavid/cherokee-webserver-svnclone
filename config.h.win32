@@ -28,8 +28,6 @@
 #define HAVE_CRYPT 1
 #define HAVE_GETDTABLESIZE 1
 #define HAVE_WIN32_SELECT 1
-#define HAVE_STRCASESTR
-#define strcasestr(s,x) stricmp(s,x) 
 
 /* Types
  */

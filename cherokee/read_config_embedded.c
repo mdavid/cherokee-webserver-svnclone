@@ -29,6 +29,9 @@
 #include "server-protected.h"
 #include "virtual_server.h"
 
+#define DEFAULT_DOCUMENTROOT "/var/www/"
+
+
 ret_t
 cherokee_embedded_read_config (cherokee_server_t *srv)
 {
@@ -39,15 +42,20 @@ cherokee_embedded_read_config (cherokee_server_t *srv)
 
 	   vserver = srv->vserver_default;
 
-	   /* Add root directory
+	   /* Root directory
+	    */
+	   cherokee_buffer_add_str (vserver->root, DEFAULT_DOCUMENTROOT);
+
+	   /* Default handler
 	    */
 	   cherokee_module_loader_load (&srv->loader, "common");
 	   cherokee_module_loader_get_info (&srv->loader, "common", &info);
 	   
 	   cherokee_config_entry_new (&entry);
 	   cherokee_config_entry_set_handler (entry, info);
-	   cherokee_dirs_table_add (&vserver->dirs, "/", entry);
-	   cherokee_dirs_table_relink (&vserver->dirs);
+
+	   vserver->default_handler = entry;
+	   vserver->default_handler->priority = CHEROKEE_CONFIG_PRIORITY_DEFAULT;
 	   
 	   return ret_ok;
 }
