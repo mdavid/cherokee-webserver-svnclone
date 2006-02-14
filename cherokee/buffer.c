@@ -521,11 +521,9 @@ cherokee_buffer_read_from_fd (cherokee_buffer_t *buf, int fd, size_t size, size_
 
 	len = read (fd, tmp, size);
 	if (len < 0) {
-		int er = cherokee_error;
-		
 		/* On error
 		 */
-		switch (er) {
+		switch (errno) {
 		case EINTR:      return ret_eagain;
 		case EAGAIN:     return ret_eagain;
 		case EPIPE:      return ret_eof;

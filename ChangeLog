@@ -1,3 +1,7 @@
+2006-02-14  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* config.h.win32: Patch by Gisle Vanem <giva@bgnett.no>
+
 2006-02-13  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cherokee/handler_fastcgi.c (send_post): Oops! I forgot to

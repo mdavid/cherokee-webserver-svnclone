@@ -374,13 +374,18 @@ send_post (cherokee_handler_fastcgi_t *hdl, cherokee_buffer_t *buf)
 	switch (hdl->post_phase) {
 	case fcgi_post_init: {
 		FCGI_BeginRequestRecord request;
-	
+
 		/* Fetch the POST data
 		 */
 		cherokee_post_walk_reset (&conn->post);
 		cherokee_post_get_len (&conn->post, &size);
 
 		TRACE (ENTRIES, "Post %d bytes\n", size);
+
+		/* Is really a post to be sent
+		 */
+		if (size <= 0)
+			return ret_ok;
 
 		/* Add some data about it
 		 */

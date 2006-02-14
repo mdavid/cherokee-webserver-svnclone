@@ -19,15 +19,17 @@
 #define HAVE_STDINT_H   1
 #define HAVE_FCNTL_H    1
 
-/* Functions
+/* Functions & features 
  */
 #define HAVE_INT_TIMEZONE  1
 #define HAVE_MEMMOVE 1
 #define HAVE_INET_PTON 1
 #define HAVE_INET_NTOP 1
 #define HAVE_CRYPT 1
-#define HAVE_SELECT 1
 #define HAVE_GETDTABLESIZE 1
+#define HAVE_WIN32_SELECT 1
+#define HAVE_STRCASESTR
+#define strcasestr(s,x) stricmp(s,x) 
 
 /* Types
  */
