@@ -98,9 +98,6 @@ struct cherokee_connection {
 	cherokee_socket_t            *socket;
 	int                           tcp_cork;
 		
-	cherokee_buffer_t             query_string;	
-	cherokee_table_t             *arguments;
-
 	cherokee_logger_t            *logger_ref;
 	int                           log_at_end;
 	
@@ -136,6 +133,9 @@ struct cherokee_connection {
 	cherokee_buffer_t             request;             /* /dir/file */
 	cherokee_buffer_t             pathinfo;            /* /param1 */
 	cherokee_buffer_t             userdir;             /* 'alo' in http://www.alobbs.com/~alo/thing */
+	cherokee_buffer_t             query_string;	
+	cherokee_table_t             *arguments;
+
 	cherokee_buffer_t             host;
 	cherokee_buffer_t             effective_directory;
 	cherokee_buffer_t             redirect;
@@ -166,7 +166,11 @@ struct cherokee_connection {
 	cherokee_post_t               post;
 	uint32_t                      keepalive;
 	time_t                        timeout;
-	int                           extra_polling_fd;
+
+	/* Polling
+	 */
+	int                           polling_fd;
+	cherokee_boolean_t            polling_fd_added;
 
 	off_t                         range_start;
 	off_t                         range_end;

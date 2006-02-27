@@ -578,6 +578,9 @@ cherokee_buffer_print_debug (cherokee_buffer_t *buf, int len)
 		length = len;
 	}
 
+	if (length <= 0)
+		return ret_ok;
+
 	text [16] = 0;
 	for (i=0; i < length; i++) {
 		if (i%16 == 0) {

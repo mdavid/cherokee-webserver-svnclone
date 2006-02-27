@@ -40,7 +40,9 @@ typedef enum {
 	fcgi_init_get_manager,
 	fcgi_init_build_header,
 	fcgi_init_send_header,
-	fcgi_init_send_post
+	fcgi_init_send_post,
+	fcgi_init_read,
+	fcgi_init_end
 } cherokee_handler_fastcgi_init_t;
 
 typedef enum {
@@ -58,9 +60,9 @@ typedef struct {
 	list_t                  *server_list;	
 
 	cuint_t                  id;
+	cuchar_t                 generation;
 	cherokee_fcgi_manager_t *manager;
 
-	cherokee_buffer_t        header;	
 	cherokee_buffer_t        write_buffer;	
 
 	cherokee_handler_fastcgi_init_t init_phase;

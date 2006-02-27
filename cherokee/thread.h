@@ -34,6 +34,7 @@
 #include "list.h"
 #include "socket.h"
 #include "connection.h"
+#include "connection-protected.h"
 #include "fdpoll.h"
 #include "table.h"
 
@@ -47,7 +48,6 @@ typedef enum {
 	thread_tls_normal,
 	thread_normal_tls
 } cherokee_thread_pref_t;
-
 
 
 typedef struct {
@@ -114,9 +114,10 @@ ret_t cherokee_thread_add_connection             (cherokee_thread_t *thd, cherok
 ret_t cherokee_thread_get_new_connection         (cherokee_thread_t *thd, cherokee_connection_t **conn);
 ret_t cherokee_thread_set_reusable_connection    (cherokee_thread_t *thd, cherokee_connection_t  *conn);
 
-ret_t cherokee_thread_deactive_to_polling        (cherokee_thread_t *thd, cherokee_connection_t *conn, int fd, int rw);
-
+ret_t cherokee_thread_deactive_to_polling        (cherokee_thread_t *thd, cherokee_connection_t *conn, int fd, int rw, char add_fd);
 int   cherokee_thread_connection_num             (cherokee_thread_t *thd);
+
 ret_t cherokee_thread_close_all_connections      (cherokee_thread_t *thd);
+ret_t cherokee_thread_close_polling_connections  (cherokee_thread_t *thd, int fd, cuint_t *num);
 
 #endif /* CHEROKEE_THREAD_H */

@@ -31,25 +31,24 @@
 #include "ext_source.h"
 #include "thread.h"
 
+typedef struct {
+	cherokee_connection_t *conn;
+	cherokee_boolean_t     eof;
+} conn_entry_t;
 
 typedef struct {
 	cherokee_ext_source_t  *source;
 	cherokee_socket_t      *socket;
+	cuchar_t                generation;
+	cherokee_boolean_t      first_connect;
+
 	cherokee_buffer_t       read_buffer;
 	cherokee_buffer_t       incomm_buffer;
 
 	struct {
-		cherokee_connection_t **id2conn;
-		cuint_t                 size;
+		conn_entry_t   *id2conn;
+		cuint_t         size;
 	} conn;
-
-	struct {
-		cuint_t                 id;
-		cint_t                  type;
-		cint_t                  return_val;
-		cuint_t                 remaining;
-		cuint_t                 padding;
-	} current;
 
 } cherokee_fcgi_manager_t;
 
@@ -59,11 +58,10 @@ typedef struct {
 ret_t cherokee_fcgi_manager_new             (cherokee_fcgi_manager_t **fcgim, cherokee_ext_source_t *fcgi);
 ret_t cherokee_fcgi_manager_free            (cherokee_fcgi_manager_t  *fcgim);
 
-ret_t cherokee_fcgi_manager_reconnect             (cherokee_fcgi_manager_t *fcgim);
-ret_t cherokee_fcgi_manager_ensure_is_connected   (cherokee_fcgi_manager_t *fcgim);
+ret_t cherokee_fcgi_manager_ensure_is_connected   (cherokee_fcgi_manager_t *fcgim, cherokee_thread_t *thd);
 
-ret_t cherokee_fcgi_manager_register_connection   (cherokee_fcgi_manager_t *fcgim, cherokee_connection_t *conn, cuint_t *id);
-ret_t cherokee_fcgi_manager_unregister_id         (cherokee_fcgi_manager_t *fcgim, cuint_t id);
+ret_t cherokee_fcgi_manager_register_connection   (cherokee_fcgi_manager_t *fcgim, cherokee_connection_t *conn, cuint_t *id, cuchar_t *generation);
+ret_t cherokee_fcgi_manager_unregister_id         (cherokee_fcgi_manager_t *fcgim, cherokee_connection_t *conn);
 
 ret_t cherokee_fcgi_manager_send_and_remove       (cherokee_fcgi_manager_t *fcgim, cherokee_buffer_t *buf);
 ret_t cherokee_fcgi_manager_step                  (cherokee_fcgi_manager_t *fcgim);

@@ -59,7 +59,7 @@ struct cherokee_handler_cgi_base {
 	size_t             content_length;
 	cuint_t            is_error_handler;
 	cuint_t            change_user;
-	cuint_t            eof_reading_headers;
+	cuint_t            got_eof;
 
 	cherokee_buffer_t *filename;
 	cherokee_buffer_t *parameter; 

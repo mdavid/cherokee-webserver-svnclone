@@ -72,7 +72,8 @@ read_from_scgi (cherokee_handler_cgi_base_t *cgi_base, cherokee_buffer_t *buffer
 
 	switch (ret) {
 	case ret_eagain:
-		cherokee_thread_deactive_to_polling (HANDLER_THREAD(cgi_base), HANDLER_CONN(cgi_base), scgi->socket->socket, 0);
+		cherokee_thread_deactive_to_polling (HANDLER_THREAD(cgi_base), HANDLER_CONN(cgi_base), 
+						     scgi->socket->socket, 0, true);
 		return ret_eagain;
 
 	case ret_ok:
@@ -81,6 +82,7 @@ read_from_scgi (cherokee_handler_cgi_base_t *cgi_base, cherokee_buffer_t *buffer
 
 	case ret_eof:
 	case ret_error:
+		cgi_base->got_eof = true;
 		return ret;
 
 	default:
@@ -250,7 +252,7 @@ send_post (cherokee_handler_scgi_t *hdl)
 		break;
 	case ret_eagain:
 		if (e_fd != -1)
-			cherokee_thread_deactive_to_polling (HANDLER_THREAD(hdl), conn, e_fd, mode);
+			cherokee_thread_deactive_to_polling (HANDLER_THREAD(hdl), conn, e_fd, mode, true);
 		return ret_eagain;
 	default:
 		return ret;

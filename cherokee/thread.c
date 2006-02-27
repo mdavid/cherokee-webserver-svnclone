@@ -340,7 +340,8 @@ purge_closed_polling_connection (cherokee_thread_t *thread, cherokee_connection_
 {
 	/* Delete from file descriptors poll
 	 */
-	cherokee_fdpoll_del (thread->fdpoll, conn->extra_polling_fd);
+	if (conn->polling_fd_added)
+		cherokee_fdpoll_del (thread->fdpoll, conn->polling_fd);
 
 	/* Remove from the polling list
 	 */
@@ -433,18 +434,25 @@ process_polling_connections (cherokee_thread_t *thd)
 		/* Has it been too much without any work?
 		 */
 		if (conn->timeout < thd->bogo_now) {
-			purge_closed_polling_connection (thd, CONN(conn));
+			purge_closed_polling_connection (thd, conn);
 			continue;
 		}
 		
+		/* Is there information to be sent?
+		 */
+		if (conn->buffer.len > 0) {
+			reactive_conn_from_polling (thd, conn);
+			continue;
+		}
+
 		/* Check the "extra" file descriptor
 		 */
-		re = cherokee_fdpoll_check (thd->fdpoll, conn->extra_polling_fd, 0);
+		re = cherokee_fdpoll_check (thd->fdpoll, conn->polling_fd, 0);
 		switch (re) {
 		case -1:
 			/* Error, move back the connection
 			 */
-			purge_closed_polling_connection (thd, CONN(conn));
+			purge_closed_polling_connection (thd, conn);
 			continue;
 		case 0:			
 			/* Nothing to do.. wait longer
@@ -454,7 +462,7 @@ process_polling_connections (cherokee_thread_t *thd)
 
 		/* Move from the 'polling' to the 'active' list:
 		 */
-		reactive_conn_from_polling (thd, CONN(conn));
+		reactive_conn_from_polling (thd, conn);
 	}
 
 	return ret_ok;
@@ -496,10 +504,11 @@ process_active_connections (cherokee_thread_t *thd)
 		}
 
 		/* Process the connection?
-		 * 1.- Are there a pipelined connection?
+		 * 1.- Is there a pipelined connection?
+		 * 2.- Is it closing the connection?
 		 */
-		process = ((conn->phase == phase_reading_header) &&
-			   (!cherokee_buffer_is_empty (&conn->incoming_header)));
+		process = ((conn->phase == phase_lingering) ||
+			   ((conn->phase == phase_reading_header) && (conn->incoming_header.len > 0)));
 			
 		/* Process the connection?
 		 * 2.- Inspect the file descriptor	
@@ -1035,7 +1044,6 @@ process_active_connections (cherokee_thread_t *thd)
 			/* Handler step: read or make new data to send
 			 */
 			ret = cherokee_connection_step (conn);
-
 			switch (ret) {
 			case ret_eagain:
 				break;
@@ -1062,8 +1070,6 @@ process_active_connections (cherokee_thread_t *thd)
 				break;
 
 			case ret_ok:
-				/* We've data, so..
-				 */
 				ret = cherokee_connection_send (conn);
 
 				switch (ret) {
@@ -1691,6 +1697,27 @@ cherokee_thread_close_all_connections (cherokee_thread_t *thd)
 }
 
 
+ret_t 
+cherokee_thread_close_polling_connections (cherokee_thread_t *thd, int fd, cuint_t *num)
+{
+	cuint_t  n = 0;
+	list_t  *i, *tmp;
+	cherokee_connection_t *conn;
+
+	list_for_each_safe (i, tmp, &thd->polling_list) {
+		conn = CONN(i);
+
+		if (conn->polling_fd == fd) {
+			purge_closed_polling_connection (thd, conn);
+			n++;
+		}
+	}
+
+	if (num != NULL) *num = n;
+	return ret_ok;
+}
+
+
 /* Interface for handlers:
  * It could want to add a file descriptor to the thread fdpoll
  */
@@ -1701,25 +1728,9 @@ move_connection_to_polling (cherokee_thread_t *thd, cherokee_connection_t *conn)
 	del_connection (thd, conn);
 	add_connection_polling (thd, conn);	
 
+	printf (" (( move_connection_to_polling\n");
+
 	return ret_ok;
-}
-
-
-ret_t 
-cherokee_thread_deactive_to_polling (cherokee_thread_t *thd, cherokee_connection_t *conn, int fd, int rw)
-{	
-	cherokee_socket_t *socket = CONN_SOCK(conn);
-
-	/* Set the information in the connection
-	 */
-	conn->extra_polling_fd = fd;
-
-	/* Remove the connection file descriptor and add the new one
-	 */
-	cherokee_fdpoll_del (thd->fdpoll, SOCKET_FD(socket));
-	cherokee_fdpoll_add (thd->fdpoll, fd, rw);
-
-	return move_connection_to_polling (thd, conn);
 }
 
 
@@ -1728,6 +1739,8 @@ move_connection_to_active (cherokee_thread_t *thd, cherokee_connection_t *conn)
 {
 	del_connection_polling (thd, conn);
 	add_connection (thd, conn);
+
+	printf (" )) move_connection_to_active\n");
 
 	return ret_ok;
 }
@@ -1738,15 +1751,42 @@ reactive_conn_from_polling (cherokee_thread_t *thd, cherokee_connection_t *conn)
 {	
 	cherokee_socket_t *socket = CONN_SOCK(conn);
 
+	printf ("- reactive_conn_from_polling %p, add=%d\n", conn, conn->polling_fd_added);
+
 	/* Set the connection file descriptor and remove the old one
 	 */
-	cherokee_fdpoll_del (thd->fdpoll, conn->extra_polling_fd);
+	if (conn->polling_fd_added) 
+		cherokee_fdpoll_del (thd->fdpoll, conn->polling_fd);
+
 	cherokee_fdpoll_add (thd->fdpoll, socket->socket, socket->status);
 
 	/* Remove the polling fd from the connection
 	 */
-	conn->extra_polling_fd = -1;
+	conn->polling_fd       = -1;
+	conn->polling_fd_added = false;
 
 	return move_connection_to_active (thd, conn);
 }
 
+
+ret_t 
+cherokee_thread_deactive_to_polling (cherokee_thread_t *thd, cherokee_connection_t *conn, int fd, int rw, char add_fd)
+{	
+	cherokee_socket_t *socket = CONN_SOCK(conn);
+
+	printf ("+ move_connection_to_polling %p, add=%d\n", conn, add_fd);
+
+	/* Set the information in the connection
+	 */
+	conn->polling_fd       = fd;
+	conn->polling_fd_added = add_fd;
+
+	/* Remove the connection file descriptor and add the new one
+	 */
+	cherokee_fdpoll_del (thd->fdpoll, SOCKET_FD(socket));
+
+	if (add_fd != 0)
+		cherokee_fdpoll_add (thd->fdpoll, fd, rw);
+
+	return move_connection_to_polling (thd, conn);
+}
