@@ -1,3 +1,13 @@
+2006-02-16  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/thread.c (cherokee_thread_close_polling_connections):
+	New function.
+
+2006-02-15  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/thread.c (process_active_connections): Lingering close
+	related bug fixed.
+
 2006-02-14  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cherokee/read_config_embedded.c, cherokee/handler_common.c,

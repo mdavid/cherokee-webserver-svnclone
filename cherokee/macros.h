@@ -153,18 +153,18 @@
 /* Printing macros
  */
 #ifdef __GNUC__
-# define PRINT_ERROR(fmt,arg...) fprintf(stderr, "%s/%d: "fmt, __FILE__, __LINE__, ##arg)
+# define PRINT_ERROR(fmt,arg...) fprintf(stderr, "%s:%d: "fmt, __FILE__, __LINE__, ##arg)
 # define PRINT_MSG(fmt,arg...)   fprintf(stderr, fmt, ##arg)
 #else
-# define PRINT_ERROR(fmt,...)    fprintf(stderr, "%s/%d: "fmt, __FILE__, __LINE__, __VA_ARGS__)
+# define PRINT_ERROR(fmt,...)    fprintf(stderr, "%s:%d: "fmt, __FILE__, __LINE__, __VA_ARGS__)
 # define PRINT_MSG(fmt,...)      fprintf(stderr, fmt, __VA_ARGS__)
 #endif
 
 #ifdef DEBUG
 # ifdef __GNUC__
-#  define PRINT_DEBUG(fmt,arg...) do { fprintf(stdout, "%s/%d: " fmt,__FILE__,__LINE__,##arg); fflush(stdout); } while (0)
+#  define PRINT_DEBUG(fmt,arg...) do { fprintf(stdout, "%s:%d: " fmt,__FILE__,__LINE__,##arg); fflush(stdout); } while (0)
 # else
-#  define PRINT_DEBUG(fmt,...) do { fprintf(stdout, "%s/%d: " fmt,__FILE__,__LINE__,__VA_ARGS__); fflush(stdout); } while (0)
+#  define PRINT_DEBUG(fmt,...) do { fprintf(stdout, "%s:%d: " fmt,__FILE__,__LINE__,__VA_ARGS__); fflush(stdout); } while (0)
 # endif
 #else 
 # ifdef __GNUC__

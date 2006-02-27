@@ -107,25 +107,25 @@ parse_protocol (cherokee_url_t *url, char *string, int *len)
 		return ret_ok;
 	}
 
-	return ret_error;
+	return ret_not_found;
 }
 
 
 static ret_t 
 cherokee_url_parse_ptr (cherokee_url_t *url, char *url_string)
 {
-	int    len;
-	ret_t  ret;
-	char  *port;
-	char  *slash;
-	char  *server;
-	char  *arroba;
-	char  *tmp;
+	ret_t    ret;
+	cuint_t  len = 0 ;
+	char    *port;
+	char    *slash;
+	char    *server;
+	char    *arroba;
+	char    *tmp;
 	
 	/* Drop protocol, if exists..
 	 */
 	ret = parse_protocol (url, url_string, &len);
-	if (unlikely(ret != ret_ok)) return ret;
+	if (unlikely(ret < ret_ok)) return ret_error;
 	
 	tmp = url_string + len;
 

@@ -119,7 +119,8 @@ cherokee_connection_new  (cherokee_connection_t **cnt)
 	n->validator         = NULL;
 	n->req_matched_ref   = NULL;
 	n->timeout           = -1;
-	n->extra_polling_fd  = -1;
+	n->polling_fd        = -1;
+	n->polling_fd_added  = false;
 
 	cherokee_buffer_init (&n->buffer);
 	cherokee_buffer_init (&n->header_buffer);
@@ -196,9 +197,9 @@ cherokee_connection_free (cherokee_connection_t  *cnt)
 		cnt->arguments = NULL;
 	}
 
-        if (cnt->extra_polling_fd != -1) {
-                close (cnt->extra_polling_fd);
-                cnt->extra_polling_fd = -1;
+        if (cnt->polling_fd != -1) {
+                close (cnt->polling_fd);
+                cnt->polling_fd = -1;
         }
 	
 	free (cnt);
@@ -239,7 +240,8 @@ cherokee_connection_clean (cherokee_connection_t *cnt)
 	cnt->tx_partial        = 0;
 	cnt->traffic_next      = 0;
 	cnt->req_matched_ref   = NULL;
-	
+	cnt->polling_fd_added  = false;
+
 	if (cnt->handler != NULL) {
 		cherokee_handler_free (cnt->handler);
 		cnt->handler = NULL;
@@ -250,9 +252,9 @@ cherokee_connection_clean (cherokee_connection_t *cnt)
 		cnt->encoder = NULL;
 	}
 
-        if (cnt->extra_polling_fd != -1) {
-                close (cnt->extra_polling_fd);
-                cnt->extra_polling_fd = -1;
+        if (cnt->polling_fd != -1) {
+                close (cnt->polling_fd);
+                cnt->polling_fd = -1;
         }
 
 	cherokee_post_mrproper (&cnt->post);
@@ -776,7 +778,7 @@ cherokee_connection_send (cherokee_connection_t *cnt)
 	/* Add to the connection traffic counter
 	 */
 	cherokee_connection_tx_add (cnt, sent);
-	
+
 	/* Drop out the sent info
 	 */
 	if (sent == cnt->buffer.len) {
@@ -825,8 +827,10 @@ cherokee_connection_pre_lingering_close (cherokee_connection_t *cnt)
 	case ret_eof:
 	case ret_error:
 	case ret_eagain:
+		TRACE(ENTRIES, "%s\n", "ok");
 		return ret_ok;
 	case ret_ok:
+		TRACE(ENTRIES, "readed %d, eagain\n", readed);
 		return ret_eagain;
 	default:
 		RET_UNKNOWN(ret);		
@@ -845,7 +849,7 @@ cherokee_connection_step (cherokee_connection_t *cnt)
 
 	/* Need to 'read' from handler ?
 	 */
-	if (! cherokee_buffer_is_empty (&cnt->buffer)) {
+	if (cnt->buffer.len > 0) {
 		return ret_ok;
 	}
 

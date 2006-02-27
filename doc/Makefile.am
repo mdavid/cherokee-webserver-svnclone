@@ -4,14 +4,17 @@ docdir = $(datadir)/doc/cherokee/
 doc_DATA = \
 index.html \
 Authentication.html \
+Authors.html \
 Behavior_configuration.html \
 CGI_executing.html \
 Cget.html \
 Combined_logger.html \
 Combined_logs.html \
 Common_behavior.html \
+Comparison_servers.html \
 Compiling_and_Installing.html \
 Configuration.html \
+Copying_and_license.html \
 Current_events.html \
 Directory_configuration.html \
 Directory_listing.html \
@@ -35,6 +38,7 @@ PHP_execution.html \
 Plain_validator.html \
 Redirections.html \
 Request_configuration.html \
+Ruby_on_Rails_with_SCGI.html \
 SCGI.html \
 Server_configuration.html \
 U-Cherokee.html \
