@@ -46,8 +46,8 @@ typedef struct {
 	struct stat           *info;
 	cherokee_mime_entry_t *mime;
 	cherokee_boolean_t     using_sendfile;
-	cherokee_boolean_t     nocache;
-	struct stat            nocache_info;	
+	cherokee_boolean_t     use_cache;
+	struct stat            cache_info;	
 } cherokee_handler_file_t;
 
 #define FHANDLER(x)  ((cherokee_handler_file_t *)(x))

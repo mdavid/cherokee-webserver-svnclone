@@ -62,8 +62,9 @@ ret_t cherokee_post_get_len      (cherokee_post_t *post, size_t *len);
 ret_t cherokee_post_append       (cherokee_post_t *post, char *str, size_t len);
 ret_t cherokee_post_commit_buf   (cherokee_post_t *post, size_t len);
 
-ret_t cherokee_post_walk_reset   (cherokee_post_t *post);
-ret_t cherokee_post_walk_read    (cherokee_post_t *post, cherokee_buffer_t *buf, cuint_t len);
-ret_t cherokee_post_walk_to_fd   (cherokee_post_t *post, int fd, int *eagain_fd, int *mode);
+ret_t cherokee_post_walk_reset    (cherokee_post_t *post);
+ret_t cherokee_post_walk_finished (cherokee_post_t *post);
+ret_t cherokee_post_walk_read     (cherokee_post_t *post, cherokee_buffer_t *buf, cuint_t len);
+ret_t cherokee_post_walk_to_fd    (cherokee_post_t *post, int fd, int *eagain_fd, int *mode);
 
 #endif /* CHEROKEE_POST_H */

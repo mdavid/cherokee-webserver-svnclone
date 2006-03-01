@@ -78,15 +78,15 @@ cherokee_handler_file_new  (cherokee_handler_t **hdl, cherokee_connection_t *cnt
 	n->info           = NULL;
 
 #ifdef CHEROKEE_EMBEDDED
-	n->nocache        = true;
+	n->use_cache      = true;
 #else
-	n->nocache        = false;
+	n->use_cache      = false;
 #endif
 
 	/* Check some properties
 	 */
 	if (properties != NULL) {
-		cherokee_typed_table_get_int (properties, "cache", &n->nocache);
+		cherokee_typed_table_get_int (properties, "cache", &n->use_cache);
 	}
 
 	/* Return the object
@@ -257,8 +257,8 @@ stat_local_directory (cherokee_handler_file_t *n, cherokee_connection_t *conn, c
 
 	/* Without cache
 	 */
-	if (n->nocache) {
-		re = stat (conn->local_directory.buf, &n->nocache_info);
+	if (! n->use_cache) {
+		re = stat (conn->local_directory.buf, &n->cache_info);
 		if (re < 0) {
 			switch (errno) {
 			case ENOENT: 
@@ -275,7 +275,7 @@ stat_local_directory (cherokee_handler_file_t *n, cherokee_connection_t *conn, c
 			return ret_error;
 		}
 
-		*info = &n->nocache_info;		
+		*info = &n->cache_info;		
 		return ret_ok;
 	} 
 
@@ -347,7 +347,7 @@ cherokee_handler_file_init (cherokee_handler_file_t *n)
 	/* Is this file cached in the io cache?
 	 */
 #ifndef CHEROKEE_EMBEDDED
-	use_io = ((!n->nocache) &&
+	use_io = ((!n->use_cache) &&
 		  (conn->encoder == NULL) &&
 		  (conn->socket->is_tls == non_TLS) &&
 		  (n->info->st_size <= IOCACHE_MAX_FILE_SIZE) &&

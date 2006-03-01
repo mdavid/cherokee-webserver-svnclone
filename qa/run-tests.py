@@ -1,5 +1,13 @@
 #!/usr/bin/env python
 
+# Cherokee QA Tests
+#
+# Authors:
+#      Alvaro Lopez Ortega <alvaro@alobbs.com>
+#
+# Copyright (C) 2001-2006 Alvaro Lopez Ortega
+# This file is distributed under the GPL license.
+
 import os
 import sys
 import time
@@ -26,6 +34,7 @@ strace   = False
 port     = None
 method   = None
 nobody   = False
+fcgi     = True
 
 server   = CHEROKEE_PATH
 
@@ -54,6 +63,7 @@ if len(files) == 0:
 for p in param:
     if   p     == '-c': clean    = False
     elif p     == '-k': kill     = False
+    elif p     == '-f': fcgi     = False    
     elif p     == '-q': quiet    = True
     elif p     == '-v': valgrind = True
     elif p     == '-s': ssl      = True
@@ -85,7 +95,17 @@ CONF_BASE = """# Cherokee QA tests
                Encoder gzip { allow txt }
             """ % (PORT, www)
 
-BOTTON_CONF = "Extension php { Handler phpcgi { Interpreter %s } }" % (PHPCGI_PATH)
+if fcgi:
+    BOTTON_CONF = """Extension php {
+                      Handler fastcgi {
+                         Server localhost:%d {
+                           Env PHP_FCGI_CHILDREN "5"
+                           Interpreter "%s -b %d"
+                         }
+                      }
+                  }""" % (PHP_FCGI_PORT, PHPCGI_PATH, PHP_FCGI_PORT)
+else:
+    BOTTON_CONF = "Extension php { Handler phpcgi { Interpreter %s } }" % (PHPCGI_PATH)
 
 
 if ssl:

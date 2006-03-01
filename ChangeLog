@@ -1,3 +1,18 @@
+2006-02-28  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* qa/run-tests.py: Added new option -f to disable PHP/FastCGI in
+	the QA tests. By default it's enabled.
+
+	* cherokee/handler_fastcgi.c (send_post): Post greater than 64k
+	were broken. Now, it splits the post in smaller FCGI packages in
+	order to be able to send it all.
+
+	* cherokee/post.c, cherokee/post.h (cherokee_post_walk_finished):
+	Added new function.
+
+	* cherokee/handler_file.h, cherokee/handler_file.c: Fixes "IOCache
+	off".
+
 2006-02-16  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cherokee/thread.c (cherokee_thread_close_polling_connections):
