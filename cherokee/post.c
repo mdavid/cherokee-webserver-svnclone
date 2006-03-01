@@ -168,6 +168,36 @@ cherokee_post_commit_buf (cherokee_post_t *post, size_t size)
 
 
 ret_t 
+cherokee_post_walk_reset (cherokee_post_t *post)
+{
+	post->walk_offset = 0;
+
+	if (post->tmp_file_p != NULL) {
+		fseek (post->tmp_file_p, 0L, SEEK_SET);
+	}
+
+	return ret_ok;
+}
+
+
+ret_t 
+cherokee_post_walk_finished (cherokee_post_t *post)
+{
+	switch (post->type) {
+	case post_in_memory:
+		return (post->walk_offset >= post->info.len) ? ret_ok : ret_eagain;
+	case post_in_tmp_file:
+		return (post->walk_offset >= post->size) ? ret_ok : ret_eagain;
+	default:
+		break;
+	}
+	
+	SHOULDNT_HAPPEN;
+	return ret_error;
+}
+
+
+ret_t 
 cherokee_post_walk_to_fd (cherokee_post_t *post, int fd, int *eagain_fd, int *mode)
 {
 	ssize_t r;
@@ -194,10 +224,7 @@ cherokee_post_walk_to_fd (cherokee_post_t *post, int fd, int *eagain_fd, int *mo
 		TRACE(ENTRIES, "wrote %d\n", r);
 
 		post->walk_offset += r;
-		if (post->walk_offset >= post->info.len)
-			return ret_ok;
-
-		return ret_eagain;
+		return cherokee_post_walk_finished (post);
 
 	case post_in_tmp_file:
 		cherokee_buffer_ensure_size (&post->info, DEFAULT_READ_SIZE);
@@ -232,28 +259,11 @@ cherokee_post_walk_to_fd (cherokee_post_t *post, int fd, int *eagain_fd, int *mo
 		cherokee_buffer_move_to_begin (&post->info, r);
 
 		post->walk_offset += r;
-		if (post->walk_offset >= post->size) {
-			return ret_ok;
-		}
-
-		return ret_eagain;
+		return cherokee_post_walk_finished (post);
 
 	default:
 		SHOULDNT_HAPPEN;
 		return ret_error;
-	}
-
-	return ret_ok;
-}
-
-
-ret_t 
-cherokee_post_walk_reset (cherokee_post_t *post)
-{
-	post->walk_offset = 0;
-
-	if (post->tmp_file_p != NULL) {
-		fseek (post->tmp_file_p, 0L, SEEK_SET);
 	}
 
 	return ret_ok;
@@ -272,11 +282,7 @@ cherokee_post_walk_read (cherokee_post_t *post, cherokee_buffer_t *buf, cuint_t 
 
 		cherokee_buffer_add (buf, post->info.buf + post->walk_offset, len);
 		post->walk_offset += len;
-
-		if (post->walk_offset >= post->info.len)
-			return ret_ok;
-
-		return ret_eagain;
+		break;
 
 	case post_in_tmp_file:
 		cherokee_buffer_ensure_size (buf, buf->len + len + 1);
@@ -289,17 +295,13 @@ cherokee_post_walk_read (cherokee_post_t *post, cherokee_buffer_t *buf, cuint_t 
 		buf->len           += ur;
 		buf->buf[buf->len]  = '\0';
 		post->walk_offset  += ur;
-
-		if (post->walk_offset >= post->info.len)
-			return ret_ok;
-
-		return ret_eagain;
+		break;
 
 	default:
 		SHOULDNT_HAPPEN;
 		return ret_error;
 	}
 
-	return ret_ok;	
+	return cherokee_post_walk_finished (post);
 }
 

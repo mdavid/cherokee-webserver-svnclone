@@ -67,6 +67,7 @@ typedef struct {
 
 	cherokee_handler_fastcgi_init_t init_phase;
 	cherokee_handler_fastcgi_post_t post_phase;
+	size_t                          post_len;
 
 } cherokee_handler_fastcgi_t;
 
