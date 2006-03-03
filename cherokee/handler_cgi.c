@@ -75,6 +75,8 @@ static ret_t fork_and_execute_cgi_win32 (cherokee_handler_cgi_t *cgi);
 static ret_t fork_and_execute_cgi_unix (cherokee_handler_cgi_t *cgi);
 #endif
 
+#define set_env(cgi,k,v,vl) cherokee_handler_cgi_add_env_pair(cgi, k, sizeof(k)-1, v, vl)
+
 
 static ret_t
 read_from_cgi (cherokee_handler_cgi_base_t *cgi_base, cherokee_buffer_t *buffer)
@@ -86,7 +88,7 @@ read_from_cgi (cherokee_handler_cgi_base_t *cgi_base, cherokee_buffer_t *buffer)
 	/* Read the data from the pipe:
 	 */
 	ret = cherokee_buffer_read_from_fd (buffer, cgi->pipeInput, 4096, &readed);
-
+	
 	TRACE (ENTRIES, "read... ret=%d %d\n", ret, readed);
 
 	switch (ret) {
@@ -298,18 +300,26 @@ static ret_t
 add_environment (cherokee_handler_cgi_t *cgi, cherokee_connection_t *conn)
 {
 	ret_t                        ret;
+	char                        *lenght;
+	cuint_t                     *lenght_len;
 	cherokee_handler_cgi_base_t *cgi_base = CGI_BASE(cgi);
 
 	ret = cherokee_handler_cgi_base_build_envp (CGI_BASE(cgi), conn);
 	if (unlikely (ret != ret_ok)) return ret;
 
+	/* CONTENT_LENGTH
+	 */
+	ret = cherokee_header_get_known (conn->header, header_content_length, &lenght, &lenght_len);
+	if (ret == ret_ok)
+		set_env (cgi, "CONTENT_LENGTH", lenght, lenght_len);
+
 	/* SCRIPT_FILENAME
 	 */
-	if (cgi_base->filename) {
-		cherokee_handler_cgi_add_env_pair (cgi_base, "SCRIPT_FILENAME", 16, 
-						   cgi_base->filename->buf, cgi_base->filename->len);
-	}
+	if (cgi_base->executable.len <= 0)
+		return ret_error;
 
+	set_env (cgi_base, "SCRIPT_FILENAME",
+		 cgi_base->executable.buf, cgi_base->executable.len);
 	return ret_ok;
 }
 
@@ -350,17 +360,19 @@ send_post (cherokee_handler_cgi_t *cgi)
 ret_t 
 cherokee_handler_cgi_init (cherokee_handler_cgi_t *cgi)
 {
-	ret_t ret;
+	ret_t                        ret;
+	cherokee_handler_cgi_base_t *cgi_base = CGI_BASE(cgi);
+	cherokee_connection_t       *conn     = HANDLER_CONN(cgi);
 
-	cherokee_connection_t *conn = HANDLER_CONN(cgi);
-
-	switch (CGI_BASE(cgi)->init_phase) {
+	switch (cgi_base->init_phase) {
 	case hcgi_phase_build_headers:
 
 		/* Extracts PATH_INFO and filename from request uri 
 		 */
-		ret = cherokee_handler_cgi_base_extract_path (CGI_BASE(cgi), true);
-		if (unlikely (ret < ret_ok)) return ret;
+		if (cherokee_buffer_is_empty (&cgi_base->executable)) {
+			ret = cherokee_handler_cgi_base_extract_path (cgi_base, true);
+			if (unlikely (ret < ret_ok)) return ret;
+		}
 
 		/* It has to update the timeout of the connection,
 		 * otherwhise the server will drop it for the CGI
@@ -379,12 +391,12 @@ cherokee_handler_cgi_init (cherokee_handler_cgi_t *cgi)
 			cherokee_post_walk_reset (&conn->post);
 		}
 
-		CGI_BASE(cgi)->init_phase = hcgi_phase_send_headers;
+		cgi_base->init_phase = hcgi_phase_send_headers;
 
 	case hcgi_phase_send_headers:
 		/* There is nothing to do here, so move on!
 		 */
-		CGI_BASE(cgi)->init_phase = hcgi_phase_send_post;
+		cgi_base->init_phase = hcgi_phase_send_post;
 
 	case hcgi_phase_send_post:
 		if (! cherokee_post_is_empty (&conn->post)) {
@@ -429,8 +441,8 @@ manage_child_cgi_process (cherokee_handler_cgi_t *cgi, int pipe_cgi[2], int pipe
 	int                          re;
 	cherokee_connection_t       *conn          = HANDLER_CONN(cgi);
 	cherokee_handler_cgi_base_t *cgi_base      = CGI_BASE(cgi);
-	char                        *absolute_path = cgi_base->filename->buf;
-	char                        *argv[4]       = { NULL, NULL, NULL };
+	char                        *absolute_path = cgi_base->executable.buf;
+	char                        *argv[4]       = { NULL, NULL, NULL, NULL };
 
 	/* Close useless sides
 	 */
@@ -481,11 +493,12 @@ manage_child_cgi_process (cherokee_handler_cgi_t *cgi, int pipe_cgi[2], int pipe
 	/* Build de argv array
 	 */
 	argv[0] = absolute_path;
-	if (cgi_base->parameter != NULL) {
-		argv[1] = cgi_base->parameter->buf;
-		argv[2] = cgi_base->extra_param;
+	
+	if (cgi_base->param.len > 0) {
+		argv[1] = cgi_base->param.buf;
+		argv[2] = cgi_base->param_extra.buf;
 	} else {
-		argv[1] = cgi_base->extra_param;
+		argv[1] = cgi_base->param_extra.buf;
 	}
 
 	/* Change the execution user?
@@ -614,7 +627,7 @@ fork_and_execute_cgi_win32 (cherokee_handler_cgi_t *cgi)
 
 	/* Command line
 	 */
-	cmd = CGI_BASE(cgi)->filename->buf;
+	cmd = CGI_BASE(cgi)->executable->buf;
 	cherokee_buffer_add (&cmd_line, cmd, strlen(cmd));
 	cherokee_buffer_add_va (&cmd_line, " \"%s\"", CGI_BASE(cgi)->parameter->buf);
 
@@ -624,10 +637,10 @@ fork_and_execute_cgi_win32 (cherokee_handler_cgi_t *cgi)
 		cherokee_buffer_add_buffer (&exec_dir, &conn->effective_directory);
 	} else {
 		char *file = strrchr (cmd, '/');
-		char *end  = CGI_BASE(cgi)->filename->buf + CGI_BASE(cgi)->filename->len;
+		char *end  = CGI_BASE(cgi)->executable->buf + CGI_BASE(cgi)->executable->len;
 
 		cherokee_buffer_add (&exec_dir, cmd, 
-				     CGI_BASE(cgi)->filename->len - (end - file));
+				     CGI_BASE(cgi)->executable->len - (end - file));
 	}
 
 	/* Set the bInheritHandle flag so pipe handles are inherited. 

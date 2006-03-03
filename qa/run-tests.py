@@ -96,7 +96,7 @@ CONF_BASE = """# Cherokee QA tests
             """ % (PORT, www)
 
 if fcgi:
-    BOTTON_CONF = """Extension php {
+    PHP_EXTENSION = """Extension php {
                       Handler fastcgi {
                          Server localhost:%d {
                            Env PHP_FCGI_CHILDREN "5"
@@ -105,7 +105,7 @@ if fcgi:
                       }
                   }""" % (PHP_FCGI_PORT, PHPCGI_PATH, PHP_FCGI_PORT)
 else:
-    BOTTON_CONF = "Extension php { Handler phpcgi { Interpreter %s } }" % (PHPCGI_PATH)
+    PHP_EXTENSION = "Extension php { Handler phpcgi { Interpreter %s } }" % (PHPCGI_PATH)
 
 
 if ssl:
@@ -130,8 +130,9 @@ for m in mods:
     obj = m.Test()
     # Update 'base.py': TestCollection if new
     # properties are added here!
-    obj.tmp    = tmp
-    obj.nobody = nobody
+    obj.tmp      = tmp
+    obj.nobody   = nobody
+    obj.php_conf = PHP_EXTENSION
     objs.append(obj)
 
 # Prepare www files
@@ -145,7 +146,7 @@ for obj in objs:
         mod_conf += obj.conf+"\n"
 
 # Write down the configuration file
-cfg = CONF_BASE + mod_conf + BOTTON_CONF
+cfg = CONF_BASE + mod_conf + PHP_EXTENSION
 cfg_file = tempfile.mktemp("cherokee_tmp_cfg")
 cfg_fd = open (cfg_file, 'w')
 cfg_fd.write (cfg)

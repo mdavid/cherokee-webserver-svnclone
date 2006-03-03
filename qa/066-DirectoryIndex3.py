@@ -11,7 +11,7 @@ class Test (TestBase):
         self.expected_error    = 200
 
     def Prepare (self, www):
-        self.dr = self.Mkdir (www, "directoryindex3")
+        self.dr = self.Mkdir (www, "directoryindex3/")
         self.Mkdir (www, "directoryindex3/inside/foo")
 
         self.expected_content  = ["DocumentRoot %s" % (self.dr),
@@ -23,12 +23,8 @@ class Test (TestBase):
            Directory / { Handler common }
            DirectoryIndex index.php, /super_test_index.php
            DocumentRoot %s
-           Extension php {
-              Handler phpcgi {
-                 Interpreter %s
-              }
-           }
-        }""" % (self.dr, PHPCGI_PATH)
+           %s
+        }""" % (self.dr, self.php_conf)
 
     def JustBefore (self, www):
         self.WriteFile (self.dr, "super_test_index.php", 0666, """<?php

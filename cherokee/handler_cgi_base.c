@@ -67,15 +67,16 @@ cherokee_handler_cgi_base_init (cherokee_handler_cgi_base_t              *cgi,
 	/* Init to default values
 	 */
 	cgi->init_phase          = hcgi_phase_build_headers;
-	cgi->filename            = NULL;
-	cgi->parameter           = NULL;
 	cgi->script_alias        = NULL;
-	cgi->extra_param         = NULL;
 	cgi->system_env          = NULL;
 	cgi->content_length      = 0;
 	cgi->got_eof             = false;
 	cgi->is_error_handler    = 0;
 	cgi->change_user         = 0;
+
+	cherokee_buffer_init (&cgi->executable);
+	cherokee_buffer_init (&cgi->param);
+	cherokee_buffer_init (&cgi->param_extra);
 
 	cherokee_buffer_init (&cgi->data);
 	cherokee_buffer_ensure_size (&cgi->data, 2*1024);
@@ -106,25 +107,20 @@ ret_t
 cherokee_handler_cgi_base_free (cherokee_handler_cgi_base_t *cgi)
 {
 	cherokee_buffer_mrproper (&cgi->data);
-	
-	if (cgi->filename != NULL) {
-		cherokee_buffer_free (cgi->filename);
-		cgi->filename = NULL;
-	}
-	
-	if (cgi->parameter != NULL) {
-		cherokee_buffer_free (cgi->parameter);
-		cgi->parameter = NULL;
-	}
+	cherokee_buffer_mrproper (&cgi->executable);
+
+	cherokee_buffer_mrproper (&cgi->param);
+	cherokee_buffer_mrproper (&cgi->param_extra);
 
 	return ret_ok;
 }
 
 
 void  
-cherokee_handler_cgi_base_add_parameter (cherokee_handler_cgi_base_t *cgi, char *param)
+cherokee_handler_cgi_base_add_parameter (cherokee_handler_cgi_base_t *cgi, char *param, cuint_t param_len)
 {
-	cgi->extra_param = param;
+	cherokee_buffer_clean (&cgi->param_extra);
+	cherokee_buffer_add (&cgi->param_extra, param, param_len);
 }
 
 
@@ -210,11 +206,6 @@ cherokee_handler_cgi_base_build_basic_env (cherokee_handler_cgi_base_t          
 	if (ret == ret_ok)
 		set_env (cgi, "CONTENT_TYPE", tmp->buf, tmp->len);
 
-	cherokee_buffer_clean (tmp); 
-	ret = cherokee_header_copy_known (conn->header, header_content_length, tmp);
-	if (ret == ret_ok)
-		set_env (cgi, "CONTENT_LENGTH", tmp->buf, tmp->len);
-
 	/* If there is a query_string, set the environment variable
 	 */
 	if (conn->query_string.len > 0) 
@@ -286,7 +277,8 @@ cherokee_handler_cgi_base_build_envp (cherokee_handler_cgi_base_t *cgi, cherokee
 {
 	ret_t              ret;
 	list_t            *i;
-	char              *p;
+	cuint_t            len = 0;
+	char              *p   = NULL;
 	cherokee_buffer_t  tmp = CHEROKEE_BUF_INIT;
 
 	/* Add user defined variables at the beginning,
@@ -313,20 +305,31 @@ cherokee_handler_cgi_base_build_envp (cherokee_handler_cgi_base_t *cgi, cherokee
 
 	/* SCRIPT_NAME:
 	 * It is the request without the pathinfo if it exists
-	 */
-	if (cgi->parameter == NULL) {
-		cherokee_buffer_clean (&tmp);
-		cherokee_header_copy_request (conn->header, &tmp);
-
-		if (conn->pathinfo.len > 0) {
-			cgi->add_env_pair (cgi, "SCRIPT_NAME", 11, tmp.buf, tmp.len - conn->pathinfo.len);
+	 */	
+	if (! cgi->script_alias) {
+		if (cgi->param.len > 0) {
+			/* phpcgi request	
+			 */
+			p = cgi->param.buf + conn->local_directory.len - 1;
+			len = (cgi->param.buf + cgi->param.len) - p;
 		} else {
-			cgi->add_env_pair (cgi, "SCRIPT_NAME", 11, tmp.buf, tmp.len);
+			/* cgi, scgi or fastcgi	
+			 */
+			p = cgi->executable.buf + conn->local_directory.len - 1;
+			len = (cgi->executable.buf + cgi->executable.len) - p;
 		}
-	} else {
-		p = cgi->parameter->buf + conn->local_directory.len -1;
-		cgi->add_env_pair (cgi, "SCRIPT_NAME", 11, p, (cgi->parameter->buf + cgi->parameter->len) - p);
 	}
+
+	cherokee_buffer_clean (&tmp);
+	
+	if (conn->web_directory.len > 1) 
+		cherokee_buffer_add_buffer (&tmp, &conn->web_directory);
+
+	if (len > 0) 
+		cherokee_buffer_add (&tmp, p, len);
+	
+	cgi->add_env_pair (cgi, "SCRIPT_NAME", 11, tmp.buf, tmp.len);
+
 
 	/* SCRIPT_FILENAME
 	 * It depends on the type of CGI (CGI, SCGI o FastCGI):
@@ -349,6 +352,9 @@ cherokee_handler_cgi_base_extract_path (cherokee_handler_cgi_base_t *cgi, cherok
 	struct stat            st;
 	ret_t                  ret  = ret_ok;
 	cherokee_connection_t *conn = HANDLER_CONN(cgi);
+		int req_len;
+		int local_len;
+		int pathinfo_len;
 
 	/* ScriptAlias: If there is a ScriptAlias directive, it
 	 * doesn't need to find the executable file..
@@ -361,78 +367,65 @@ cherokee_handler_cgi_base_extract_path (cherokee_handler_cgi_base_t *cgi, cherok
 			return ret_error;
 		}
 
-		cherokee_buffer_new (&cgi->filename);
-		cherokee_buffer_add (cgi->filename, cgi->script_alias, strlen(cgi->script_alias));
+		cherokee_buffer_add (&cgi->executable, cgi->script_alias, strlen(cgi->script_alias));
 
-		/* Check the path_info even if it uses a
-		 * scriptalias. the PATH_INFO is the rest of the
-		 * substraction * of request - configured directory.
+		/* Check the path_info even if it uses a  scriptalias. The PATH_INFO 	
+		 * is the rest of the substraction of request - configured directory.
 		 */
-		if (cgi->script_alias != NULL) {
-			cherokee_buffer_add (&conn->pathinfo, 
-					     conn->request.buf + conn->web_directory.len, 
-					     conn->request.len - conn->web_directory.len);
-		}
-
+		cherokee_buffer_add (&conn->pathinfo, 
+				     conn->request.buf + conn->web_directory.len, 
+				     conn->request.len - conn->web_directory.len);
 		return ret_ok;
 	}
 
-	/* Maybe the request contains pathinfo
+	req_len      = conn->request.len;
+	local_len    = conn->local_directory.len;
+	pathinfo_len = conn->pathinfo.len;
+
+	/* It is going to concatenate two paths like: 
+	 * local_directory = "/usr/share/cgi-bin/", and 
+	 * request = "/thing.cgi", so there would be two 
+	 * slashes in the middle of the request.
 	 */
-	if ((cgi->parameter == NULL) &&
-	    cherokee_buffer_is_empty (&conn->pathinfo)) 
-	{
-		int req_len;
-		int local_len;
+	if (req_len > 0)
+		cherokee_buffer_add (&conn->local_directory, 
+				     conn->request.buf + 1, 
+				     conn->request.len - 1); 
 
-		/* It is going to concatenate two paths like:
-		 * local_directory = "/usr/share/cgi-bin/", and
-		 * request = "/thing.cgi", so there will be two
-		 * slashes in the middle of the request.
-		 */
-		req_len   = conn->request.len;
-		local_len = conn->local_directory.len;
-
-		if (conn->request.len > 0)
-			cherokee_buffer_add (&conn->local_directory, 
-					     conn->request.buf + 1, 
-					     conn->request.len - 1); 
-
+	if (pathinfo_len <= 0) {
 		if (check_filename)
 			ret = cherokee_handler_cgi_base_split_pathinfo (cgi, &conn->local_directory, local_len -1, false);
 		else
 			ret = cherokee_handler_cgi_base_split_pathinfo (cgi, &conn->local_directory, local_len -1,  true);
-
+			
 		if (unlikely(ret < ret_ok)) goto bye;
-		
-		/* Is the filename set? 
-		 */
-		if ((cgi->filename == NULL) && (check_filename))
-		{ 
-			/* We have to check if the file exists 
-			 */
-			if (stat (conn->local_directory.buf, &st) == -1) {
-				conn->error_code = http_not_found;
-				return ret_error;
-			}
-			
-			cherokee_buffer_new (&cgi->filename);
-			cherokee_buffer_add_buffer (cgi->filename, &conn->local_directory);
-			
-			TRACE (ENTRIES, "Filename: '%s'\n", cgi->filename->buf);
-		}
-		
-	bye:
-		cherokee_buffer_drop_endding (&conn->local_directory, req_len - 1);
 	}
+
+	/* Is the filename set? 
+	 */
+	if (cgi->executable.len <= 0) {
+		cherokee_buffer_add_buffer (&cgi->executable, &conn->local_directory);
+		TRACE (ENTRIES, "Executable: '%s'\n", cgi->executable.buf);
+	}
+
+	if (check_filename) {
+		/* We have to check if the file exists 
+		 */
+		if (stat (conn->local_directory.buf, &st) == -1) {
+			conn->error_code = http_not_found;
+			ret = ret_error;
+			goto bye;
+		}
+	}
+		
+bye:
+	if (pathinfo_len)
+		cherokee_buffer_drop_endding (&conn->local_directory, req_len - 1);
+	else
+		cherokee_buffer_drop_endding (&conn->local_directory, req_len - (conn->pathinfo.len + 1));
 
 	return ret;
 }
-
-
-//
-#include "handler_fastcgi.h"
-//
 
 
 static ret_t
@@ -633,13 +626,12 @@ cherokee_handler_cgi_base_split_pathinfo (cherokee_handler_cgi_base_t *cgi, cher
 		return ret_error;
 	}
 
-	/* Build the PathInfo string 
+	/* Split the string
 	 */
-	cherokee_buffer_add (&conn->pathinfo, pathinfo, pathinfo_len);
-	
-	/* Drop it out from the original string
-	 */
-	cherokee_buffer_drop_endding (buf, pathinfo_len);
+	if (pathinfo_len > 0) {
+		cherokee_buffer_add (&conn->pathinfo, pathinfo, pathinfo_len);
+		cherokee_buffer_drop_endding (buf, pathinfo_len);
+	}
 
 	TRACE (ENTRIES, "Pathinfo '%s'\n", conn->pathinfo.buf);
 
