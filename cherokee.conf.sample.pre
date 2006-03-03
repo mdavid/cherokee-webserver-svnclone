@@ -46,7 +46,7 @@ IPv6 Off
 ##
 ## Timeout: The number of seconds before receives and sends time out.
 ##
-Timeout 15
+Timeout 60
 
 ##
 ## KeepAlive: Whether or not to allow persistent connections (more than

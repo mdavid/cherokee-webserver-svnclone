@@ -648,7 +648,7 @@ cherokee_header_get_length (cherokee_header_t *hdr, cuint_t *len)
 
 
 ret_t 
-cherokee_header_get_unknown (cherokee_header_t *hdr, char *name, int name_len, char **header, int *header_len)
+cherokee_header_get_unknown (cherokee_header_t *hdr, char *name, int name_len, char **header, cuint_t *header_len)
 {
 	int i;
 
@@ -673,9 +673,9 @@ cherokee_header_get_unknown (cherokee_header_t *hdr, char *name, int name_len, c
 ret_t
 cherokee_header_copy_unknown (cherokee_header_t *hdr, char *name, int name_len, cherokee_buffer_t *buf)
 {
-	ret_t  ret;
-	char  *info;
-	int    info_len;
+	ret_t    ret;
+	char    *info;
+	cuint_t  info_len;
 
 	ret = cherokee_header_get_unknown (hdr, name, name_len, &info, &info_len);
 	if (unlikely(ret != ret_ok)) return ret;
@@ -696,7 +696,7 @@ cherokee_header_has_known (cherokee_header_t *hdr, cherokee_common_header_t head
 
 
 ret_t 
-cherokee_header_get_known (cherokee_header_t *hdr, cherokee_common_header_t header, char **info, int *info_len)
+cherokee_header_get_known (cherokee_header_t *hdr, cherokee_common_header_t header, char **info, cuint_t *info_len)
 {
 	HEADER_INTERNAL_CHECK(hdr);
 
@@ -714,9 +714,9 @@ cherokee_header_get_known (cherokee_header_t *hdr, cherokee_common_header_t head
 ret_t 
 cherokee_header_copy_known (cherokee_header_t *hdr, cherokee_common_header_t header, cherokee_buffer_t *buf)
 {
-	ret_t ret;
-	char *info     = NULL;
-	int   info_len = 0;
+	ret_t    ret;
+	char    *info     = NULL;
+	cuint_t  info_len = 0;
 
 	ret = cherokee_header_get_known (hdr, header, &info, &info_len);
 	if (unlikely(ret != ret_ok)) return ret;

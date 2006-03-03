@@ -866,6 +866,7 @@ process_active_connections (cherokee_thread_t *thd)
 			case ret_ok:
 				break;
 			case ret_eagain:
+				cherokee_connection_clean_for_respin (conn);
 				continue;
 			default:
 				cherokee_connection_setup_error_handler (conn);

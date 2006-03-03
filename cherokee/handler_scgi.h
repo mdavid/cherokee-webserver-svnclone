@@ -42,6 +42,8 @@ typedef struct {
 
 	list_t             *scgi_env_ref;
 	list_t             *server_list;	
+
+	size_t              post_len;
 } cherokee_handler_scgi_t;
 
 #define HANDLER_SCGI(x)  ((cherokee_handler_scgi_t *)(x))

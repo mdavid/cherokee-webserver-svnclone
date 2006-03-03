@@ -39,25 +39,30 @@ cherokee_module_info_handler_t MODULE_INFO(scgi) = {
 	.valid_methods   = http_get | http_post | http_head /* http methods */
 };
 
+#define set_env(cgi,key,val,len) \
+	add_env_pair (cgi, key, sizeof(key)-1, val, len)
+
 
 static void 
 add_env_pair (cherokee_handler_cgi_base_t *cgi_base, 
 	      char *key, int key_len, 
 	      char *val, int val_len)
 {
-	char                    *zero = "\0";
+	static char              zero = '\0';
 	cherokee_handler_scgi_t *scgi = HANDLER_SCGI(cgi_base);
 
 	if (val_len == 0) {
 		return;
 	}
 
+	printf ("****[%s]=[%s] (%d, %d)\n", key, val, key_len, val_len);
+
 	cherokee_buffer_ensure_size (&scgi->header, scgi->header.len + key_len + val_len + 3);
 
 	cherokee_buffer_add (&scgi->header, key, key_len);
-	cherokee_buffer_add (&scgi->header, zero, 1);
+	cherokee_buffer_add (&scgi->header, &zero, 1);
 	cherokee_buffer_add (&scgi->header, val, val_len);
-	cherokee_buffer_add (&scgi->header, zero, 1);
+	cherokee_buffer_add (&scgi->header, &zero, 1);
 }
 
 
@@ -116,6 +121,8 @@ cherokee_handler_scgi_new (cherokee_handler_t **hdl, void *cnt, cherokee_table_t
 
 	/* Properties
 	 */
+	n->post_len = 0;
+
 	cherokee_buffer_init (&n->header);
 	cherokee_socket_new  (&n->socket);
 
@@ -173,8 +180,13 @@ netstringer (cherokee_buffer_t *buf)
 static ret_t
 build_header (cherokee_handler_scgi_t *hdl)
 {
-	add_env_pair (CGI_BASE(hdl), "CONTENT_LENGTH", 14, "0", 1);
-	add_env_pair (CGI_BASE(hdl), "SCGI", 4, "1", 1);
+	cuint_t len;
+	char    tmp[64];
+
+	len = snprintf (tmp, 64, "%d", hdl->post_len);
+	
+	set_env (CGI_BASE(hdl), "CONTENT_LENGTH", tmp, len);
+	set_env (CGI_BASE(hdl), "SCGI", "1", 1);
 
 	cherokee_handler_cgi_base_build_envp (CGI_BASE(hdl), HANDLER_CONN(hdl));       	
 
@@ -226,6 +238,8 @@ send_header (cherokee_handler_scgi_t *hdl)
 	ret = cherokee_socket_write (hdl->socket, &hdl->header, &written);
 	if (ret != ret_ok) return ret;
 	
+	cherokee_buffer_print_debug (&hdl->header, -1);
+
 	cherokee_buffer_move_to_begin (&hdl->header, written);
 
 	TRACE (ENTRIES, "sent remaining=%d\n", hdl->header.len);
@@ -275,6 +289,13 @@ cherokee_handler_scgi_init (cherokee_handler_scgi_t *hdl)
 		ret = cherokee_handler_cgi_base_extract_path (CGI_BASE(hdl), false);
 		if (unlikely (ret < ret_ok)) return ret;
 		
+		/* Prepare Post
+		 */
+		if (! cherokee_post_is_empty (&conn->post)) {
+			cherokee_post_walk_reset (&conn->post);
+			cherokee_post_get_len (&conn->post, &hdl->post_len);
+		}
+
 		/* Build the headers
 		 */
 		ret = build_header (hdl);
@@ -285,12 +306,6 @@ cherokee_handler_scgi_init (cherokee_handler_scgi_t *hdl)
 		ret = connect_to_server (hdl);
 		if (unlikely (ret != ret_ok)) return ret;
 		
-		/* Prepare Post
-		 */
-		if (! cherokee_post_is_empty (&conn->post)) {
-			cherokee_post_walk_reset (&conn->post);
-		}
-
 		CGI_BASE(hdl)->init_phase = hcgi_phase_send_headers;
 
 	case hcgi_phase_send_headers:
@@ -304,7 +319,7 @@ cherokee_handler_scgi_init (cherokee_handler_scgi_t *hdl)
 	case hcgi_phase_send_post:
 		/* Send the Post
 		 */
-		if (! cherokee_post_is_empty (&conn->post)) {
+		if (hdl->post_len > 0) {
 			return send_post (hdl);
 		}
 		break;

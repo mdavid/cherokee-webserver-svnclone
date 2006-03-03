@@ -1895,3 +1895,11 @@ cherokee_connection_update_vhost_traffic (cherokee_connection_t *cnt)
 	return ret_ok;
 }
 
+
+ret_t 
+cherokee_connection_clean_for_respin (cherokee_connection_t *cnt)
+{
+	cherokee_buffer_clean (&cnt->web_directory);
+
+	return ret_ok;
+}

@@ -234,6 +234,7 @@ ret_t cherokee_connection_parse_header           (cherokee_connection_t *cnt, ch
 int   cherokee_connection_is_userdir             (cherokee_connection_t *cnt);
 ret_t cherokee_connection_build_local_directory  (cherokee_connection_t *cnt, cherokee_virtual_server_t *vsrv, cherokee_config_entry_t *entry);
 ret_t cherokee_connection_build_local_directory_userdir (cherokee_connection_t *cnt, cherokee_virtual_server_t *vsrv, cherokee_config_entry_t *entry);
+ret_t cherokee_connection_clean_for_respin       (cherokee_connection_t *cnt);
 
 /* Log
  */

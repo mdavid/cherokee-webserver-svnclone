@@ -61,8 +61,10 @@ struct cherokee_handler_cgi_base {
 	cuint_t            change_user;
 	cuint_t            got_eof;
 
-	cherokee_buffer_t *filename;
-	cherokee_buffer_t *parameter; 
+	cherokee_buffer_t  executable;
+	cherokee_buffer_t  param; 
+	cherokee_buffer_t  param_extra;
+
 	cherokee_buffer_t  data; 
 
 	/* Virtual methods
@@ -82,7 +84,7 @@ ret_t cherokee_handler_cgi_base_init           (cherokee_handler_cgi_base_t     
 
 ret_t cherokee_handler_cgi_base_free           (cherokee_handler_cgi_base_t *hdl);
 
-void  cherokee_handler_cgi_base_add_parameter  (cherokee_handler_cgi_base_t *cgi, char *name);
+void  cherokee_handler_cgi_base_add_parameter  (cherokee_handler_cgi_base_t *cgi, char *name, cuint_t len);
 ret_t cherokee_handler_cgi_base_extract_path   (cherokee_handler_cgi_base_t *cgi, cherokee_boolean_t check_filename);
 
 ret_t cherokee_handler_cgi_base_add_headers    (cherokee_handler_cgi_base_t *cgi, cherokee_buffer_t *buffer);

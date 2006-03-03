@@ -317,20 +317,25 @@ register_connection (cherokee_handler_fastcgi_t *hdl)
 static ret_t
 add_extra_fastcgi_env (cherokee_handler_fastcgi_t *hdl, cuint_t *last_header_offset)
 {
+	ret_t                        ret;
 	cherokee_handler_cgi_base_t *cgi_base = CGI_BASE(hdl);
         cherokee_buffer_t            buffer   = CHEROKEE_BUF_INIT;
 	cherokee_connection_t       *conn     = HANDLER_CONN(hdl);
 
-	/* SCRIPT_FILENAME
+	/* CONTENT_LENGTH
 	 */
-	cherokee_buffer_add_buffer (&buffer, &conn->local_directory);
+	ret = cherokee_header_copy_known (conn->header, header_content_length, &buffer);
+	if (ret == ret_ok)
+		set_env (cgi_base, "CONTENT_LENGTH", buffer.buf, buffer.len);
 
+	/* PATH_INFO
+	 */
+	cherokee_buffer_clean (&buffer); 
+	cherokee_buffer_add_buffer (&buffer, &conn->local_directory);
 	if (conn->request.len > 0) {
 		cherokee_buffer_add (&buffer, conn->request.buf + 1, conn->request.len - 1);
         }
 
-	/* PATH_INFO
-	 */
 	if (! cherokee_buffer_is_empty (&conn->pathinfo)) {
 		set_env (cgi_base, "PATH_INFO", conn->pathinfo.buf, conn->pathinfo.len);
 	}
@@ -470,6 +475,11 @@ send_post (cherokee_handler_fastcgi_t *hdl, cherokee_buffer_t *buf)
 					   hdl->id, buf->len - sizeof(FCGI_Header), 0);
 		}
 
+		ret = cherokee_post_walk_finished (&conn->post);
+		if (ret == ret_ok) {
+			add_empty_packet (hdl, FCGI_STDIN);
+		}
+
 		hdl->post_phase = fcgi_post_write;
 
 	case fcgi_post_write:
@@ -522,7 +532,7 @@ ret_t
 cherokee_handler_fastcgi_init (cherokee_handler_fastcgi_t *hdl)
 {
 	ret_t                        ret;
-	cherokee_handler_cgi_base_t *cgi = CGI_BASE(hdl);
+	cherokee_handler_cgi_base_t *cgi  = CGI_BASE(hdl);
 
 	switch (hdl->init_phase) {
 	case fcgi_init_get_manager:
@@ -537,7 +547,12 @@ cherokee_handler_fastcgi_init (cherokee_handler_fastcgi_t *hdl)
 		 */
 		ret = register_connection (hdl);
 		if (unlikely (ret != ret_ok)) return ret;
-		
+
+		/* Set the executable filename
+		 */
+		ret = cherokee_handler_cgi_base_extract_path (CGI_BASE(cgi), true);
+		if (unlikely (ret < ret_ok)) return ret;
+
 		hdl->init_phase = fcgi_init_build_header;
 
 	case fcgi_init_build_header:
@@ -566,7 +581,7 @@ cherokee_handler_fastcgi_init (cherokee_handler_fastcgi_t *hdl)
 		ret = send_post (hdl, &hdl->write_buffer);
 		if (ret != ret_ok) return ret;
 
-		add_empty_packet (hdl, FCGI_STDIN);
+//		add_empty_packet (hdl, FCGI_STDIN);
 
 		hdl->init_phase = fcgi_init_read;
 		
