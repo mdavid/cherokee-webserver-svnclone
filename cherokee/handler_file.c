@@ -120,7 +120,7 @@ check_cached (cherokee_handler_file_t *n)
 {
 	ret_t                  ret;
 	char                  *header;
-	int                    header_len;
+	cuint_t                header_len;
 	cherokee_connection_t *conn = HANDLER_CONN(n);
 
 	/* Based in time

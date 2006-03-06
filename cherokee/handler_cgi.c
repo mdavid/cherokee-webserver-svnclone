@@ -93,7 +93,7 @@ read_from_cgi (cherokee_handler_cgi_base_t *cgi_base, cherokee_buffer_t *buffer)
 
 	switch (ret) {
 	case ret_eagain:
-		cherokee_thread_deactive_to_polling (HANDLER_THREAD(cgi), HANDLER_CONN(cgi), cgi->pipeInput, 0, true);
+		cherokee_thread_deactive_to_polling (HANDLER_THREAD(cgi), HANDLER_CONN(cgi), cgi->pipeInput, 0, false);
 		return ret_eagain;
 
 	case ret_ok:
@@ -301,7 +301,7 @@ add_environment (cherokee_handler_cgi_t *cgi, cherokee_connection_t *conn)
 {
 	ret_t                        ret;
 	char                        *lenght;
-	cuint_t                     *lenght_len;
+	cuint_t                      lenght_len;
 	cherokee_handler_cgi_base_t *cgi_base = CGI_BASE(cgi);
 
 	ret = cherokee_handler_cgi_base_build_envp (CGI_BASE(cgi), conn);
@@ -311,7 +311,7 @@ add_environment (cherokee_handler_cgi_t *cgi, cherokee_connection_t *conn)
 	 */
 	ret = cherokee_header_get_known (conn->header, header_content_length, &lenght, &lenght_len);
 	if (ret == ret_ok)
-		set_env (cgi, "CONTENT_LENGTH", lenght, lenght_len);
+		set_env (cgi_base, "CONTENT_LENGTH", lenght, lenght_len);
 
 	/* SCRIPT_FILENAME
 	 */
@@ -346,7 +346,7 @@ send_post (cherokee_handler_cgi_t *cgi)
 		
 	case ret_eagain:
 		if (eagain_fd != -1) {
-			cherokee_thread_deactive_to_polling (HANDLER_THREAD(cgi), conn, eagain_fd, mode, true);
+			cherokee_thread_deactive_to_polling (HANDLER_THREAD(cgi), conn, eagain_fd, mode, false);
 		}
 		
 		return ret_eagain;

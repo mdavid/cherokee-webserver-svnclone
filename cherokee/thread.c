@@ -270,14 +270,14 @@ conn_set_mode (cherokee_thread_t *thd, cherokee_connection_t *conn, cherokee_soc
 static void
 add_connection (cherokee_thread_t *thd, cherokee_connection_t *conn)
 {
-	list_add ((list_t *)conn, &thd->active_list);
+	list_add_tail ((list_t *)conn, &thd->active_list);
 	thd->active_list_num++;
 }
 
 static void
 add_connection_polling (cherokee_thread_t *thd, cherokee_connection_t *conn)
 {
-	list_add ((list_t *)conn, &thd->polling_list);
+	list_add_tail ((list_t *)conn, &thd->polling_list);
 	thd->polling_list_num++;
 }
 
@@ -335,12 +335,55 @@ purge_connection (cherokee_thread_t *thread, cherokee_connection_t *conn)
 }
 
 
+static cherokee_boolean_t 
+check_addition_multiple_fd (cherokee_thread_t *thread, int fd)
+{
+	list_t                *i;
+	cherokee_connection_t *iconn;
+	
+	list_for_each (i, &thread->polling_list) {
+		iconn = CONN(i);
+		
+		if (iconn->polling_fd == fd)
+			return false;
+	}
+	return true;
+}
+
+static cherokee_boolean_t 
+check_removal_multiple_fd (cherokee_thread_t *thread, int fd)
+{
+	list_t                *i;
+	cherokee_connection_t *iconn;
+	cherokee_boolean_t     first = false;
+	
+	list_for_each (i, &thread->polling_list) {
+		iconn = CONN(i);
+		
+		if (iconn->polling_fd == fd) {
+			if (!first) {
+				first = true;
+				continue;
+			}
+			return false;
+		}
+	}
+	return true;
+}
+
+
+
 static void
 purge_closed_polling_connection (cherokee_thread_t *thread, cherokee_connection_t *conn)
 {
+	cherokee_boolean_t del_fd = true;
+
 	/* Delete from file descriptors poll
 	 */
-	if (conn->polling_fd_added)
+	if (conn->polling_multiple) 
+		del_fd = check_removal_multiple_fd (thread, conn->polling_fd);
+
+	if (del_fd)
 		cherokee_fdpoll_del (thread->fdpoll, conn->polling_fd);
 
 	/* Remove from the polling list
@@ -1751,43 +1794,53 @@ static ret_t
 reactive_conn_from_polling (cherokee_thread_t *thd, cherokee_connection_t *conn)
 {	
 	cherokee_socket_t *socket = CONN_SOCK(conn);
-
-//	printf ("- reactive_conn_from_polling %p, add=%d\n", conn, conn->polling_fd_added);
+	cherokee_boolean_t del    = true;
 
 	/* Set the connection file descriptor and remove the old one
 	 */
-	if (conn->polling_fd_added) 
+	if (conn->polling_multiple) 
+		del = check_removal_multiple_fd (thd, conn->polling_fd);
+
+	if (del) 
 		cherokee_fdpoll_del (thd->fdpoll, conn->polling_fd);
+
+	printf ("- reactive_conn_from_polling %p, multiple=%d del=%d\n", conn, conn->polling_multiple, del);
 
 	cherokee_fdpoll_add (thd->fdpoll, socket->socket, socket->status);
 
 	/* Remove the polling fd from the connection
 	 */
 	conn->polling_fd       = -1;
-	conn->polling_fd_added = false;
+	conn->polling_multiple = false;
 
 	return move_connection_to_active (thd, conn);
 }
 
 
 ret_t 
-cherokee_thread_deactive_to_polling (cherokee_thread_t *thd, cherokee_connection_t *conn, int fd, int rw, char add_fd)
+cherokee_thread_deactive_to_polling (cherokee_thread_t *thd, cherokee_connection_t *conn, int fd, int rw, char multiple)
 {	
-	cherokee_socket_t *socket = CONN_SOCK(conn);
+	cherokee_boolean_t     add_fd = true;
+	cherokee_socket_t     *socket = CONN_SOCK(conn);
 
-//	printf ("+ move_connection_to_polling %p, add=%d\n", conn, add_fd);
-
-	/* Set the information in the connection
+	/* Check for fds added more than once
 	 */
-	conn->polling_fd       = fd;
-	conn->polling_fd_added = add_fd;
+	if (multiple) 
+		add_fd = check_addition_multiple_fd (thd, fd);
 
+	printf ("+ move_connection_to_polling %p, multiple=%d add=%d\n", conn, multiple, add_fd);
+	
 	/* Remove the connection file descriptor and add the new one
 	 */
 	cherokee_fdpoll_del (thd->fdpoll, SOCKET_FD(socket));
 
-	if (add_fd != 0)
+	if (add_fd)
 		cherokee_fdpoll_add (thd->fdpoll, fd, rw);
+
+	/* Set the information in the connection
+	 */
+	conn->polling_fd       = fd;
+	conn->polling_multiple = multiple;
 
 	return move_connection_to_polling (thd, conn);
 }
