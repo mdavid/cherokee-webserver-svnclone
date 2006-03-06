@@ -120,7 +120,7 @@ cherokee_connection_new  (cherokee_connection_t **cnt)
 	n->req_matched_ref   = NULL;
 	n->timeout           = -1;
 	n->polling_fd        = -1;
-	n->polling_fd_added  = false;
+	n->polling_multiple  = false;
 
 	cherokee_buffer_init (&n->buffer);
 	cherokee_buffer_init (&n->header_buffer);
@@ -240,7 +240,7 @@ cherokee_connection_clean (cherokee_connection_t *cnt)
 	cnt->tx_partial        = 0;
 	cnt->traffic_next      = 0;
 	cnt->req_matched_ref   = NULL;
-	cnt->polling_fd_added  = false;
+	cnt->polling_multiple  = false;
 
 	if (cnt->handler != NULL) {
 		cherokee_handler_free (cnt->handler);
@@ -1240,10 +1240,11 @@ get_range (cherokee_connection_t *cnt, char *ptr, int ptr_len)
 static ret_t
 post_init (cherokee_connection_t *cnt)
 {
-	ret_t  ret;
-	long   post_len;
-	char  *info     = NULL;
-	int    info_len = 0;
+	ret_t    ret;
+	long     post_len;
+	char    *info     = NULL;
+	cuint_t  info_len = 0;
+
 	CHEROKEE_TEMP(buf,64);
 
 	/* Get the header "Content-Lenght" content
@@ -1324,9 +1325,9 @@ parse_userdir (cherokee_connection_t *cnt)
 ret_t 
 cherokee_connection_get_request (cherokee_connection_t *cnt)
 {
-	ret_t  ret;
-	char  *host, *upgrade, *conn;
-	int    host_len, upgrade_len, conn_len;
+	ret_t    ret;
+	char    *host, *upgrade, *conn;
+	cuint_t  host_len, upgrade_len, conn_len;
 
 	/* Header parsing
 	 */
@@ -1585,9 +1586,9 @@ cherokee_connection_get_req_entry (cherokee_connection_t *cnt, cherokee_reqs_lis
 ret_t 
 cherokee_connection_check_authentication (cherokee_connection_t *cnt, cherokee_config_entry_t *config_entry)
 {
-	ret_t ret;
-	char *ptr;
-	int   len;
+	ret_t    ret;
+	char    *ptr;
+	cuint_t  len;
 
 	/* Return, there is nothing to do here
 	 */
@@ -1737,9 +1738,9 @@ cherokee_connection_create_handler (cherokee_connection_t *cnt, cherokee_config_
 ret_t
 cherokee_connection_parse_header (cherokee_connection_t *cnt, cherokee_encoder_table_t *encoders)
 {
-	ret_t  ret;
-	char  *ptr;
-	int    ptr_len;
+	ret_t    ret;
+	char    *ptr;
+	cuint_t  ptr_len;
 
 	/* Look for "Connection: Keep-Alive / Close"
 	 */

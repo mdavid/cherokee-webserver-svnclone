@@ -159,6 +159,7 @@ reconnect (cherokee_fcgi_manager_t *fcgim, cherokee_thread_t *thd, cherokee_bool
 		}
 	}
 
+	cherokee_fd_set_nonblocking (fcgim->socket->socket);
 
 	TRACE (ENTRIES, "Connected sucessfully try=%d, fd=%d\n", try, fcgim->socket->socket);
 	return ret_ok;
@@ -171,6 +172,7 @@ cherokee_fcgi_manager_ensure_is_connected (cherokee_fcgi_manager_t *fcgim, chero
 	ret_t ret;
 	
 	if (fcgim->socket->status == socket_closed) {
+		printf ("RECONNECT %p\n", fcgim->socket);
 		TRACE (ENTRIES, "It needs to reconnect %s", "\n");
 
 		ret = reconnect (fcgim, thd, !fcgim->first_connect);
@@ -204,15 +206,20 @@ cherokee_fcgi_manager_register_connection (cherokee_fcgi_manager_t *fcgim, chero
 	/* Do we need more memory for the index?
 	 */
 	if (found == false) {
+		cuint_t i;
+
 		fcgim->conn.id2conn = (conn_entry_t *) realloc (
 			fcgim->conn.id2conn, (fcgim->conn.size + CONN_STEP) * sizeof(conn_entry_t));
 
                 if (unlikely (fcgim->conn.id2conn == NULL)) 
 			return ret_nomem;
 
-		memset (&fcgim->conn.id2conn[fcgim->conn.size], 0, CONN_STEP * sizeof(conn_entry_t));
+		for (i = 0; i < CONN_STEP; i++) {
+			fcgim->conn.id2conn[i + fcgim->conn.size].eof  = true;
+			fcgim->conn.id2conn[i + fcgim->conn.size].conn = NULL;			
+		}
 		
-		slot = fcgim->conn.size + 1;
+		slot = fcgim->conn.size;
 		fcgim->conn.size += CONN_STEP;
 	}
 
@@ -279,18 +286,18 @@ cherokee_fcgi_manager_send_and_remove (cherokee_fcgi_manager_t *fcgim, cherokee_
 static ret_t
 process_package (cherokee_fcgi_manager_t *fcgim, cherokee_buffer_t *inbuf)
 {
-	cuint_t                len;
-	FCGI_Header           *header;
-	FCGI_EndRequestBody   *ending;
-	cherokee_buffer_t     *outbuf;
-	cherokee_connection_t *conn;
+	FCGI_Header                *header;
+	FCGI_EndRequestBody        *ending;
+	cherokee_buffer_t          *outbuf;
+	cherokee_connection_t      *conn;
 	cherokee_handler_fastcgi_t *hdl;
-	char                  *data;
 
-	cint_t  return_val;
-	cuint_t type;
-	cuint_t id;
-	cuint_t padding;
+	cuint_t  len;
+	char    *data;
+	cint_t   return_val;
+	cuint_t  type;
+	cuint_t  id;
+	cuint_t  padding;
 		
 	/* Is there enough information?
 	 */
@@ -357,7 +364,7 @@ process_package (cherokee_fcgi_manager_t *fcgim, cherokee_buffer_t *inbuf)
 		break;
 
 	case FCGI_STDOUT:
-//		printf ("READ:STDOUT id=%d gen=%d eof=%d (%s): %d", id, hdl->generation, CGI_BASE(hdl)->got_eof, conn->query_string.buf, len);
+		printf ("READ:STDOUT id=%d gen=%d eof=%d (%s): %d", id, hdl->generation, CGI_BASE(hdl)->got_eof, conn->query_string.buf, len);
 		cherokee_buffer_add (outbuf, data, len);
 		break;
 
@@ -369,10 +376,10 @@ process_package (cherokee_fcgi_manager_t *fcgim, cherokee_buffer_t *inbuf)
 			      (ending->appStatusB0 << 16) | 
 			      (ending->appStatusB0 << 24));
 
-		CGI_BASE(hdl)->got_eof       = true;
+		CGI_BASE(hdl)->got_eof      = true;
 		fcgim->conn.id2conn[id].eof = true;
 
-//		printf ("READ:END id=%d gen=%d (%s)", id, hdl->generation, conn->query_string.buf);
+		printf ("READ:END id=%d gen=%d", id, hdl->generation);
 		break;
 
 	default:
@@ -382,7 +389,7 @@ process_package (cherokee_fcgi_manager_t *fcgim, cherokee_buffer_t *inbuf)
 
 go_out:
 	cherokee_buffer_move_to_begin (inbuf, len + FCGI_HEADER_LEN + padding);
-//	printf ("- FCGI quedan %d\n", inbuf->len);
+	printf ("- FCGI quedan %d\n", inbuf->len);
 	return ret_eagain;
 
 error:
