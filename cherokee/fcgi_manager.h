@@ -28,8 +28,9 @@
 #include "common.h"
 #include "connection.h"
 #include "socket.h"
-#include "ext_source.h"
 #include "thread.h"
+#include "ext_source.h"
+
 
 typedef struct {
 	cherokee_connection_t *conn;
@@ -37,33 +38,38 @@ typedef struct {
 } conn_entry_t;
 
 typedef struct {
-	cherokee_ext_source_t  *source;
-	cherokee_socket_t      *socket;
-	cuchar_t                generation;
-	cherokee_boolean_t      first_connect;
+	cherokee_socket_t      socket;
+	cherokee_buffer_t      read_buffer;
+	cherokee_ext_source_t *source;
+	void                  *dispatcher;
 
-	cherokee_buffer_t       read_buffer;
-	cherokee_buffer_t       incomm_buffer;
+	cherokee_boolean_t    first_connect;	
+	char                  generation;
+	cuint_t               pipeline;
+	cherokee_boolean_t    keepalive;
 
 	struct {
-		conn_entry_t   *id2conn;
-		cuint_t         size;
+		conn_entry_t *id2conn;
+		cuint_t       size;
+		cuint_t       len;
 	} conn;
-
 } cherokee_fcgi_manager_t;
+
 
 #define FCGI_MANAGER(f) ((cherokee_fcgi_manager_t *)(f))
 
+ret_t cherokee_fcgi_manager_init        (cherokee_fcgi_manager_t *mgr, void *dispatcher, cherokee_ext_source_t *src, cherokee_boolean_t keepalive, cuint_t pipeline);
+ret_t cherokee_fcgi_manager_mrproper    (cherokee_fcgi_manager_t *mgr);
 
-ret_t cherokee_fcgi_manager_new             (cherokee_fcgi_manager_t **fcgim, cherokee_ext_source_t *fcgi);
-ret_t cherokee_fcgi_manager_free            (cherokee_fcgi_manager_t  *fcgim);
+ret_t cherokee_fcgi_manager_register    (cherokee_fcgi_manager_t *mgr, cherokee_connection_t *conn, cuint_t *id, cuchar_t *gen);
+ret_t cherokee_fcgi_manager_unregister  (cherokee_fcgi_manager_t *mgr, cherokee_connection_t *conn);
 
-ret_t cherokee_fcgi_manager_ensure_is_connected   (cherokee_fcgi_manager_t *fcgim, cherokee_thread_t *thd);
+ret_t cherokee_fcgi_manager_ensure_is_connected (cherokee_fcgi_manager_t *mgr, cherokee_thread_t *thd);
+ret_t cherokee_fcgi_manager_send_remove         (cherokee_fcgi_manager_t *mgr, cherokee_buffer_t *buf);
+ret_t cherokee_fcgi_manager_step                (cherokee_fcgi_manager_t *mgr);
 
-ret_t cherokee_fcgi_manager_register_connection   (cherokee_fcgi_manager_t *fcgim, cherokee_connection_t *conn, cuint_t *id, cuchar_t *generation);
-ret_t cherokee_fcgi_manager_unregister_id         (cherokee_fcgi_manager_t *fcgim, cherokee_connection_t *conn);
-
-ret_t cherokee_fcgi_manager_send_and_remove       (cherokee_fcgi_manager_t *fcgim, cherokee_buffer_t *buf);
-ret_t cherokee_fcgi_manager_step                  (cherokee_fcgi_manager_t *fcgim);
+/* Internal use 
+ */
+char  cherokee_fcgi_manager_supports_pipelining (cherokee_fcgi_manager_t *mgr);
 
 #endif /* CHEROKEE_FCGI_MANAGER_H */

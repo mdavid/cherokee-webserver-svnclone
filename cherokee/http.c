@@ -111,6 +111,7 @@ cherokee_http_code_to_string (cherokee_http_t code, const char **str)
 	case http_upgrade_required:      *str = http_upgrade_required_string; break;
 	case http_continue:              *str = http_continue_string; break;
 	case http_switching_protocols:   *str = http_switching_protocols_string; break;
+	case http_service_unavailable:   *str = http_service_unavailable_string; break;
 	default:
 		*str = "Unknown error";
 		return ret_error;
@@ -145,6 +146,7 @@ cherokee_http_code_copy (cherokee_http_t code, cherokee_buffer_t *buf)
 		entry_code (range_not_satisfiable);
 		entry_code (upgrade_required);
 		entry_code (internal_error);
+		entry_code (service_unavailable);
 	default:
 		break;
 	}
