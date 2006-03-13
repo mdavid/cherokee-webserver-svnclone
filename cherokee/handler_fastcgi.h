@@ -33,6 +33,7 @@
 #include "socket.h"
 #include "handler_cgi_base.h"
 #include "fcgi_manager.h"
+#include "fcgi_dispatcher.h"
 
 
 typedef enum {
@@ -56,14 +57,20 @@ typedef enum {
 typedef struct {
 	cherokee_handler_cgi_base_t base;
 
-	list_t                  *fastcgi_env_ref;
-	list_t                  *server_list;	
+	list_t                         *fastcgi_env_ref;
+	list_t                         *server_list;	
 
-	cuint_t                  id;
-	cuchar_t                 generation;
-	cherokee_fcgi_manager_t *manager;
+	cuint_t                         id;
+	cuchar_t                        generation;
+	
+	cuint_t                         nsockets;
+	cuint_t                         nkeepalive;
+	cuint_t                         npipeline;
 
-	cherokee_buffer_t        write_buffer;	
+	cherokee_buffer_t               write_buffer;	
+
+	cherokee_fcgi_manager_t        *manager;
+	cherokee_fcgi_dispatcher_t     *dispatcher;
 
 	cherokee_handler_fastcgi_init_t init_phase;
 	cherokee_handler_fastcgi_post_t post_phase;

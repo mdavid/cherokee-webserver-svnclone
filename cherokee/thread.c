@@ -1772,8 +1772,6 @@ move_connection_to_polling (cherokee_thread_t *thd, cherokee_connection_t *conn)
 	del_connection (thd, conn);
 	add_connection_polling (thd, conn);	
 
-//	printf (" (( move_connection_to_polling\n");
-
 	return ret_ok;
 }
 
@@ -1783,8 +1781,6 @@ move_connection_to_active (cherokee_thread_t *thd, cherokee_connection_t *conn)
 {
 	del_connection_polling (thd, conn);
 	add_connection (thd, conn);
-
-//	printf (" )) move_connection_to_active\n");
 
 	return ret_ok;
 }
@@ -1804,7 +1800,7 @@ reactive_conn_from_polling (cherokee_thread_t *thd, cherokee_connection_t *conn)
 	if (del) 
 		cherokee_fdpoll_del (thd->fdpoll, conn->polling_fd);
 
-	printf ("- reactive_conn_from_polling %p, multiple=%d del=%d\n", conn, conn->polling_multiple, del);
+//	printf ("- reactive_conn_from_polling %p, multiple=%d del=%d\n", conn, conn->polling_multiple, del);
 
 	cherokee_fdpoll_add (thd->fdpoll, socket->socket, socket->status);
 
@@ -1828,7 +1824,7 @@ cherokee_thread_deactive_to_polling (cherokee_thread_t *thd, cherokee_connection
 	if (multiple) 
 		add_fd = check_addition_multiple_fd (thd, fd);
 
-	printf ("+ move_connection_to_polling %p, multiple=%d add=%d\n", conn, multiple, add_fd);
+//	printf ("+ move_connection_to_polling %p, multiple=%d add=%d fd=%d\n", conn, multiple, add_fd, fd);
 	
 	/* Remove the connection file descriptor and add the new one
 	 */
@@ -1843,4 +1839,24 @@ cherokee_thread_deactive_to_polling (cherokee_thread_t *thd, cherokee_connection
 	conn->polling_multiple = multiple;
 
 	return move_connection_to_polling (thd, conn);
+}
+
+
+ret_t 
+cherokee_thread_retire_active_connection (cherokee_thread_t *thd, cherokee_connection_t *conn)
+{
+	cherokee_fdpoll_del (thd->fdpoll, SOCKET_FD(conn->socket));
+	del_connection (thd, conn);
+
+	return ret_ok;
+}
+
+
+ret_t 
+cherokee_thread_inject_active_connection (cherokee_thread_t *thd, cherokee_connection_t *conn)
+{
+	cherokee_fdpoll_add (thd->fdpoll, SOCKET_FD(conn->socket), 1);
+	add_connection (thd, conn);
+
+	return ret_ok;
 }

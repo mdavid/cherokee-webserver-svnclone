@@ -32,113 +32,133 @@
 #include <unistd.h>
 
 
-#define ENTRIES "manager,fcgi"
-#define CONN_STEP 20 
+#define ENTRIES "manager,cgi"
+#define CONN_STEP 10 
+
+
+ret_t
+cherokee_fcgi_manager_init (cherokee_fcgi_manager_t *mgr,
+			    void                    *dispatcher,
+			    cherokee_ext_source_t   *src, 
+			    cherokee_boolean_t       keepalive, 
+			    cuint_t                  pipeline)
+{
+	cuint_t i;
+	
+	cherokee_socket_init (&mgr->socket);
+	cherokee_buffer_init (&mgr->read_buffer);
+
+	mgr->dispatcher    = dispatcher;
+	mgr->keepalive     = keepalive;
+	mgr->pipeline      = pipeline;
+	mgr->generation    = 0;
+	mgr->source        = src;
+	mgr->first_connect = true;
+
+	mgr->conn.len      = 0;
+	mgr->conn.size     = CONN_STEP;
+
+	mgr->conn.id2conn = (conn_entry_t *) malloc (CONN_STEP * sizeof (conn_entry_t));
+	if (unlikely(mgr->conn.id2conn == NULL)) return ret_nomem;
+
+	for (i=0; i<CONN_STEP; i++) {
+		mgr->conn.id2conn[i].conn = NULL;
+		mgr->conn.id2conn[i].eof  = true;		
+	}
+
+	TRACE (ENTRIES, "keepalive=%d pipeline=%d conn_entries=%d\n", keepalive, pipeline, mgr->conn.size);
+	return ret_ok;
+}
+
+
+ret_t
+cherokee_fcgi_manager_mrproper (cherokee_fcgi_manager_t *mgr)
+{
+	cherokee_socket_close (&mgr->socket);
+	cherokee_socket_mrproper (&mgr->socket);
+
+	cherokee_buffer_mrproper (&mgr->read_buffer);
+
+	if (mgr->conn.id2conn != NULL) {
+		free (mgr->conn.id2conn);
+		mgr->conn.id2conn = NULL;
+	}
+
+	return ret_ok;
+}
 
 
 static void
-reset_connections (cherokee_fcgi_manager_t *fcgim)
+update_conn_list_lenght (cherokee_fcgi_manager_t *mgr, cuint_t id)
+{
+	if (mgr->conn.id2conn[id].conn == NULL) {
+		/* There is room of one connection, notify it
+		 */
+		cherokee_fcgi_dispatcher_end_notif (FCGI_DISPATCHER(mgr->dispatcher));
+		mgr->conn.len--;
+	}
+
+//	printf ("mgr->conn.id2conn[id].conn %p, mgr->conn.id2conn[id].eof %d -- use=%d\n",
+//		mgr->conn.id2conn[id].conn, mgr->conn.id2conn[id].eof, mgr->conn.len);
+}
+
+
+static void
+reset_connections (cherokee_fcgi_manager_t *mgr)
 {
 	cuint_t i;
 
-//	printf ("\n++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n");
-//	printf ("+ El reconnect de la muerte ataca de nuevo!! Nooooooooooooo... +\n");
-//	printf ("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n\n");
-
-	for (i=1; i<fcgim->conn.size; i++) {
+	for (i=1; i<mgr->conn.size; i++) {
 		cherokee_handler_cgi_base_t *cgi;
 		
-		if (fcgim->conn.id2conn[i].conn == NULL)
+		if (mgr->conn.id2conn[i].conn == NULL)
 			continue;
 			
-		cgi = CGI_BASE(fcgim->conn.id2conn[i].conn->handler);
+		cgi = CGI_BASE(mgr->conn.id2conn[i].conn->handler);
 
-		if (fcgim->generation != HANDLER_FASTCGI(cgi)->generation) {
-//			printf ("CLEAN: diff gen %i\n", i);
+		if (mgr->generation != HANDLER_FASTCGI(cgi)->generation) {
 			continue;
 		}
 		
-//		printf ("reconnect CLEAN: reset_connections id=%d\n", i);
-		
 		cgi->got_eof = true;
-		fcgim->conn.id2conn[i].conn = NULL;
-		fcgim->conn.id2conn[i].eof  = true;
+		mgr->conn.id2conn[i].conn = NULL;
+		mgr->conn.id2conn[i].eof  = true;
+		mgr->conn.len--;
 	}
-}
-
-ret_t 
-cherokee_fcgi_manager_new (cherokee_fcgi_manager_t **fcgim, cherokee_ext_source_t *src)
-{
-	ret_t   ret;
-	cuint_t i;
-        CHEROKEE_NEW_STRUCT (n,fcgi_manager);
-	
-	ret = cherokee_socket_new (&n->socket);
-	if (unlikely (ret != ret_ok)) return ret;
-	
-	n->source         = src;
-	n->generation     = 0;
-	n->first_connect  = true;
-
-	n->conn.size      = CONN_STEP;
-	n->conn.id2conn   = (conn_entry_t *) malloc (CONN_STEP * sizeof (conn_entry_t));
-
-	for (i=0; i<CONN_STEP; i++) {
-		n->conn.id2conn[i].conn = NULL;
-		n->conn.id2conn[i].eof  = true;		
-	}
-
-	cherokee_buffer_init (&n->read_buffer);
-	
-	*fcgim = n;
-	return ret_ok;
-}
-
-
-ret_t 
-cherokee_fcgi_manager_free (cherokee_fcgi_manager_t *fcgim)
-{
-	cherokee_socket_close (fcgim->socket);
-	cherokee_socket_free (fcgim->socket);
-
-	cherokee_buffer_mrproper (&fcgim->read_buffer);
-	
-	free (fcgim);
-	return ret_ok;
 }
 
 
 static ret_t 
-reconnect (cherokee_fcgi_manager_t *fcgim, cherokee_thread_t *thd, cherokee_boolean_t clean_up)
+reconnect (cherokee_fcgi_manager_t *mgr, cherokee_thread_t *thd, cherokee_boolean_t clean_up)
 {
 	ret_t                  ret;
 	cuint_t                next;
-	cuint_t                try    = 0;
-	cherokee_ext_source_t *src    = fcgim->source;
+	cuint_t                try = 0;
+	cherokee_ext_source_t *src = mgr->source;
 
 	/* Do some clean up
 	 */
 	if (clean_up) {
 		TRACE (ENTRIES, "Cleaning up before reconecting %s", "\n");
 
-		cherokee_thread_close_polling_connections (thd, SOCKET_FD(fcgim->socket), NULL);
+		cherokee_thread_close_polling_connections (thd, SOCKET_FD(&mgr->socket), NULL);
 
-		reset_connections (fcgim);
-		cherokee_buffer_clean (&fcgim->read_buffer);
+		reset_connections (mgr);
+		cherokee_buffer_clean (&mgr->read_buffer);
 	
 		/* Set the new generation number
 		 */
-		next = fcgim->generation;
-		fcgim->generation = ++next % 255;
+		next = mgr->generation;
+		mgr->generation = ++next % 255;
 
 		/* Close	
 		 */
-		cherokee_socket_close (fcgim->socket);
+		cherokee_socket_close (&mgr->socket);
 	}
 	
 	/* If it connects we're done here..
 	 */
-	ret = cherokee_ext_source_connect (src, fcgim->socket);
+	ret = cherokee_ext_source_connect (src, &mgr->socket);
 	if (ret != ret_ok) {
 		/* It didn't sucess to connect, so lets spawn a new server
 		 */
@@ -151,7 +171,7 @@ reconnect (cherokee_fcgi_manager_t *fcgim, cherokee_thread_t *thd, cherokee_bool
 		for (; try < 4; try++) {
 			/* Try to connect again	
 			 */
-			ret = cherokee_ext_source_connect (src, fcgim->socket);
+			ret = cherokee_ext_source_connect (src, &mgr->socket);
 			if (ret == ret_ok) break;
 
 			TRACE (ENTRIES, "Couldn't connect: %s, try %d\n", src->host.buf ? src->host.buf : src->unix_socket.buf, try);
@@ -159,132 +179,35 @@ reconnect (cherokee_fcgi_manager_t *fcgim, cherokee_thread_t *thd, cherokee_bool
 		}
 	}
 
-	cherokee_fd_set_nonblocking (fcgim->socket->socket);
+	cherokee_fd_set_nonblocking (mgr->socket.socket);
 
-	TRACE (ENTRIES, "Connected sucessfully try=%d, fd=%d\n", try, fcgim->socket->socket);
+	TRACE (ENTRIES, "Connected sucessfully try=%d, fd=%d\n", try, mgr->socket.socket);
 	return ret_ok;
 }
 
 
 ret_t 
-cherokee_fcgi_manager_ensure_is_connected (cherokee_fcgi_manager_t *fcgim, cherokee_thread_t *thd)
+cherokee_fcgi_manager_ensure_is_connected (cherokee_fcgi_manager_t *mgr, cherokee_thread_t *thd)
 {
-	ret_t ret;
-	
-	if (fcgim->socket->status == socket_closed) {
-		printf ("RECONNECT %p\n", fcgim->socket);
-		TRACE (ENTRIES, "It needs to reconnect %s", "\n");
+	ret_t              ret;
+	cherokee_socket_t *socket = &mgr->socket;
 
-		ret = reconnect (fcgim, thd, !fcgim->first_connect);
+	if (socket->status == socket_closed) {
+		TRACE (ENTRIES, "mgr=%p reconnecting\n", mgr);
+		
+		ret = reconnect (mgr, thd, !mgr->first_connect);
 		if (ret != ret_ok) return ret;
-		
-		if (fcgim->first_connect)
-			fcgim->first_connect = false;
+
+ 		if (mgr->first_connect) 
+ 			mgr->first_connect = false; 
 	}
 	
-	return ret_ok;
-}
-
-
-ret_t 
-cherokee_fcgi_manager_register_connection (cherokee_fcgi_manager_t *fcgim, cherokee_connection_t *conn, cuint_t *id, cuchar_t *gen)
-{
-	cuint_t            slot;
-	cherokee_boolean_t found = false;
-
-	/* Look for a available slot
-	 */
-	for (slot = 1; slot < fcgim->conn.size; slot++) {
-		if ((fcgim->conn.id2conn[slot].eof) &&
-		    (fcgim->conn.id2conn[slot].conn == NULL)) 
-		{
-			found = true;
-			break;
-		}
-	}
-
-	/* Do we need more memory for the index?
-	 */
-	if (found == false) {
-		cuint_t i;
-
-		fcgim->conn.id2conn = (conn_entry_t *) realloc (
-			fcgim->conn.id2conn, (fcgim->conn.size + CONN_STEP) * sizeof(conn_entry_t));
-
-                if (unlikely (fcgim->conn.id2conn == NULL)) 
-			return ret_nomem;
-
-		for (i = 0; i < CONN_STEP; i++) {
-			fcgim->conn.id2conn[i + fcgim->conn.size].eof  = true;
-			fcgim->conn.id2conn[i + fcgim->conn.size].conn = NULL;			
-		}
-		
-		slot = fcgim->conn.size;
-		fcgim->conn.size += CONN_STEP;
-	}
-
-	/* Register the connection
-	 */
-	fcgim->conn.id2conn[slot].conn = conn;
-	fcgim->conn.id2conn[slot].eof  = false;
-
-	*gen = fcgim->generation;
-	*id  = slot;
-	
-	TRACE (ENTRIES, "registered id=%d (gen=%d)\n", slot, fcgim->generation);
-	return ret_ok;
-}
-
-
-ret_t 
-cherokee_fcgi_manager_unregister_id (cherokee_fcgi_manager_t *fcgim, cherokee_connection_t *conn)
-{
-	cherokee_handler_fastcgi_t *hdl = HANDLER_FASTCGI(conn->handler);
-
-	if (hdl->generation != fcgim->generation) {
-		TRACE (ENTRIES, "Unregister: Different generation id=%d gen=%d, mgr=%d\n", 
-		       hdl->id, fcgim->generation, fcgim->generation);
-		return ret_ok;
-	}
-
-	if (fcgim->conn.id2conn[hdl->id].conn != conn) {
-		SHOULDNT_HAPPEN;
-		exit(1);
-		return ret_error;
-	}
-
-	TRACE (ENTRIES, "UNregistered id=%d (gen=%d)\n", hdl->id, fcgim->generation);
-	fcgim->conn.id2conn[hdl->id].conn = NULL;	
-	return ret_ok;
-}
-
-
-ret_t 
-cherokee_fcgi_manager_send_and_remove (cherokee_fcgi_manager_t *fcgim, cherokee_buffer_t *buf)
-{
-	ret_t  ret;
-	size_t written = 0;
-
-	ret = cherokee_socket_write (fcgim->socket, buf, &written);
-	switch (ret) {
-	case ret_ok:
-		TRACE (ENTRIES, "Sent %db\n", written);
-		cherokee_buffer_move_to_begin (buf, written);
-		return ret_ok;
-	case ret_eof:
-	case ret_error:
-	case ret_eagain:
-		return ret;
-	default:
-		RET_UNKNOWN(ret);
-	}
-
 	return ret_ok;
 }
 
 
 static ret_t
-process_package (cherokee_fcgi_manager_t *fcgim, cherokee_buffer_t *inbuf)
+process_package (cherokee_fcgi_manager_t *mgr, cherokee_buffer_t *inbuf)
 {
 	FCGI_Header                *header;
 	FCGI_EndRequestBody        *ending;
@@ -337,9 +260,9 @@ process_package (cherokee_fcgi_manager_t *fcgim, cherokee_buffer_t *inbuf)
 
 	/* Locate the connection
 	 */
-	conn = fcgim->conn.id2conn[id].conn;
+	conn = mgr->conn.id2conn[id].conn;
 	if (conn == NULL) {
-		if (fcgim->conn.id2conn[id].eof)
+		if (mgr->conn.id2conn[id].eof)
 			goto error;
 
 		goto go_out;
@@ -364,7 +287,7 @@ process_package (cherokee_fcgi_manager_t *fcgim, cherokee_buffer_t *inbuf)
 		break;
 
 	case FCGI_STDOUT:
-		printf ("READ:STDOUT id=%d gen=%d eof=%d (%s): %d", id, hdl->generation, CGI_BASE(hdl)->got_eof, conn->query_string.buf, len);
+//		printf ("READ:STDOUT id=%d gen=%d eof=%d (%s): %d", id, hdl->generation, CGI_BASE(hdl)->got_eof, conn->query_string.buf, len);
 		cherokee_buffer_add (outbuf, data, len);
 		break;
 
@@ -376,20 +299,21 @@ process_package (cherokee_fcgi_manager_t *fcgim, cherokee_buffer_t *inbuf)
 			      (ending->appStatusB0 << 16) | 
 			      (ending->appStatusB0 << 24));
 
-		CGI_BASE(hdl)->got_eof      = true;
-		fcgim->conn.id2conn[id].eof = true;
+		CGI_BASE(hdl)->got_eof    = true;
+		mgr->conn.id2conn[id].eof = true;
 
-		printf ("READ:END id=%d gen=%d", id, hdl->generation);
+		update_conn_list_lenght (mgr, id);
+
+//		printf ("READ:END id=%d gen=%d", id, hdl->generation);
 		break;
 
 	default:
 		SHOULDNT_HAPPEN;
-		exit(1);
 	}
 
 go_out:
 	cherokee_buffer_move_to_begin (inbuf, len + FCGI_HEADER_LEN + padding);
-	printf ("- FCGI quedan %d\n", inbuf->len);
+//	printf ("- FCGI quedan %d\n", inbuf->len);
 	return ret_eagain;
 
 error:
@@ -399,12 +323,12 @@ error:
 
 
 static ret_t
-process_buffer (cherokee_fcgi_manager_t *fcgim)
+process_buffer (cherokee_fcgi_manager_t *mgr)
 {
 	ret_t ret;
 	
 	do {
-		ret = process_package (fcgim, &fcgim->read_buffer);
+		ret = process_package (mgr, &mgr->read_buffer);
 	} while (ret == ret_eagain);
 
 	/* ok, error
@@ -414,13 +338,94 @@ process_buffer (cherokee_fcgi_manager_t *fcgim)
 
 
 ret_t 
-cherokee_fcgi_manager_step (cherokee_fcgi_manager_t *fcgim)
+cherokee_fcgi_manager_register (cherokee_fcgi_manager_t *mgr, cherokee_connection_t *conn, cuint_t *id, cuchar_t *gen)
+{
+	cuint_t            slot;
+	cherokee_boolean_t found = false;
+
+	/* Look for a available slot
+	 */
+	for (slot = 1; slot < mgr->conn.size; slot++) {
+		if ((mgr->conn.id2conn[slot].eof) &&
+		    (mgr->conn.id2conn[slot].conn == NULL)) 
+		{
+			found = true;
+			break;
+		}
+	}
+	
+	/* Do we need more memory for the index?
+	 */
+	if (found == false) {
+		cuint_t i;
+
+		mgr->conn.id2conn = (conn_entry_t *) realloc (
+			mgr->conn.id2conn, (mgr->conn.size + CONN_STEP) * sizeof(conn_entry_t));
+
+                if (unlikely (mgr->conn.id2conn == NULL)) 
+			return ret_nomem;
+
+		for (i = 0; i < CONN_STEP; i++) {
+			mgr->conn.id2conn[i + mgr->conn.size].eof  = true;
+			mgr->conn.id2conn[i + mgr->conn.size].conn = NULL;			
+		}
+		
+		slot = mgr->conn.size;
+		mgr->conn.size += CONN_STEP;
+	}
+
+	/* Register the connection
+	 */
+	mgr->conn.id2conn[slot].conn = conn;
+	mgr->conn.id2conn[slot].eof  = false;
+	mgr->conn.len++;
+
+	*gen = mgr->generation;
+	*id  = slot;
+	
+	TRACE (ENTRIES, "registered id=%d (gen=%d)\n", slot, mgr->generation);
+	return ret_ok;
+}
+
+
+ret_t 
+cherokee_fcgi_manager_unregister (cherokee_fcgi_manager_t *mgr, cherokee_connection_t *conn)
+{
+	cherokee_handler_fastcgi_t *hdl = HANDLER_FASTCGI(conn->handler);
+
+	if (hdl->generation != mgr->generation) {
+		TRACE (ENTRIES, "Unregister: Different generation id=%d gen=%d, mgr=%d\n",
+		       hdl->id, mgr->generation, mgr->generation);
+		return ret_ok;
+	}
+ 	
+	if (mgr->conn.id2conn[hdl->id].conn != conn) {
+		SHOULDNT_HAPPEN;
+		return ret_error;
+	}
+ 	
+	TRACE (ENTRIES, "UNregistered id=%d (gen=%d)\n", hdl->id, mgr->generation);
+
+	if (! mgr->keepalive) {
+		cherokee_socket_close (&mgr->socket);
+		cherokee_socket_clean (&mgr->socket);
+	}
+
+	mgr->conn.id2conn[hdl->id].conn = NULL;       
+	update_conn_list_lenght (mgr, hdl->id);
+
+	return ret_ok;
+}
+
+
+ret_t 
+cherokee_fcgi_manager_step (cherokee_fcgi_manager_t *mgr)
 {
 	ret_t  ret;
 	size_t size = 0; 
-		
-	if (fcgim->read_buffer.len < sizeof(FCGI_Header)) {
-		ret = cherokee_socket_read (fcgim->socket, &fcgim->read_buffer, DEFAULT_READ_SIZE, &size);
+
+	if (mgr->read_buffer.len < sizeof(FCGI_Header)) {
+		ret = cherokee_socket_read (&mgr->socket, &mgr->read_buffer, DEFAULT_READ_SIZE, &size);
 		switch (ret) {
 		case ret_ok:
 			TRACE (ENTRIES, "%d bytes readed\n", size);
@@ -442,9 +447,39 @@ cherokee_fcgi_manager_step (cherokee_fcgi_manager_t *fcgim)
 
 	/* Process the new chunk
 	 */
-	ret = process_buffer (fcgim);
+	ret = process_buffer (mgr);
 	if (unlikely (ret != ret_ok)) return ret;
 
 	return ret_ok;
 }
 
+
+ret_t 
+cherokee_fcgi_manager_send_remove (cherokee_fcgi_manager_t *mgr, cherokee_buffer_t *buf)
+{
+	ret_t  ret;
+	size_t written = 0;
+	
+	ret = cherokee_socket_write (&mgr->socket, buf, &written);
+	switch (ret) {
+	case ret_ok:
+		TRACE (ENTRIES, "Sent %db\n", written);
+		cherokee_buffer_move_to_begin (buf, written);
+		return ret_ok;
+	case ret_eof:
+	case ret_error:
+	case ret_eagain:
+		return ret;
+	default:
+		RET_UNKNOWN(ret);
+	}
+
+	return ret_ok;
+}
+
+
+char
+cherokee_fcgi_manager_supports_pipelining (cherokee_fcgi_manager_t *mgr)
+{
+	return (mgr->pipeline > 0);
+}

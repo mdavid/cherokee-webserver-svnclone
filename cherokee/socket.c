@@ -95,25 +95,67 @@ extern int32_t sendfile (int out_fd, int in_fd, int32_t *offset, uint32_t count)
 
 
 ret_t
+cherokee_socket_init (cherokee_socket_t *socket)
+{
+	memset (&socket->client_addr, 0, sizeof(cherokee_sockaddr_t));
+	socket->client_addr_len = -1;
+
+	socket->socket      = -1;
+	socket->status      = socket_closed;
+	socket->is_tls      = non_TLS;
+
+#ifdef HAVE_TLS
+	socket->initialized = false;
+	socket->vserver_ref = NULL;
+#endif
+
+#ifdef HAVE_GNUTLS
+	socket->session     = NULL;
+#endif
+
+#ifdef HAVE_OPENSSL
+	socket->session     = NULL;
+	socket->ssl_ctx     = NULL;
+#endif
+
+	return ret_ok;
+}
+
+
+ret_t
+cherokee_socket_mrproper (cherokee_socket_t *socket)
+{
+#ifdef HAVE_GNUTLS
+	if (socket->session != NULL) {
+		gnutls_deinit (socket->session);
+		socket->session = NULL;
+	}
+#endif
+
+#ifdef HAVE_OPENSSL
+	if (socket->session != NULL) {
+		SSL_free (socket->session);
+		socket->session = NULL;
+	}
+
+	if (socket->ssl_ctx != NULL) {
+		SSL_CTX_free (socket->ssl_ctx);
+		socket->ssl_ctx = NULL;
+	}
+#endif
+
+	return ret_ok;
+}
+
+ret_t
 cherokee_socket_new (cherokee_socket_t **socket)
 {
  	CHEROKEE_NEW_STRUCT (n, socket);
 
 	/* Init 
 	 */
-#ifdef HAVE_TLS
-	n->session = NULL;
-# ifdef HAVE_OPENSSL
-	n->ssl_ctx = NULL;
-# endif
-#endif
-	cherokee_socket_clean (n);
-
-	/* Client address
-	 */
-	memset (&n->client_addr, 0, sizeof(struct sockaddr));
-	n->client_addr_len = -1;
-
+	cherokee_socket_init (n);
+	
 	/* Return it
 	 */
 	*socket = n;
@@ -381,24 +423,7 @@ cherokee_socket_init_tls (cherokee_socket_t *socket, cherokee_virtual_server_t *
 ret_t
 cherokee_socket_free (cherokee_socket_t *socket)
 {
-#ifdef HAVE_GNUTLS
-	if (socket->session != NULL) {
-		gnutls_deinit (socket->session);
-		socket->session = NULL;
-	}
-#endif
-
-#ifdef HAVE_OPENSSL
-	if (socket->session != NULL) {
-		SSL_free (socket->session);
-		socket->session = NULL;
-	}
-
-	if (socket->ssl_ctx != NULL) {
-		SSL_CTX_free (socket->ssl_ctx);
-		socket->ssl_ctx = NULL;
-	}
-#endif
+	cherokee_socket_mrproper (socket);
 
 	free (socket);
 	return ret_ok;

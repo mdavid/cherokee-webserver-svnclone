@@ -1111,6 +1111,15 @@ handler_option : T_REWRITE T_QSTRING
 	   handler_redir_add_property_simple (current_config_entry, $2, 0);
 };
 
+handler_option : T_KEEPALIVE T_NUMBER
+{
+	   cherokee_config_entry_set_handler_prop (current_config_entry, "nkeepalive", typed_int, INT_TO_POINTER($2), NULL);	   
+};
+
+handler_option : T_SOCKET T_NUMBER
+{
+	   cherokee_config_entry_set_handler_prop (current_config_entry, "nsocket", typed_int, INT_TO_POINTER($2), NULL);	   
+};
 
 str_type : T_ID
          | fulldir
@@ -1268,9 +1277,12 @@ handler_server_optinal_entry : T_ENV T_ID str_type
 
 handler_server_optinal_entry: T_ID str_type
 {
-	   if (strcasecmp($1, "interpreter") != 0) return 1;
-	   fix_win32_path($2);
-	   cherokee_buffer_add (&current_ext_source->interpreter, $2, strlen($2));
+	   if (strcasecmp($1, "interpreter") == 0) {
+			 fix_win32_path($2);
+			 cherokee_buffer_add (&current_ext_source->interpreter, $2, strlen($2));
+	   } else {
+			 return 1;
+	   }
 };
 
 handler_option : T_NUMBER http_generic

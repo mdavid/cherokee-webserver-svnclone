@@ -627,9 +627,9 @@ fork_and_execute_cgi_win32 (cherokee_handler_cgi_t *cgi)
 
 	/* Command line
 	 */
-	cmd = CGI_BASE(cgi)->executable->buf;
+	cmd = CGI_BASE(cgi)->executable.buf;
 	cherokee_buffer_add (&cmd_line, cmd, strlen(cmd));
-	cherokee_buffer_add_va (&cmd_line, " \"%s\"", CGI_BASE(cgi)->parameter->buf);
+	cherokee_buffer_add_va (&cmd_line, " \"%s\"", CGI_BASE(cgi)->param.buf);
 
 	/* Execution directory
 	 */
@@ -637,10 +637,10 @@ fork_and_execute_cgi_win32 (cherokee_handler_cgi_t *cgi)
 		cherokee_buffer_add_buffer (&exec_dir, &conn->effective_directory);
 	} else {
 		char *file = strrchr (cmd, '/');
-		char *end  = CGI_BASE(cgi)->executable->buf + CGI_BASE(cgi)->executable->len;
+		char *end  = CGI_BASE(cgi)->executable.buf + CGI_BASE(cgi)->executable.len;
 
 		cherokee_buffer_add (&exec_dir, cmd, 
-				     CGI_BASE(cgi)->executable->len - (end - file));
+				     CGI_BASE(cgi)->executable.len - (end - file));
 	}
 
 	/* Set the bInheritHandle flag so pipe handles are inherited. 

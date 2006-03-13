@@ -219,6 +219,8 @@ endif
 handler_fastcgi = \
 $(handlerfcgi_cgi) \
 fastcgi.h \
+fcgi_dispatcher.h \
+fcgi_dispatcher.c \
 fcgi_manager.h \
 fcgi_manager.c \
 handler_fastcgi.c \
