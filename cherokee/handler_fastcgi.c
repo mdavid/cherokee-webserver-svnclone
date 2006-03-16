@@ -658,4 +658,6 @@ cherokee_handler_fastcgi_init (cherokee_handler_fastcgi_t *hdl)
 void  
 MODULE_INIT(fastcgi) (cherokee_module_loader_t *loader)
 {
+	printf ("IMPORTANT: This \"fastcgi\" module is NOT ready to be used. Please,\n");
+	printf ("modify your configuration in order to use the \"fcgi\" module instead.\n\n");
 }

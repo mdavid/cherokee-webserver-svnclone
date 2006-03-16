@@ -210,14 +210,37 @@ endif
 
 
 #
-# Handler fastcgi
+# Handler fcgi
 #
-if !STATIC_HANDLER_FASTCGI
+if !STATIC_HANDLER_FCGI
 handlerfcgi_cgi = handler_cgi_base.h handler_cgi_base.c
 endif
 
-handler_fastcgi = \
+handler_fcgi = \
 $(handlerfcgi_cgi) \
+fastcgi.h \
+handler_fcgi.h \
+handler_fcgi.c
+
+libplugin_fcgi_la_LDFLAGS = $(module_ldflags)  
+libplugin_fcgi_la_SOURCES = $(handler_fcgi)
+
+if STATIC_HANDLER_FCGI
+static_handler_fcgi_src = $(handler_fcgi)
+else
+dynamic_handler_fcgi_lib = libplugin_fcgi.la
+endif
+
+
+#
+# Handler fastcgi
+#
+if !STATIC_HANDLER_FASTCGI
+handlerfastcgi_cgi = handler_cgi_base.h handler_cgi_base.c
+endif
+
+handler_fastcgi = \
+$(handlerfastcgi_cgi) \
 fastcgi.h \
 fcgi_dispatcher.h \
 fcgi_dispatcher.c \
@@ -668,6 +691,11 @@ downloader-protected.h \
 downloader.c 
 
 
+if STATIC_HANDLER_FCGI
+   common_cgi = handler_cgi_base.h \
+	     	 handler_cgi_base.c
+endif
+
 if STATIC_HANDLER_FASTCGI
    common_cgi = handler_cgi_base.h \
 	     	 handler_cgi_base.c
@@ -693,6 +721,7 @@ $(static_handler_file_src) \
 $(static_handler_admin_src) \
 $(static_handler_dirlist_src) \
 $(static_handler_scgi_src) \
+$(static_handler_fcgi_src) \
 $(static_handler_fastcgi_src) \
 $(static_handler_redir_src) \
 $(static_handler_error_redir_src) \
@@ -828,6 +857,7 @@ $(dynamic_handler_file_lib) \
 $(dynamic_handler_admin_lib) \
 $(dynamic_handler_dirlist_lib) \
 $(dynamic_handler_scgi_lib) \
+$(dynamic_handler_fcgi_lib) \
 $(dynamic_handler_fastcgi_lib) \
 $(dynamic_handler_redir_lib) \
 $(dynamic_handler_error_redir_lib) \
