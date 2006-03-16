@@ -22,8 +22,8 @@
  * USA
  */
 
-#ifndef CHEROKEE_HANDLER_SCGI_H
-#define CHEROKEE_HANDLER_SCGI_H
+#ifndef CHEROKEE_HANDLER_FCGI_H
+#define CHEROKEE_HANDLER_FCGI_H
 
 #include "common-internal.h"
 
@@ -32,31 +32,37 @@
 #include "module_loader.h"
 #include "socket.h"
 #include "handler_cgi_base.h"
+#include "ext_source.h"
 
+
+typedef enum {
+	fcgi_post_unknown,
+	fcgi_post_init,
+	fcgi_post_read,
+	fcgi_post_write
+} cherokee_handler_fcgi_post_t;
 
 typedef struct {
-	cherokee_handler_cgi_base_t base;
+	cherokee_handler_cgi_base_t   base;
+	cherokee_socket_t             socket;
+	cherokee_ext_source_t        *src;
+	cherokee_buffer_t             write_buffer;
+	cherokee_handler_fcgi_post_t  post_phase;
+	list_t                       *server_list;
+	cuint_t                       post_len;
+} cherokee_handler_fcgi_t;
 
-	cherokee_buffer_t   header;
-	cherokee_socket_t  *socket;
-
-	list_t             *scgi_env_ref;
-	list_t             *server_list;	
-
-	size_t              post_len;
-} cherokee_handler_scgi_t;
-
-#define HANDLER_SCGI(x)  ((cherokee_handler_scgi_t *)(x))
+#define HANDLER_FCGI(x)  ((cherokee_handler_fcgi_t *)(x))
 
  
 /* Library init function
  */
-void MODULE_INIT(scgi) (cherokee_module_loader_t *loader);
+void  MODULE_INIT(fcgi) (cherokee_module_loader_t *loader);
 
 /* Methods
  */
-ret_t cherokee_handler_scgi_new  (cherokee_handler_t     **hdl, void *cnt, cherokee_table_t *properties);
-ret_t cherokee_handler_scgi_free (cherokee_handler_scgi_t *hdl);
-ret_t cherokee_handler_scgi_init (cherokee_handler_scgi_t *hdl);
+ret_t cherokee_handler_fcgi_new  (cherokee_handler_t     **hdl, void *cnt, cherokee_table_t *properties);
+ret_t cherokee_handler_fcgi_free (cherokee_handler_fcgi_t *hdl);
+ret_t cherokee_handler_fcgi_init (cherokee_handler_fcgi_t *hdl);
 
 #endif /* CHEROKEE_HANDLER_CGI_H */

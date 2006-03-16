@@ -1,3 +1,8 @@
+2006-03-07  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/socket.h, cherokee/socket.c (cherokee_socket_init,
+	cherokee_socket_mrproper): Added new methods.
+
 2006-02-28  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* qa/run-tests.py: Added new option -f to disable PHP/FastCGI in
