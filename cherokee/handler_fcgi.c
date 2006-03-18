@@ -49,11 +49,10 @@ static void set_env_pair (cherokee_handler_cgi_base_t *cgi_base,
 			  char *key, int key_len, 
 			  char *val, int val_len);
 static ret_t
-process_package (cherokee_handler_fcgi_t *hdl, cherokee_buffer_t *inbuf)
+process_package (cherokee_handler_fcgi_t *hdl, cherokee_buffer_t *inbuf, cherokee_buffer_t *outbuf)
 {
 	FCGI_Header           *header;
 	FCGI_EndRequestBody   *ending;
-	cherokee_buffer_t     *outbuf;
 	cherokee_connection_t *conn = HANDLER_CONN(hdl);
 
 	cuint_t  len;
@@ -93,16 +92,12 @@ process_package (cherokee_handler_fcgi_t *hdl, cherokee_buffer_t *inbuf)
 	padding =  header->paddingLength;
 	id      = (header->requestIdB0     | (header->requestIdB1 << 8));
 	len     = (header->contentLengthB0 | (header->contentLengthB1 << 8));
+	data    = inbuf->buf +  FCGI_HEADER_LEN;
 
 	/* Is the package complete?
 	 */
 	if (len > inbuf->len - (FCGI_HEADER_LEN + padding))
 		return ret_ok;
-
-	/* Locate the connection
-	 */
-	outbuf   = &CGI_BASE(hdl)->data;
-	data     = inbuf->buf +  FCGI_HEADER_LEN;
 
 	/* It has received the full package content
 	 */
@@ -146,16 +141,19 @@ process_package (cherokee_handler_fcgi_t *hdl, cherokee_buffer_t *inbuf)
 
 
 static ret_t
-process_buffer (cherokee_handler_fcgi_t *hdl, cherokee_buffer_t *buffer)
+process_buffer (cherokee_handler_fcgi_t *hdl, cherokee_buffer_t *inbuf, cherokee_buffer_t *outbuf)
 {
 	ret_t ret;
 	
 	do {
-		ret = process_package (hdl, buffer);
+		ret = process_package (hdl, inbuf, outbuf);
 	} while (ret == ret_eagain);
 
-	/* ok, error
-	 */
+	if (ret == ret_ok) {
+		if (cherokee_buffer_is_empty (outbuf))
+			return ret_eagain;
+	}
+	
 	return ret;
 }
 
@@ -165,8 +163,8 @@ read_from_fcgi (cherokee_handler_cgi_base_t *cgi, cherokee_buffer_t *buffer)
 	ret_t                    ret;
 	size_t                   read = 0;
 	cherokee_handler_fcgi_t *fcgi = HANDLER_FCGI(cgi);
-	
-	ret = cherokee_socket_read (&fcgi->socket, buffer, 4096, &read);
+
+	ret = cherokee_socket_read (&fcgi->socket, &fcgi->write_buffer, DEFAULT_READ_SIZE, &read);
 
 	switch (ret) {
 	case ret_eagain:
@@ -175,8 +173,11 @@ read_from_fcgi (cherokee_handler_cgi_base_t *cgi, cherokee_buffer_t *buffer)
 		return ret_eagain;
 
 	case ret_ok:
-		TRACE (ENTRIES, "%d bytes readed\n", read);
-		return process_buffer (fcgi, buffer);		
+		ret = process_buffer (fcgi, &fcgi->write_buffer, buffer);
+		TRACE (ENTRIES, "%d bytes readed, buffer.len %d\n", read, buffer->len);
+		if ((ret == ret_ok) && cgi->got_eof && (buffer->len > 0)) 
+			return ret_eof_have_data;
+		return ret;
 
 	case ret_eof:
 	case ret_error:
@@ -223,6 +224,7 @@ cherokee_handler_fcgi_new (cherokee_handler_t **hdl, void *cnt, cherokee_table_t
 	cherokee_buffer_init (&n->write_buffer);
 	cherokee_buffer_ensure_size (&n->write_buffer, 512);
 
+
 	if (properties) {
 		cherokee_typed_table_get_list (properties, "servers", &n->server_list);
 	}
@@ -263,7 +265,8 @@ fcgi_build_request_body (FCGI_BeginRequestRecord *request)
 {
         request->body.roleB0      = FCGI_RESPONDER;
         request->body.roleB1      = 0;
-        request->body.flags       = 0; // FCGI_KEEP_CONN
+        request->body.flags       = 0;
+//      request->body.flags       = FCGI_KEEP_CONN;
         request->body.reserved[0] = 0;
         request->body.reserved[1] = 0;
         request->body.reserved[2] = 0;
@@ -430,7 +433,8 @@ build_header (cherokee_handler_fcgi_t *hdl, cherokee_buffer_t *buffer)
 static ret_t 
 connect_to_server (cherokee_handler_fcgi_t *hdl)
 {
-	ret_t ret;
+	ret_t   ret;
+	cuint_t try = 0;
 
 	if (hdl->src == NULL) {
 		ret = cherokee_ext_source_get_next (EXT_SOURCE_HEAD(hdl->server_list->next), hdl->server_list, &hdl->src);
@@ -438,8 +442,27 @@ connect_to_server (cherokee_handler_fcgi_t *hdl)
 	}
 	
 	ret = cherokee_ext_source_connect (hdl->src, &hdl->socket);
-	if (unlikely (ret != ret_ok)) return ret;
+	if (ret != ret_ok) {
+		/* It didn't sucess to connect, so lets spawn a new server
+		 */
+		ret = cherokee_ext_source_spawn_srv (hdl->src);
+		if (ret != ret_ok) {
+			TRACE (ENTRIES, "Couldn't spawn: %s\n", hdl->src->host.buf ? hdl->src->host.buf : hdl->src->unix_socket.buf);
+			return ret;
+		}
+		
+		for (; try < 4; try++) {
+			/* Try to connect again	
+			 */
+			ret = cherokee_ext_source_connect (hdl->src, &hdl->socket);
+			if (ret == ret_ok) break;
+
+			TRACE (ENTRIES, "Couldn't connect: %s, try %d\n", hdl->src->host.buf ? hdl->src->host.buf : hdl->src->unix_socket.buf, try);
+			sleep (1);
+		}
+	}
 	
+	TRACE (ENTRIES, "Connected sucessfully try=%d, fd=%d\n", try, hdl->socket.socket);
 	return ret_ok;
 }
 
@@ -578,6 +601,11 @@ cherokee_handler_fcgi_init (cherokee_handler_fcgi_t *hdl)
 			cherokee_post_get_len (&conn->post, &hdl->post_len);
 		}
 
+		/* Set the executable filename
+		 */
+		ret = cherokee_handler_cgi_base_extract_path (CGI_BASE(hdl), true);
+		if (unlikely (ret < ret_ok)) return ret; 
+
 		/* Build the headers
 		 */
 		ret = build_header (hdl, &hdl->write_buffer);
@@ -586,7 +614,7 @@ cherokee_handler_fcgi_init (cherokee_handler_fcgi_t *hdl)
 		/* Connect	
 		 */
 		ret = connect_to_server (hdl);
-		if (unlikely (ret != ret_ok)) return ret;
+		if (unlikely (ret != ret_ok)) return ret; 
 		
 		CGI_BASE(hdl)->init_phase = hcgi_phase_send_headers;
 
@@ -607,6 +635,7 @@ cherokee_handler_fcgi_init (cherokee_handler_fcgi_t *hdl)
 		break;
 	}
 
+	cherokee_buffer_clean (&hdl->write_buffer);
 	return ret_ok;
 }
 

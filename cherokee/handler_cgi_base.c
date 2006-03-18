@@ -500,7 +500,6 @@ parse_header (cherokee_handler_cgi_base_t *cgi, cherokee_buffer_t *buffer)
 		begin = end2;
 	}
 
-//	printf ("id=%d gen=%d eof=%d add_headers:end\n", HANDLER_FASTCGI(cgi)->id, HANDLER_FASTCGI(cgi)->generation, cgi->got_eof);
 	return ret_ok;
 }
 
@@ -515,8 +514,6 @@ cherokee_handler_cgi_base_add_headers (cherokee_handler_cgi_base_t *cgi, cheroke
 	int                    end_len;
 	cherokee_buffer_t     *inbuf = &cgi->data; 
 
-//	printf ("id=%d gen=%d eof=%d add_headers:begin\n", HANDLER_FASTCGI(cgi)->id, HANDLER_FASTCGI(cgi)->generation, cgi->got_eof);
-
 	/* Read some information
 	 */
 	ret = cgi->read_from_cgi (cgi, inbuf);
@@ -528,11 +525,9 @@ cherokee_handler_cgi_base_add_headers (cherokee_handler_cgi_base_t *cgi, cheroke
 	case ret_eof:
 	case ret_error:
 	case ret_eagain:
-//		printf ("id=%d gen=%d eof=%d add_headers:return eagain\n", HANDLER_FASTCGI(cgi)->id, HANDLER_FASTCGI(cgi)->generation, cgi->got_eof);
 		return ret;
 		
 	default:
-//		printf ("id=%d gen=%d eof=%d add_headers:return2\n", HANDLER_FASTCGI(cgi)->id, HANDLER_FASTCGI(cgi)->generation, cgi->got_eof);		
 		RET_UNKNOWN(ret);
 		return ret_error;
 	}
@@ -548,7 +543,6 @@ cherokee_handler_cgi_base_add_headers (cherokee_handler_cgi_base_t *cgi, cheroke
 	}
 	
 	if (content == NULL) {
-//		printf ("id=%d gen=%d eof=%d add_headers:return3s %s (%s)\n", HANDLER_FASTCGI(cgi)->id, HANDLER_FASTCGI(cgi)->generation, cgi->got_eof, (cgi->got_eof) ? "ret_eof" : "ret_eagain", HANDLER_CONN(cgi)->query_string.buf);
 		return (cgi->got_eof) ? ret_eof : ret_eagain;
 	}
 
@@ -576,8 +570,6 @@ cherokee_handler_cgi_base_step (cherokee_handler_cgi_base_t *cgi, cherokee_buffe
 	ret_t              ret;
 	cherokee_buffer_t *inbuf = &cgi->data; 
 
-//	printf ("id=%d gen=%d eof=%dstep:begin\n", HANDLER_FASTCGI(cgi)->id, HANDLER_FASTCGI(cgi)->generation, cgi->got_eof);
-
 	/* If there is some data waiting to be sent in the CGI buffer, move it
 	 * to the connection buffer and continue..
 	 */
@@ -588,11 +580,9 @@ cherokee_handler_cgi_base_step (cherokee_handler_cgi_base_t *cgi, cherokee_buffe
 		cherokee_buffer_clean (&cgi->data);
 
 		if (cgi->got_eof) {
-//			printf ("id=%d gen=%d eof=%d step:return1\n", HANDLER_FASTCGI(cgi)->id, HANDLER_FASTCGI(cgi)->generation, cgi->got_eof);
 			return ret_eof_have_data;
 		}
 
-//		printf ("id=%d gen=%d eof=%d step:return2\n", HANDLER_FASTCGI(cgi)->id, HANDLER_FASTCGI(cgi)->generation, cgi->got_eof);
 		return ret_ok;
 	}
 
@@ -605,7 +595,6 @@ cherokee_handler_cgi_base_step (cherokee_handler_cgi_base_t *cgi, cherokee_buffe
 		cherokee_buffer_clean (inbuf);
 	}
 
-//	printf ("id=%d gen=%d eof=%d step:return3 ret=%d, outbuf.len=%d\n", HANDLER_FASTCGI(cgi)->id, HANDLER_FASTCGI(cgi)->generation, cgi->got_eof, ret, outbuf->len);
 	return ret;
 }
 
