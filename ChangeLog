@@ -1,5 +1,13 @@
 2006-03-18  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* qa/130-Digest-EmptyPasswd.py: Added new test to ensure Digest
+	authentication works with emtpy passwords.
+
+	* cherokee/handler_fcgi.c, cherokee/handler_fcgi.h: Added new
+	handler.  It implements a very basic FastCGI protocol.. a so small
+	subset of the original spec that is even supported by the brain
+	death implementation of the PHP interpreter.
+
 	* qa/129-Basic-EmptyPasswd.py: Added new test case to ensure
 	previous bug is fixed.
 
