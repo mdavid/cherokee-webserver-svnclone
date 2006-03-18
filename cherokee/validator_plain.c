@@ -171,6 +171,18 @@ cherokee_validator_plain_check (cherokee_validator_plain_t *plain, cherokee_conn
 		 */
 		switch (conn->req_auth_type) {
 		case http_auth_basic:
+			/* Empty password
+			 */
+			if (conn->validator->passwd.len <= 0) {
+				if (strlen(pass) == 0) {
+					ret = ret_ok;
+					goto go_out;
+				}
+				continue;
+			}
+
+			/* Check the passwd
+			 */
 			if (strcmp (conn->validator->passwd.buf, pass) == 0) {
 				ret = ret_ok;
 				goto go_out;
