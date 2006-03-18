@@ -1,3 +1,14 @@
+2006-03-18  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* qa/129-Basic-EmptyPasswd.py: Added new test case to ensure
+	previous bug is fixed.
+
+	* cherokee/validator_plain.c (cherokee_validator_plain_check): Bug
+	fix.  It was crashing it the password provided by the client was
+	emtpy.
+
+	* qa/040-Auth-Basic2.py: The Base64 string is not longer hardcoded
+
 2006-03-07  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cherokee/socket.h, cherokee/socket.c (cherokee_socket_init,
