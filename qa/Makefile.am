@@ -130,7 +130,10 @@ run-tests.py \
 125-domain-redir1.py \
 126-SCGI.py \
 127-SCGI-Post.py \
-128-ValidMethod-common.py
+128-ValidMethod-common.py \
+129-Basic-EmptyPasswd.py \
+130-Digest-EmptyPasswd.py \
+131-ChangeUser-phpcgi.py
 
 test:
 	./run-tests.py

@@ -43,6 +43,8 @@ www = tempfile.mkdtemp ("cherokee_www")
 tmp = www + "/_tmp/"
 os.makedirs (tmp)
 
+map (lambda x: os.chmod (x, 0777), [www, tmp])
+
 # Make the files list
 files = []
 param = []

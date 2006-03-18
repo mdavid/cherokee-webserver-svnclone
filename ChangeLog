@@ -1,5 +1,8 @@
 2006-03-18  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* qa/131-ChangeUser-phpcgi.py: Added new test. It checks the
+	ChangeUser property of the phpcgi handler.
+
 	* qa/130-Digest-EmptyPasswd.py: Added new test to ensure Digest
 	authentication works with emtpy passwords.
 
