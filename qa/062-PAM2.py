@@ -32,7 +32,7 @@ class Test (TestBase):
                        }"""
 
     def Precondition (self):
-        # It will only work it the server runs like root
+        # It will only work it the server runs as root
         if os.getuid() != 0:
             return False
 

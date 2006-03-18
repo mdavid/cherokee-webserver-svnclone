@@ -233,9 +233,9 @@ class TestBase:
 
         return src
 
-    def Mkdir (self, www, dir):
+    def Mkdir (self, www, dir, mode=0777):
         fulldir = os.path.join (www, dir)
-        os.makedirs(fulldir)
+        os.makedirs(fulldir, mode)
         return fulldir
 
     def WriteFile (self, www, filename, mode=0444, content=''):
