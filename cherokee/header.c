@@ -369,23 +369,27 @@ parse_request_first_line (cherokee_header_t *hdr, cherokee_buffer_t *buf, char *
 {
 	ret_t  ret;
 	char  *line  = buf->buf;
-	char  *begin = line;
+	char  *begin = buf->buf;
 	char  *end;
 	char  *ptr;
+	char  *restore;
 
-	/* Example:
-	 * GET / HTTP/1.0
+	/* Basic security check. The shortest possible request
+	 * "GET / HTTP/1.0" is 14 characters long..
+	 */
+	if (buf->len < 14) {
+		return ret_error;
+	}
+
+	/* Look for the end of the request line
 	 */
 	end = strchr (line, '\r');
 	if (end == NULL) {
 		return ret_error;
 	}
 
-	/* Some security checks
-	 */
-	if (buf->len < 14) {
-		return ret_error;
-	}
+	*end = '\0';
+	restore = end;
 
 	/* Return the line endding
 	 */
@@ -394,31 +398,31 @@ parse_request_first_line (cherokee_header_t *hdr, cherokee_buffer_t *buf, char *
 	/* Get the method
 	 */
 	ret = parse_method (hdr, line, &begin);
-	if (unlikely (ret != ret_ok)) return ret;
+	if (unlikely (ret != ret_ok)) goto error;
 
 	/* Get the protocol version
 	 */	
 	switch (end[-1]) {
 	case '1':
 		if (unlikely(strncmp (end-8, "HTTP/1.1", 8) != 0))
-			return ret_error;
+			goto error;
 		hdr->version = http_version_11; 
 		break;
 	case '0':
 		if (unlikely(strncmp (end-8, "HTTP/1.0", 8) != 0))
-			return ret_error;
+			goto error;
 		hdr->version = http_version_10; 
 		break;
 	case '9':
 		if (unlikely(strncmp (end-8, "HTTP/0.9", 8) != 0))
-			return ret_error;
+			goto error;
 		hdr->version = http_version_09; 
 		break;
 	default:
-		return ret_error;
+		goto error;
 	}
 
-	/* Skip the HTTP version string: "HTTP/x.y"
+	/* Skip the HTTP version string: " HTTP/x.y"
 	 */
 	end -= 9;
 
@@ -427,7 +431,7 @@ parse_request_first_line (cherokee_header_t *hdr, cherokee_buffer_t *buf, char *
 	hdr->request_args_len = end - begin;
 	ptr = strchr (begin, '?');
 
-	if ((ptr) && (ptr < end)) {
+	if (ptr) {
 		end = ptr;
 		hdr->query_string_off = ++ptr - buf->buf;
 		hdr->query_string_len = (unsigned long) strchr(ptr, ' ') - (unsigned long) ptr;
@@ -448,7 +452,7 @@ parse_request_first_line (cherokee_header_t *hdr, cherokee_buffer_t *buf, char *
 		char *host = begin + 7;
 
 		dir = strchr (host, '/');
-		if (dir == NULL) return ret_error;
+		if (dir == NULL) goto error;
 
 		/* Add the host header
 		 */
@@ -460,7 +464,12 @@ parse_request_first_line (cherokee_header_t *hdr, cherokee_buffer_t *buf, char *
 		hdr->request_off = dir - buf->buf;
 	}
 
+	*restore = '\r';
 	return ret_ok;
+
+error:
+	*restore = '\r';
+	return ret_error;
 }
 
 

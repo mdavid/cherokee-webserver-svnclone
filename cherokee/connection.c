@@ -1810,8 +1810,6 @@ cherokee_connection_parse_args (cherokee_connection_t *cnt)
 ret_t
 cherokee_connection_open_request (cherokee_connection_t *cnt)
 {	
-	ret_t ret;
-	
 	TRACE (ENTRIES, "web_directory='%s' request='%s' local_directory='%s'\n", 
 	       cnt->web_directory.buf,
 	       cnt->request.buf,
@@ -1829,8 +1827,7 @@ cherokee_connection_open_request (cherokee_connection_t *cnt)
 	 */
 	cherokee_buffer_ensure_size (&cnt->buffer, DEFAULT_READ_SIZE+1);
 
-	ret = cherokee_handler_init (cnt->handler);
-	return ret;
+	return cherokee_handler_init (cnt->handler);
 }
 
 

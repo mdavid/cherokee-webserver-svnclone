@@ -97,7 +97,7 @@ CONF_BASE = """# Cherokee QA tests
 
 if fcgi:
     PHP_EXTENSION = """Extension php {
-                      Handler fastcgi {
+                      Handler fcgi {
                          Server localhost:%d {
                            Env PHP_FCGI_CHILDREN "5"
                            Interpreter "%s -b %d"
