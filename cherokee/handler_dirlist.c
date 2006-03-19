@@ -257,12 +257,12 @@ check_request_finish_with_slash (cherokee_handler_dirlist_t *dhdl)
 		cherokee_buffer_ensure_size (&conn->redirect, conn->request.len + conn->userdir.len + 4);
 
 		if (! cherokee_buffer_is_empty (&conn->userdir)) {
-			cherokee_buffer_add (&conn->redirect, "/~", 2);
+			cherokee_buffer_add_str (&conn->redirect, "/~");
 			cherokee_buffer_add_buffer (&conn->redirect, &conn->userdir);
 		}
 
 		cherokee_buffer_add_buffer (&conn->redirect, &conn->request);
-		cherokee_buffer_add (&conn->redirect, "/", 1);
+		cherokee_buffer_add_str (&conn->redirect, "/");
 		
 		conn->error_code = http_moved_permanently;
 		return ret_error;		
@@ -480,7 +480,7 @@ build_public_path (cherokee_handler_dirlist_t *dhdl, cherokee_buffer_t *buf)
 	if (!cherokee_buffer_is_empty (&conn->userdir)) {
 		/* ~user local dir request
  		 */
-		cherokee_buffer_add (buf, "/~", 2);
+		cherokee_buffer_add_str (buf, "/~");
 		cherokee_buffer_add_buffer (buf, &conn->userdir);
 	}
 	
@@ -544,10 +544,10 @@ render_page_header (cherokee_handler_dirlist_t *dhdl, cherokee_buffer_t *buffer)
 	 */
 #ifndef CHEROKEE_EMBEDDED
 	if (icons && (icons->parentdir_icon != NULL))
-		cherokee_buffer_add (buffer, "<img src=\"/icons/blank.png\">", 28);
+		cherokee_buffer_add_str (buffer, "<img src=\"/icons/blank.png\">");
 	else
 #endif	
-		cherokee_buffer_add (buffer, "   ", 3);
+		cherokee_buffer_add_str (buffer, "   ");
 	
 	cherokee_buffer_add_va (buffer, " <a href=\"?order=%c\">Name</a>",
 				(dhdl->sort == Name_Down) ? 'N' : 'n');
@@ -564,7 +564,7 @@ render_page_header (cherokee_handler_dirlist_t *dhdl, cherokee_buffer_t *buffer)
 					(dhdl->sort == Size_Down) ? 'S' : 's');
 	}
 	
-	cherokee_buffer_add (buffer, "<hr>", 4);
+	cherokee_buffer_add_str (buffer, "<hr>");
 	
 	/* Step 3:
 	 * Free the path, we will not need it again
@@ -582,7 +582,7 @@ render_page_header (cherokee_handler_dirlist_t *dhdl, cherokee_buffer_t *buffer)
 					icons->parentdir_icon);
 	} else
 #endif	
-		cherokee_buffer_add (buffer, "<a href=\"..\">Parent Directory</a>\n", 34);
+		cherokee_buffer_add_str (buffer, "<a href=\"..\">Parent Directory</a>\n");
 	
 	return ret_ok;
 }
@@ -684,7 +684,7 @@ render_file (cherokee_handler_dirlist_t *dhdl, cherokee_buffer_t *buffer, file_e
 		}
 	}
 		
-	cherokee_buffer_add (buffer, "\n", 1);
+	cherokee_buffer_add_str (buffer, "\n");
 	return ret_ok;
 }
 
@@ -737,7 +737,7 @@ cherokee_handler_dirlist_step (cherokee_handler_dirlist_t *dhdl, cherokee_buffer
 
 	/* Page ending
 	 */
-	cherokee_buffer_add (buffer, "</pre><hr>\n", 11);
+	cherokee_buffer_add_str (buffer, "</pre><hr>\n");
 
 	if (HANDLER_CONN(dhdl)->socket->is_tls == non_TLS)
  		port = HANDLER_SRV(dhdl)->port;
@@ -749,7 +749,7 @@ cherokee_handler_dirlist_step (cherokee_handler_dirlist_t *dhdl, cherokee_buffer
 	else 
 		cherokee_buffer_add_version (buffer, port, ver_port_html);
 
-	cherokee_buffer_add (buffer, "\n</body></html>", 15);
+	cherokee_buffer_add_str (buffer, "\n</body></html>");
 
 	return ret_eof_have_data;
 }
@@ -758,7 +758,7 @@ cherokee_handler_dirlist_step (cherokee_handler_dirlist_t *dhdl, cherokee_buffer
 ret_t
 cherokee_handler_dirlist_add_headers (cherokee_handler_dirlist_t *dhdl, cherokee_buffer_t *buffer)
 {
-	cherokee_buffer_add (buffer, "Content-Type: text/html"CRLF, 25);
+	cherokee_buffer_add_str (buffer, "Content-Type: text/html"CRLF);
 	return ret_ok;
 }
 

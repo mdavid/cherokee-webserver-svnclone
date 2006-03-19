@@ -107,9 +107,9 @@ static void
 server_info_add_table (cherokee_buffer_t *buf, char *name, char *a_name, cherokee_buffer_t *content)
 {
 	cherokee_buffer_add_va (buf, "<h2><a name=\"%s\">%s</a></h2>", a_name, name);
-	cherokee_buffer_add_va (buf, "<table border=\"0\" cellpadding=\"3\" width=\"600\">");
+	cherokee_buffer_add_str (buf, "<table border=\"0\" cellpadding=\"3\" width=\"600\">");
 	cherokee_buffer_add_buffer (buf, content);
-	cherokee_buffer_add_va (buf, "</table><br />");
+	cherokee_buffer_add_str (buf, "</table><br />");
 }
 
 static void
@@ -449,11 +449,11 @@ cherokee_handler_server_info_add_headers (cherokee_handler_server_info_t *hdl, c
 
 	switch (hdl->action) {
 	case send_logo:
-		cherokee_buffer_add (buffer, "Content-Type: image/gif"CRLF, 25);
+		cherokee_buffer_add_str (buffer, "Content-Type: image/gif"CRLF);
 		break;
 	case send_page:
 	default:
-		cherokee_buffer_add (buffer, "Content-Type: text/html"CRLF, 25);
+		cherokee_buffer_add_str (buffer, "Content-Type: text/html"CRLF);
 		break;
 	}
 

@@ -402,9 +402,9 @@ build_response_header__authenticate (cherokee_connection_t *cnt, cherokee_buffer
 	 */
 	if (cnt->auth_type & http_auth_basic) {
 		cherokee_buffer_ensure_size (buffer, 31 + cnt->realm_ref->len + 4);
-		cherokee_buffer_add (buffer, "WWW-Authenticate: Basic realm=\"", 31);
+		cherokee_buffer_add_str (buffer, "WWW-Authenticate: Basic realm=\"");
 		cherokee_buffer_add_buffer (buffer, cnt->realm_ref);
-		cherokee_buffer_add (buffer, "\""CRLF, 3);
+		cherokee_buffer_add_str (buffer, "\""CRLF);
 	}
 
 	/* Digest Authenticatiom
@@ -415,7 +415,7 @@ build_response_header__authenticate (cherokee_connection_t *cnt, cherokee_buffer
 		/* Realm
 		 */
 		cherokee_buffer_ensure_size (buffer, 32 + cnt->realm_ref->len + 4);
-		cherokee_buffer_add (buffer, "WWW-Authenticate: Digest realm=\"", 32);
+		cherokee_buffer_add_str (buffer, "WWW-Authenticate: Digest realm=\"");
 		cherokee_buffer_add_buffer (buffer, cnt->realm_ref);
 		cherokee_buffer_add_str (buffer, "\", ");
 
@@ -445,14 +445,14 @@ build_response_header (cherokee_connection_t *cnt, cherokee_buffer_t *buffer)
 	 */
 	switch (cnt->header->version) {
 	case http_version_09:
-		cherokee_buffer_add (buffer, "HTTP/0.9 ", 9); 
+		cherokee_buffer_add_str (buffer, "HTTP/0.9 "); 
 		break;
 	case http_version_10:
-		cherokee_buffer_add (buffer, "HTTP/1.0 ", 9); 
+		cherokee_buffer_add_str (buffer, "HTTP/1.0 "); 
 		break;
 	case http_version_11:
 	default:
-		cherokee_buffer_add (buffer, "HTTP/1.1 ", 9); 
+		cherokee_buffer_add_str (buffer, "HTTP/1.1 "); 
 		break;
 	}
 	
@@ -462,27 +462,27 @@ build_response_header (cherokee_connection_t *cnt, cherokee_buffer_t *buffer)
 	/* Add the "Connection:" header
 	 */
 	if (cnt->upgrade != http_upgrade_nothing) {
-		cherokee_buffer_add (buffer, "Connection: Upgrade"CRLF, 21);		
+		cherokee_buffer_add_str (buffer, "Connection: Upgrade"CRLF);
 
 	} else if (cnt->handler && (cnt->keepalive > 0)) {
-		cherokee_buffer_add (buffer, "Connection: Keep-Alive"CRLF, 24);
+		cherokee_buffer_add_str (buffer, "Connection: Keep-Alive"CRLF);
 		cherokee_buffer_add_buffer (buffer, CONN_SRV(cnt)->timeout_header);
 
 	} else {
-		cherokee_buffer_add (buffer, "Connection: Close"CRLF, 19);
+		cherokee_buffer_add_str (buffer, "Connection: Close"CRLF);
 	}
 
 	/* Date
 	 */
-	cherokee_buffer_add (buffer, "Date: ", 6);
+	cherokee_buffer_add_str (buffer, "Date: ");
 	cherokee_buffer_add_buffer (buffer, CONN_SRV(cnt)->bogo_now_string);
 	cherokee_buffer_add (buffer, CRLF, 2);
 
 	/* Add the Server header
 	 */
-	cherokee_buffer_add (buffer, "Server: ", 8);
+	cherokee_buffer_add_str (buffer, "Server: ");
 	cherokee_buffer_add_buffer (buffer, CONN_SRV(cnt)->server_string);
-	cherokee_buffer_add (buffer, CRLF, 2);
+	cherokee_buffer_add_str (buffer, CRLF);
 
 	/* Authentication
 	 */
@@ -494,9 +494,9 @@ build_response_header (cherokee_connection_t *cnt, cherokee_buffer_t *buffer)
 	/* Redirected connections
 	 */
 	if (cnt->redirect.len >= 1) {
-		cherokee_buffer_add (buffer, "Location: ", 10);
+		cherokee_buffer_add_str (buffer, "Location: ");
 		cherokee_buffer_add_buffer (buffer, &cnt->redirect);
-		cherokee_buffer_add (buffer, CRLF, 2);
+		cherokee_buffer_add_str (buffer, CRLF);
 	}
 
 	/* Encoder headers
@@ -515,7 +515,7 @@ build_response_header (cherokee_connection_t *cnt, cherokee_buffer_t *buffer)
 	/* Unusual methods
 	 */
 	if (CONN_HDR(cnt)->method == http_options) {
-		cherokee_buffer_add (buffer, "Allow: GET, HEAD, POST, OPTIONS"CRLF, 33);
+		cherokee_buffer_add_str (buffer, "Allow: GET, HEAD, POST, OPTIONS"CRLF);
 	}
 	
 	/* Maybe the handler add some headers from the handler
@@ -526,7 +526,7 @@ build_response_header (cherokee_connection_t *cnt, cherokee_buffer_t *buffer)
 
 	/* Add the response header ends
 	 */
-	cherokee_buffer_add (buffer, CRLF, 2);
+	cherokee_buffer_add_str (buffer, CRLF);
 }
 
 
