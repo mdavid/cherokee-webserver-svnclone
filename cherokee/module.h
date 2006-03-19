@@ -59,6 +59,11 @@ typedef struct {
 	cherokee_http_method_t valid_methods;
 } cherokee_module_info_handler_t;
 
+typedef struct {
+	cherokee_module_info_t module;
+	cherokee_http_auth_t   valid_methods;
+} cherokee_module_info_validator_t;
+
 
 typedef struct {
 	module_func_new_t       instance; /* constructor step begging */

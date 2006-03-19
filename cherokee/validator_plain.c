@@ -29,11 +29,12 @@
 #include "connection-protected.h"
 #include "module_loader.h"
 
-cherokee_module_info_t MODULE_INFO(plain) = {
-	cherokee_validator,             /* type     */
-	cherokee_validator_plain_new    /* new func */
-};
 
+cherokee_module_info_validator_t MODULE_INFO(plain) = {
+	.module.type     = cherokee_validator,                 /* type     */
+	.module.new_func = cherokee_validator_plain_new,       /* new func */
+	.valid_methods   = http_auth_basic | http_auth_digest  /* methods  */
+};
 
 ret_t 
 cherokee_validator_plain_new (cherokee_validator_plain_t **plain, cherokee_table_t *properties)

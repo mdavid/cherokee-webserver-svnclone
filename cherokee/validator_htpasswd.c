@@ -38,9 +38,10 @@
 #define CRYPT_SALT_LENGTH 2
 
 
-cherokee_module_info_t MODULE_INFO(htpasswd) = {
-	cherokee_validator,                /* type     */
-	cherokee_validator_htpasswd_new    /* new func */
+cherokee_module_info_validator_t MODULE_INFO(htpasswd) = {
+	.module.type     = cherokee_validator,                 /* type     */
+	.module.new_func = cherokee_validator_htpasswd_new,    /* new func */
+	.valid_methods   = http_auth_basic                     /* methods  */
 };
 
 
