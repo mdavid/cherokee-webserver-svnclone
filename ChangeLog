@@ -1,5 +1,12 @@
 2006-03-19  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* cherokee/module.h, cherokee/validator_plain.c,
+	cherokee/read_config_grammar.y, cherokee/validator_htpasswd.c,
+	cherokee/validator_htdigest.c, cherokee/validator_pam.c: Added a
+	check in the configuration parser to ensure that the
+	authentification method are supported by the validators. It closes
+	bug #55.
+	
 	* cherokee/handler_cgi_base.c (cherokee_handler_cgi_base_build_basic_env):
 	Bug fix.  It was setting the SERVER_NAME variable with the colon
 	and the port number.  Patch by olivier-ml1@oleastre.be

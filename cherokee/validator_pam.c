@@ -30,15 +30,16 @@
 
 #include <security/pam_appl.h>
 
-
-cherokee_module_info_t MODULE_INFO(pam) = {
-	cherokee_validator,           /* type     */
-	cherokee_validator_pam_new    /* new func */
-};
-
 /* PAM service name
  */
 #define CHEROKEE_AUTH_SERVICE "cherokee"
+
+
+cherokee_module_info_validator_t MODULE_INFO(pam) = {
+	.module.type     = cherokee_validator,                 /* type     */
+	.module.new_func = cherokee_validator_pam_new,         /* new func */
+	.valid_methods   = http_auth_basic                     /* methods  */
+};
 
 
 ret_t 

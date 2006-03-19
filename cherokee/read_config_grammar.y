@@ -1608,9 +1608,9 @@ directory_option : T_DOCUMENT_ROOT fulldir
 };
 
 
-directory_option : T_AUTH id_list '{' auth_options '}'
+directory_option : T_AUTH id_list '{'
 {
-	   linked_list_t               *i     = $2;
+	   linked_list_t               *i = $2;
 	   cherokee_config_entry_t *entry = current_config_entry;
 
 	   while (i != NULL) {
@@ -1629,7 +1629,7 @@ directory_option : T_AUTH id_list '{' auth_options '}'
 	   }
 
 	   free_linked_list ($2, free);
-};
+} auth_options '}';
 
 
 directory_option : T_ALLOW T_FROM ip_list 
@@ -1699,8 +1699,12 @@ auth_option : T_USER id_list
 auth_option : T_METHOD T_ID maybe_auth_option_params
 {
 	   ret_t ret;
-	   cherokee_module_info_t *info;
+	   cherokee_module_info_t           *info;
+	   cherokee_module_info_validator_t *vinfo;
+	   cherokee_config_entry_t          *entry = current_config_entry;
 
+	   /* Load the module
+	    */
 	   ret = cherokee_module_loader_load (&SRV(server)->loader, $2);
 	   if (ret != ret_ok) {
 			 PRINT_MSG ("ERROR: Can't load validator module '%s'\n", $2);
@@ -1713,8 +1717,16 @@ auth_option : T_METHOD T_ID maybe_auth_option_params
 			 PRINT_MSG ("ERROR: %s is not a validator module!!\n", $2);
 	   }
 
+	   vinfo = (cherokee_module_info_validator_t *)info;
+	   
+	   /* Check that the method is supported
+	    */
+	   if ((entry->authentication & vinfo->valid_methods) != entry->authentication) {
+			 PRINT_MSG ("ERROR: The module %s doesn't support all the authentication methods that you configured\n", $2);
+			 return 1;
+	   }
 
-	   current_config_entry->validator_new_func = info->new_func;
+	   entry->validator_new_func = info->new_func;
 };
 
 maybe_auth_option_params : '{' auth_option_params '}'
