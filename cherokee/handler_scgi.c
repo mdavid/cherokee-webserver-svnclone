@@ -55,7 +55,7 @@ add_env_pair (cherokee_handler_cgi_base_t *cgi_base,
 		return;
 	}
 
-	printf ("****[%s]=[%s] (%d, %d)\n", key, val, key_len, val_len);
+//	printf ("****[%s]=[%s] (%d, %d)\n", key, val, key_len, val_len);
 
 	cherokee_buffer_ensure_size (&scgi->header, scgi->header.len + key_len + val_len + 3);
 
@@ -238,7 +238,7 @@ send_header (cherokee_handler_scgi_t *hdl)
 	ret = cherokee_socket_write (hdl->socket, &hdl->header, &written);
 	if (ret != ret_ok) return ret;
 	
-	cherokee_buffer_print_debug (&hdl->header, -1);
+//	cherokee_buffer_print_debug (&hdl->header, -1);
 
 	cherokee_buffer_move_to_begin (&hdl->header, written);
 
