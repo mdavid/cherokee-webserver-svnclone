@@ -343,9 +343,9 @@ cherokee_handler_cgi_base_extract_path (cherokee_handler_cgi_base_t *cgi, cherok
 	struct stat            st;
 	ret_t                  ret  = ret_ok;
 	cherokee_connection_t *conn = HANDLER_CONN(cgi);
-		int req_len;
-		int local_len;
-		int pathinfo_len;
+	int                    req_len;
+	int                    local_len;
+	int                    pathinfo_len;
 
 	/* ScriptAlias: If there is a ScriptAlias directive, it
 	 * doesn't need to find the executable file..

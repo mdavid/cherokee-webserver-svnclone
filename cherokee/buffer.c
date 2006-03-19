@@ -361,7 +361,7 @@ cherokee_buffer_drop_endding (cherokee_buffer_t *buffer, int num_chars)
 {
 	int num;
 
-	if (buffer->buf == NULL) {
+	if ((buffer->buf == NULL) || (num_chars <= 0)) {
 		return ret_ok;
 	}
 

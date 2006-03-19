@@ -1,5 +1,11 @@
 2006-03-19  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* cherokee/buffer.c (cherokee_buffer_drop_endding): Added a little
+	sanity check. It isn't possible to drop negative amounts.
+
+	* cherokee/handler_cgi_base.c (cherokee_handler_cgi_base_build_basic_env):
+	Bug fix.  It was setting SERVER_NAME twice.
+
 	* cherokee/module.h, cherokee/validator_plain.c,
 	cherokee/read_config_grammar.y, cherokee/validator_htpasswd.c,
 	cherokee/validator_htdigest.c, cherokee/validator_pam.c: Added a

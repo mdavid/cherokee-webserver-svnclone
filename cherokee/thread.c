@@ -934,7 +934,6 @@ process_active_connections (cherokee_thread_t *thd)
 		}
 			
 		case phase_init: 
-
 			/* Server's "Keep-Alive" could be turned "Off"
 			 */
 			if (srv->keepalive == false) {
