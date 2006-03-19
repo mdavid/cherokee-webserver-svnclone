@@ -172,7 +172,7 @@ cherokee_handler_cgi_base_build_basic_env (cherokee_handler_cgi_base_t          
 		p = strchr (tmp->buf, ':');
 		if (p != NULL) *p = '\0';
 
-		set_env (cgi, "SERVER_NAME", tmp->buf, tmp->len);
+		set_env (cgi, "SERVER_NAME", tmp->buf, p - tmp->buf);
 	}
 
 	/* Cookies :-)
