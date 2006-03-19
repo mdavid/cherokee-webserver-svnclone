@@ -1,5 +1,20 @@
 2006-03-19  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* cherokee/handler_file.c (check_cached): Fixed to work with
+	If-Range as a known header.
+
+	* cherokee/header.c (cherokee_header_parse): Little hack to
+	slightly speed up the header parsing.
+
+	* qa/133-If-None-Match.py, qa/Makefile.am: Added new test. It
+	checks the HTTP_IF_NONE_MATCH.
+
+	* cherokee/handler_cgi_base.c (cherokee_handler_cgi_base_build_basic_env):
+	Now it adds HTTP_IF_NONE_MATCH.
+
+	* cherokee/header.h, cherokee/header.c (cherokee_header_parse):
+	Added support of If-Range and If-None-Match headers.
+
 	* cherokee/buffer.c (cherokee_buffer_drop_endding): Added a little
 	sanity check. It isn't possible to drop negative amounts.
 

@@ -133,7 +133,7 @@ cherokee_handler_cgi_base_build_basic_env (cherokee_handler_cgi_base_t          
 	int           r;
 	ret_t         ret;
 	char         *p;
-	int           p_len;
+	cuint_t       p_len;
 	const char   *p_const;
 
 	char remote_ip[CHE_INET_ADDRSTRLEN+1];
@@ -258,6 +258,13 @@ cherokee_handler_cgi_base_build_basic_env (cherokee_handler_cgi_base_t          
 		set_env (cgi, "HTTPS", "on", 2);
 	else 
 		set_env (cgi, "HTTPS", "off", 3);
+
+	/* If-None-Match header
+	 */
+	ret = cherokee_header_get_known (conn->header, header_if_none_match, &p, &p_len);
+	if (ret == ret_ok) {
+		set_env (cgi, "HTTP_IF_NONE_MATCH", p, p_len);		
+	}
 
 	return ret_ok;
 }

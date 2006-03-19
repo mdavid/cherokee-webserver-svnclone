@@ -1,7 +1,7 @@
 PORT = 1978
 HOST = "localhost"
 
-CHEROKEE_PATH     = "/usr/sbin/cherokee"
+CHEROKEE_PATH     = "../cherokee/cherokee"
 CHEROKEE_MODS     = "/usr/lib/cherokee"
 
 STRACE_PATH       = "/usr/bin/strace"

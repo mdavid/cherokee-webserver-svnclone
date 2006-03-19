@@ -34,7 +34,7 @@
  		 return ret_ok;
 
 ret_t 
-cherokee_http_method_to_string (cherokee_http_method_t method, const char **str, int *len)
+cherokee_http_method_to_string (cherokee_http_method_t method, const char **str, cuint_t *len)
 {
 	switch (method) {
 		/* HTTP 1.1 methods
@@ -74,7 +74,7 @@ cherokee_http_method_to_string (cherokee_http_method_t method, const char **str,
 
 
 ret_t 
-cherokee_http_version_to_string (cherokee_http_version_t version, const char **str, int *len)
+cherokee_http_version_to_string (cherokee_http_version_t version, const char **str, cuint_t *len)
 {
 	switch (version) {
 		entry (http_version_11, "HTTP/1.1");

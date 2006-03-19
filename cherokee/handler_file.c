@@ -177,7 +177,7 @@ check_cached (cherokee_handler_file_t *n)
 	
 	/* If-Range
 	 */
-	ret = cherokee_header_get_unknown (conn->header, "If-Range", 8, &header, &header_len);
+	ret = cherokee_header_get_known (conn->header, header_if_range, &header, &header_len);
 	if (ret == ret_ok)  {
 		time_t req_time;
 		char   tmp;
