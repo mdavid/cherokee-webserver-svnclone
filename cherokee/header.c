@@ -54,24 +54,27 @@
   extern char *strsep (char** str, const char* delims);
 #endif
 
+#define kentry(n)   { n, sizeof(n)-1 }
+#define equal(str, n) (strncasecmp(str, n, sizeof(n)-1) == 0)
 
 static struct {
 	char *name;
 	int   len;
 } 
 known_header_names [] = {
-	{"Connection",      10},
-	{"Range",            5},
-	{"Keep-Alive",      10},
-	{"Accept",           6},
-	{"Host",             4},
-	{"Accept-Encoding", 15},
-	{"User-Agent",      10},
-	{"Referer",          7},
-	{"Location",         8},
-	{"Content-Length",  14},
-	{"Upgrade",          7},
-	{"If-Range",         8}
+	kentry("Connection"),
+	kentry("Range"),
+	kentry("Keep-Alive"),
+	kentry("Accept"),
+	kentry("Host"),
+	kentry("Accept-Encoding"),
+	kentry("User-Agent"),
+	kentry("Referer"),
+	kentry("Location"),
+	kentry("Content-Length"),
+	kentry("Upgrade"),
+	kentry("If-Range"),
+	kentry("If-None-Match")
 };
 
 
@@ -564,6 +567,10 @@ cherokee_header_parse (cherokee_header_t *hdr, cherokee_buffer_t *buffer,  chero
 	 */
 	while ((end = get_new_line(begin)) && (end < header_end))
 	{	       
+		char end_char = *end;
+
+		*end = '\0';
+
 		points = strchr (begin, ':');
 		if (points == NULL) {
 			goto next;
@@ -574,59 +581,69 @@ cherokee_header_parse (cherokee_header_t *hdr, cherokee_buffer_t *buffer,  chero
 		}
 
 		if ((hdr->header[header_accept_encoding].info_off == 0) && 
-		    (strncasecmp(begin, "Accept-Encoding", 15) == 0))
+		    (equal (begin, "Accept-Encoding")))
 		{
 			ret = add_known_header (hdr, header_accept_encoding, (points+2)-buffer->buf, end-points-2);
 		} 
 		else if ((hdr->header[header_accept].info_off == 0) && 
-		    (strncasecmp(begin, "Accept", 6) == 0)) 
+			 (equal (begin, "Accept")))
 		{
 			ret = add_known_header (hdr, header_accept, (points+2)-buffer->buf, end-points-2);
 		} 
 		else if ((hdr->header[header_host].info_off == 0) && 
-			 (strncasecmp(begin, "Host", 4) == 0))
+			 (equal (begin, "Host")))
 		{
  			ret = add_known_header (hdr, header_host, (points+2)-buffer->buf, end-points-2);
 		} 
-		else if ((hdr->header[header_range].info_off == 0) && 
-			 (strncasecmp(begin, "Range", 5) == 0))
-		{
-			ret = add_known_header (hdr, header_range, (points+2)-buffer->buf, end-points-2);
-		} 
 		else if ((hdr->header[header_connection].info_off == 0) && 
-			 (strncasecmp(begin, "Connection", 10) == 0))
+			 (equal (begin, "Connection")))
 		{
 			ret = add_known_header (hdr, header_connection, (points+2)-buffer->buf, end-points-2);
 		}
 		else if ((hdr->header[header_user_agent].info_off == 0) && 
-			 (strncasecmp(begin, "User-Agent", 10) == 0))
+			 (equal (begin, "User-Agent")))
 		{
 			ret = add_known_header (hdr, header_user_agent, (points+2)-buffer->buf, end-points-2);
 		}
 		else if ((hdr->header[header_keepalive].info_off == 0) && 
-			 (strncasecmp(begin, "Keep-Alive", 10) == 0))
+			 (equal (begin, "Keep-Alive")))
 		{
 			ret = add_known_header (hdr, header_keepalive, (points+2)-buffer->buf, end-points-2);
 		}
 		else if ((hdr->header[header_referer].info_off == 0) && 
-			 (strncasecmp(begin, "Referer", 7) == 0))
+			 (equal (begin, "Referer")))
 		{
 			ret = add_known_header (hdr, header_referer, (points+2)-buffer->buf, end-points-2);
 		}
 		else if ((hdr->header[header_location].info_off == 0) && 
-			 (strncasecmp(begin, "Location", 8) == 0))
+			 (equal (begin, "Location")))
 		{
 			ret = add_known_header (hdr, header_location, (points+2)-buffer->buf, end-points-2);
 		}
 		else if ((hdr->header[header_content_length].info_off == 0) && 
-			 (strncasecmp(begin, "Content-Length", 14) == 0))
+			 (equal (begin, "Content-Length")))
 		{
 			ret = add_known_header (hdr, header_content_length, (points+2)-buffer->buf, end-points-2);
 		}
 		else if ((hdr->header[header_upgrade].info_off == 0) && 
-			 (strncasecmp(begin, "Upgrade", 7) == 0))
+			 (equal (begin, "Upgrade")))
 		{
 			ret = add_known_header (hdr, header_upgrade, (points+2)-buffer->buf, end-points-2);
+		}
+		else if ((hdr->header[header_upgrade].info_off == 0) && 
+			 (equal (begin, "If-Range")))
+		{
+			ret = add_known_header (hdr, header_if_range, (points+2)-buffer->buf, end-points-2);
+		}
+		else if ((hdr->header[header_range].info_off == 0) && 
+			 (equal (begin, "Range")))
+		{
+			ret = add_known_header (hdr, header_range, (points+2)-buffer->buf, end-points-2);
+		} 
+		else if ((hdr->header[header_upgrade].info_off == 0) && 
+			 (equal (begin, "If-None-Match")))
+		{
+			ret = add_known_header (hdr, header_if_none_match, (points+2)-buffer->buf, end-points-2);
 		}
 		else {
 			/* Add a unknown header
@@ -640,6 +657,8 @@ cherokee_header_parse (cherokee_header_t *hdr, cherokee_buffer_t *buffer,  chero
 		}
 
 	next:
+		*end = end_char;
+
 		while ((*end == '\r') || (*end == '\n')) end++;
 		begin = end;
 	}
@@ -842,7 +861,7 @@ cherokee_header_copy_method (cherokee_header_t *hdr, cherokee_buffer_t *buf)
 {
 	ret_t       ret;
 	const char *tmp;
-	int         len;
+	cuint_t     len;
 
 	ret = cherokee_http_method_to_string (HDR_METHOD(hdr), &tmp, &len);
 	if (unlikely(ret != ret_ok)) return ret;
@@ -856,7 +875,7 @@ cherokee_header_copy_version (cherokee_header_t *hdr, cherokee_buffer_t *buf)
 {
 	ret_t       ret;
 	const char *tmp;
-	int         len;
+	cuint_t     len;
 
 	ret = cherokee_http_version_to_string (HDR_METHOD(hdr), &tmp, &len);
 	if (unlikely(ret != ret_ok)) return ret;

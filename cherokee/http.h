@@ -143,8 +143,8 @@ typedef enum {
 				   (m == http_propfind) || \
 				   (m == http_proppatch))
 
-ret_t cherokee_http_method_to_string  (cherokee_http_method_t  method,  const char **str, int *str_len);
-ret_t cherokee_http_version_to_string (cherokee_http_version_t version, const char **str, int *str_len);
+ret_t cherokee_http_method_to_string  (cherokee_http_method_t  method,  const char **str, cuint_t *str_len);
+ret_t cherokee_http_version_to_string (cherokee_http_version_t version, const char **str, cuint_t *str_len);
 ret_t cherokee_http_code_to_string    (cherokee_http_t code, const char **str);
 ret_t cherokee_http_code_copy         (cherokee_http_t code, cherokee_buffer_t *buf);
 
