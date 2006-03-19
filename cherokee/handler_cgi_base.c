@@ -168,11 +168,13 @@ cherokee_handler_cgi_base_build_basic_env (cherokee_handler_cgi_base_t          
 	cherokee_header_copy_known (conn->header, header_host, tmp);
 	if (! cherokee_buffer_is_empty(tmp)) {
 		set_env (cgi, "HTTP_HOST", tmp->buf, tmp->len);
-
+		
 		p = strchr (tmp->buf, ':');
-		if (p != NULL) *p = '\0';
-
-		set_env (cgi, "SERVER_NAME", tmp->buf, p - tmp->buf);
+		if (p != NULL) {
+			set_env (cgi, "SERVER_NAME", tmp->buf, p - tmp->buf);
+		} else {
+			set_env (cgi, "SERVER_NAME", tmp->buf, tmp->len);
+		}
 	}
 
 	/* Cookies :-)
@@ -236,17 +238,6 @@ cherokee_handler_cgi_base_build_basic_env (cherokee_handler_cgi_base_t          
 		set_env (cgi, "REMOTE_USER", conn->validator->user.buf, conn->validator->user.len);
 	} else {
 		set_env (cgi, "REMOTE_USER", "", 0);
-	}
-
-	/* Set the host name
-	 */
-	if (!cherokee_buffer_is_empty (&conn->host)) {
-		p = strchr (conn->host.buf, ':');
-		if (p != NULL) *p = '\0';
-		
-		set_env (cgi, "SERVER_NAME", conn->host.buf, conn->host.len);
-
-		if (p != NULL) *p = ':';
 	}
 
 	/* Set PATH_INFO 
