@@ -381,6 +381,7 @@ dnl
 dnl Check for GNU getopt_long()
 dnl
 #AC_SEARCH_LIBS(getopt_long, [iberty gnugetopt])
+AC_CHECK_HEADERS(getopt.h)
 AC_CHECK_FUNC(getopt_long, have_getopt_long="yes")
 AM_CONDITIONAL(HAVE_GETOPT_LONG, test x"$have_getopt_long" = "xyes")
 
