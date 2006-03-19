@@ -138,7 +138,7 @@ substitute_groups (cherokee_buffer_t* url, const char* subject,
 			} else {
 				/* If it is not a number, add both characters 
 				 */
-				cherokee_buffer_add (url, (char *)"$",  1);
+				cherokee_buffer_add_str (url, "$");
 				cherokee_buffer_add (url, (char *)subs, 1);
 			}
 

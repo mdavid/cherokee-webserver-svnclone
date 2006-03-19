@@ -72,18 +72,18 @@ build_hardcoded_response_page (cherokee_connection_t *cnt, cherokee_buffer_t *bu
 {
 	cuint_t port;
 
-	cherokee_buffer_add (buffer, "<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">" CRLF, 50);
+	cherokee_buffer_add_str (buffer, "<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">" CRLF);
 	   
 	/* Add page title
 	 */
-	cherokee_buffer_add (buffer, "<html><head><title>", 19);
+	cherokee_buffer_add_str (buffer, "<html><head><title>");
 	cherokee_http_code_copy (cnt->error_code, buffer);
 
 	/* Add big banner
 	 */
-	cherokee_buffer_add (buffer, "</title></head><body><h1>", 25);
+	cherokee_buffer_add_str (buffer, "</title></head><body><h1>");
 	cherokee_http_code_copy (cnt->error_code, buffer);
-	cherokee_buffer_add (buffer, "</h1>", 5);
+	cherokee_buffer_add_str (buffer, "</h1>");
 
 	/* Maybe add some info
 	 */
@@ -98,23 +98,22 @@ build_hardcoded_response_page (cherokee_connection_t *cnt, cherokee_buffer_t *bu
 			cherokee_buffer_escape_get_html (cnt->request_escape, &req_html_ref);
 
 			cherokee_buffer_ensure_size (buffer, 18 + req_html_ref->len + 30);
-			cherokee_buffer_add (buffer, "The requested URL ", 18);
+			cherokee_buffer_add_str (buffer, "The requested URL ");
 			cherokee_buffer_add_buffer (buffer, req_html_ref);
-			cherokee_buffer_add (buffer, " was not found on this server.", 30);
+			cherokee_buffer_add_str (buffer, " was not found on this server.");
 		}
 		break;
 	case http_bad_request:
-		cherokee_buffer_add (buffer, 
-				     "Your browser sent a request that this server could not understand.", 66);
+		cherokee_buffer_add_str (buffer, 
+					 "Your browser sent a request that this server could not understand.");
 		cherokee_buffer_add_va (buffer, "<p><pre>%s</pre>", cnt->header->input_buffer->buf);
 		break;
         case http_access_denied:
-		cherokee_buffer_add(buffer,
-				    "You have no access to the request URL", 37);
+		cherokee_buffer_add_str (buffer, "You have no access to the request URL");
 		break;
 	case http_request_uri_too_long:
-		cherokee_buffer_add (buffer,
-				     "The requested URL's length exceeds the capacity limit for this server.", 70);
+		cherokee_buffer_add_str (buffer,
+					 "The requested URL's length exceeds the capacity limit for this server.");
 		break;		
 	case http_moved_permanently:
 	case http_moved_temporarily:
@@ -123,16 +122,16 @@ build_hardcoded_response_page (cherokee_connection_t *cnt, cherokee_buffer_t *bu
 					cnt->redirect.buf);
 		break;
 	case http_unauthorized:
-		cherokee_buffer_add (buffer, 
-				     "This server could not verify that you are authorized to access the document "
-				     "requested.  Either you supplied the wrong credentials (e.g., bad password), "
-				     "or your browser doesn't understand how to supply the credentials required.", 226);
+		cherokee_buffer_add_str (buffer, 
+					 "This server could not verify that you are authorized to access the document "
+					 "requested.  Either you supplied the wrong credentials (e.g., bad password), "
+					 "or your browser doesn't understand how to supply the credentials required.");
 	case http_upgrade_required:
-		cherokee_buffer_add (buffer,
-				     "The requested resource can only be retrieved using SSL.  The server is "
-				     "willing to upgrade the current connection to SSL, but your client doesn't "
-				     "support it. Either upgrade your client, or try requesting the page "
-				     "using https://", 226);
+		cherokee_buffer_add_str (buffer,
+					 "The requested resource can only be retrieved using SSL.  The server is "
+					 "willing to upgrade the current connection to SSL, but your client doesn't "
+					 "support it. Either upgrade your client, or try requesting the page "
+					 "using https://");
 		break;
 	default:
 		break;
@@ -140,7 +139,7 @@ build_hardcoded_response_page (cherokee_connection_t *cnt, cherokee_buffer_t *bu
 	   
 	/* Add page foot
 	 */
-	cherokee_buffer_add (buffer, "<p><hr>", 7);	
+	cherokee_buffer_add_str (buffer, "<p><hr>");	
 
 	if (cnt->socket->is_tls == non_TLS)
  		port = CONN_SRV(cnt)->port;
@@ -152,7 +151,7 @@ build_hardcoded_response_page (cherokee_connection_t *cnt, cherokee_buffer_t *bu
 	} else {
 		cherokee_buffer_add_version (buffer, port, ver_full_html);
 	}
-	cherokee_buffer_add (buffer, "</body></html>", 14); 
+	cherokee_buffer_add_str (buffer, "</body></html>"); 
 
 	return ret_ok;
 }
@@ -184,10 +183,10 @@ cherokee_handler_error_add_headers (cherokee_handler_error_t *hdl, cherokee_buff
 	case http_upgrade_nothing:
 		break;
 	case http_upgrade_tls10:
-		cherokee_buffer_add (buffer, "Upgrade: TLS/1.0, HTTP/1.1"CRLF, 28);
+		cherokee_buffer_add_str (buffer, "Upgrade: TLS/1.0, HTTP/1.1"CRLF);
 		break;
 	case http_upgrade_http11:
-		cherokee_buffer_add (buffer, "Upgrade: HTTP/1.1"CRLF, 19);
+		cherokee_buffer_add_str (buffer, "Upgrade: HTTP/1.1"CRLF);
 		break;
 	default:
 		SHOULDNT_HAPPEN;
@@ -195,11 +194,11 @@ cherokee_handler_error_add_headers (cherokee_handler_error_t *hdl, cherokee_buff
 
 	/* Usual headers
 	 */
-	cherokee_buffer_add    (buffer, "Content-Type: text/html"CRLF, 25);
-	cherokee_buffer_add_va (buffer, "Content-length: %d"CRLF, hdl->content->len);
-	cherokee_buffer_add    (buffer, "Cache-Control: no-cache"CRLF, 25);		
-	cherokee_buffer_add    (buffer, "Pragma: no-cache"CRLF, 18);		
-	cherokee_buffer_add    (buffer, "P3P: CP=3DNOI NID CURa OUR NOR UNI"CRLF, 36);		
+	cherokee_buffer_add_str (buffer, "Content-Type: text/html"CRLF);
+	cherokee_buffer_add_va  (buffer, "Content-length: %d"CRLF, hdl->content->len);
+	cherokee_buffer_add_str (buffer, "Cache-Control: no-cache"CRLF);
+	cherokee_buffer_add_str (buffer, "Pragma: no-cache"CRLF);		
+	cherokee_buffer_add_str (buffer, "P3P: CP=3DNOI NID CURa OUR NOR UNI"CRLF);
 
 	return ret_ok;
 }

@@ -1,5 +1,11 @@
 2006-03-19  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* cherokee/handler_redir.c, cherokee/handler_server_info.c,
+	cherokee/handler_dirlist.c, cherokee/handler_file.c,
+	cherokee/handler_error.c, cherokee/connection.c: Some clean up.
+	There were many cherokee_buffer_add() calls with hardcoded
+	lenghts.  I have change them for cherokee_buffer_add_str calls.
+
 	* cherokee/handler_file.c (check_cached): Fixed to work with
 	If-Range as a known header.
 

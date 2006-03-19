@@ -592,9 +592,9 @@ cherokee_handler_file_add_headers (cherokee_handler_file_t *fhdl,
 		cuint_t            maxage;
 
 		cherokee_mime_entry_get_type (fhdl->mime, &mime);
-		cherokee_buffer_add (buffer, "Content-Type: ", 14);
+		cherokee_buffer_add_str (buffer, "Content-Type: ");
 		cherokee_buffer_add_buffer (buffer, mime);
-		cherokee_buffer_add (buffer, CRLF, 2);
+		cherokee_buffer_add_str (buffer, CRLF);
 
 		ret = cherokee_mime_entry_get_maxage (fhdl->mime, &maxage);		
 		if (ret == ret_ok) {
