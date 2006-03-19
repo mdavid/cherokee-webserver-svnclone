@@ -1,7 +1,5 @@
 ## Cherokee: cherokee/Makefile.am  -*- makefile -*-
 
-# SUBDIRS = pcre
-
 INCLUDES = \
 $(TLS_CFLAGS) \
 $(PTHREAD_CFLAGS) \
@@ -78,11 +76,12 @@ endif
 #
 if PLATFORM_WIN32
 no_undefined = -no-undefined -Wl,--export-all-symbols
+module_ldflags_w32 = -lcherokee-base -lcherokee-config -lcherokee-server
 endif
 
 common_ldflags = \
-$(LIBTOOL_EXPORT_OPTIONS) \
-$(no_undefined)
+$(no_undefined) \
+$(LIBTOOL_EXPORT_OPTIONS)
 
 #
 # LDFLAGS for modules = flags for libraries + more
@@ -91,7 +90,8 @@ module_ldflags = \
 $(common_ldflags) \
 -module \
 -avoid-version \
--export-dynamic 
+-export-dynamic \
+$(module_ldflags_w32) 
 
 
 #
@@ -266,7 +266,11 @@ handler_phpcgi = \
 handler_phpcgi.c \
 handler_phpcgi.h
 
-libplugin_phpcgi_la_LDFLAGS = $(module_ldflags)  
+if PLATFORM_WIN32
+phpcgi_ldflags_win32 = -lplugin_cgi
+endif
+
+libplugin_phpcgi_la_LDFLAGS = $(module_ldflags) $(phpcgi_ldflags_win32)
 libplugin_phpcgi_la_SOURCES = $(handler_phpcgi)
 
 if STATIC_HANDLER_PHPCGI
@@ -300,7 +304,11 @@ handler_error_redir = \
 handler_error_redir.c \
 handler_error_redir.h
 
-libplugin_error_redir_la_LDFLAGS = $(module_ldflags)  
+if PLATFORM_WIN32
+error_redir_ldflags_win32 = -lplugin_redir
+endif
+
+libplugin_error_redir_la_LDFLAGS = $(module_ldflags) $(error_redir_ldflags_win32)
 libplugin_error_redir_la_SOURCES = $(handler_error_redir)
 
 if STATIC_HANDLER_ERROR_REDIR
@@ -317,7 +325,11 @@ handler_common = \
 handler_common.c \
 handler_common.h
 
-libplugin_common_la_LDFLAGS = $(module_ldflags) 
+if PLATFORM_WIN32
+common_ldflags_win32 = -lplugin_dirlist -lplugin_file
+endif
+
+libplugin_common_la_LDFLAGS = $(module_ldflags) $(common_ldflags_win32)
 libplugin_common_la_SOURCES = $(handler_common)
 
 if STATIC_HANDLER_COMMON
@@ -336,7 +348,11 @@ levenshtein_distance.h \
 handler_nn.c \
 handler_nn.h
 
-libplugin_nn_la_LDFLAGS = $(module_ldflags)  
+if PLATFORM_WIN32
+nn_ldflags_win32 = -lplugin_common -lplugin_redir
+endif
+
+libplugin_nn_la_LDFLAGS = $(module_ldflags) $(nn_ldflags_win32)
 libplugin_nn_la_SOURCES = $(handler_nn)
 
 if STATIC_HANDLER_NN
@@ -411,7 +427,11 @@ logger_combined = \
 logger_combined.h \
 logger_combined.c
 
-libplugin_combined_la_LDFLAGS = $(module_ldflags)  
+if PLATFORM_WIN32
+combined_ldflags_win32 = -lplugin_ncsa
+endif
+
+libplugin_combined_la_LDFLAGS = $(module_ldflags) $(combined_ldflags_win32)
 libplugin_combined_la_SOURCES = $(logger_combined)
 
 if STATIC_LOGGER_COMBINED
@@ -568,6 +588,8 @@ libcherokee-base.la
 
 libcherokee_config_la_LDFLAGS = $(common_ldflags)
 libcherokee_config_la_LIBADD = \
+$(PTHREAD_LIBS) \
+$(PTHREAD_CFLAGS) \
 libcherokee-base.la \
 libcherokee-client.la \
 libcherokee-server.la
@@ -892,7 +914,7 @@ cherokee_LDFLAGS = -export-dynamic
 bin_PROGRAMS = cherokee_logrotate
 
 cherokee_logrotate_SOURCES = cherokee_logrotate.c
-cherokee_logrotate_LDADD = libcherokee-config.la libcherokee-base.la libcherokee-client.la 
+cherokee_logrotate_LDADD = libcherokee-base.la libcherokee-client.la libcherokee-server.la libcherokee-config.la
 
 
 #
