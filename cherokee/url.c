@@ -85,7 +85,7 @@ cherokee_url_clean (cherokee_url_t *url)
 
 
 static ret_t
-parse_protocol (cherokee_url_t *url, char *string, int *len)
+parse_protocol (cherokee_url_t *url, char *string, cuint_t *len)
 {
 	/* Drop "http://"
 	 */

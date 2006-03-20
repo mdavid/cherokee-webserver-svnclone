@@ -1,5 +1,13 @@
 2006-03-20  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* cherokee/connection-protected.h, cherokee/connection.c,
+	cherokee/handler_cgi_base.c, cherokee/handler_dirlist.c,
+	cherokee/thread.c, cherokee/handler_file.c,
+	cherokee/logger_ncsa.c, cherokee/handler_error.c,
+	cherokee/connection_info.c, cherokee/url.c: Now conn->socket is
+	embedded inside connection. It does not logger use a _new/_free
+	object.
+
 	* cherokee/icons.c (cherokee_icons_get_icon): It was using a case
 	sensitive search for the extension, but it does much more sense to
 	do a case insensitive search. Changed.

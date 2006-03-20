@@ -95,7 +95,7 @@ struct cherokee_connection {
 	
 	/* Socket stuff
 	 */
-	cherokee_socket_t            *socket;
+	cherokee_socket_t             socket;
 	int                           tcp_cork;
 		
 	cherokee_logger_t            *logger_ref;

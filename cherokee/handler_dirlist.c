@@ -739,7 +739,7 @@ cherokee_handler_dirlist_step (cherokee_handler_dirlist_t *dhdl, cherokee_buffer
 	 */
 	cherokee_buffer_add_str (buffer, "</pre><hr>\n");
 
-	if (HANDLER_CONN(dhdl)->socket->is_tls == non_TLS)
+	if (HANDLER_CONN(dhdl)->socket.is_tls == non_TLS)
  		port = HANDLER_SRV(dhdl)->port;
 	else 
  		port = HANDLER_SRV(dhdl)->port_tls;

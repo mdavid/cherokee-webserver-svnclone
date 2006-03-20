@@ -262,8 +262,8 @@ cherokee_thread_new  (cherokee_thread_t **thd, void *server, cherokee_thread_typ
 static void
 conn_set_mode (cherokee_thread_t *thd, cherokee_connection_t *conn, cherokee_socket_status_t s)
 {
-	cherokee_socket_set_status (conn->socket, s);
-	cherokee_fdpoll_set_mode (thd->fdpoll, SOCKET_FD(conn->socket), s);
+	cherokee_socket_set_status (&conn->socket, s);
+	cherokee_fdpoll_set_mode (thd->fdpoll, SOCKET_FD(&conn->socket), s);
 }
 
 
@@ -402,7 +402,7 @@ purge_closed_connection (cherokee_thread_t *thread, cherokee_connection_t *conn)
 {
 	/* Delete from file descriptors poll
 	 */
-	cherokee_fdpoll_del (thread->fdpoll, SOCKET_FD(conn->socket));
+	cherokee_fdpoll_del (thread->fdpoll, SOCKET_FD(&conn->socket));
 
 	/* Remove from active connections list
 	 */
@@ -560,8 +560,8 @@ process_active_connections (cherokee_thread_t *thd)
 			int num;
 
 			num = cherokee_fdpoll_check (thd->fdpoll, 
-						     SOCKET_FD(conn->socket), 
-						     SOCKET_STATUS(conn->socket));
+						     SOCKET_FD(&conn->socket), 
+						     SOCKET_STATUS(&conn->socket));
 			switch (num) {
 			case -1:
 				purge_closed_connection(thd, conn);
@@ -608,7 +608,7 @@ process_active_connections (cherokee_thread_t *thd)
 			conn->phase = phase_tls_handshake;;
 			
 		case phase_tls_handshake:
-			ret = cherokee_socket_init_tls (CONN_SOCK(conn), CONN_VSRV(conn));
+			ret = cherokee_socket_init_tls (&conn->socket, CONN_VSRV(conn));
 			switch (ret) {
 			case ret_eagain:
 				continue;
@@ -1221,7 +1221,7 @@ __accept_from_server (cherokee_thread_t *thd, int srv_socket, cherokee_socket_ty
 		return 0;
 	}
 
-	ret = cherokee_socket_set_sockaddr (CONN_SOCK(new_conn), new_fd, &new_sa);
+	ret = cherokee_socket_set_sockaddr (&new_conn->socket, new_fd, &new_sa);
 	if (unlikely(ret < ret_ok)) goto error;
 
 	/* May active the TLS support
@@ -1711,7 +1711,7 @@ cherokee_thread_add_connection (cherokee_thread_t *thd, cherokee_connection_t  *
 {
 	ret_t ret;
 
-	ret = cherokee_fdpoll_add (thd->fdpoll, SOCKET_FD(conn->socket), 0);
+	ret = cherokee_fdpoll_add (thd->fdpoll, SOCKET_FD(&conn->socket), 0);
 	if (unlikely (ret < ret_ok)) return ret;
 
 	conn_set_mode (thd, conn, socket_reading);
@@ -1788,7 +1788,7 @@ move_connection_to_active (cherokee_thread_t *thd, cherokee_connection_t *conn)
 static ret_t 
 reactive_conn_from_polling (cherokee_thread_t *thd, cherokee_connection_t *conn)
 {	
-	cherokee_socket_t *socket = CONN_SOCK(conn);
+	cherokee_socket_t *socket = &conn->socket;
 	cherokee_boolean_t del    = true;
 
 	/* Set the connection file descriptor and remove the old one
@@ -1816,7 +1816,7 @@ ret_t
 cherokee_thread_deactive_to_polling (cherokee_thread_t *thd, cherokee_connection_t *conn, int fd, int rw, char multiple)
 {	
 	cherokee_boolean_t     add_fd = true;
-	cherokee_socket_t     *socket = CONN_SOCK(conn);
+	cherokee_socket_t     *socket = &conn->socket;
 
 	/* Check for fds added more than once
 	 */
@@ -1844,7 +1844,7 @@ cherokee_thread_deactive_to_polling (cherokee_thread_t *thd, cherokee_connection
 ret_t 
 cherokee_thread_retire_active_connection (cherokee_thread_t *thd, cherokee_connection_t *conn)
 {
-	cherokee_fdpoll_del (thd->fdpoll, SOCKET_FD(conn->socket));
+	cherokee_fdpoll_del (thd->fdpoll, SOCKET_FD(&conn->socket));
 	del_connection (thd, conn);
 
 	return ret_ok;
@@ -1854,7 +1854,7 @@ cherokee_thread_retire_active_connection (cherokee_thread_t *thd, cherokee_conne
 ret_t 
 cherokee_thread_inject_active_connection (cherokee_thread_t *thd, cherokee_connection_t *conn)
 {
-	cherokee_fdpoll_add (thd->fdpoll, SOCKET_FD(conn->socket), 1);
+	cherokee_fdpoll_add (thd->fdpoll, SOCKET_FD(&conn->socket), 1);
 	add_connection (thd, conn);
 
 	return ret_ok;
