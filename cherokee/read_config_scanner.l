@@ -33,7 +33,7 @@
 ws              [ \t]+
 integer         [-+]?[0-9]+
 comment         #.*$
-fpath_win       ([a-zA-Z]:[^\"\n\r ]*)
+fpath_win       ([a-zA-Z]:[^\"\n\r]*)
 fpath           (\/[^\"\n\r ]*)|{fpath_win}
 qstring         \"[^\"\{\}\n\r]*\"
 http            http\:\/{fpath}

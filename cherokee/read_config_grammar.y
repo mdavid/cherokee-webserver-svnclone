@@ -405,9 +405,20 @@ fix_win32_path (char *str)
 {
 #ifdef _WIN32
 	   char *i = str;
+
+	   /* Replace '\' by '/'
+	    */
 	   while (*i) {
 			 if (*i == '\\') *i='/';
 			 i++;
+	   }
+
+	   /* Remove the spaces at the end of the string
+	    */
+	   i--;
+	   while ((i > str) && (*i == ' ')) {
+			 *i='\0'; 
+			 i--; 			 
 	   }
 #endif 
 	   return str;
