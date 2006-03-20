@@ -62,6 +62,7 @@
 #include "encoder_table.h"
 #include "post.h"
 #include "reqs_list.h"
+#include "header-protected.h"
 
 
 typedef enum {
@@ -118,7 +119,7 @@ struct cherokee_connection {
 	
 	/* Headers
 	 */
-	cherokee_header_t            *header;
+	cherokee_header_t             header;
 
 	/* Encoders
 	 */

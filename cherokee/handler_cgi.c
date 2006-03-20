@@ -309,7 +309,7 @@ add_environment (cherokee_handler_cgi_t *cgi, cherokee_connection_t *conn)
 
 	/* CONTENT_LENGTH
 	 */
-	ret = cherokee_header_get_known (conn->header, header_content_length, &lenght, &lenght_len);
+	ret = cherokee_header_get_known (&conn->header, header_content_length, &lenght, &lenght_len);
 	if (ret == ret_ok)
 		set_env (cgi_base, "CONTENT_LENGTH", lenght, lenght_len);
 

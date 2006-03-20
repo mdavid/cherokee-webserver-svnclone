@@ -242,7 +242,7 @@ cherokee_logger_w3c_write_error  (cherokee_logger_w3c_t *logger, cherokee_connec
 			conn_time->tm_hour, 
 			conn_time->tm_min, 
 			conn_time->tm_sec,
-			method[cnt->header->method],
+			method[cnt->header.method],
 			request->buf);
 
 	if ((len > tmp_size-1) || (len == -1)) {
@@ -322,7 +322,7 @@ cherokee_logger_w3c_write_access (cherokee_logger_w3c_t *logger, cherokee_connec
 			conn_time->tm_hour, 
 			conn_time->tm_min, 
 			conn_time->tm_sec,
-			method[cnt->header->method],
+			method[cnt->header.method],
 			request->buf);
 
 	   

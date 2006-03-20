@@ -73,8 +73,11 @@ typedef ret_t (* cherokee_header_foreach_func_t) (cherokee_buffer_t *header, che
 
 ret_t cherokee_header_new                 (cherokee_header_t **hdr);
 ret_t cherokee_header_free                (cherokee_header_t  *hdr);
-ret_t cherokee_header_clean               (cherokee_header_t  *hdr);
 
+ret_t cherokee_header_init                (cherokee_header_t *hdr);
+ret_t cherokee_header_mrproper            (cherokee_header_t *hdr);
+
+ret_t cherokee_header_clean               (cherokee_header_t *hdr);
 ret_t cherokee_header_parse               (cherokee_header_t *hdr, cherokee_buffer_t *buffer, cherokee_type_header_t type);
 ret_t cherokee_header_has_header          (cherokee_header_t *hdr, cherokee_buffer_t *buffer, int tail_len);
 ret_t cherokee_header_get_length          (cherokee_header_t *hdr, cuint_t *len);

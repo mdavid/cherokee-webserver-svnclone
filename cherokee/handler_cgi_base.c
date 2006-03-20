@@ -165,7 +165,7 @@ cherokee_handler_cgi_base_build_basic_env (cherokee_handler_cgi_base_t          
 	 * HTTP_HOST can include the «:PORT» text, and SERVER_NAME only
 	 * the name 
 	 */
-	cherokee_header_copy_known (conn->header, header_host, tmp);
+	cherokee_header_copy_known (&conn->header, header_host, tmp);
 	if (! cherokee_buffer_is_empty(tmp)) {
 		set_env (cgi, "HTTP_HOST", tmp->buf, tmp->len);
 		
@@ -180,7 +180,7 @@ cherokee_handler_cgi_base_build_basic_env (cherokee_handler_cgi_base_t          
 	/* Cookies :-)
 	 */
 	cherokee_buffer_clean (tmp);
-	ret = cherokee_header_copy_unknown (conn->header, "Cookie", 6, tmp);
+	ret = cherokee_header_copy_unknown (&conn->header, "Cookie", 6, tmp);
 	if (ret == ret_ok) {
 		set_env (cgi, "HTTP_COOKIE", tmp->buf, tmp->len);
 	}
@@ -188,7 +188,7 @@ cherokee_handler_cgi_base_build_basic_env (cherokee_handler_cgi_base_t          
 	/* User Agent
 	 */
 	cherokee_buffer_clean (tmp);
-	ret = cherokee_header_copy_known (conn->header, header_user_agent, tmp);
+	ret = cherokee_header_copy_known (&conn->header, header_user_agent, tmp);
 	if (ret == ret_ok) {
 		set_env (cgi, "HTTP_USER_AGENT", tmp->buf, tmp->len);
 	}
@@ -196,7 +196,7 @@ cherokee_handler_cgi_base_build_basic_env (cherokee_handler_cgi_base_t          
 	/* Set referer
 	 */
 	cherokee_buffer_clean (tmp);
-	ret = cherokee_header_copy_known (conn->header, header_referer, tmp);
+	ret = cherokee_header_copy_known (&conn->header, header_referer, tmp);
 	if (ret == ret_ok) {
 		set_env (cgi, "HTTP_REFERER", tmp->buf, tmp->len);
 	}
@@ -204,7 +204,7 @@ cherokee_handler_cgi_base_build_basic_env (cherokee_handler_cgi_base_t          
 	/* Content-type and Content-lenght (if available) 
 	 */
 	cherokee_buffer_clean (tmp);
-	ret = cherokee_header_copy_unknown (conn->header, "Content-Type", 12, tmp);
+	ret = cherokee_header_copy_unknown (&conn->header, "Content-Type", 12, tmp);
 	if (ret == ret_ok)
 		set_env (cgi, "CONTENT_TYPE", tmp->buf, tmp->len);
 
@@ -222,13 +222,13 @@ cherokee_handler_cgi_base_build_basic_env (cherokee_handler_cgi_base_t          
 
 	/* Set the HTTP version
 	 */
-	ret = cherokee_http_version_to_string (conn->header->version, &p_const, &p_len);
+	ret = cherokee_http_version_to_string (conn->header.version, &p_const, &p_len);
 	if (ret >= ret_ok)
 		set_env (cgi, "SERVER_PROTOCOL", (char *)p_const, p_len);
 
 	/* Set the method
 	 */
-	ret = cherokee_http_method_to_string (conn->header->method, &p_const, &p_len);
+	ret = cherokee_http_method_to_string (conn->header.method, &p_const, &p_len);
 	if (ret >= ret_ok)
 		set_env (cgi, "REQUEST_METHOD", (char *)p_const, p_len);
 
@@ -249,7 +249,7 @@ cherokee_handler_cgi_base_build_basic_env (cherokee_handler_cgi_base_t          
 	/* Set REQUEST_URI 
 	 */
 	cherokee_buffer_clean (tmp);
-	cherokee_header_copy_request_w_args (conn->header, tmp);
+	cherokee_header_copy_request_w_args (&conn->header, tmp);
 	set_env (cgi, "REQUEST_URI", tmp->buf, tmp->len);
 
 	/* Set HTTPS
@@ -261,7 +261,7 @@ cherokee_handler_cgi_base_build_basic_env (cherokee_handler_cgi_base_t          
 
 	/* If-None-Match header
 	 */
-	ret = cherokee_header_get_known (conn->header, header_if_none_match, &p, &p_len);
+	ret = cherokee_header_get_known (&conn->header, header_if_none_match, &p, &p_len);
 	if (ret == ret_ok) {
 		set_env (cgi, "HTTP_IF_NONE_MATCH", p, p_len);		
 	}

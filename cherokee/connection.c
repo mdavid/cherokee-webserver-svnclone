@@ -143,7 +143,7 @@ cherokee_connection_new  (cherokee_connection_t **cnt)
 	cherokee_buffer_escape_set_ref (n->request_escape, &n->request);
 
 	cherokee_socket_init (&n->socket);
-	cherokee_header_new (&n->header);
+	cherokee_header_init (&n->header);
 	cherokee_post_init (&n->post);
 
 	*cnt = n;
@@ -154,7 +154,7 @@ cherokee_connection_new  (cherokee_connection_t **cnt)
 ret_t
 cherokee_connection_free (cherokee_connection_t  *cnt)
 {
-	cherokee_header_free (cnt->header);
+	cherokee_header_mrproper (&cnt->header);
 	cherokee_socket_mrproper (&cnt->socket);
 	
 	if (cnt->handler != NULL) {
@@ -287,9 +287,9 @@ cherokee_connection_clean (cherokee_connection_t *cnt)
 
 	/* Drop out the loast incoming header
 	 */
-	cherokee_header_get_length (cnt->header, &header_len);
+	cherokee_header_get_length (&cnt->header, &header_len);
 
-	cherokee_header_clean (cnt->header);
+	cherokee_header_clean (&cnt->header);
 	cherokee_buffer_clean (&cnt->buffer);
 	cherokee_buffer_clean (&cnt->header_buffer);
 	cherokee_buffer_move_to_begin (&cnt->incoming_header, header_len);
@@ -443,7 +443,7 @@ build_response_header (cherokee_connection_t *cnt, cherokee_buffer_t *buffer)
 
 	/* Add protocol string + error_code
 	 */
-	switch (cnt->header->version) {
+	switch (cnt->header.version) {
 	case http_version_09:
 		cherokee_buffer_add_str (buffer, "HTTP/0.9 "); 
 		break;
@@ -514,7 +514,7 @@ build_response_header (cherokee_connection_t *cnt, cherokee_buffer_t *buffer)
 
 	/* Unusual methods
 	 */
-	if (CONN_HDR(cnt)->method == http_options) {
+	if (cnt->header.method == http_options) {
 		cherokee_buffer_add_str (buffer, "Allow: GET, HEAD, POST, OPTIONS"CRLF);
 	}
 	
@@ -1249,7 +1249,7 @@ post_init (cherokee_connection_t *cnt)
 
 	/* Get the header "Content-Lenght" content
 	 */
-	ret = cherokee_header_get_known (cnt->header, header_content_length, &info, &info_len);
+	ret = cherokee_header_get_known (&cnt->header, header_content_length, &info, &info_len);
 	if (ret != ret_ok) {
 		cnt->error_code = http_length_required;
 		return ret_error;
@@ -1331,14 +1331,14 @@ cherokee_connection_get_request (cherokee_connection_t *cnt)
 
 	/* Header parsing
 	 */
-	ret = cherokee_header_parse (cnt->header, &cnt->incoming_header, header_type_request);
+	ret = cherokee_header_parse (&cnt->header, &cnt->incoming_header, header_type_request);
 	if (ret < ret_ok) {
 		goto error;
 	}
 
 	/* Maybe read the POST data
 	 */
-	if (http_method_with_input (cnt->header->method)) {
+	if (http_method_with_input (cnt->header.method)) {
 		uint32_t header_len;
 		uint32_t post_len;
 
@@ -1347,7 +1347,7 @@ cherokee_connection_get_request (cherokee_connection_t *cnt)
 			return ret;
 		}
 
-		ret = cherokee_header_get_length (cnt->header, &header_len);
+		ret = cherokee_header_get_length (&cnt->header, &header_len);
 		if (unlikely(ret != ret_ok)) return ret;
 
 		post_len = cnt->incoming_header.len - header_len;
@@ -1358,7 +1358,7 @@ cherokee_connection_get_request (cherokee_connection_t *cnt)
 	
 	/* Copy the request
 	 */
-	ret = cherokee_header_copy_request (cnt->header, &cnt->request);
+	ret = cherokee_header_copy_request (&cnt->header, &cnt->request);
 	if (ret < ret_ok) goto error;
 
 	/* Look for starting '/' in the request
@@ -1378,11 +1378,11 @@ cherokee_connection_get_request (cherokee_connection_t *cnt)
 
 	/* Read the Host header
 	 */
-	ret = cherokee_header_get_known (cnt->header, header_host, &host, &host_len);
+	ret = cherokee_header_get_known (&cnt->header, header_host, &host, &host_len);
 	switch (ret) {
 	case ret_error:
 	case ret_not_found:
-		if (cnt->header->version == http_version_11) {
+		if (cnt->header.version == http_version_11) {
 			/* It is needed in HTTP/1.1
 			 */
 			goto error;
@@ -1419,14 +1419,14 @@ cherokee_connection_get_request (cherokee_connection_t *cnt)
 	 * to complete the current HTTP/1.1 request after switching to TLS/1.0
 	 */
 	if (CONN_SRV(cnt)->tls_enabled) {
-		ret = cherokee_header_get_known (cnt->header, header_upgrade, &upgrade, &upgrade_len);
+		ret = cherokee_header_get_known (&cnt->header, header_upgrade, &upgrade, &upgrade_len);
 		if (ret == ret_ok) {
 
 			/* Note that HTTP/1.1 [1] specifies "the upgrade keyword MUST be
 			 * supplied within a Connection header field (section 14.10)
 			 * whenever Upgrade is present in an HTTP/1.1 message".
 			 */
-			ret = cherokee_header_get_known (cnt->header, header_connection, &conn, &conn_len);
+			ret = cherokee_header_get_known (&cnt->header, header_connection, &conn, &conn_len);
 			if (ret == ret_ok) {
 				if (strncasecmp("Upgrade", conn, 7) == 0) {
 					if (strncasecmp("TLS", upgrade, 3) == 0) {
@@ -1598,7 +1598,7 @@ cherokee_connection_check_authentication (cherokee_connection_t *cnt, cherokee_c
 	/* Look for authentication in the headers:
 	 * It's done on demand because the directory maybe don't have protection
 	 */
-	ret = cherokee_header_get_unknown (cnt->header, "Authorization", 13, &ptr, &len);
+	ret = cherokee_header_get_unknown (&cnt->header, "Authorization", 13, &ptr, &len);
 	if (ret != ret_ok) {
 		goto unauthorized;
 	}
@@ -1705,7 +1705,7 @@ cherokee_connection_check_only_secure (cherokee_connection_t *cnt, cherokee_conf
 ret_t 
 cherokee_connection_check_http_method (cherokee_connection_t *cnt, cherokee_config_entry_t *config_entry)
 {
-	if (config_entry->handler_methods & cnt->header->method)
+	if (config_entry->handler_methods & cnt->header.method)
 		return ret_ok;
 
 	cnt->error_code = http_method_not_allowed;
@@ -1744,7 +1744,7 @@ cherokee_connection_parse_header (cherokee_connection_t *cnt, cherokee_encoder_t
 
 	/* Look for "Connection: Keep-Alive / Close"
 	 */
-	ret = cherokee_header_get_known (cnt->header, header_connection, &ptr, &ptr_len);
+	ret = cherokee_header_get_known (&cnt->header, header_connection, &ptr, &ptr_len);
 	if (ret == ret_ok) 
 	{
 		if (strncasecmp (ptr, "close", 5) == 0) {
@@ -1758,7 +1758,7 @@ cherokee_connection_parse_header (cherokee_connection_t *cnt, cherokee_encoder_t
 	/* Look for "Range:" 
 	 */
 	if (HANDLER_SUPPORT_RANGE(cnt->handler)) {
-		ret = cherokee_header_get_known (cnt->header, header_range, &ptr, &ptr_len);
+		ret = cherokee_header_get_known (&cnt->header, header_range, &ptr, &ptr_len);
 		if (ret == ret_ok) {
 			if (strncmp (ptr, "bytes=", 6) == 0) {
 				ret = get_range (cnt, ptr+6, ptr_len-6);
@@ -1772,7 +1772,7 @@ cherokee_connection_parse_header (cherokee_connection_t *cnt, cherokee_encoder_t
 
 	/* Look for "Accept-Encoding:"
 	 */
-	ret = cherokee_header_get_known (cnt->header, header_accept_encoding, &ptr, &ptr_len);
+	ret = cherokee_header_get_known (&cnt->header, header_accept_encoding, &ptr, &ptr_len);
 	if (ret == ret_ok) {
 		ret = get_encoding (cnt, ptr, encoders);
 		if (ret < ret_ok) {
@@ -1800,7 +1800,7 @@ cherokee_connection_parse_args (cherokee_connection_t *cnt)
 
 	/* Parse the header
 	 */
-	ret = cherokee_header_get_arguments (cnt->header, &cnt->query_string, cnt->arguments);
+	ret = cherokee_header_get_arguments (&cnt->header, &cnt->query_string, cnt->arguments);
 	if (unlikely(ret < ret_ok)) return ret;
 
 	return ret_ok;
