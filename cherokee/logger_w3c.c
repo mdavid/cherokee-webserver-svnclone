@@ -62,7 +62,6 @@ pthread_mutex_t buffer_lock = PTHREAD_MUTEX_INITIALIZER;
 
 /* Some constants
  */
-static char *method[]  = {"GET", "POST", "HEAD", "UNKNOWN", NULL};
 static char *month[]   = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
 			  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", NULL};
 
@@ -214,6 +213,7 @@ cherokee_logger_w3c_write_error  (cherokee_logger_w3c_t *logger, cherokee_connec
 {
 	long int           z;
 	int                len;
+	const char        *method;
 	struct tm         *conn_time;
 	cherokee_buffer_t *request;
 	static long       *this_timezone = NULL;
@@ -232,6 +232,10 @@ cherokee_logger_w3c_write_error  (cherokee_logger_w3c_t *logger, cherokee_connec
 	
 	z = - (*this_timezone / 60);
 
+	/* The method
+	 */
+	cherokee_http_method_to_string (cnt->header.method, &method, NULL);
+
 	/* Build the string
 	 */
 	request = cherokee_buffer_is_empty(&cnt->request_original) ? 
@@ -242,7 +246,7 @@ cherokee_logger_w3c_write_error  (cherokee_logger_w3c_t *logger, cherokee_connec
 			conn_time->tm_hour, 
 			conn_time->tm_min, 
 			conn_time->tm_sec,
-			method[cnt->header.method],
+			method,
 			request->buf);
 
 	if ((len > tmp_size-1) || (len == -1)) {
@@ -276,6 +280,7 @@ cherokee_logger_w3c_write_access (cherokee_logger_w3c_t *logger, cherokee_connec
 {
 	long int           z;
 	int                len;
+	const char        *method;
 	struct tm         *conn_time;
 	cherokee_buffer_t *request;
 	static long       *this_timezone = NULL;
@@ -312,6 +317,10 @@ cherokee_logger_w3c_write_access (cherokee_logger_w3c_t *logger, cherokee_connec
 	
 	z = - (*this_timezone / 60);
 
+	/* HTTP Method
+	 */
+	cherokee_http_method_to_string (cnt->header.method, &method, NULL);
+
 	/* Build the string
 	 */
 	request = cherokee_buffer_is_empty(&cnt->request_original) ? 
@@ -322,7 +331,7 @@ cherokee_logger_w3c_write_access (cherokee_logger_w3c_t *logger, cherokee_connec
 			conn_time->tm_hour, 
 			conn_time->tm_min, 
 			conn_time->tm_sec,
-			method[cnt->header.method],
+			method,
 			request->buf);
 
 	   
