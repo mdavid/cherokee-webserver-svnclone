@@ -1,5 +1,8 @@
 2006-03-20  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* cherokee/header.h, cherokee/header.c: Losing some fat..
+	cherokee_header_foreach() removed.
+
 	* cherokee/header.h, cherokee/header.c,
 	cherokee/handler_file.c (check_cached): Yet another header
 	promoted to known: "If-Modified-Since"

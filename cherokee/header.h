@@ -82,7 +82,9 @@ ret_t cherokee_header_mrproper            (cherokee_header_t *hdr);
 ret_t cherokee_header_clean               (cherokee_header_t *hdr);
 ret_t cherokee_header_parse               (cherokee_header_t *hdr, cherokee_buffer_t *buffer, cherokee_type_header_t type);
 ret_t cherokee_header_has_header          (cherokee_header_t *hdr, cherokee_buffer_t *buffer, int tail_len);
+
 ret_t cherokee_header_get_length          (cherokee_header_t *hdr, cuint_t *len);
+ret_t cherokee_header_get_number          (cherokee_header_t *hdr, cuint_t *num);
 
 ret_t cherokee_header_copy_request        (cherokee_header_t *hdr, cherokee_buffer_t *request);
 ret_t cherokee_header_copy_request_w_args (cherokee_header_t *hdr, cherokee_buffer_t *request);
@@ -95,9 +97,6 @@ ret_t cherokee_header_get_unknown         (cherokee_header_t *hdr, char *name, i
 
 ret_t cherokee_header_copy_known          (cherokee_header_t *hdr, cherokee_common_header_t header, cherokee_buffer_t *buf);
 ret_t cherokee_header_copy_unknown        (cherokee_header_t *hdr, char *name, int name_len, cherokee_buffer_t *buf);
-
-ret_t cherokee_header_get_number          (cherokee_header_t *hdr, int *num);
-ret_t cherokee_header_foreach             (cherokee_header_t *hdr, cherokee_header_foreach_func_t, cherokee_buffer_t *name, cherokee_buffer_t *cont, void *param);
 
 
 CHEROKEE_END_DECLS
