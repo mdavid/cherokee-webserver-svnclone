@@ -1,5 +1,10 @@
 2006-03-20  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* cherokee/read_config_scanner.l,
+	cherokee/read_config_grammar.y (fix_win32_path): The space
+	character wasn't allowed in Win32 paths. Fixed. Patch by
+	olivier-ml1@oleastre.be
+
 	* cherokee/header.h, cherokee/header.c: Losing some fat..
 	cherokee_header_foreach() removed.
 
