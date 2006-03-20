@@ -1,5 +1,10 @@
 2006-03-20  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* cherokee/handler_cgi_base.c (cherokee_handler_cgi_base_build_basic_env):
+	Added some aditional headers: HTTP_IF_RANGE,
+	HTTP_IF_MODIFIED_SINCE, HTTP_AUTHORIZATION and
+	HTTP_ACCEPT_ENCODING.
+
 	* cherokee/read_config_scanner.l,
 	cherokee/read_config_grammar.y (fix_win32_path): The space
 	character wasn't allowed in Win32 paths. Fixed. Patch by
