@@ -141,9 +141,9 @@ cherokee_connection_info_fill_up (cherokee_connection_info_t *info, cherokee_con
 
 	/* From
 	 */
-	if (conn->socket > 0) {
+	if (conn->socket.socket > 0) {
 		cherokee_buffer_ensure_size (&info->ip, CHE_INET_ADDRSTRLEN + 1);
-		cherokee_socket_ntop (conn->socket, info->ip.buf, info->ip.size - 1);
+		cherokee_socket_ntop (&conn->socket, info->ip.buf, info->ip.size - 1);
 	}
 
 	/* Request

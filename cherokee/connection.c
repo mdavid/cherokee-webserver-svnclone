@@ -142,7 +142,7 @@ cherokee_connection_new  (cherokee_connection_t **cnt)
 	cherokee_buffer_escape_new (&n->request_escape);
 	cherokee_buffer_escape_set_ref (n->request_escape, &n->request);
 
-	cherokee_socket_new (&n->socket);
+	cherokee_socket_init (&n->socket);
 	cherokee_header_new (&n->header);
 	cherokee_post_init (&n->post);
 
@@ -155,7 +155,7 @@ ret_t
 cherokee_connection_free (cherokee_connection_t  *cnt)
 {
 	cherokee_header_free (cnt->header);
-	cherokee_socket_free (cnt->socket);
+	cherokee_socket_mrproper (&cnt->socket);
 	
 	if (cnt->handler != NULL) {
 		cherokee_handler_free (cnt->handler);
@@ -317,10 +317,10 @@ cherokee_connection_mrproper (cherokee_connection_t *cnt)
 	
 	/* Close and clean the socket
 	 */
-	ret = cherokee_socket_close (cnt->socket);
+	ret = cherokee_socket_close (&cnt->socket);
 	if (unlikely(ret < ret_ok)) return ret;
 
-	ret = cherokee_socket_clean (cnt->socket);
+	ret = cherokee_socket_clean (&cnt->socket);
 	if (unlikely(ret < ret_ok)) return ret;
 
 	/* Clean the connection object
@@ -577,7 +577,7 @@ cherokee_connection_send_header_and_mmaped (cherokee_connection_t *cnt)
 	 * It is becase it has been sent in a writev()
 	 */
 	if (cherokee_buffer_is_empty (&cnt->buffer)) {
-		ret = cherokee_write (cnt->socket, cnt->mmaped, cnt->mmaped_len, &re);
+		ret = cherokee_write (&cnt->socket, cnt->mmaped, cnt->mmaped_len, &re);
 		switch (ret) {
 		case ret_eof:
 		case ret_eagain:
@@ -606,7 +606,7 @@ cherokee_connection_send_header_and_mmaped (cherokee_connection_t *cnt)
 	bufs[1].iov_base = cnt->mmaped;
 	bufs[1].iov_len  = cnt->mmaped_len;
 
-	ret = cherokee_writev (cnt->socket, bufs, 2, &re);
+	ret = cherokee_writev (&cnt->socket, bufs, 2, &re);
 
 	switch (ret) {
 	case ret_ok: 
@@ -673,7 +673,7 @@ cherokee_connection_recv (cherokee_connection_t *cnt, cherokee_buffer_t *buffer,
 	ret_t  ret;
 	size_t readed = 0;
 	
-	ret = cherokee_socket_read (cnt->socket, buffer, DEFAULT_RECV_SIZE, &readed);
+	ret = cherokee_socket_read (&cnt->socket, buffer, DEFAULT_RECV_SIZE, &readed);
 
 	switch (ret) {
 	case ret_ok:
@@ -715,7 +715,7 @@ cherokee_connection_set_cork (cherokee_connection_t *cnt, int enable)
 	int fd;
 
 #ifdef HAVE_TCP_CORK
-	fd = SOCKET_FD(cnt->socket);
+	fd = SOCKET_FD(&cnt->socket);
 	if (enable) {
 		setsockopt(fd, IPPROTO_TCP, TCP_NODELAY,  &on, sizeof on);
 
@@ -743,7 +743,7 @@ cherokee_connection_send_header (cherokee_connection_t *cnt)
 
 	/* Send the buffer content
 	 */
-	ret = cherokee_socket_write (cnt->socket, &cnt->buffer, &sent);
+	ret = cherokee_socket_write (&cnt->socket, &cnt->buffer, &sent);
 	if (unlikely(ret != ret_ok)) return ret;
 	
 	/* Add to the connection traffic counter
@@ -772,7 +772,7 @@ cherokee_connection_send (cherokee_connection_t *cnt)
 
 	/* Send the buffer content
 	 */
-	ret = cherokee_socket_write (cnt->socket, &cnt->buffer, &sent);
+	ret = cherokee_socket_write (&cnt->socket, &cnt->buffer, &sent);
 	if (unlikely(ret != ret_ok)) return ret;
 
 	/* Add to the connection traffic counter
@@ -807,22 +807,22 @@ cherokee_connection_pre_lingering_close (cherokee_connection_t *cnt)
 	/* At this point, we don't want to follow the TLS protocol
 	 * any longer.
 	 */
-	cnt->socket->is_tls = non_TLS;
+	cnt->socket.is_tls = non_TLS;
 
 	/* Shut down the socket for write, which will send a FIN
 	 * to the peer.
 	 */
-	ret = cherokee_socket_shutdown (cnt->socket, SHUT_WR);
+	ret = cherokee_socket_shutdown (&cnt->socket, SHUT_WR);
 	if (unlikely (ret != ret_ok)) return ret_ok;
 
 	/* Set the timeout
 	 */
-	ret = cherokee_socket_set_timeout (cnt->socket, MSECONS_TO_LINGER);	
+	ret = cherokee_socket_set_timeout (&cnt->socket, MSECONS_TO_LINGER);	
 	if (unlikely (ret != ret_ok)) return ret_ok;
 
 	/* Read from the socket to nowhere
 	 */
-	ret = cherokee_socket_read (cnt->socket, NULL, DEFAULT_RECV_SIZE, &readed);
+	ret = cherokee_socket_read (&cnt->socket, NULL, DEFAULT_RECV_SIZE, &readed);
 	switch (ret) {
 	case ret_eof:
 	case ret_error:
@@ -1671,7 +1671,7 @@ cherokee_connection_check_ip_validation (cherokee_connection_t *cnt, cherokee_co
 		return ret_ok;
 	}
 
-	ret = cherokee_access_ip_match (config_entry->access, cnt->socket);
+	ret = cherokee_access_ip_match (config_entry->access, &cnt->socket);
 	if (ret == ret_ok) {
 		return ret_ok;
 	}
@@ -1690,7 +1690,7 @@ cherokee_connection_check_only_secure (cherokee_connection_t *cnt, cherokee_conf
 		return ret_ok;
 	}
 
-	if (CONN_SOCK(cnt)->is_tls == TLS) {
+	if (cnt->socket.is_tls == TLS) {
 		/* It is secure
 		 */
 		return ret_ok;

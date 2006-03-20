@@ -245,7 +245,7 @@ build_log_string (cherokee_logger_ncsa_t *logger, cherokee_connection_t *cnt, ch
 	z = - (*this_timezone / 60);
 
 	memset (ipaddr, 0, sizeof(ipaddr));
-	cherokee_socket_ntop (cnt->socket, ipaddr, sizeof(ipaddr)-1);
+	cherokee_socket_ntop (&cnt->socket, ipaddr, sizeof(ipaddr)-1);
 
 	/* Look for the user
 	 */

@@ -349,7 +349,7 @@ cherokee_handler_file_init (cherokee_handler_file_t *n)
 #ifndef CHEROKEE_EMBEDDED
 	use_io = ((!n->use_cache) &&
 		  (conn->encoder == NULL) &&
-		  (conn->socket->is_tls == non_TLS) &&
+		  (conn->socket.is_tls == non_TLS) &&
 		  (n->info->st_size <= IOCACHE_MAX_FILE_SIZE) &&
 		  (http_method_with_body (conn->header->method)));
 	
@@ -454,7 +454,7 @@ cherokee_handler_file_init (cherokee_handler_file_t *n)
 			     (conn->encoder == NULL) &&
 			     (n->info->st_size >= srv->sendfile.min) && 
 			     (n->info->st_size <  srv->sendfile.max) &&
-			     (conn->socket->is_tls == non_TLS));
+			     (conn->socket.is_tls == non_TLS));
 
 # ifdef HAVE_SENDFILE_BROKEN
 	n->using_sendfile = false;
@@ -482,7 +482,7 @@ cherokee_handler_file_step (cherokee_handler_file_t *fhdl,
 		ret_t   ret;
 		ssize_t sent;
 		
-		ret = cherokee_socket_sendfile (conn->socket,                      /* cherokee_socket_t *socket */
+		ret = cherokee_socket_sendfile (&conn->socket,                     /* cherokee_socket_t *socket */
 						fhdl->fd,                          /* int                fd     */
 						conn->range_end - fhdl->offset,    /* size_t             size   */
 						&fhdl->offset,                     /* off_t             *offset */

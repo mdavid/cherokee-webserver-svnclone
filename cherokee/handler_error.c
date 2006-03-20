@@ -141,7 +141,7 @@ build_hardcoded_response_page (cherokee_connection_t *cnt, cherokee_buffer_t *bu
 	 */
 	cherokee_buffer_add_str (buffer, "<p><hr>");	
 
-	if (cnt->socket->is_tls == non_TLS)
+	if (cnt->socket.is_tls == non_TLS)
  		port = CONN_SRV(cnt)->port;
 	else 
  		port = CONN_SRV(cnt)->port_tls;

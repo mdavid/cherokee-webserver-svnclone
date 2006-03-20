@@ -158,7 +158,7 @@ cherokee_handler_cgi_base_build_basic_env (cherokee_handler_cgi_base_t          
 	 * as if the request came through a proxy).
 	 */
 	memset (remote_ip, 0, sizeof(remote_ip));
-	cherokee_socket_ntop (conn->socket, remote_ip, sizeof(remote_ip)-1);
+	cherokee_socket_ntop (&conn->socket, remote_ip, sizeof(remote_ip)-1);
 	set_env (cgi, "REMOTE_ADDR", remote_ip, strlen(remote_ip));
 
 	/* HTTP_HOST and SERVER_NAME. The difference between them is that
@@ -254,7 +254,7 @@ cherokee_handler_cgi_base_build_basic_env (cherokee_handler_cgi_base_t          
 
 	/* Set HTTPS
 	 */
-	if (conn->socket->is_tls) 
+	if (conn->socket.is_tls) 
 		set_env (cgi, "HTTPS", "on", 2);
 	else 
 		set_env (cgi, "HTTPS", "off", 3);
