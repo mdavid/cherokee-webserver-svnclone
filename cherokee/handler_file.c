@@ -125,7 +125,7 @@ check_cached (cherokee_handler_file_t *n)
 
 	/* Based in time
 	 */
-	ret = cherokee_header_get_unknown (&conn->header, "If-Modified-Since", 17, &header, &header_len);
+	ret = cherokee_header_get_known (&conn->header, header_if_modified_since, &header, &header_len);
 	if (ret == ret_ok)  {
 		time_t req_time;
 		char   tmp;

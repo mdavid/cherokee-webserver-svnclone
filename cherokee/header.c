@@ -75,7 +75,8 @@ known_header_names [] = {
 	kentry("Upgrade"),
 	kentry("Authorization"),
 	kentry("If-Range"),
-	kentry("If-None-Match")
+	kentry("If-None-Match"),
+	kentry("If-Modified-Since")
 };
 
 
@@ -663,6 +664,11 @@ cherokee_header_parse (cherokee_header_t *hdr, cherokee_buffer_t *buffer,  chero
 			 (equal (begin, "If-None-Match")))
 		{
 			ret = add_known_header (hdr, header_if_none_match, (points+2)-buffer->buf, end-points-2);
+		}	
+		else if ((hdr->header[header_if_modified_since].info_off == 0) && 
+			 (equal (begin, "If-Modified-Since")))
+		{
+			ret = add_known_header (hdr, header_if_modified_since, (points+2)-buffer->buf, end-points-2);
 		}
 		else {
 			/* Add a unknown header
