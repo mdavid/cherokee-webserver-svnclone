@@ -259,11 +259,31 @@ cherokee_handler_cgi_base_build_basic_env (cherokee_handler_cgi_base_t          
 	else 
 		set_env (cgi, "HTTPS", "off", 3);
 
-	/* If-None-Match header
+	/* HTTP variables
 	 */
 	ret = cherokee_header_get_known (&conn->header, header_if_none_match, &p, &p_len);
 	if (ret == ret_ok) {
 		set_env (cgi, "HTTP_IF_NONE_MATCH", p, p_len);		
+	}
+
+	ret = cherokee_header_get_known (&conn->header, header_if_range, &p, &p_len);
+	if (ret == ret_ok) {
+		set_env (cgi, "HTTP_IF_RANGE", p, p_len);		
+	}
+
+	ret = cherokee_header_get_known (&conn->header, header_if_modified_since, &p, &p_len);
+	if (ret == ret_ok) {
+		set_env (cgi, "HTTP_IF_MODIFIED_SINCE", p, p_len);		
+	}
+
+	ret = cherokee_header_get_known (&conn->header, header_authorization, &p, &p_len);
+	if (ret == ret_ok) {
+		set_env (cgi, "HTTP_AUTHORIZATION", p, p_len);		
+	}
+
+	ret = cherokee_header_get_known (&conn->header, header_accept_encoding, &p, &p_len);
+	if (ret == ret_ok) {
+		set_env (cgi, "HTTP_ACCEPT_ENCODING", p, p_len);		
 	}
 
 	return ret_ok;
