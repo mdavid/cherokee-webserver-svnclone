@@ -55,6 +55,7 @@ typedef enum {
 	header_authorization,
 	header_if_range,
 	header_if_none_match,
+	header_if_modified_since,
 	HEADER_LENGTH
 } cherokee_common_header_t;
 
