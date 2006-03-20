@@ -1,5 +1,8 @@
 2006-03-20  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* cherokee/handler_file.c (check_cached): Fixed. "If-None-Match"
+	is a known header, I made this change yesterday.
+
 	* cherokee/header.h, cherokee/header.c (cherokee_header_parse),
 	cherokee/connection.c: "Authorization" promoted to known header.
 

@@ -162,7 +162,7 @@ check_cached (cherokee_handler_file_t *n)
 
 	/* Based in ETag
 	 */
-	ret = cherokee_header_get_unknown (&conn->header, "If-None-Match", 13, &header, &header_len);
+	ret = cherokee_header_get_known (&conn->header, header_if_none_match, &header, &header_len);
 	if (ret == ret_ok)  {
 		int    tmp_len;
 		CHEROKEE_TEMP(tmp,100);
