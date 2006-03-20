@@ -1,3 +1,13 @@
+2006-03-20  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/icons.c (cherokee_icons_get_icon): It was using a case
+	sensitive search for the extension, but it does much more sense to
+	do a case insensitive search. Changed.
+
+	* cherokee/table.h, cherokee/table.c (cherokee_table_init_case):
+	Added new method. If performs searches on the tree using
+	strcasecmp rather than strcmp.
+
 2006-03-19  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cherokee/Makefile.am: Applied a patch to compile Win32 modules,
@@ -9,7 +19,7 @@
 	cherokee/handler_dirlist.c, cherokee/handler_file.c,
 	cherokee/handler_error.c, cherokee/connection.c: Some clean up.
 	There were many cherokee_buffer_add() calls with hardcoded
-	lenghts.  I have change them for cherokee_buffer_add_str calls.
+	lenghts.  I have changed them for cherokee_buffer_add_str calls.
 
 	* cherokee/handler_file.c (check_cached): Fixed to work with
 	If-Range as a known header.

@@ -45,6 +45,7 @@ typedef struct cherokee_table cherokee_table_t;
 
 ret_t cherokee_table_new       (cherokee_table_t **tab);
 ret_t cherokee_table_init      (cherokee_table_t  *tab);
+ret_t cherokee_table_init_case (cherokee_table_t  *tab);
 
 ret_t cherokee_table_free      (cherokee_table_t  *tab);
 ret_t cherokee_table_free2     (cherokee_table_t  *tab, cherokee_table_free_item_t func);

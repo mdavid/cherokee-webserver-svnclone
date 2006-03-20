@@ -22,19 +22,19 @@
  * USA
  */
 
-#ifndef __CHEROKEE_ICONS_H__
-#define __CHEROKEE_ICONS_H__
+#ifndef CHEROKEE_ICONS_H
+#define CHEROKEE_ICONS_H
 
 #include "common.h"
 #include "table.h"
+#include "table-protected.h"
 #include "list.h"
 #include "buffer.h"
 
-
 typedef struct {
-	cherokee_table_t *files;
-	cherokee_table_t *suffixes;
-	cherokee_table_t *files_matching;	
+	cherokee_table_t files;
+	cherokee_table_t suffixes;
+	cherokee_table_t files_matching;	
 
 	char *default_icon;
 	char *directory_icon;
@@ -59,4 +59,4 @@ ret_t cherokee_icons_set_default   (cherokee_icons_t *icons, char *icon);
 ret_t cherokee_icons_set_directory (cherokee_icons_t *icons, char *icon);
 ret_t cherokee_icons_set_parentdir (cherokee_icons_t *icons, char *icon);
 
-#endif /* __CHEROKEE_ICONS_H__ */
+#endif /* CHEROKEE_ICONS_H */
