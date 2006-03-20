@@ -109,52 +109,65 @@ clean_headers (cherokee_header_t *hdr)
 
 
 ret_t 
+cherokee_header_init (cherokee_header_t *hdr)
+{
+	/* Known headers
+	 */
+	clean_known_headers (hdr);
+
+	/* Unknown headers
+	 */
+	hdr->unknowns     = NULL;
+	hdr->unknowns_len = 0;
+
+	/* Properties
+	 */
+	hdr->method   = http_unknown;
+	hdr->version  = http_version_unknown;
+	hdr->response = http_unset; 
+
+	/* Request
+	 */
+	hdr->request_off      = 0;
+	hdr->request_len      = 0;
+	hdr->request_args_len = 0;
+	
+	/* Query string
+	 */
+	hdr->query_string_off = 0;
+	hdr->query_string_len = 0;
+	
+	/* Sanity
+	 */
+	hdr->input_buffer     = NULL;
+	hdr->input_buffer_crc = 0;
+	hdr->input_header_len = 0;
+
+	return ret_ok;
+}
+
+ret_t 
+cherokee_header_mrproper (cherokee_header_t *hdr)
+{
+	clean_unknown_headers (hdr);
+	return ret_ok;
+}
+
+ret_t 
 cherokee_header_new (cherokee_header_t **hdr)
 {
 	CHEROKEE_NEW_STRUCT(n,header);
 
-	/* Known headers
-	 */
-	clean_known_headers (n);
-
-	/* Unknown headers
-	 */
-	n->unknowns     = NULL;
-	n->unknowns_len = 0;
-
-	/* Properties
-	 */
-	n->method   = http_unknown;
-	n->version  = http_version_unknown;
-	n->response = http_unset; 
-
-	/* Request
-	 */
-	n->request_off      = 0;
-	n->request_len      = 0;
-	n->request_args_len = 0;
-	
-	/* Query string
-	 */
-	n->query_string_off = 0;
-	n->query_string_len = 0;
-	
-	/* Sanity
-	 */
-	n->input_buffer     = NULL;
-	n->input_buffer_crc = 0;
-	n->input_header_len = 0;
-
 	*hdr = n;
-	return ret_ok;
+	return cherokee_header_init (n);
 }
 
 ret_t 
 cherokee_header_free (cherokee_header_t *hdr)
 {
-	clean_unknown_headers (hdr);
-	free (hdr);
+	cherokee_header_mrproper (hdr);
 
+	free (hdr);
 	return ret_ok;
 }
 

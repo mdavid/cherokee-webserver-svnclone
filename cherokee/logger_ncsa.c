@@ -257,10 +257,10 @@ build_log_string (cherokee_logger_ncsa_t *logger, cherokee_connection_t *cnt, ch
 
 	/* Get the method and version strings
 	 */
-	ret = cherokee_http_method_to_string (cnt->header->method, &method, NULL);
+	ret = cherokee_http_method_to_string (cnt->header.method, &method, NULL);
 	if (unlikely(ret < ret_ok)) return ret;
 
-	ret = cherokee_http_version_to_string (cnt->header->version, &version, NULL);
+	ret = cherokee_http_version_to_string (cnt->header.version, &version, NULL);
 	if (unlikely(ret < ret_ok)) return ret;
 
 	/* Look for the "combined" information
@@ -270,8 +270,8 @@ build_log_string (cherokee_logger_ncsa_t *logger, cherokee_connection_t *cnt, ch
 		char *usr;
 		CHEROKEE_NEW2(referer, useragent, buffer);
 
-		cherokee_header_copy_known (cnt->header, header_referer, referer);
-		cherokee_header_copy_known (cnt->header, header_user_agent, useragent);
+		cherokee_header_copy_known (&cnt->header, header_referer, referer);
+		cherokee_header_copy_known (&cnt->header, header_user_agent, useragent);
 
 		ref = (referer->buf) ? referer->buf : "-";
 		usr = (useragent->buf) ? useragent->buf : "";

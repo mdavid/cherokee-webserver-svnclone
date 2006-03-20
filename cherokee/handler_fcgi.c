@@ -326,7 +326,7 @@ add_extra_fcgi_env (cherokee_handler_fcgi_t *hdl, cuint_t *last_header_offset)
 
 	/* CONTENT_LENGTH
 	 */
-	ret = cherokee_header_copy_known (conn->header, header_content_length, &buffer);
+	ret = cherokee_header_copy_known (&conn->header, header_content_length, &buffer);
 	if (ret == ret_ok)
 		set_env (cgi_base, "CONTENT_LENGTH", buffer.buf, buffer.len);
 

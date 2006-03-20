@@ -125,7 +125,7 @@ check_cached (cherokee_handler_file_t *n)
 
 	/* Based in time
 	 */
-	ret = cherokee_header_get_unknown (conn->header, "If-Modified-Since", 17, &header, &header_len);
+	ret = cherokee_header_get_unknown (&conn->header, "If-Modified-Since", 17, &header, &header_len);
 	if (ret == ret_ok)  {
 		time_t req_time;
 		char   tmp;
@@ -157,12 +157,12 @@ check_cached (cherokee_handler_file_t *n)
 	
 	/* HTTP/1.1 only headers
 	 */
-	if (conn->header->version < http_version_11)
+	if (conn->header.version < http_version_11)
 		return ret_ok;
 
 	/* Based in ETag
 	 */
-	ret = cherokee_header_get_unknown (conn->header, "If-None-Match", 13, &header, &header_len);
+	ret = cherokee_header_get_unknown (&conn->header, "If-None-Match", 13, &header, &header_len);
 	if (ret == ret_ok)  {
 		int    tmp_len;
 		CHEROKEE_TEMP(tmp,100);
@@ -177,7 +177,7 @@ check_cached (cherokee_handler_file_t *n)
 	
 	/* If-Range
 	 */
-	ret = cherokee_header_get_known (conn->header, header_if_range, &header, &header_len);
+	ret = cherokee_header_get_known (&conn->header, header_if_range, &header, &header_len);
 	if (ret == ret_ok)  {
 		time_t req_time;
 		char   tmp;
@@ -351,7 +351,7 @@ cherokee_handler_file_init (cherokee_handler_file_t *n)
 		  (conn->encoder == NULL) &&
 		  (conn->socket.is_tls == non_TLS) &&
 		  (n->info->st_size <= IOCACHE_MAX_FILE_SIZE) &&
-		  (http_method_with_body (conn->header->method)));
+		  (http_method_with_body (conn->header.method)));
 	
 	if (use_io) {
 		ret = cherokee_iocache_mmap_lookup (srv->iocache,
@@ -605,7 +605,7 @@ cherokee_handler_file_add_headers (cherokee_handler_file_t *fhdl,
 
 	/* Etag
 	 */
-	if (HANDLER_CONN(fhdl)->header->version >= http_version_11) { 
+	if (HANDLER_CONN(fhdl)->header.version >= http_version_11) { 
 		cherokee_buffer_add_va (buffer, "Etag: %lx=%lx"CRLF, fhdl->info->st_mtime, fhdl->info->st_size);
 	}
 

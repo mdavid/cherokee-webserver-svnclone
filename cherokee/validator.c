@@ -256,7 +256,7 @@ digest_HA2 (cherokee_validator_t *validator, cherokee_buffer_t *buf, cherokee_co
 	if (cherokee_buffer_is_empty (&validator->uri))
 		return ret_deny;
 
-	ret = cherokee_http_method_to_string (conn->header->method, &method, NULL);
+	ret = cherokee_http_method_to_string (conn->header.method, &method, NULL);
 	if (unlikely (ret != ret_ok)) return ret;
 
 	cherokee_buffer_add_va (buf, "%s:%s", method, validator->uri.buf);

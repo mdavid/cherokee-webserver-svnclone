@@ -679,7 +679,7 @@ process_active_connections (cherokee_thread_t *thd)
 			/* Maybe the buffer has a request (previous pipelined)
 			 */
 			if (! cherokee_buffer_is_empty (&conn->incoming_header)) {
-				ret = cherokee_header_has_header (conn->header,
+				ret = cherokee_header_has_header (&conn->header,
 								  &conn->incoming_header, 
 								  conn->incoming_header.len);
 				if (ret == ret_ok) {
@@ -707,15 +707,15 @@ process_active_connections (cherokee_thread_t *thd)
 			 */
 			ret = cherokee_connection_reading_check (conn);
 			if (ret != ret_ok) {
-				conn->keepalive      = 0; 
-				conn->phase          = phase_setup_connection;
-				conn->header->method = http_version_11;
+				conn->keepalive     = 0; 
+				conn->phase         = phase_setup_connection;
+				conn->header.method = http_version_11;
 				continue;
 			}
 
 			/* May it already has the full header
 			 */
-			ret = cherokee_header_has_header (conn->header, &conn->incoming_header, len+4);
+			ret = cherokee_header_has_header (&conn->header, &conn->incoming_header, len+4);
 			if (ret != ret_ok) {
 				conn->phase = phase_reading_header;
 				continue;
@@ -744,7 +744,7 @@ process_active_connections (cherokee_thread_t *thd)
 
 			/* If it's a POST we've to read more data
 			 */
-			if (http_method_with_input (conn->header->method)) 
+			if (http_method_with_input (conn->header.method)) 
 			{
 				if (! cherokee_post_got_all (&conn->post)) {
 					conn_set_mode (thd, conn, socket_reading);
@@ -1030,7 +1030,7 @@ process_active_connections (cherokee_thread_t *thd)
 				continue;
 
 			case ret_ok:
-				if (!http_method_with_body (conn->header->method)) {
+				if (!http_method_with_body (conn->header.method)) {
 					maybe_purge_closed_connection (thd, conn);
 					continue;
 				}

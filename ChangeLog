@@ -1,5 +1,14 @@
 2006-03-20  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* cherokee/handler_cgi_base.c, cherokee/validator.c,
+	cherokee/thread.c, cherokee/handler_file.c, cherokee/header.c,
+	cherokee/header.h, cherokee/handler_fcgi.c,
+	cherokee/handler_fastcgi.c, cherokee/logger_ncsa.c,
+	cherokee/handler_error.c, cherokee/handler_cgi.c,
+	cherokee/connection.c, cherokee/logger_w3c.c,
+	cherokee/connection-protected.h: con->header is no longer dynamic,
+	now it is embedded inside the connection object.
+
 	* cherokee/connection-protected.h, cherokee/connection.c,
 	cherokee/handler_cgi_base.c, cherokee/handler_dirlist.c,
 	cherokee/thread.c, cherokee/handler_file.c,
