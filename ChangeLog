@@ -1,5 +1,9 @@
 2006-03-20  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* cherokee/logger_w3c.c: Removed a static method array that was
+	used to look up the name of the http method used in the
+	connection.  Now, it uses cherokee_http_method_to_string().
+
 	* cherokee/handler_cgi_base.c, cherokee/validator.c,
 	cherokee/thread.c, cherokee/handler_file.c, cherokee/header.c,
 	cherokee/header.h, cherokee/handler_fcgi.c,
