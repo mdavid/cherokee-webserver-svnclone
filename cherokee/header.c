@@ -54,30 +54,7 @@
   extern char *strsep (char** str, const char* delims);
 #endif
 
-#define kentry(n)   { n, sizeof(n)-1 }
 #define equal(str, n) (strncasecmp(str, n, sizeof(n)-1) == 0)
-
-static struct {
-	char *name;
-	int   len;
-} 
-known_header_names [] = {
-	kentry("Connection"),
-	kentry("Range"),
-	kentry("Keep-Alive"),
-	kentry("Accept"),
-	kentry("Host"),
-	kentry("Accept-Encoding"),
-	kentry("User-Agent"),
-	kentry("Referer"),
-	kentry("Location"),
-	kentry("Content-Length"),
-	kentry("Upgrade"),
-	kentry("Authorization"),
-	kentry("If-Range"),
-	kentry("If-None-Match"),
-	kentry("If-Modified-Since")
-};
 
 
 static void
@@ -910,10 +887,10 @@ cherokee_header_copy_version (cherokee_header_t *hdr, cherokee_buffer_t *buf)
 
 
 ret_t 
-cherokee_header_get_number (cherokee_header_t *hdr, int *ret_num)
+cherokee_header_get_number (cherokee_header_t *hdr, cuint_t *ret_num)
 {
-	int   i;
-	int num;
+	cuint_t   i;
+	cuint_t num;
 
 	/* Unknown headers
 	 */
@@ -931,56 +908,6 @@ cherokee_header_get_number (cherokee_header_t *hdr, int *ret_num)
 	/* Retur the number
 	 */
 	*ret_num = num;
-	return ret_ok;
-}
-
-
-ret_t 
-cherokee_header_foreach (cherokee_header_t *hdr, cherokee_header_foreach_func_t func, 
-			 cherokee_buffer_t *name, cherokee_buffer_t *cont, void *param)
-{
-	ret_t  ret;
-	char  *header_name;
-	int    header_len, i;
-
-	/* Known headers
-	 */
-	for (i=0; i<HEADER_LENGTH; i++)
-	{
-		if (hdr->header[i].info_off != 0) {
-			header_name = known_header_names[i].name;
-			header_len  = known_header_names[i].len;
-
-			cherokee_buffer_clean (name);
-			cherokee_buffer_clean (cont);
-
-			cherokee_buffer_add (name, header_name, header_len);
-			cherokee_header_copy_known (hdr, i, cont);
-
-			ret = func (name, cont, param);
-			if (unlikely(ret < ret_ok)) return ret;
-		}
-	}	
-
-	/* Unknown headers
-	 */
-	for (i=0; i < hdr->unknowns_len; i++)
-	{
-		header_name = hdr->unknowns[i].header_off + hdr->input_buffer->buf;
-		header_len = strchr (header_name, ':') - header_name;
-
-		cherokee_buffer_clean (name);
-		cherokee_buffer_clean (cont);
-
-		cherokee_buffer_add(name, header_name, header_len);
-		cherokee_buffer_add(cont, 
-				hdr->unknowns[i].header_info_off + hdr->input_buffer->buf,
-				hdr->unknowns[i].header_info_len);
-
-		ret = func(name, cont, param);
-		if (unlikely(ret < ret_ok)) return ret;
-	}
-
 	return ret_ok;
 }
 
