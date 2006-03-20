@@ -52,6 +52,7 @@ typedef enum {
 	header_location,
 	header_content_length,
 	header_upgrade,
+	header_authorization,
 	header_if_range,
 	header_if_none_match,
 	HEADER_LENGTH

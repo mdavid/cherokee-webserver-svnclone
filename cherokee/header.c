@@ -73,6 +73,7 @@ known_header_names [] = {
 	kentry("Location"),
 	kentry("Content-Length"),
 	kentry("Upgrade"),
+	kentry("Authorization"),
 	kentry("If-Range"),
 	kentry("If-None-Match")
 };
@@ -643,7 +644,12 @@ cherokee_header_parse (cherokee_header_t *hdr, cherokee_buffer_t *buffer,  chero
 		{
 			ret = add_known_header (hdr, header_upgrade, (points+2)-buffer->buf, end-points-2);
 		}
-		else if ((hdr->header[header_upgrade].info_off == 0) && 
+		else if ((hdr->header[header_authorization].info_off == 0) && 
+			 (equal (begin, "Authorization")))
+		{
+			ret = add_known_header (hdr, header_authorization, (points+2)-buffer->buf, end-points-2);
+		}
+		else if ((hdr->header[header_if_range].info_off == 0) && 
 			 (equal (begin, "If-Range")))
 		{
 			ret = add_known_header (hdr, header_if_range, (points+2)-buffer->buf, end-points-2);
@@ -653,7 +659,7 @@ cherokee_header_parse (cherokee_header_t *hdr, cherokee_buffer_t *buffer,  chero
 		{
 			ret = add_known_header (hdr, header_range, (points+2)-buffer->buf, end-points-2);
 		} 
-		else if ((hdr->header[header_upgrade].info_off == 0) && 
+		else if ((hdr->header[header_if_none_match].info_off == 0) && 
 			 (equal (begin, "If-None-Match")))
 		{
 			ret = add_known_header (hdr, header_if_none_match, (points+2)-buffer->buf, end-points-2);

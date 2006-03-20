@@ -1598,7 +1598,7 @@ cherokee_connection_check_authentication (cherokee_connection_t *cnt, cherokee_c
 	/* Look for authentication in the headers:
 	 * It's done on demand because the directory maybe don't have protection
 	 */
-	ret = cherokee_header_get_unknown (&cnt->header, "Authorization", 13, &ptr, &len);
+	ret = cherokee_header_get_known (&cnt->header, header_authorization, &ptr, &len);
 	if (ret != ret_ok) {
 		goto unauthorized;
 	}
