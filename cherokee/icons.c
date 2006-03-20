@@ -41,13 +41,13 @@ cherokee_icons_new  (cherokee_icons_t **icons)
 	ret_t ret;
 	CHEROKEE_NEW_STRUCT(n, icons);
 
-	ret = cherokee_table_new (&n->files);
+	ret = cherokee_table_init_case (&n->files);
 	if (unlikely(ret < ret_ok)) return ret;
 
-	ret = cherokee_table_new (&n->files_matching);
+	ret = cherokee_table_init (&n->files_matching);
 	if (unlikely(ret < ret_ok)) return ret;
 
-	ret = cherokee_table_new (&n->suffixes);
+	ret = cherokee_table_init_case (&n->suffixes);
 	if (unlikely(ret < ret_ok)) return ret;
 
 	n->default_icon   = NULL;
@@ -64,9 +64,9 @@ cherokee_icons_free (cherokee_icons_t *icons)
 {
 	/* TODO: Set a free_item function.
 	 */
-	cherokee_table_free2 (icons->files, free);
-	cherokee_table_free2 (icons->suffixes, free);
-	cherokee_table_free2 (icons->files_matching, free);
+	cherokee_table_mrproper2 (&icons->files, free);
+	cherokee_table_mrproper2 (&icons->suffixes, free);
+	cherokee_table_mrproper2 (&icons->files_matching, free);
 
 	if (icons->default_icon != NULL) {
 		free (icons->default_icon);
@@ -146,7 +146,7 @@ cherokee_icons_set_suffixes (cherokee_icons_t *icons, list_t *suf_list, char *ic
 	/* Add suffixes to the table
 	 */
 	list_for_each (i, suf_list) {
-		cherokee_table_add (icons->suffixes, LIST_ITEM_INFO(i), strdup(icon));
+		cherokee_table_add (&icons->suffixes, LIST_ITEM_INFO(i), strdup(icon));
 	}
 	
 	return ret_ok;
@@ -166,11 +166,11 @@ cherokee_icons_set_files (cherokee_icons_t *icons, list_t *nam_list, char *icon)
 		if ((strchr(filename, '*') != NULL) ||
 		    (strchr(filename, '?') != NULL))
 		{
-			cherokee_table_add (icons->files_matching, filename, strdup(icon));
+			cherokee_table_add (&icons->files_matching, filename, strdup(icon));
 			continue;
 		}
 
-		cherokee_table_add (icons->files, filename, strdup(icon));
+		cherokee_table_add (&icons->files, filename, strdup(icon));
 	}
 
 	return ret_ok;
@@ -231,20 +231,20 @@ cherokee_icons_get_icon (cherokee_icons_t *icons, char *file, char **icon_ret)
 
 	/* Look for the filename
 	 */
-	ret = cherokee_table_get (icons->files, file, (void **)icon_ret);
+	ret = cherokee_table_get (&icons->files, file, (void **)icon_ret);
 	if (ret == ret_ok) return ret_ok;
 
 	/* Look for the suffix
 	 */
 	suffix = strrchr (file, '.');
 	if (suffix != NULL) {
-		ret = cherokee_table_get (icons->suffixes, suffix+1, (void **)icon_ret);
+		ret = cherokee_table_get (&icons->suffixes, suffix+1, (void **)icon_ret);
 		if (ret == ret_ok) return ret_ok;
 	}
 	
 	/* Look for the wildcat matching
 	 */
-	ret = cherokee_table_while (icons->files_matching, match_file, 
+	ret = cherokee_table_while (&icons->files_matching, match_file, 
 				    file, &match_string, (void **)icon_ret);
 	if (ret == ret_ok) return ret_ok;
 

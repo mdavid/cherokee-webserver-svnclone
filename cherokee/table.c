@@ -36,12 +36,20 @@ typedef struct {
 } item_t;
 
 
-static inline int
+static int
 equal (const void *avl_a, const void *avl_b, void *avl_param)
 {
 	avl_param = avl_param;
 
 	return strcmp(((item_t *)avl_a)->key, ((item_t *)avl_b)->key);
+}
+
+static int
+equal_case (const void *avl_a, const void *avl_b, void *avl_param)
+{
+	avl_param = avl_param;
+
+	return strcasecmp(((item_t *)avl_a)->key, ((item_t *)avl_b)->key);
 }
 
 
@@ -72,6 +80,18 @@ ret_t
 cherokee_table_init (cherokee_table_t *tab)
 {
 	tab->tree = avl_create (equal, NULL, NULL);
+	if (tab->tree == NULL) {
+		return ret_error;
+	}
+
+	return ret_ok;
+}
+
+
+ret_t
+cherokee_table_init_case (cherokee_table_t *tab)
+{
+	tab->tree = avl_create (equal_case, NULL, NULL);
 	if (tab->tree == NULL) {
 		return ret_error;
 	}
