@@ -1,3 +1,17 @@
+2006-03-25  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/handler_cgi_base.c, cherokee/handler_cgi_base.h,
+	cherokee/ext_source.c, cherokee/read_config_grammar.y,
+	cherokee/handler_fcgi.c: Many thing fixed in here.  Some
+	environment variables were fixed. New code to signal the FastCGI
+	that it is certainly a Fastcgi, and some clean up.
+
+2006-03-22  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/handler_fcgi.c (process_package): Quite important bug
+	fix. It wasn't taking in consideration the padding when it was
+	checking if the fastcgi package was big enough to be processed.
+
 2006-03-20  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cherokee/handler_cgi_base.c (cherokee_handler_cgi_base_build_basic_env):

@@ -71,7 +71,8 @@ cherokee_handler_cgi_base_init (cherokee_handler_cgi_base_t              *cgi,
 	cgi->system_env          = NULL;
 	cgi->content_length      = 0;
 	cgi->got_eof             = false;
-	cgi->is_error_handler    = 0;
+	cgi->is_error_handler    = false;
+	cgi->check_file          = true;
 	cgi->change_user         = 0;
 
 	cherokee_buffer_init (&cgi->executable);
@@ -89,10 +90,11 @@ cherokee_handler_cgi_base_init (cherokee_handler_cgi_base_t              *cgi,
 	/* Read the properties
 	 */
 	if (properties) {
-		cherokee_typed_table_get_str  (properties, "scriptalias",   &cgi->script_alias);
-		cherokee_typed_table_get_list (properties, "env",           &cgi->system_env);
-		cherokee_typed_table_get_int  (properties, "error_handler", &cgi->is_error_handler);
-		cherokee_typed_table_get_int  (properties, "changeuser",    &cgi->change_user);		
+		cherokee_typed_table_get_str  (properties, "scriptalias",  &cgi->script_alias);
+		cherokee_typed_table_get_list (properties, "env",          &cgi->system_env);
+		cherokee_typed_table_get_int  (properties, "errorhandler", &cgi->is_error_handler);
+		cherokee_typed_table_get_int  (properties, "changeuser",   &cgi->change_user);		
+		cherokee_typed_table_get_int  (properties, "checkfile",    &cgi->check_file);		
 	}
 
 	if (cgi->is_error_handler) {
@@ -141,8 +143,8 @@ cherokee_handler_cgi_base_build_basic_env (cherokee_handler_cgi_base_t          
 
 	/* Set the basic variables
 	 */
-	set_env (cgi, "SERVER_SIGNATURE",  "<address>Cherokee web server</address>", 38);
 	set_env (cgi, "SERVER_SOFTWARE",   "Cherokee " PACKAGE_VERSION, 9 + (sizeof(PACKAGE_VERSION) - 1));
+	set_env (cgi, "SERVER_SIGNATURE",  "<address>Cherokee web server</address>", 38);
 	set_env (cgi, "GATEWAY_INTERFACE", "CGI/1.1", 7);
 	set_env (cgi, "PATH",              "/bin:/usr/bin:/sbin:/usr/sbin", 29);
 
@@ -177,50 +179,27 @@ cherokee_handler_cgi_base_build_basic_env (cherokee_handler_cgi_base_t          
 		}
 	}
 
-	/* Cookies :-)
-	 */
-	cherokee_buffer_clean (tmp);
-	ret = cherokee_header_copy_unknown (&conn->header, "Cookie", 6, tmp);
-	if (ret == ret_ok) {
-		set_env (cgi, "HTTP_COOKIE", tmp->buf, tmp->len);
-	}
-
-	/* User Agent
-	 */
-	cherokee_buffer_clean (tmp);
-	ret = cherokee_header_copy_known (&conn->header, header_user_agent, tmp);
-	if (ret == ret_ok) {
-		set_env (cgi, "HTTP_USER_AGENT", tmp->buf, tmp->len);
-	}
-
-	/* Set referer
-	 */
-	cherokee_buffer_clean (tmp);
-	ret = cherokee_header_copy_known (&conn->header, header_referer, tmp);
-	if (ret == ret_ok) {
-		set_env (cgi, "HTTP_REFERER", tmp->buf, tmp->len);
-	}
-
 	/* Content-type and Content-lenght (if available) 
 	 */
 	cherokee_buffer_clean (tmp);
 	ret = cherokee_header_copy_unknown (&conn->header, "Content-Type", 12, tmp);
-	if (ret == ret_ok)
+	if (ret == ret_ok) {
 		set_env (cgi, "CONTENT_TYPE", tmp->buf, tmp->len);
+	}
 
-	/* If there is a query_string, set the environment variable
+	/* Query string
 	 */
 	if (conn->query_string.len > 0) 
 		set_env (cgi, "QUERY_STRING", conn->query_string.buf, conn->query_string.len);
 	else
 		set_env (cgi, "QUERY_STRING", "", 0);
 
-	/* Set the server port
+	/* Sever port
 	 */
 	r = snprintf (temp, temp_size, "%d", CONN_SRV(conn)->port);
 	set_env (cgi, "SERVER_PORT", temp, r);
 
-	/* Set the HTTP version
+	/* HTTP protocol version
 	 */
 	ret = cherokee_http_version_to_string (conn->header.version, &p_const, &p_len);
 	if (ret >= ret_ok)
@@ -234,17 +213,17 @@ cherokee_handler_cgi_base_build_basic_env (cherokee_handler_cgi_base_t          
 
 	/* Remote user
 	 */
-	if (conn->validator && !cherokee_buffer_is_empty (&conn->validator->user)) {
+	if (conn->validator && !cherokee_buffer_is_empty (&conn->validator->user))
 		set_env (cgi, "REMOTE_USER", conn->validator->user.buf, conn->validator->user.len);
-	} else {
+	else 
 		set_env (cgi, "REMOTE_USER", "", 0);
-	}
 
 	/* Set PATH_INFO 
 	 */
-	if (! cherokee_buffer_is_empty (&conn->pathinfo)) {
+	if (! cherokee_buffer_is_empty (&conn->pathinfo)) 
 		set_env (cgi, "PATH_INFO", conn->pathinfo.buf, conn->pathinfo.len);
-	}
+	else 
+		set_env (cgi, "PATH_INFO", "", 0);
 
 	/* Set REQUEST_URI 
 	 */
@@ -261,6 +240,21 @@ cherokee_handler_cgi_base_build_basic_env (cherokee_handler_cgi_base_t          
 
 	/* HTTP variables
 	 */
+	ret = cherokee_header_get_unknown (&conn->header, "Cookie", 6, &p, &p_len);
+	if (ret == ret_ok) {
+		set_env (cgi, "HTTP_COOKIE", p, p_len);
+	}
+
+	ret = cherokee_header_get_known (&conn->header, header_user_agent, &p, &p_len);
+	if (ret == ret_ok) {
+		set_env (cgi, "HTTP_USER_AGENT", p, p_len);
+	}
+
+	ret = cherokee_header_get_known (&conn->header, header_referer, &p, &p_len);
+	if (ret == ret_ok) {
+		set_env (cgi, "HTTP_REFERER", p, p_len);
+	}
+	
 	ret = cherokee_header_get_known (&conn->header, header_if_none_match, &p, &p_len);
 	if (ret == ret_ok) {
 		set_env (cgi, "HTTP_IF_NONE_MATCH", p, p_len);		
@@ -286,6 +280,12 @@ cherokee_handler_cgi_base_build_basic_env (cherokee_handler_cgi_base_t          
 		set_env (cgi, "HTTP_ACCEPT_ENCODING", p, p_len);		
 	}
 
+	/* TODO: Fill the others CGI environment variables
+	 * 
+	 * http://hoohoo.ncsa.uiuc.edu/cgi/env.html
+	 * http://cgi-spec.golux.com/cgi-120-00a.html
+	 */
+
 	return ret_ok;
 }
 
@@ -296,7 +296,7 @@ cherokee_handler_cgi_base_build_envp (cherokee_handler_cgi_base_t *cgi, cherokee
 	ret_t              ret;
 	list_t            *i;
 	cuint_t            len = 0;
-	char              *p   = NULL;
+	char              *p   = "";
 	cherokee_buffer_t  tmp = CHEROKEE_BUF_INIT;
 
 	/* Add user defined variables at the beginning,
@@ -340,24 +340,21 @@ cherokee_handler_cgi_base_build_envp (cherokee_handler_cgi_base_t *cgi, cherokee
 
 	cherokee_buffer_clean (&tmp);
 	
-	if (conn->web_directory.len > 1) 
+	if (cgi->check_file &&
+	    (conn->web_directory.len > 1))
+	{
 		cherokee_buffer_add_buffer (&tmp, &conn->web_directory);
+	}
 
-	if (len > 0) 
+	if (len > 0)
 		cherokee_buffer_add (&tmp, p, len);
 	
 	cgi->add_env_pair (cgi, "SCRIPT_NAME", 11, tmp.buf, tmp.len);
-
+	TRACE (ENTRIES, "SCRIPT_NAME '%s'\n", tmp.buf);
 
 	/* SCRIPT_FILENAME
 	 * It depends on the type of CGI (CGI, SCGI o FastCGI):
 	 *    http://php.net/reserved.variables
-	 */
-
-	/* TODO: Fill the others CGI environment variables
-	 * 
-	 * http://hoohoo.ncsa.uiuc.edu/cgi/env.html
-	 * http://cgi-spec.golux.com/cgi-120-00a.html
 	 */
 	cherokee_buffer_mrproper (&tmp);
 	return ret_ok;
@@ -368,11 +365,11 @@ ret_t
 cherokee_handler_cgi_base_extract_path (cherokee_handler_cgi_base_t *cgi, cherokee_boolean_t check_filename)
 {
 	struct stat            st;
-	ret_t                  ret  = ret_ok;
-	cherokee_connection_t *conn = HANDLER_CONN(cgi);
+	ret_t                  ret;
+	cherokee_connection_t *conn         = HANDLER_CONN(cgi);
 	int                    req_len;
 	int                    local_len;
-	int                    pathinfo_len;
+	int                    pathinfo_len = 0;
 
 	/* ScriptAlias: If there is a ScriptAlias directive, it
 	 * doesn't need to find the executable file..
@@ -398,37 +395,87 @@ cherokee_handler_cgi_base_extract_path (cherokee_handler_cgi_base_t *cgi, cherok
 
 	req_len      = conn->request.len;
 	local_len    = conn->local_directory.len;
-	pathinfo_len = conn->pathinfo.len;
 
-	/* It is going to concatenate two paths like: 
-	 * local_directory = "/usr/share/cgi-bin/", and 
-	 * request = "/thing.cgi", so there would be two 
-	 * slashes in the middle of the request.
+	/* It is going to concatenate two paths like: local_directory
+	 * = "/usr/share/cgi-bin/", and request = "/thing.cgi", so
+	 * there would be two slashes in the middle of the request.
 	 */
-	if (req_len > 0)
+	if (req_len > 0) {
 		cherokee_buffer_add (&conn->local_directory, 
 				     conn->request.buf + 1, 
 				     conn->request.len - 1); 
+	}	
 
-	if (pathinfo_len <= 0) {
-		if (check_filename)
-			ret = cherokee_handler_cgi_base_split_pathinfo (cgi, &conn->local_directory, local_len -1, false);
-		else
-			ret = cherokee_handler_cgi_base_split_pathinfo (cgi, &conn->local_directory, local_len -1,  true);
-			
-		if (unlikely(ret < ret_ok)) goto bye;
-	}
-
-	/* Is the filename set? 
+	/* Build the pathinfo string
 	 */
-	if (cgi->executable.len <= 0) {
-		cherokee_buffer_add_buffer (&cgi->executable, &conn->local_directory);
-		TRACE (ENTRIES, "Executable: '%s'\n", cgi->executable.buf);
+	if (pathinfo_len <= 0) {
+		cuint_t start = local_len - 1;
+
+		if (! check_filename) {
+			/* FastCGI and SCGI
+			 */
+			if (! cherokee_buffer_is_empty (&conn->web_directory)) {
+				start += conn->web_directory.len;
+			}
+
+			ret = cherokee_handler_cgi_base_split_pathinfo (cgi, &conn->local_directory, start, true);
+			if (ret != ret_ok) {
+				/* It couldn't find a pathinfo, so let's check if there is something
+				 * we can do here: skip the next file and the rest is pathinfo.
+				 */
+				char *end   = conn->local_directory.buf + conn->local_directory.len;
+				char *begin = conn->local_directory.buf + start + 1;
+				char *p     = begin;
+
+				while ((p < end) && (*p != '/')) p++;
+				 
+				if (p < end) {
+					cherokee_buffer_add (&conn->pathinfo, p, end - p);
+	
+					pathinfo_len = end - p;
+					cherokee_buffer_drop_endding (&conn->local_directory, pathinfo_len);
+				} 
+
+/* 				if (p <= begin) { */
+/* 					conn->error_code = http_not_found; */
+/* 					goto bye; */
+/* 				} */
+			}
+		} 
+		else {
+			/* CGI and phpCGI
+			 */
+			ret = cherokee_handler_cgi_base_split_pathinfo (cgi, &conn->local_directory, start, false);
+			if (unlikely(ret < ret_ok)) {
+				conn->error_code = http_not_found;
+				goto bye;
+			}
+
+			pathinfo_len = conn->pathinfo.len;
+		}
+
+		/* At this point:
+		 *  - conn->pathinfo:        has been filled
+		 *  - conn->local_directory: doesn't contain the pathinfo
+		 */
 	}
 
+	TRACE (ENTRIES, "Pathinfo: '%s'\n", conn->pathinfo.buf);
+
+	cherokee_buffer_add_buffer (&cgi->executable, &conn->local_directory);
+	TRACE (ENTRIES, "Executable: '%s'\n", cgi->executable.buf);
+
+/* 	printf ("\n"); */
+/* 	printf ("** conn->web_directory   %s\n", conn->web_directory.buf); */
+/* 	printf ("** conn->local_directory %s\n", conn->local_directory.buf); */
+/* 	printf ("** cgi->executable       %s\n", cgi->executable.buf); */
+/* 	printf ("** conn->request         %s\n", conn->request.buf); */
+/* 	printf ("** conn->pathinfo        %s\n", conn->pathinfo.buf); */
+
+	/* Check if the file exists 
+	 */
+	ret = ret_ok;
 	if (check_filename) {
-		/* We have to check if the file exists 
-		 */
 		if (stat (conn->local_directory.buf, &st) == -1) {
 			conn->error_code = http_not_found;
 			ret = ret_error;
@@ -437,11 +484,9 @@ cherokee_handler_cgi_base_extract_path (cherokee_handler_cgi_base_t *cgi, cherok
 	}
 		
 bye:
-	if (pathinfo_len)
-		cherokee_buffer_drop_endding (&conn->local_directory, req_len - 1);
-	else
-		cherokee_buffer_drop_endding (&conn->local_directory, req_len - (conn->pathinfo.len + 1));
-
+	/* Clean up the mess
+	 */
+	cherokee_buffer_drop_endding (&conn->local_directory, (req_len - pathinfo_len) - 1);
 	return ret;
 }
 
@@ -628,10 +673,7 @@ cherokee_handler_cgi_base_split_pathinfo (cherokee_handler_cgi_base_t *cgi, cher
 	/* Look for the pathinfo
 	 */
 	ret = cherokee_split_pathinfo (buf, init_pos, allow_dirs, &pathinfo, &pathinfo_len);
-	if (ret == ret_not_found) {
-		conn->error_code = http_not_found;
-		return ret_error;
-	}
+	if (ret == ret_not_found) return ret;
 
 	/* Split the string
 	 */

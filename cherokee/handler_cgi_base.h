@@ -53,19 +53,21 @@ struct cherokee_handler_cgi_base {
 	cherokee_handler_t                handler;
 	cherokee_handler_cgi_base_phase_t init_phase;
 	
-	char              *script_alias;
-	char              *extra_param;
-	list_t            *system_env;
-	size_t             content_length;
-	cuint_t            is_error_handler;
-	cuint_t            change_user;
-	cuint_t            got_eof;
+	char               *script_alias;
+	char               *extra_param;
+	list_t             *system_env;
+	size_t              content_length;
+	cherokee_boolean_t  is_error_handler;
+	cherokee_boolean_t  check_file;
 
-	cherokee_buffer_t  executable;
-	cherokee_buffer_t  param; 
-	cherokee_buffer_t  param_extra;
+	cuint_t             change_user;
+	cuint_t             got_eof;
 
-	cherokee_buffer_t  data; 
+	cherokee_buffer_t   executable;
+	cherokee_buffer_t   param; 
+	cherokee_buffer_t   param_extra;
+
+	cherokee_buffer_t   data; 
 
 	/* Virtual methods
 	 */
