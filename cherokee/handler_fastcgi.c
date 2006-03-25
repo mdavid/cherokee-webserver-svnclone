@@ -333,9 +333,9 @@ add_extra_fastcgi_env (cherokee_handler_fastcgi_t *hdl, cuint_t *last_header_off
 		cherokee_buffer_add (&buffer, conn->request.buf + 1, conn->request.len - 1);
         }
 
-	if (! cherokee_buffer_is_empty (&conn->pathinfo)) {
-		set_env (cgi_base, "PATH_INFO", conn->pathinfo.buf, conn->pathinfo.len);
-	}
+/* 	if (! cherokee_buffer_is_empty (&conn->pathinfo)) { */
+/* 		set_env (cgi_base, "PATH_INFO", conn->pathinfo.buf, conn->pathinfo.len); */
+/* 	} */
 
 	/* A few more..
 	 */

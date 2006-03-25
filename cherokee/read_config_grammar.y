@@ -1178,14 +1178,16 @@ handler_option : T_ID T_NUMBER
 			 cherokee_config_entry_set_handler_prop (current_config_entry, "changeuser", typed_int, INT_TO_POINTER($2), NULL);
 	   } else if (!strcasecmp ($1, "iocache")) {
 			 cherokee_config_entry_set_handler_prop (current_config_entry, "cache", typed_int, INT_TO_POINTER($2), NULL);
-	   } else if (!strcasecmp ($1, "errorhandler")) {
+	   } else if (!strcasecmp ($1, "checkfile")) {
+			 cherokee_config_entry_set_handler_prop (current_config_entry, "checkfile", typed_int, INT_TO_POINTER($2), NULL);
+	   } else {
 			 return 1;
-	   }
+	   } 
 };
 
 handler_option : T_ERROR_HANDLER T_NUMBER
 {
-	   cherokee_config_entry_set_handler_prop (current_config_entry, "error_handler", typed_int, INT_TO_POINTER($2), NULL);
+	   cherokee_config_entry_set_handler_prop (current_config_entry, "errorhandler", typed_int, INT_TO_POINTER($2), NULL);
 };
 
 handler_option : T_SHOW T_HEADERFILE T_NUMBER

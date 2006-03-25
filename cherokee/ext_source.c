@@ -221,6 +221,12 @@ cherokee_ext_source_get_next (cherokee_ext_source_head_t *head_config, list_t *s
 	return ret_ok;
 }
 
+//
+#include <sys/types.h>
+#include <sys/socket.h>
+#include "fastcgi.h"
+#include "socket.h"
+//
 
 ret_t 
 cherokee_ext_source_spawn_srv (cherokee_ext_source_t *server)
@@ -232,9 +238,33 @@ cherokee_ext_source_spawn_srv (cherokee_ext_source_t *server)
 	char              *empty_envp[] = {NULL};
 	cherokee_buffer_t  tmp          = CHEROKEE_BUF_INIT;
 
+	int s;
+	cherokee_sockaddr_t addr;
+
 	/* Maybe set a custom enviroment variable set 
 	 */
 	envp = (server->custom_env) ? server->custom_env : empty_envp;
+
+#if 0
+	/* This code is meant to, in some way, signal the FastCGI that
+	 * it is centainly a FastCGI.  The fcgi client will execute
+	 * getpeername (FCGI_LISTENSOCK_FILENO) and, then if it is a
+	 * fcgi, error will have the ENOTCONN value.
+	 */
+	addr.sa_in.sin_addr.s_addr = htonl(INADDR_ANY);
+
+	s = socket (AF_INET, SOCK_STREAM, 0);
+	if (s < 0) return ret_error;
+	
+	re = 1;
+	setsockopt (s, SOL_SOCKET, SO_REUSEADDR, &re, sizeof(re));
+
+	re = bind (s, (struct sockaddr *) &addr, sizeof(cherokee_sockaddr_t));
+	if (re == -1) return ret_error;
+
+	re = listen(s, 1024);
+	if (re == -1) return ret_error;
+#endif
 
 	/* Execute the FastCGI server
 	 */
@@ -247,6 +277,20 @@ cherokee_ext_source_spawn_srv (cherokee_ext_source_t *server)
 #endif
 	switch (child) {
 	case 0:
+#if 0 
+		/* More FCGI_LISTENSOCK_FILENO stuff..
+		 */
+		close (STDIN_FILENO);
+
+		if (s != FCGI_LISTENSOCK_FILENO) {
+			close (FCGI_LISTENSOCK_FILENO);
+			dup2 (s, FCGI_LISTENSOCK_FILENO);
+			close (s);
+		}
+		
+		close (STDOUT_FILENO);
+		close (STDERR_FILENO);
+#endif
 		argv[2] = (char *)tmp.buf;
 
 		re = execve ("/bin/sh", argv, envp);
