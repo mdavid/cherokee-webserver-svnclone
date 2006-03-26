@@ -48,6 +48,7 @@ cherokee_module_info_handler_t MODULE_INFO(fcgi) = {
 static void set_env_pair (cherokee_handler_cgi_base_t *cgi_base, 
 			  char *key, int key_len, 
 			  char *val, int val_len);
+
 static ret_t
 process_package (cherokee_handler_fcgi_t *hdl, cherokee_buffer_t *inbuf, cherokee_buffer_t *outbuf)
 {
@@ -121,7 +122,11 @@ process_package (cherokee_handler_fcgi_t *hdl, cherokee_buffer_t *inbuf, cheroke
 
 	case FCGI_STDOUT:
 //		printf ("READ:STDOUT eof=%d: %d", CGI_BASE(hdl)->got_eof, len);
-		cherokee_buffer_add (outbuf, data, len);
+		if (len > 0) {
+			printf ("1 outbuf->buf %p, len %d\n", outbuf->buf, outbuf->len);
+			cherokee_buffer_add (outbuf, data, len);
+			printf ("2 outbuf->buf %p, len %d\n", outbuf->buf, outbuf->len);
+		}
 		break;
 
 	case FCGI_END_REQUEST: 
@@ -249,7 +254,8 @@ cherokee_handler_fcgi_free (cherokee_handler_fcgi_t *hdl)
 	cherokee_socket_mrproper (&hdl->socket);
 
 	cherokee_buffer_mrproper (&hdl->write_buffer);
-	return ret_ok;
+
+	return cherokee_handler_cgi_base_free (CGI_BASE(hdl));
 }
 
 
@@ -615,14 +621,6 @@ cherokee_handler_fcgi_init (cherokee_handler_fcgi_t *hdl)
 			cherokee_post_walk_reset (&conn->post);
 			cherokee_post_get_len (&conn->post, &hdl->post_len);
 		}
-
-		/* Set the executable filename
-		 */
-/* 		if (CGI_BASE(hdl)->check_file == false) { */
-/* 			cherokee_buffer_add_buffer (&conn->pathinfo, &conn->request); */
-/* 			cherokee_buffer_clean (&conn->pathinfo); */
-/* 		} else { */
-/* 		} */
 
 		/* Extracts PATH_INFO and filename from request uri 
 		 */		

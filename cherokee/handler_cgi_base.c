@@ -494,13 +494,6 @@ cherokee_handler_cgi_base_extract_path (cherokee_handler_cgi_base_t *cgi, cherok
 	cherokee_buffer_add_buffer (&cgi->executable, &conn->local_directory);
 	TRACE (ENTRIES, "Executable: '%s'\n", cgi->executable.buf);
 
-/* 	printf ("\n"); */
-/* 	printf ("** conn->web_directory   %s\n", conn->web_directory.buf); */
-/* 	printf ("** conn->local_directory %s\n", conn->local_directory.buf); */
-/* 	printf ("** cgi->executable       %s\n", cgi->executable.buf); */
-/* 	printf ("** conn->request         %s\n", conn->request.buf); */
-/* 	printf ("** conn->pathinfo        %s\n", conn->pathinfo.buf); */
-
 	/* Check if the file exists 
 	 */
 	ret = ret_ok;
@@ -648,7 +641,9 @@ cherokee_handler_cgi_base_add_headers (cherokee_handler_cgi_base_t *cgi, cheroke
 
 	/* Drop out the headers, we already have a copy
 	 */
+	printf ("3 inbuf->buf %p, len %d\n", inbuf->buf, inbuf->len);
 	cherokee_buffer_move_to_begin (inbuf, len + end_len);
+	printf ("4 inbuf->buf %p, len %d\n", inbuf->buf, inbuf->len);
 
 	/* Parse the header.. it is likely we will have something to do with it.
 	 */
@@ -668,8 +663,11 @@ cherokee_handler_cgi_base_step (cherokee_handler_cgi_base_t *cgi, cherokee_buffe
 	if (! cherokee_buffer_is_empty (&cgi->data)) {
 		TRACE (ENTRIES, "sending stored data: %d bytes\n", cgi->data.len);
 
+	printf ("5 cgi->data.buf %p, len %d\n", cgi->data.buf, cgi->data.len);
 		cherokee_buffer_add_buffer (outbuf, &cgi->data);
+	printf ("6 cgi->data.buf %p, len %d\n", cgi->data.buf, cgi->data.len);
 		cherokee_buffer_clean (&cgi->data);
+	printf ("7 cgi->data.buf %p, len %d\n", cgi->data.buf, cgi->data.len);
 
 		if (cgi->got_eof) {
 			return ret_eof_have_data;
