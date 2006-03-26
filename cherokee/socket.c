@@ -372,7 +372,7 @@ ret_t
 cherokee_socket_init_tls (cherokee_socket_t *socket, cherokee_virtual_server_t *vserver)
 {
 #ifdef HAVE_TLS
-	int rc;
+	int re;
 	
 	socket->is_tls = TLS;
 
@@ -382,28 +382,28 @@ cherokee_socket_init_tls (cherokee_socket_t *socket, cherokee_virtual_server_t *
 	}
 
 # ifdef HAVE_GNUTLS
-	rc = gnutls_handshake (socket->session);
+	re = gnutls_handshake (socket->session);
 
-	switch (rc) {
+	switch (re) {
 	case GNUTLS_E_AGAIN:
 		return ret_eagain;
 	case GNUTLS_E_INTERRUPTED:
 		return ret_error;
 	}
 	
-	if (rc < 0) {
-		PRINT_ERROR ("ERROR: Init GNUTLS: Handshake has failed: %s\n", gnutls_strerror(rc));
+	if (re < 0) {
+		PRINT_ERROR ("ERROR: Init GNUTLS: Handshake has failed: %s\n", gnutls_strerror(re));
 		return ret_error;
 	}
 # endif
 
 # ifdef HAVE_OPENSSL
-	rc = SSL_accept (socket->session);
+	re = SSL_accept (socket->session);
 
-	if (rc <= 0) {
+	if (re <= 0) {
 		char *error;
 
-		switch (SSL_get_error(socket->session, rc)) {
+		switch (SSL_get_error(socket->session, re)) {
 		case SSL_ERROR_WANT_READ:
 		case SSL_ERROR_WANT_WRITE:
 		case SSL_ERROR_WANT_CONNECT:
@@ -434,7 +434,7 @@ cherokee_socket_close (cherokee_socket_t *socket)
 {
 	int re;
 
-	if (socket->socket <= 0) {
+	if (socket->socket < 0) {
 		return ret_error;
 	}
 
@@ -471,7 +471,7 @@ cherokee_socket_shutdown (cherokee_socket_t *socket, int how)
 {
 	int re;
 
-	if (socket->socket <= 0) {
+	if (socket->socket < 0) {
 		return ret_error;
 	}
 
@@ -488,7 +488,7 @@ cherokee_socket_ntop (cherokee_socket_t *socket, char *dst, size_t cnt)
 
 	errno = EAFNOSUPPORT;
 
-	if (SOCKET_FD(socket) <= 0) {
+	if (SOCKET_FD(socket) < 0) {
 		return ret_error;
 	}
 
@@ -1229,7 +1229,7 @@ cherokee_socket_set_timeout (cherokee_socket_t *socket, cuint_t timeout)
 	cuint_t        block;
 	struct timeval tv;
 
-	if (socket->socket <= 0) {
+	if (socket->socket < 0) {
 		return ret_error;
 	}
 
