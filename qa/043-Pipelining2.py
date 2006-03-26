@@ -10,11 +10,11 @@ class Test (TestBase):
 
         self.request          = "GET /pipe2/file1 HTTP/1.1\r\n"   +\
                                 "Host: localhost\r\n"             +\
-                                "Connection-type: Keep-alive\r\n" +\
+                                "Connection: Keep-alive\r\n" +\
                                 "\r\n"                            +\
                                 "GET /pipe2/ HTTP/1.1\r\n"        +\
                                 "Host: localhost\r\n"             +\
-                                "Connection-type: Keep-alive\r\n"
+                                "Connection: Keep-alive\r\n"
 
         self.conf             = "Directory /pipe2 { Handler common }"
         self.expected_error   = 200

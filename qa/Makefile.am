@@ -135,7 +135,8 @@ run-tests.py \
 130-Digest-EmptyPasswd.py \
 131-ChangeUser-phpcgi.py \
 132-file-ContentType.py \
-133-If-None-Match.py
+133-If-None-Match.py \
+134-HTTP_headers.py
 
 test:
 	./run-tests.py

@@ -41,21 +41,24 @@ CHEROKEE_BEGIN_DECLS
  * Keep it sync with known_headers_names of header.c
  */
 typedef enum {
-	header_connection,
-	header_range,
-	header_keepalive,
 	header_accept,
-	header_host,
+	header_accept_charset,
 	header_accept_encoding,
-	header_user_agent,
-	header_referer,
-	header_location,
-	header_content_length,
-	header_upgrade,
+	header_accept_language,
 	header_authorization,
-	header_if_range,
-	header_if_none_match,
+	header_connection,
+	header_content_length,
+	header_cookie,
+	header_host,
 	header_if_modified_since,
+	header_if_none_match,
+	header_if_range,
+	header_keepalive,
+	header_location,
+	header_range,
+	header_referer,
+	header_upgrade,
+	header_user_agent,
 	HEADER_LENGTH
 } cherokee_common_header_t;
 
