@@ -1,5 +1,8 @@
 2006-03-26  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* cherokee/handler_fcgi.c (cherokee_handler_fcgi_free): Memory
+	leak. Fixed.
+
 	* cherokee/header.c (cherokee_header_parse): Partially
 	rewritten. It should be slightly faster.  Some headers were added
 	as known as well.

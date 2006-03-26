@@ -54,6 +54,8 @@
   extern char *strsep (char** str, const char* delims);
 #endif
 
+#define cmp_str(l,s) (strncmp(l, s, sizeof(s)-1) == 0)
+
 
 static void
 clean_known_headers (cherokee_header_t *hdr)
@@ -231,10 +233,9 @@ parse_response_first_line (cherokee_header_t *hdr, cherokee_buffer_t *buf, char 
 	/* Example:
 	 * HTTP/1.0 403 Forbidden
 	 */
-	if (strncmp("HTTP/", begin, 5) != 0) {
+	if (unlikely(! cmp_str(begin, "HTTP/"))) {
 		return ret_error;
 	}
-
 
 	/* Get the HTTP version
 	 */
@@ -252,7 +253,6 @@ parse_response_first_line (cherokee_header_t *hdr, cherokee_buffer_t *buf, char 
 		return ret_error;
 	}
 
-
 	/* Read the response code
 	 */
 	memcpy (tmp, begin+9, 3);
@@ -268,86 +268,86 @@ parse_method (cherokee_header_t *hdr, char *line, char **pointer)
 {
 	/* These are HTTP/1.1 methods
 	 */
-	if (strncmp (line, "GET ", 4) == 0) {
+	if (cmp_str (line, "GET ")) {
 		hdr->method = http_get;
 		*pointer += 4;
 		return ret_ok;
-	} else if (strncmp (line, "POST ", 5) == 0) {
+	} else if (cmp_str (line, "POST ")) {
 		hdr->method = http_post;
 		*pointer += 5;
 		return ret_ok;
-	} else if (strncmp (line, "HEAD ", 5) == 0) {
+	} else if (cmp_str (line, "HEAD ")) {
 		hdr->method = http_head;
 		*pointer += 5;
 		return ret_ok;
-	} else if (strncmp (line, "OPTIONS ", 8) == 0) {
+	} else if (cmp_str (line, "OPTIONS ")) {
 		hdr->method = http_options;
 		*pointer += 8;
 		return ret_ok;
-	} else if (strncmp (line, "PUT ", 4) == 0) {
+	} else if (cmp_str (line, "PUT ")) {
 		hdr->method = http_put;
 		*pointer += 4;
 		return ret_ok;
-	} else if (strncmp (line, "DELETE ", 7) == 0) {
+	} else if (cmp_str (line, "DELETE ")) {
 		hdr->method = http_delete;
 		*pointer += 7;
 		return ret_ok;
-	} else if (strncmp (line, "TRACE ", 6) == 0) {
+	} else if (cmp_str (line, "TRACE ")) {
 		hdr->method = http_trace;
 		*pointer += 6;
 		return ret_ok;
-	} else if (strncmp (line, "CONNECT ", 8) == 0) {
+	} else if (cmp_str (line, "CONNECT ")) {
 		hdr->method = http_connect;
 		*pointer += 8;
 		return ret_ok;
 
 	/* WebDAV methods
 	 */
-	} else if (strncmp (line, "COPY ", 5) == 0) {
+	} else if (cmp_str (line, "COPY ")) {
 		hdr->method = http_copy;
 		*pointer += 5;
 		return ret_ok;
-	} else if (strncmp (line, "LOCK ", 5) == 0) {
+	} else if (cmp_str (line, "LOCK ")) {
 		hdr->method = http_lock;
 		*pointer += 5;
 		return ret_ok;
-	} else if (strncmp (line, "MKCOL ", 6) == 0) {
+	} else if (cmp_str (line, "MKCOL ")) {
 		hdr->method = http_mkcol;
 		*pointer += 6;
 		return ret_ok;
-	} else if (strncmp (line, "MOVE ", 5) == 0) {
+	} else if (cmp_str (line, "MOVE ")) {
 		hdr->method = http_move;
 		*pointer += 5;
 		return ret_ok;
-	} else if (strncmp (line, "NOTIFY ", 7) == 0) {
+	} else if (cmp_str (line, "NOTIFY ")) {
 		hdr->method = http_notify;
 		*pointer += 7;
 		return ret_ok;
-	} else if (strncmp (line, "POLL ", 5) == 0) {
+	} else if (cmp_str (line, "POLL ")) {
 		hdr->method = http_poll;
 		*pointer += 5;
 		return ret_ok;
-	} else if (strncmp (line, "PROPFIND ", 9) == 0) {
+	} else if (cmp_str (line, "PROPFIND ")) {
 		hdr->method = http_propfind;
 		*pointer += 9;
 		return ret_ok;
-	} else if (strncmp (line, "PROPPATCH ", 10) == 0) {
+	} else if (cmp_str (line, "PROPPATCH ")) {
 		hdr->method = http_proppatch;
 		*pointer += 10;
 		return ret_ok;
-	} else if (strncmp (line, "SEARCH ", 7) == 0) {
+	} else if (cmp_str (line, "SEARCH ")) {
 		hdr->method = http_search;
 		*pointer += 7;
 		return ret_ok;
-	} else if (strncmp (line, "SUBSCRIBE ", 10) == 0) {
+	} else if (cmp_str (line, "SUBSCRIBE ")) {
 		hdr->method = http_subscribe;
 		*pointer += 10;
 		return ret_ok;
-	} else if (strncmp (line, "UNLOCK ", 7) == 0) {
+	} else if (cmp_str (line, "UNLOCK ")) {
 		hdr->method = http_unlock;
 		*pointer += 7;
 		return ret_ok;
-	} else if (strncmp (line, "UNSUBSCRIBE ", 12) == 0) {
+	} else if (cmp_str (line, "UNSUBSCRIBE ")) {
 		hdr->method = http_unsubscribe;
 		*pointer += 12;
 		return ret_ok;
@@ -440,7 +440,7 @@ parse_request_first_line (cherokee_header_t *hdr, cherokee_buffer_t *buf, char *
 	/* Check if the request is a full URL
 	 */
 	begin = buf->buf + hdr->request_off;
-	if (strncmp (begin, "http://", 7) == 0) {
+	if (cmp_str (begin, "http://")) {
 		char *dir;
 		char *host = begin + 7;
 
@@ -579,7 +579,7 @@ cherokee_header_parse (cherokee_header_t *hdr, cherokee_buffer_t *buffer,  chero
 			first_char -=  'a' - 'A';
 
 
-#define header_equals(str,hdr_enum,begin,len) ((len == (sizeof(str)-1))         && \
+#define header_equals(str,hdr_enum,begin,len) ((len == (sizeof(str)-1)) && \
 					       (hdr->header[hdr_enum].info_off == 0) && \
 					       (strncasecmp (begin, str, sizeof(str)-1) == 0))
 
