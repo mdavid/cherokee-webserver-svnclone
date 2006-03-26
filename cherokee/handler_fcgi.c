@@ -122,11 +122,7 @@ process_package (cherokee_handler_fcgi_t *hdl, cherokee_buffer_t *inbuf, cheroke
 
 	case FCGI_STDOUT:
 //		printf ("READ:STDOUT eof=%d: %d", CGI_BASE(hdl)->got_eof, len);
-		if (len > 0) {
-			printf ("1 outbuf->buf %p, len %d\n", outbuf->buf, outbuf->len);
-			cherokee_buffer_add (outbuf, data, len);
-			printf ("2 outbuf->buf %p, len %d\n", outbuf->buf, outbuf->len);
-		}
+		cherokee_buffer_add (outbuf, data, len);
 		break;
 
 	case FCGI_END_REQUEST: 
