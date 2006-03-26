@@ -1,3 +1,7 @@
+2006-03-26  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/socket.c: fd 0 is okay.  Fixed.
+
 2006-03-25  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cherokee/handler_cgi_base.c, cherokee/handler_cgi_base.h,
