@@ -1,5 +1,22 @@
 2006-03-26  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* cherokee/header.c (cherokee_header_parse): Partially
+	rewritten. It should be slightly faster.  Some headers were added
+	as known as well.
+
+	* qa/134-HTTP_headers.py: New test to check HTTP_* headers inside
+	in cgi_base based handlers.
+
+	* cherokee/header.h, cherokee/header.c,
+	cherokee/handler_cgi_base.c (cherokee_handler_cgi_base_build_basic_env):
+	From now on, "Cookie: " is a known header.
+
+	* qa/042-Pipelining.py, qa/043-Pipelining2.py: Fixed. It was using
+	"Connection-type: " instead of "Connection: "
+
+	* cherokee/handler_cgi_base.c (cherokee_handler_cgi_base_build_basic_env):
+	Added HTTP_ACCEPT header.
+
 	* cherokee/socket.c: fd 0 is okay.  Fixed.
 
 2006-03-25  Alvaro Lopez Ortega  <alvaro@alobbs.com>

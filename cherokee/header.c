@@ -54,8 +54,6 @@
   extern char *strsep (char** str, const char* delims);
 #endif
 
-#define equal(str, n) (strncasecmp(str, n, sizeof(n)-1) == 0)
-
 
 static void
 clean_known_headers (cherokee_header_t *hdr)
@@ -494,7 +492,7 @@ cherokee_header_parse (cherokee_header_t *hdr, cherokee_buffer_t *buffer,  chero
 	ret_t  ret;
 	char  *begin = buffer->buf;
 	char  *end   = NULL;
-	char  *points;
+	char  *colon;
 	char  *header_end;
 
 	/* Check the buffer content
@@ -559,98 +557,98 @@ cherokee_header_parse (cherokee_header_t *hdr, cherokee_buffer_t *buffer,  chero
 	 */
 	while ((end = get_new_line(begin)) && (end < header_end))
 	{	       
-		char end_char = *end;
+		cuint_t header_len;
+		char    first_char;
+		char    end_char = *end;
 
 		*end = '\0';
 
-		points = strchr (begin, ':');
-		if (points == NULL) {
+		colon = strchr (begin, ':');
+		if (colon == NULL) {
 			goto next;
 		}
 		
-		if (end < points +2) {
+		if (end < colon +2) {
 			goto next;
 		}
 
-		if ((hdr->header[header_accept_encoding].info_off == 0) && 
-		    (equal (begin, "Accept-Encoding")))
-		{
-			ret = add_known_header (hdr, header_accept_encoding, (points+2)-buffer->buf, end-points-2);
-		} 
-		else if ((hdr->header[header_accept].info_off == 0) && 
-			 (equal (begin, "Accept")))
-		{
-			ret = add_known_header (hdr, header_accept, (points+2)-buffer->buf, end-points-2);
-		} 
-		else if ((hdr->header[header_host].info_off == 0) && 
-			 (equal (begin, "Host")))
-		{
- 			ret = add_known_header (hdr, header_host, (points+2)-buffer->buf, end-points-2);
-		} 
-		else if ((hdr->header[header_connection].info_off == 0) && 
-			 (equal (begin, "Connection")))
-		{
-			ret = add_known_header (hdr, header_connection, (points+2)-buffer->buf, end-points-2);
-		}
-		else if ((hdr->header[header_user_agent].info_off == 0) && 
-			 (equal (begin, "User-Agent")))
-		{
-			ret = add_known_header (hdr, header_user_agent, (points+2)-buffer->buf, end-points-2);
-		}
-		else if ((hdr->header[header_keepalive].info_off == 0) && 
-			 (equal (begin, "Keep-Alive")))
-		{
-			ret = add_known_header (hdr, header_keepalive, (points+2)-buffer->buf, end-points-2);
-		}
-		else if ((hdr->header[header_referer].info_off == 0) && 
-			 (equal (begin, "Referer")))
-		{
-			ret = add_known_header (hdr, header_referer, (points+2)-buffer->buf, end-points-2);
-		}
-		else if ((hdr->header[header_location].info_off == 0) && 
-			 (equal (begin, "Location")))
-		{
-			ret = add_known_header (hdr, header_location, (points+2)-buffer->buf, end-points-2);
-		}
-		else if ((hdr->header[header_content_length].info_off == 0) && 
-			 (equal (begin, "Content-Length")))
-		{
-			ret = add_known_header (hdr, header_content_length, (points+2)-buffer->buf, end-points-2);
-		}
-		else if ((hdr->header[header_upgrade].info_off == 0) && 
-			 (equal (begin, "Upgrade")))
-		{
-			ret = add_known_header (hdr, header_upgrade, (points+2)-buffer->buf, end-points-2);
-		}
-		else if ((hdr->header[header_authorization].info_off == 0) && 
-			 (equal (begin, "Authorization")))
-		{
-			ret = add_known_header (hdr, header_authorization, (points+2)-buffer->buf, end-points-2);
-		}
-		else if ((hdr->header[header_if_range].info_off == 0) && 
-			 (equal (begin, "If-Range")))
-		{
-			ret = add_known_header (hdr, header_if_range, (points+2)-buffer->buf, end-points-2);
-		}
-		else if ((hdr->header[header_range].info_off == 0) && 
-			 (equal (begin, "Range")))
-		{
-			ret = add_known_header (hdr, header_range, (points+2)-buffer->buf, end-points-2);
-		} 
-		else if ((hdr->header[header_if_none_match].info_off == 0) && 
-			 (equal (begin, "If-None-Match")))
-		{
-			ret = add_known_header (hdr, header_if_none_match, (points+2)-buffer->buf, end-points-2);
-		}	
-		else if ((hdr->header[header_if_modified_since].info_off == 0) && 
-			 (equal (begin, "If-Modified-Since")))
-		{
-			ret = add_known_header (hdr, header_if_modified_since, (points+2)-buffer->buf, end-points-2);
-		}
-		else {
+		header_len = colon - begin;
+
+		first_char = *begin;
+		if (first_char > 'Z')
+			first_char -=  'a' - 'A';
+
+
+#define header_equals(str,hdr_enum,begin,len) ((len == (sizeof(str)-1))         && \
+					       (hdr->header[hdr_enum].info_off == 0) && \
+					       (strncasecmp (begin, str, sizeof(str)-1) == 0))
+
+		switch (first_char) {
+		case 'A':
+			if (header_equals ("Accept-Encoding", header_accept_encoding, begin, header_len)) {
+				ret = add_known_header (hdr, header_accept_encoding, (colon+2)-buffer->buf, end-colon-2);
+			} else if (header_equals ("Accept-Charset", header_accept_charset, begin, header_len)) {
+				ret = add_known_header (hdr, header_accept_charset, (colon+2)-buffer->buf, end-colon-2);
+			} else if (header_equals ("Accept-Language", header_accept_charset, begin, header_len)) {
+				ret = add_known_header (hdr, header_accept_language, (colon+2)-buffer->buf, end-colon-2);
+			} else if (header_equals ("Accept", header_accept_charset, begin, header_len)) {
+				ret = add_known_header (hdr, header_accept, (colon+2)-buffer->buf, end-colon-2);
+			} else if (header_equals ("Authorization", header_accept_charset, begin, header_len)) {
+				ret = add_known_header (hdr, header_authorization, (colon+2)-buffer->buf, end-colon-2);
+			} else goto unknown; 
+			break;
+		case 'C':
+			if (header_equals ("Connection", header_connection, begin, header_len)) {
+				ret = add_known_header (hdr, header_connection, (colon+2)-buffer->buf, end-colon-2);
+			} else if (header_equals ("Content-Length", header_content_length, begin, header_len)) {
+				ret = add_known_header (hdr, header_content_length, (colon+2)-buffer->buf, end-colon-2);
+			} else if (header_equals ("Cookie", header_cookie, begin, header_len)) {
+				ret = add_known_header (hdr, header_cookie, (colon+2)-buffer->buf, end-colon-2);
+			} else goto unknown;
+			break;
+		case 'H':
+			if (header_equals ("Host", header_host, begin, header_len)) {
+				ret = add_known_header (hdr, header_host, (colon+2)-buffer->buf, end-colon-2);
+			} else goto unknown;
+			break;
+		case 'I':
+			if (header_equals ("If-Modified-Since", header_if_modified_since, begin, header_len)) {
+				ret = add_known_header (hdr, header_if_modified_since, (colon+2)-buffer->buf, end-colon-2);
+			} else if (header_equals ("If-None-Match", header_if_none_match, begin, header_len)) {
+				ret = add_known_header (hdr, header_if_none_match, (colon+2)-buffer->buf, end-colon-2);
+			} else if (header_equals ("If-Range", header_if_range, begin, header_len)) {
+				ret = add_known_header (hdr, header_if_range, (colon+2)-buffer->buf, end-colon-2);
+			} else goto unknown;
+			break;
+		case 'K':
+			if (header_equals ("Keep-Alive", header_keepalive, begin, header_len)) {
+				ret = add_known_header (hdr, header_keepalive, (colon+2)-buffer->buf, end-colon-2);
+			} else goto unknown;
+			break;
+		case 'L':
+			if (header_equals ("Location", header_location, begin, header_len)) {
+				ret = add_known_header (hdr, header_location, (colon+2)-buffer->buf, end-colon-2);
+			} else goto unknown;
+			break;
+		case 'R':
+			if (header_equals ("Range", header_range, begin, header_len)) {
+				ret = add_known_header (hdr, header_range, (colon+2)-buffer->buf, end-colon-2);
+			} else if (header_equals ("Referer", header_referer, begin, header_len)) {
+				ret = add_known_header (hdr, header_referer, (colon+2)-buffer->buf, end-colon-2);
+			} else goto unknown;
+			break;
+		case 'U':
+			if (header_equals ("Upgrade", header_upgrade, begin, header_len)) {
+				ret = add_known_header (hdr, header_upgrade, (colon+2)-buffer->buf, end-colon-2);
+			} else if (header_equals ("User-Agent", header_user_agent, begin, header_len)) {
+				ret = add_known_header (hdr, header_user_agent, (colon+2)-buffer->buf, end-colon-2);
+			} else goto unknown;
+			break;
+		default:
+		unknown:
 			/* Add a unknown header
 			 */
-			ret = add_unknown_header (hdr, begin-buffer->buf, (points+2)-buffer->buf, end-points-2);
+			ret = add_unknown_header (hdr, begin-buffer->buf, (colon+2)-buffer->buf, end-colon-2);
 		}
 
 		if (ret < ret_ok) {

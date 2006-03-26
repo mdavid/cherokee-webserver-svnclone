@@ -132,11 +132,10 @@ cherokee_handler_cgi_base_build_basic_env (cherokee_handler_cgi_base_t          
 					   cherokee_connection_t                    *conn,
 					   cherokee_buffer_t                        *tmp)
 {
-	int           r;
-	ret_t         ret;
-	char         *p;
-	cuint_t       p_len;
-	const char   *p_const;
+	int      re;
+	ret_t    ret;
+	char    *p;
+	cuint_t  p_len;
 
 	char remote_ip[CHE_INET_ADDRSTRLEN+1];
 	CHEROKEE_TEMP(temp, 32);
@@ -196,20 +195,20 @@ cherokee_handler_cgi_base_build_basic_env (cherokee_handler_cgi_base_t          
 
 	/* Sever port
 	 */
-	r = snprintf (temp, temp_size, "%d", CONN_SRV(conn)->port);
-	set_env (cgi, "SERVER_PORT", temp, r);
+	re = snprintf (temp, temp_size, "%d", CONN_SRV(conn)->port);
+	set_env (cgi, "SERVER_PORT", temp, re);
 
 	/* HTTP protocol version
 	 */
-	ret = cherokee_http_version_to_string (conn->header.version, &p_const, &p_len);
+	ret = cherokee_http_version_to_string (conn->header.version, (const char **) &p, &p_len);
 	if (ret >= ret_ok)
-		set_env (cgi, "SERVER_PROTOCOL", (char *)p_const, p_len);
+		set_env (cgi, "SERVER_PROTOCOL", p, p_len);
 
 	/* Set the method
 	 */
-	ret = cherokee_http_method_to_string (conn->header.method, &p_const, &p_len);
+	ret = cherokee_http_method_to_string (conn->header.method, (const char **) &p, &p_len);
 	if (ret >= ret_ok)
-		set_env (cgi, "REQUEST_METHOD", (char *)p_const, p_len);
+		set_env (cgi, "REQUEST_METHOD", p, p_len);
 
 	/* Remote user
 	 */
@@ -240,21 +239,46 @@ cherokee_handler_cgi_base_build_basic_env (cherokee_handler_cgi_base_t          
 
 	/* HTTP variables
 	 */
-	ret = cherokee_header_get_unknown (&conn->header, "Cookie", 6, &p, &p_len);
+	ret = cherokee_header_get_known (&conn->header, header_accept, &p, &p_len);
+	if (ret == ret_ok) {
+		set_env (cgi, "HTTP_ACCEPT", p, p_len);		
+	}
+
+	ret = cherokee_header_get_known (&conn->header, header_accept_charset, &p, &p_len);
+	if (ret == ret_ok) {
+		set_env (cgi, "HTTP_ACCEPT_CHARSET", p, p_len);
+	}
+
+	ret = cherokee_header_get_known (&conn->header, header_accept_encoding, &p, &p_len);
+	if (ret == ret_ok) {
+		set_env (cgi, "HTTP_ACCEPT_ENCODING", p, p_len);
+	}
+
+	ret = cherokee_header_get_known (&conn->header, header_accept_language, &p, &p_len);
+	if (ret == ret_ok) {
+		set_env (cgi, "HTTP_ACCEPT_LANGUAGE", p, p_len);
+	}
+
+	ret = cherokee_header_get_known (&conn->header, header_authorization, &p, &p_len);
+	if (ret == ret_ok) {
+		set_env (cgi, "HTTP_AUTHORIZATION", p, p_len);		
+	}
+
+	ret = cherokee_header_get_known (&conn->header, header_connection, &p, &p_len);
+	if (ret == ret_ok) {
+		set_env (cgi, "HTTP_CONNECTION", p, p_len);
+	}
+
+	ret = cherokee_header_get_known (&conn->header, header_cookie, &p, &p_len);
 	if (ret == ret_ok) {
 		set_env (cgi, "HTTP_COOKIE", p, p_len);
 	}
 
-	ret = cherokee_header_get_known (&conn->header, header_user_agent, &p, &p_len);
+	ret = cherokee_header_get_known (&conn->header, header_if_modified_since, &p, &p_len);
 	if (ret == ret_ok) {
-		set_env (cgi, "HTTP_USER_AGENT", p, p_len);
+		set_env (cgi, "HTTP_IF_MODIFIED_SINCE", p, p_len);		
 	}
 
-	ret = cherokee_header_get_known (&conn->header, header_referer, &p, &p_len);
-	if (ret == ret_ok) {
-		set_env (cgi, "HTTP_REFERER", p, p_len);
-	}
-	
 	ret = cherokee_header_get_known (&conn->header, header_if_none_match, &p, &p_len);
 	if (ret == ret_ok) {
 		set_env (cgi, "HTTP_IF_NONE_MATCH", p, p_len);		
@@ -265,19 +289,24 @@ cherokee_handler_cgi_base_build_basic_env (cherokee_handler_cgi_base_t          
 		set_env (cgi, "HTTP_IF_RANGE", p, p_len);		
 	}
 
-	ret = cherokee_header_get_known (&conn->header, header_if_modified_since, &p, &p_len);
+	ret = cherokee_header_get_known (&conn->header, header_keepalive, &p, &p_len);
 	if (ret == ret_ok) {
-		set_env (cgi, "HTTP_IF_MODIFIED_SINCE", p, p_len);		
+		set_env (cgi, "HTTP_KEEP_ALIVE", p, p_len);		
 	}
 
-	ret = cherokee_header_get_known (&conn->header, header_authorization, &p, &p_len);
+	ret = cherokee_header_get_known (&conn->header, header_range, &p, &p_len);
 	if (ret == ret_ok) {
-		set_env (cgi, "HTTP_AUTHORIZATION", p, p_len);		
+		set_env (cgi, "HTTP_RANGE", p, p_len);
 	}
 
-	ret = cherokee_header_get_known (&conn->header, header_accept_encoding, &p, &p_len);
+	ret = cherokee_header_get_known (&conn->header, header_referer, &p, &p_len);
 	if (ret == ret_ok) {
-		set_env (cgi, "HTTP_ACCEPT_ENCODING", p, p_len);		
+		set_env (cgi, "HTTP_REFERER", p, p_len);
+	}
+
+	ret = cherokee_header_get_known (&conn->header, header_user_agent, &p, &p_len);
+	if (ret == ret_ok) {
+		set_env (cgi, "HTTP_USER_AGENT", p, p_len);
 	}
 
 	/* TODO: Fill the others CGI environment variables
