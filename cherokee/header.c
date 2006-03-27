@@ -589,11 +589,11 @@ cherokee_header_parse (cherokee_header_t *hdr, cherokee_buffer_t *buffer,  chero
 				ret = add_known_header (hdr, header_accept_encoding, (colon+2)-buffer->buf, end-colon-2);
 			} else if (header_equals ("Accept-Charset", header_accept_charset, begin, header_len)) {
 				ret = add_known_header (hdr, header_accept_charset, (colon+2)-buffer->buf, end-colon-2);
-			} else if (header_equals ("Accept-Language", header_accept_charset, begin, header_len)) {
+			} else if (header_equals ("Accept-Language", header_accept_language, begin, header_len)) {
 				ret = add_known_header (hdr, header_accept_language, (colon+2)-buffer->buf, end-colon-2);
-			} else if (header_equals ("Accept", header_accept_charset, begin, header_len)) {
+			} else if (header_equals ("Accept", header_accept, begin, header_len)) {
 				ret = add_known_header (hdr, header_accept, (colon+2)-buffer->buf, end-colon-2);
-			} else if (header_equals ("Authorization", header_accept_charset, begin, header_len)) {
+			} else if (header_equals ("Authorization", header_authorization, begin, header_len)) {
 				ret = add_known_header (hdr, header_authorization, (colon+2)-buffer->buf, end-colon-2);
 			} else goto unknown; 
 			break;
