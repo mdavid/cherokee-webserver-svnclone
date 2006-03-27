@@ -39,7 +39,7 @@
 #include "module_loader.h"
 
 
-#define ENV_VAR_NUM 30
+#define ENV_VAR_NUM 80
 
 
 typedef struct {
