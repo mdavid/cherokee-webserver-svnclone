@@ -1,3 +1,8 @@
+2006-03-28  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/buffer.c (cherokee_buffer_print_debug): Improved by
+	olivier-ml1@oleastre.be.
+
 2006-03-26  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cherokee/handler_fcgi.c (cherokee_handler_fcgi_free): Memory

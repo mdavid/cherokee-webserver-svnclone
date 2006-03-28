@@ -569,43 +569,47 @@ ret_t
 cherokee_buffer_print_debug (cherokee_buffer_t *buf, int len)
 {
 	int           i, length;
-	char          text[17];
+	char          text[67];
+	char*         hex_text;
+	char*         ascii_text;
 	unsigned char tmp;
-
+	 
 	if ((len == -1) || (buf->len <= len)) {
 		length = buf->len;
 	} else {
 		length = len;
 	}
-
+	 
 	if (length <= 0)
 		return ret_ok;
-
-	text [16] = 0;
+	
+	memset(text, 0, 67);
 	for (i=0; i < length; i++) {
 		if (i%16 == 0) {
-			printf ("%08x ", i);
+			if (text[0] != 0){
+				printf ("%s%s", text, CRLF);
+			}
+			sprintf (text, "%08x%57c", i, ' ');
+			hex_text = text + 9;
+			ascii_text = text + 49;
 		}
-
+		 
 		tmp = buf->buf[i];
-		printf ("%02x",  tmp & 0xFF);
-
-		if ((tmp > ' ') &&  (tmp < 128))
-			text [i%16] = tmp;
-		else
-			text [i%16] = '.';
-
+		sprintf (hex_text, "%02x",  tmp & 0xFF);
+		hex_text += 2;
+		*hex_text = ' ';
 		if ((i+1)%2 == 0) {
-			printf (" ");
+			hex_text++;
 		}
-
-		if ((i+1)%16 == 0) {
-			printf ("%s\n", text);
-		}
-
-		fflush(stdout);
+		 
+		if ((tmp > ' ') &&  (tmp < 128))
+			*ascii_text = tmp;
+		else
+			*ascii_text = '.';
+		ascii_text += 1;
 	}
-	printf (CRLF);
+	printf ("%s%s", text, CRLF);
+	fflush(stdout);
 
 	return ret_ok;
 }
