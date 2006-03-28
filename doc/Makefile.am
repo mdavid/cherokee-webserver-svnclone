@@ -29,6 +29,7 @@ How_to_manage_Virtual_Host.html \
 Htdigest_validator.html \
 Htpasswd_validator.html \
 Icons_configuration.html \
+Jaws_and_Cherokee_with_FastCGI.html \
 Logging_system.html \
 Mime_types_configuration.html \
 NCSA_logger.html \
