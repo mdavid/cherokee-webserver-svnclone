@@ -25,6 +25,7 @@
 #include "common-internal.h"
 #include "ext_source.h"
 #include "util.h"
+#include "socket.h"
 
 #include <sys/types.h>
 #include <unistd.h>
@@ -221,12 +222,6 @@ cherokee_ext_source_get_next (cherokee_ext_source_head_t *head_config, list_t *s
 	return ret_ok;
 }
 
-//
-#include <sys/types.h>
-#include <sys/socket.h>
-#include "fastcgi.h"
-#include "socket.h"
-//
 
 ret_t 
 cherokee_ext_source_spawn_srv (cherokee_ext_source_t *server)
@@ -238,14 +233,10 @@ cherokee_ext_source_spawn_srv (cherokee_ext_source_t *server)
 	char              *empty_envp[] = {NULL};
 	cherokee_buffer_t  tmp          = CHEROKEE_BUF_INIT;
 
+#if 0
 	int s;
 	cherokee_sockaddr_t addr;
 
-	/* Maybe set a custom enviroment variable set 
-	 */
-	envp = (server->custom_env) ? server->custom_env : empty_envp;
-
-#if 0
 	/* This code is meant to, in some way, signal the FastCGI that
 	 * it is centainly a FastCGI.  The fcgi client will execute
 	 * getpeername (FCGI_LISTENSOCK_FILENO) and, then if it is a
@@ -265,6 +256,10 @@ cherokee_ext_source_spawn_srv (cherokee_ext_source_t *server)
 	re = listen(s, 1024);
 	if (re == -1) return ret_error;
 #endif
+
+	/* Maybe set a custom enviroment variable set 
+	 */
+	envp = (server->custom_env) ? server->custom_env : empty_envp;
 
 	/* Execute the FastCGI server
 	 */

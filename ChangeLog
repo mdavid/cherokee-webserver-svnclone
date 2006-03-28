@@ -1,5 +1,9 @@
 2006-03-28  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* cherokee/ext_source.c (cherokee_ext_source_spawn_srv): Cleaned
+	up. olivier-ml1@oleastre.be reported problems compiling on Win32
+	because of a bunch of includes I forgot after some tests.
+
 	* cherokee/buffer.c (cherokee_buffer_print_debug): Improved by
 	olivier-ml1@oleastre.be.
 
