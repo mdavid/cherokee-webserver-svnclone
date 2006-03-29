@@ -1,3 +1,9 @@
+2006-03-29  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/handler_cgi_base.c (cherokee_handler_cgi_base_build_envp):
+	Under some circumstances it was trying to access NULL. Fixed by
+	olivier-ml1@oleastre.be
+
 2006-03-28  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cherokee/ext_source.c (cherokee_ext_source_spawn_srv): Cleaned

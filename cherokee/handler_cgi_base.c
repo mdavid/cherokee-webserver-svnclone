@@ -327,6 +327,7 @@ cherokee_handler_cgi_base_build_envp (cherokee_handler_cgi_base_t *cgi, cherokee
 	cuint_t            len = 0;
 	char              *p   = "";
 	cherokee_buffer_t  tmp = CHEROKEE_BUF_INIT;
+	cherokee_buffer_t *name;
 
 	/* Add user defined variables at the beginning,
 	 * these have precedence..
@@ -357,13 +358,19 @@ cherokee_handler_cgi_base_build_envp (cherokee_handler_cgi_base_t *cgi, cherokee
 		if (cgi->param.len > 0) {
 			/* phpcgi request	
 			 */
-			p = cgi->param.buf + conn->local_directory.len - 1;
-			len = (cgi->param.buf + cgi->param.len) - p;
+			name = &cgi->param;
 		} else {
 			/* cgi, scgi or fastcgi	
 			 */
-			p = cgi->executable.buf + conn->local_directory.len - 1;
-			len = (cgi->executable.buf + cgi->executable.len) - p;
+			name = &cgi->executable;
+		}
+
+		if (conn->local_directory.len > 0){
+			p = name->buf + conn->local_directory.len - 1;
+			len = (name->buf + name->len) - p;
+		} else {
+			p = name->buf;
+			len = name->len;
 		}
 	}
 
