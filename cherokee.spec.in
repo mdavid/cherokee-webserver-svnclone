@@ -14,12 +14,10 @@ Group:          Productivity/Networking/Web/Servers
 URL:            http://www.0x50.org
 
 %description
-Cherokee is a tiny, very fast, lightweight Web server. It is
-implemented entirely in C, and has no dependencies beyond a standard C
-library. It is embeddable and extensible with plug-ins. It supports
-on-the-fly configuration by reading files or strings, TLS/SSL (via
-GNUTLS or OpenSSL), virtual hosts, authentication, cache friendly
-features, PHP4, custom error management, and much more.
+Cherokee is a very fast, flexible and easy to configure Web Server.
+It supports the widespread technologies nowadays: FastCGI, SCGI, PHP,
+CGI, TLS and SSL encrypted connections, Virtual hosts, Authentication,
+on the fly encoding, Apache compatible log files, and much more.
 
 %prep
 %setup -q
@@ -30,7 +28,7 @@ CFLAGS="$RPM_OPT_FLAGS"                 \
 ./configure --prefix=%{_prefix}         \
             --sysconfdir=%{_sysconfdir} \
             --mandir=%{_mandir}         \
-            --sbindir=%{_sbindir}       \ 
+            --sbindir=%{_sbindir}       \
 		  --with-wwwroot=/home/httpd/ \
             --enable-pthreads
 make CFLAGS="-O0 -g3"
