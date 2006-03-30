@@ -82,7 +82,7 @@ ServerTokens Full
 ##
 Encoder gzip {
    Allow html, htm, txt
-   Deny jpg, png, gz
+   Deny jpg, png, gz, php
 }
 
 ##

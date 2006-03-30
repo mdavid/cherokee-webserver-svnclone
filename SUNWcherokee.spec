@@ -10,8 +10,8 @@
 
 Name:                    SUNWcherokee
 Summary:                 cherokee - Fast, flexible, lightweight web server
-Version:                 0.4.30
-Source:                  http://www.0x50.org/download/0.4/%{version}/cherokee-%{version}.tar.gz
+Version:                 0.5.0
+Source:                  http://www.0x50.org/download/0.5/%{version}/cherokee-%{version}.tar.gz
 SUNW_BaseDir:            %{_basedir}
 BuildRoot:               %{_tmppath}/%{name}-%{version}-build
 
