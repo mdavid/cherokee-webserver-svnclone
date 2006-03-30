@@ -59,6 +59,7 @@ debian_testing_chroot.sh
 
 EXTRA_DIST =          \
 TODO                  \
+http-cherokee.xml     \
 cherokee.spec         \
 cherokee.spec.in      \
 SUNWcherokee.spec     \

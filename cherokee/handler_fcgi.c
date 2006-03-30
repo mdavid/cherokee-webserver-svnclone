@@ -74,7 +74,7 @@ process_package (cherokee_handler_fcgi_t *hdl, cherokee_buffer_t *inbuf, cheroke
 
 	if (header->version != 1) {
 		cherokee_buffer_print_debug (inbuf, -1);
-		PRINT_ERROR ("Parsing error: unknown version\n");
+		PRINT_ERROR_S ("Parsing error: unknown version\n");
 		return ret_error;
 	}
 	
@@ -83,7 +83,7 @@ process_package (cherokee_handler_fcgi_t *hdl, cherokee_buffer_t *inbuf, cheroke
 	    header->type != FCGI_END_REQUEST)
 	{
 		cherokee_buffer_print_debug (inbuf, -1);
-		PRINT_ERROR ("Parsing error: unknown type\n");
+		PRINT_ERROR_S ("Parsing error: unknown type\n");
 		return ret_error;
 	}
 	
