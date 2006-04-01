@@ -1,5 +1,7 @@
 2006-04-01  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* cherokee/connection.c (get_host): Little clean up.
+
 	* cherokee/handler_error.c (build_hardcoded_response_page): It was
 	missing a break. Patch by Philip Pemberton <philpem@dsl.pipex.com>
 

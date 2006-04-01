@@ -115,7 +115,7 @@ cherokee_header_init (cherokee_header_t *hdr)
 	 */
 	hdr->query_string_off = 0;
 	hdr->query_string_len = 0;
-	
+
 	/* Sanity
 	 */
 	hdr->input_buffer     = NULL;
@@ -441,8 +441,8 @@ parse_request_first_line (cherokee_header_t *hdr, cherokee_buffer_t *buf, char *
 	 */
 	begin = buf->buf + hdr->request_off;
 	if (cmp_str (begin, "http://")) {
-		char *dir;
-		char *host = begin + 7;
+		char   *dir;
+		char   *host = begin + 7;
 
 		dir = strchr (host, '/');
 		if (dir == NULL) goto error;

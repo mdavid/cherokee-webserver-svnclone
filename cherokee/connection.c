@@ -905,25 +905,30 @@ get_host (cherokee_connection_t *cnt,
 	  char                  *ptr,
 	  int                    size) 
 {
-	char  *end;
-	char  *end2;
-	ret_t  ret;
+	ret_t    ret;
+	char    *i;
+	char    *end = ptr + size;
+	cuint_t  skip = 0;
 
-	/* Drop the port if present
-	 * Eg: www.alobbs.com:8080 -> www.alobbs.com
-	 */ 
-	end = end2 = ptr + size;
-	while ((*end2 != ':') && (end2 > ptr)) end2--;
-	if (*end2 == ':') end = end2;
-
-	/* Sanity check: Is the host name empty?
+	/* Sanity check
 	 */
-	if (unlikely(end - ptr == 0)) return ret_error;
+	if (size <= 0) return ret_error;
+
+	/* Skip "colon + port"
+	 */
+	for (i=end; i>=ptr; i--) {
+		if (*i == ':') {
+			skip = end - i;
+			break;
+		}
+	}
 
 	/* Copy the string
 	 */
-	size = (end - ptr);
-	ret = cherokee_buffer_add (&cnt->host, ptr, size);
+	if (unlikely (size - skip) <= 0)
+		return ret_error;
+
+	ret = cherokee_buffer_add (&cnt->host, ptr, size - skip);
 	if (unlikely(ret < ret_ok)) return ret;
 
 	/* Security check: Hostname shouldn't start with a dot
@@ -939,6 +944,7 @@ get_host (cherokee_connection_t *cnt,
 	
 	return ret_ok;
 }
+
 
 static inline ret_t
 get_encoding (cherokee_connection_t    *cnt,
