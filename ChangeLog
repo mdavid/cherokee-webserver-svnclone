@@ -1,3 +1,8 @@
+2006-04-01  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/handler_error.c (build_hardcoded_response_page): It was
+	missing a break. Patch by Philip Pemberton <philpem@dsl.pipex.com>
+
 2006-03-31  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cherokee.spec.in: Fixed extra space. Reported by
