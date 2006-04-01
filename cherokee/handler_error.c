@@ -126,6 +126,7 @@ build_hardcoded_response_page (cherokee_connection_t *cnt, cherokee_buffer_t *bu
 					 "This server could not verify that you are authorized to access the document "
 					 "requested.  Either you supplied the wrong credentials (e.g., bad password), "
 					 "or your browser doesn't understand how to supply the credentials required.");
+		break;
 	case http_upgrade_required:
 		cherokee_buffer_add_str (buffer,
 					 "The requested resource can only be retrieved using SSL.  The server is "
