@@ -52,7 +52,7 @@ struct cherokee_header {
 	/* Unknown headers
 	 */
 	cherokee_header_unknown_entry_t *unknowns;
-	int                              unknowns_len;
+	cint_t                           unknowns_len;
 
 	/* Properties
 	 */
@@ -62,20 +62,20 @@ struct cherokee_header {
 
 	/* Request
 	 */
-	off_t request_off;
-	int   request_len;
-	int   request_args_len;
+	off_t                   request_off;
+	cint_t                  request_len;
+	cint_t                  request_args_len;
 
 	/* Query string
 	 */
-	off_t query_string_off;
-	int   query_string_len;
+	off_t                   query_string_off;
+	cint_t                  query_string_len;
 
 	/* Debug & sanity checks
 	 */
-	cherokee_buffer_t *input_buffer;
-	crc_t              input_buffer_crc;
-	uint32_t           input_header_len;
+	cherokee_buffer_t      *input_buffer;
+	crc_t                   input_buffer_crc;
+	uint32_t                input_header_len;
 
 };
 
