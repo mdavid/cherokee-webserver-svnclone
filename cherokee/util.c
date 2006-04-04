@@ -685,6 +685,9 @@ cherokee_gethostbyname (const char *hostname, struct in_addr *addr)
 
         /* Copy the address
          */
+	if (hp == NULL)
+		return ret_not_found;
+
         memcpy (addr, hp->h_addr, hp->h_length);
 
         return ret_ok;
