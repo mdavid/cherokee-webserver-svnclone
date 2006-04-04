@@ -1,4 +1,11 @@
+2006-04-04  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/handler_error.c (build_hardcoded_response_page): Fixed
+	Cross Site Scripting bug discovered by Ruben Garrote Garcia.
+
 2006-04-01  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/util.c (cherokee_gethostbyname): Fixes segfault.
 
 	* cherokee/connection.c (get_host): Little clean up.
 
