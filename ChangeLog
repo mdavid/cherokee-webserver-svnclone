@@ -1,3 +1,7 @@
+2006-04-10  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* 0.5.1 released
+
 2006-04-04  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cherokee/handler_error.c (build_hardcoded_response_page): Fixed
