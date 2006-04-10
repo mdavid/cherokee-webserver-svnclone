@@ -53,7 +53,7 @@ equal_case (const void *avl_a, const void *avl_b, void *avl_param)
 }
 
 
-static inline void
+static void
 del_item (void *avl_item, void *avl_param)
 {
 	free (((item_t *)avl_item)->key);
