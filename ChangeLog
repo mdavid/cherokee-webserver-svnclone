@@ -3,6 +3,11 @@
 	* cherokee/main.c (common_server_initialization): PID file must to
 	written before the server changes its user identity.
 
+	* cherokee.1, cherokee_logrotate.1, doc/develop/Intro.txt, README,
+	sites-default.sample.pre, windows/cherokee.nsi.in: URL poiting to
+	alobbs.com has been fixed to point to 0x50.org.  Patch by Gunnar
+	Wolf <gwolf@gwolf.org>
+
 2006-04-10  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cherokee/table.c (del_item): It is no longer an inline'd
