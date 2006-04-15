@@ -758,7 +758,7 @@ cherokee_handler_dirlist_step (cherokee_handler_dirlist_t *dhdl, cherokee_buffer
 ret_t
 cherokee_handler_dirlist_add_headers (cherokee_handler_dirlist_t *dhdl, cherokee_buffer_t *buffer)
 {
-	cherokee_buffer_add_str (buffer, "Content-Type: text/html"CRLF);
+	cherokee_buffer_add_str (buffer, "Content-Type: text/html; charset=iso-8859-1"CRLF);
 	return ret_ok;
 }
 
