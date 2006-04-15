@@ -1,5 +1,9 @@
 2006-04-15  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* cherokee/read_config_grammar.y, cherokee/server-protected.h,
+	cherokee/module_read_config.c, cherokee/server.c: It was failing
+	to load more than one MimeFile.
+
 	* cherokee/handler_dirlist.c (cherokee_handler_dirlist_add_headers):
 	Added charset entry into Content-Type header.
 
