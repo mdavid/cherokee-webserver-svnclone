@@ -767,7 +767,21 @@ server_tokens : T_SERVER_TOKENS T_ID
 
 mime : T_MIME_FILE fulldir
 {
-	   SRV(server)->mime_file = $2;
+	   ret_t ret;
+
+	   if (SRV(server)->mime == NULL) {
+			 ret = cherokee_mime_new (&SRV(server)->mime);
+			 if (ret != ret_ok) {
+				    PRINT_ERROR_S ("Can not get default MIME configuration file\n");
+				    return 1;
+			 }
+	   }
+
+	   ret = cherokee_mime_load_mime_types (SRV(server)->mime, $2);
+	   if (ret < ret_ok) {
+			 PRINT_ERROR ("Can not load MIME configuration file %s\n", $2);
+			 return 1;
+	   }
 };
 
 mime_entry : T_MIMETYPE T_MIMETYPE_ID '{'

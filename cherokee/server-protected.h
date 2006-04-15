@@ -153,7 +153,6 @@ struct cherokee_server {
 
 	/* Mime
 	 */
-	char                      *mime_file;
 	cherokee_mime_t           *mime;
 
 	/* Time

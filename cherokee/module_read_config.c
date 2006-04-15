@@ -254,24 +254,6 @@ read_config_string (cherokee_server_t *srv, char *config_string)
 			PRINT_ERROR_S ("Cannot read the icons file\n");
 		}
 	}
-
-	/* Maybe read the MIME file
-	 */
-	if (srv->mime_file != NULL) {
-		if (srv->mime == NULL) {
-			ret = cherokee_mime_new (&srv->mime);
-			if (ret < ret_ok) {
-				PRINT_ERROR_S ("Can not get default MIME configuration file\n");
-				return ret;
-			}
-		}
-
-		ret = cherokee_mime_load_mime_types (srv->mime, srv->mime_file);
-		if (ret < ret_ok) {
-			PRINT_ERROR ("Can not load MIME configuration file %s\n", srv->mime_file);
-			return ret;
-		}
-	}
 #endif
 
 	return ret;
