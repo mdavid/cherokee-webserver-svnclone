@@ -1,5 +1,7 @@
 2006-04-22  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* qa/094-URL-request.py (Test.Prepare): Fixed.
+
 	* cherokee/handler_dirlist.c (generate_file_entry): Tiny memory
 	leak.
 

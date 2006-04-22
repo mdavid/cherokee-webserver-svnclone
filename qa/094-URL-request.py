@@ -9,14 +9,17 @@ class Test (TestBase):
         self.request          = "GET http://request1host/urlrequest1/dir/file HTTP/1.1\r\n"
         self.expected_error   = 200
         self.expected_content = MAGIC
+
+    def Prepare (self, www):
+        d = self.Mkdir (www, "urlrequest1/dir")
+        self.WriteFile (d, "file", 0444, MAGIC)
+
         self.conf             = """
            Server request1host {
+             DocumentRoot %s
              Directory /urlrequest1 {
                Handler file
              }
            }
-        """
+        """  % (www)
 
-    def Prepare (self, www):
-        dir = self.Mkdir (www, "urlrequest1/dir")
-        self.WriteFile (dir, "file", 0444, MAGIC)
