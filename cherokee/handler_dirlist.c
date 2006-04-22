@@ -92,7 +92,10 @@ generate_file_entry (DIR *dir, cherokee_buffer_t *path, cherokee_handler_dirlist
 	/* Read a new directory entry
 	 */
 	cherokee_readdir (dir, &n->info, &entry);
-	if (entry == NULL) return ret_eof;
+	if (entry == NULL) {
+		free(n);
+		return ret_eof;
+	}
 
 	/* Initialization
 	 */

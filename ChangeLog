@@ -1,4 +1,17 @@
+2006-04-22  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/handler_dirlist.c (generate_file_entry): Tiny memory
+	leak.
+
+	* configure.in, cherokee/module_loader.c (dylib_open): Native
+	MacOS X compilation fixed.  It was trying to use .dylib rather
+	than .so in the modules filename.
+
 2006-04-17  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* 0.5.2 released
+
+	* SUNWcherokee.spec: Updated
 
 	* cherokee/thread.c (process_active_connections): There was an
 	unhandler error case here. It was the source of some stability

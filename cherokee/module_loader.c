@@ -216,7 +216,7 @@ dylib_open (const char *libname, void **handler_out, int extra_flags)
 
 	/* Build the path string
 	 */
-	ret = cherokee_buffer_add_va (&tmp, CHEROKEE_PLUGINDIR "/libplugin_%s." SO_SUFFIX, libname);
+	ret = cherokee_buffer_add_va (&tmp, CHEROKEE_PLUGINDIR "/libplugin_%s." MOD_SUFFIX, libname);
 	if (unlikely(ret < ret_ok)) return ret;
 	
 	/* Open the library	
