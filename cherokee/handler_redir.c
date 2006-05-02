@@ -121,46 +121,59 @@ static void
 substitute_groups (cherokee_buffer_t* url, const char* subject, 
 		   const char* subs, int ovector[], int stringcount)
 {
-	int               dollar;
-	cherokee_buffer_t buff = CHEROKEE_BUF_INIT;
+	int                 re;
+	cherokee_boolean_t  dollar;
+	char                num;
+	const char         *substring = NULL;
 	
-	for(dollar = 0; *subs != '\0'; subs++) {
-
-		if (dollar) {
-			char num = *subs - '0';
-
-			if (num >= 0 && num <= 9) {
-				cherokee_buffer_ensure_size (&buff, 1024);
-
-				pcre_copy_substring (subject, ovector, stringcount, num, buff.buf, buff.size-1);
-				cherokee_buffer_add (url, buff.buf, strlen(buff.buf));
-
-			} else {
-				/* If it is not a number, add both characters 
-				 */
-				cherokee_buffer_add_str (url, "$");
-				cherokee_buffer_add (url, (char *)subs, 1);
-			}
-
-			dollar = 0;
-		} else {
+	for(dollar = false; *subs != '\0'; subs++) {		
+		if (!dollar) {
 			if (*subs == '$')
-				dollar = 1;
+				dollar = true;
 			else 
 				cherokee_buffer_add (url, (char *)subs, 1);
+			continue;
 		}
-	}
 
-	cherokee_buffer_mrproper (&buff);
+		num = *subs - '0';
+		if (num >= 0 && num <= 9) {
+			re = pcre_get_substring (subject, ovector, stringcount, num, &substring);
+			if ((re < 0) || (substring == NULL)) {
+				dollar = false;
+				continue;
+			}
+
+			cherokee_buffer_add (url, (char *)substring, strlen(substring));
+			pcre_free_substring (substring);
+
+		} else {
+			/* If it is not a number, add both characters 
+			 */
+			cherokee_buffer_add_str (url, "$");
+			cherokee_buffer_add (url, (char *)subs, 1);
+		}
+		
+		dollar = false;
+	}
 }
 
 
 static ret_t
 match_and_substitute (cherokee_handler_redir_t *n) 
 {
+	ret_t                  ret;
 	struct cre_list       *list;
 	cherokee_connection_t *conn = HANDLER_CONN(n);
 	
+	/* Append the query string
+	 */
+	if (! cherokee_buffer_is_empty (&conn->query_string)) {
+		cherokee_buffer_add (&conn->request, "?", 1);
+		cherokee_buffer_add_buffer (&conn->request, &conn->query_string);
+	}
+
+	/* Try to match all the entries
+	 */
 	list = (struct cre_list*)n->regex_list_cre;
 	while (list != NULL) {	
 		int   ovector[OVECTOR_LEN], rc;
@@ -188,7 +201,7 @@ match_and_substitute (cherokee_handler_redir_t *n)
 			rc = conn->req_matched_ref->ovecsize;
 
 		} else {
-			rc = pcre_exec (list->re, NULL, subject, subject_len, 0, 0, ovector, 30);
+			rc = pcre_exec (list->re, NULL, subject, subject_len, 0, 0, ovector, OVECTOR_LEN);
 			if (rc == 0) {
 				PRINT_ERROR_S("Too many groups in the regex\n");
 			}
@@ -214,9 +227,10 @@ match_and_substitute (cherokee_handler_redir_t *n)
 			int   len;
 			char *subject_copy = strdup (subject);
 
-			cherokee_buffer_ensure_size (&conn->request, conn->request.len + subject_len);
+			cherokee_buffer_clean (&conn->pathinfo);
 			cherokee_buffer_clean (&conn->request);
 
+			cherokee_buffer_ensure_size (&conn->request, conn->request.len + subject_len);
 			substitute_groups (&conn->request, subject_copy, list->subs, ovector, rc);
 
 			cherokee_split_arguments (&conn->request, 0, &args, &len);
@@ -231,7 +245,9 @@ match_and_substitute (cherokee_handler_redir_t *n)
 			       conn->request.buf, conn->query_string.buf);
 			
 			free (subject_copy);
-			return ret_eagain;
+
+			ret = ret_eagain;
+			goto out;
 		}
 		
 		/* External redirect
@@ -241,10 +257,15 @@ match_and_substitute (cherokee_handler_redir_t *n)
 
 		TRACE (ENTRIES, "Redirect %s -> %s\n", conn->request_original.buf, conn->redirect.buf);
 
-		return ret_ok;
+		ret = ret_ok;
+		goto out;
 	}
 
-	return ret_ok;
+out:
+	if (! cherokee_buffer_is_empty (&conn->query_string)) 
+		cherokee_buffer_drop_endding (&conn->request, conn->query_string.len + 1);
+
+	return ret;
 }
 
 #endif
@@ -258,7 +279,7 @@ cherokee_handler_redir_new (cherokee_handler_t **hdl, void *cnt, cherokee_table_
 	/* Init the base class object
 	 */
 	cherokee_handler_init_base(HANDLER(n), cnt);
-	
+
 	MODULE(n)->init         = (handler_func_init_t) cherokee_handler_redir_init;
 	MODULE(n)->free         = (handler_func_free_t) cherokee_handler_redir_free;
 	HANDLER(n)->add_headers = (handler_func_add_headers_t) cherokee_handler_redir_add_headers;

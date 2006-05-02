@@ -100,9 +100,12 @@ cherokee_reqs_list_get (cherokee_reqs_list_t     *rl,
 		if (ret != ret_ok) continue;
 		
 		rei = pcre_exec (re, NULL, request, request_len, 0, 0, lentry->ovector, OVECTOR_LEN);
-		if (rei < 0) continue;
+		if (rei < 0) {
+			TRACE (ENTRIES, "Request \"%s\" does _not_ match with \"%s\", rei=%d\n", request, pattern, rei);
+			continue;
+		}
 
-		TRACE (ENTRIES, "Request \"%s\" matches with \"%s\"\n", request, pattern);
+		TRACE (ENTRIES, "Request \"%s\" matched \"%s\", ovecsize=%d\n", request, pattern, rei);
 		
 		lentry->ovecsize      = rei;
 		conn->req_matched_ref = lentry;
