@@ -1567,9 +1567,6 @@ cherokee_connection_get_req_entry (cherokee_connection_t *cnt, cherokee_reqs_lis
 	 */
 #ifndef CHEROKEE_EMBEDDED
 	ret = cherokee_reqs_list_get (reqs, &cnt->request, config_entry, cnt);
-#else
-	return ret_ok;
-#endif
 	switch (ret) {
 	case ret_not_found:
 		break;
@@ -1589,6 +1586,9 @@ cherokee_connection_get_req_entry (cherokee_connection_t *cnt, cherokee_reqs_lis
 	cnt->auth_type = config_entry->authentication;
 
 	return ret;
+#else
+	return ret_ok;
+#endif
 }
 
 
