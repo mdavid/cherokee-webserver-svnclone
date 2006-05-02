@@ -980,6 +980,9 @@ cherokee_parse_query_string (cherokee_buffer_t *query_string,
  	char *string;
 	char *token; 
 
+	if (cherokee_buffer_is_empty (query_string))
+		return ret_ok;
+
 	string = query_string->buf;
 
 	while ((token = (char *) strsep(&string, "&")) != NULL)
