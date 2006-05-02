@@ -43,6 +43,8 @@
 #include <dirent.h>
 
 #include <cherokee/buffer.h>
+#include <cherokee/table.h>
+
 
 
 CHEROKEE_BEGIN_DECLS
@@ -110,6 +112,8 @@ ret_t cherokee_split_arguments (cherokee_buffer_t *request,
 
 ret_t cherokee_short_path      (cherokee_buffer_t *path);
 
+ret_t cherokee_parse_query_string (cherokee_buffer_t *query_string,
+				   cherokee_table_t  *arguments);
 
 CHEROKEE_END_DECLS
 

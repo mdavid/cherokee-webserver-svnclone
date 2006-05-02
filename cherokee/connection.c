@@ -1362,10 +1362,13 @@ cherokee_connection_get_request (cherokee_connection_t *cnt)
 		cherokee_buffer_drop_endding (&cnt->incoming_header, post_len);
 	}
 	
-	/* Copy the request
+	/* Copy the request and query_string
 	 */
 	ret = cherokee_header_copy_request (&cnt->header, &cnt->request);
-	if (ret < ret_ok) goto error;
+	if (unlikely (ret < ret_ok)) goto error;
+
+	ret = cherokee_header_copy_query_string (&cnt->header, &cnt->query_string);
+	if (unlikely (ret < ret_ok)) goto error;
 
 	/* Look for starting '/' in the request
 	 */
@@ -1806,7 +1809,7 @@ cherokee_connection_parse_args (cherokee_connection_t *cnt)
 
 	/* Parse the header
 	 */
-	ret = cherokee_header_get_arguments (&cnt->header, &cnt->query_string, cnt->arguments);
+	ret = cherokee_parse_query_string (&cnt->query_string, cnt->arguments);
 	if (unlikely(ret < ret_ok)) return ret;
 
 	return ret_ok;

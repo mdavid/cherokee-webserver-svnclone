@@ -973,3 +973,43 @@ cherokee_get_timezone_ref (void)
 }
 
 
+ret_t 
+cherokee_parse_query_string (cherokee_buffer_t *query_string,
+			     cherokee_table_t  *arguments)
+{
+ 	char *string;
+	char *token; 
+
+	string = query_string->buf;
+
+	while ((token = (char *) strsep(&string, "&")) != NULL)
+	{
+		char *equ, *key, *val;
+
+		if (token == NULL) continue;
+
+		if ((equ = strchr(token, '=')))
+		{
+			*equ = '\0';
+
+			key = token;
+			val = equ+1;
+
+			cherokee_table_add (arguments, key, strdup(val));
+
+			*equ = '=';
+		} else {
+			cherokee_table_add (arguments, token, NULL);
+		}
+
+		/* UGLY hack, part 1:
+		 * It restore the string modified by the strtok() function
+		 */
+		token[strlen(token)] = '&';
+	}
+
+	/* UGLY hack, part 2:
+	 */
+	query_string->buf[query_string->len] = '\0';
+	return ret_ok;
+}

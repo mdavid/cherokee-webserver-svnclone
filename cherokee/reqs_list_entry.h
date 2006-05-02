@@ -28,7 +28,7 @@
 #include "common-internal.h"
 #include "config_entry.h"
 
-#define OVECTOR_LEN 30
+#define OVECTOR_LEN 10
 
 
 typedef struct {
@@ -45,6 +45,5 @@ typedef struct {
 
 ret_t cherokee_reqs_list_entry_new  (cherokee_reqs_list_entry_t **entry);
 ret_t cherokee_reqs_list_entry_free (cherokee_reqs_list_entry_t  *entry);
-
 
 #endif /* CHEROKEE_REQS_LIST_ENTRY_H */

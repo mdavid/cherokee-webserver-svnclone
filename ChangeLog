@@ -1,3 +1,16 @@
+2006-05-02  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* qa/135-RedirParams.py, qa/Makefile.am: Added new QA tests in
+	order to ensure previous bug is fixed. It should detect possible
+	regression is the future as well.
+
+	* cherokee/handler_redir.c, cherokee/reqs_list.c,
+	cherokee/header.c, cherokee/header.h, cherokee/util.c,
+	cherokee/util.h, cherokee/connection.c,
+	cherokee/reqs_list_entry.h: Fixed a redir handler problem. In some
+	situations, it was failing to redirect URLs with multiple
+	parameters. Reported by Xuzo, Ubuntu-es. 
+
 2006-04-22  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* qa/094-URL-request.py (Test.Prepare): Fixed.
