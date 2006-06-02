@@ -90,6 +90,7 @@ typedef enum {
 	http_partial_content       = 206,
 	http_moved_permanently     = 301,
 	http_moved_temporarily     = 302,
+	http_see_other             = 303,
 	http_not_modified          = 304,
 	http_bad_request           = 400,
 	http_unauthorized          = 401,
@@ -113,6 +114,7 @@ typedef enum {
 #define http_partial_content_string       "206 Partial Content"
 #define http_moved_permanently_string     "301 Moved Permanently"
 #define http_moved_temporarily_string     "302 Moved Temporarily"
+#define http_see_other_string             "303 See Other"
 #define http_not_modified_string          "304 Not Modified"
 #define http_bad_request_string           "400 Bad Request"
 #define http_unauthorized_string          "401 Authorization Required"

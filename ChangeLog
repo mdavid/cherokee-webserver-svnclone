@@ -1,3 +1,8 @@
+2006-05-24  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/http.c, cherokee/http.h: Added HTTP error code 303:
+	"See other".
+
 2006-05-02  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* qa/135-RedirParams.py, qa/Makefile.am: Added new QA tests in
