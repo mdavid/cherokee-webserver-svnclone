@@ -161,8 +161,8 @@ substitute_groups (cherokee_buffer_t* url, const char* subject,
 static ret_t
 match_and_substitute (cherokee_handler_redir_t *n) 
 {
-	ret_t                  ret;
 	struct cre_list       *list;
+	ret_t                  ret  = ret_ok;
 	cherokee_connection_t *conn = HANDLER_CONN(n);
 	
 	/* Append the query string
@@ -245,9 +245,7 @@ match_and_substitute (cherokee_handler_redir_t *n)
 			       conn->request.buf, conn->query_string.buf);
 			
 			free (subject_copy);
-
-			ret = ret_eagain;
-			goto out;
+			return ret_eagain; 
 		}
 		
 		/* External redirect

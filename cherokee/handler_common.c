@@ -121,7 +121,7 @@ cherokee_handler_common_new (cherokee_handler_t **hdl, void *cnt, cherokee_table
 	int                       exists;
 	struct stat               nocache_info;
 	struct stat              *info;
-	cherokee_iocache_entry_t *file;
+	cherokee_iocache_entry_t *file        = NULL;
 	cherokee_iocache_t       *iocache     = NULL;
  	cherokee_boolean_t        use_iocache = true;
 	cherokee_connection_t    *conn        = CONN(cnt);
@@ -161,7 +161,8 @@ cherokee_handler_common_new (cherokee_handler_t **hdl, void *cnt, cherokee_table
 		
 		ret = cherokee_split_pathinfo (&conn->local_directory, begin, true, &pathinfo, &pathinfo_len);
 		if ((ret == ret_not_found) || (pathinfo_len <= 0)) {
-			conn->error_code = http_not_found;
+			cherokee_iocache_mmap_release (iocache, file);
+			conn->error_code = http_not_found;			
 			return ret_error;
 		}
 		
@@ -174,6 +175,8 @@ cherokee_handler_common_new (cherokee_handler_t **hdl, void *cnt, cherokee_table
 		 * to restart the connection setup phase
 		 */
 		cherokee_buffer_clean (&conn->local_directory);
+
+		cherokee_iocache_mmap_release (iocache, file);
 		return ret_eagain;
 	}	
 
@@ -191,6 +194,8 @@ cherokee_handler_common_new (cherokee_handler_t **hdl, void *cnt, cherokee_table
 	if (S_ISDIR(info->st_mode)) {
 		list_t *i;
 
+		cherokee_iocache_mmap_release (iocache, file);
+
 		/* Maybe it has to be redirected
 		 */
 		if (conn->request.buf[conn->request.len-1] != '/') {
@@ -205,6 +210,7 @@ cherokee_handler_common_new (cherokee_handler_t **hdl, void *cnt, cherokee_table
 		/* Have an index file inside?
 		 */
 		list_for_each (i, &CONN_VSRV(conn)->index_list) {
+			int   is_dir;
 			char *index     = LIST_ITEM_INFO(i);
 			int   index_len = strlen (index);
 
@@ -229,6 +235,7 @@ cherokee_handler_common_new (cherokee_handler_t **hdl, void *cnt, cherokee_table
 				
 				ret = stat_file (use_iocache, iocache, &nocache_info, new_local_dir.buf, &file, &info);
 				exists = (ret == ret_ok);
+				cherokee_iocache_mmap_release (iocache, file);
 
 				cherokee_buffer_mrproper (&new_local_dir);
 				if (!exists) continue;
@@ -247,18 +254,20 @@ cherokee_handler_common_new (cherokee_handler_t **hdl, void *cnt, cherokee_table
 			/* Stat() the possible new path
 			 */
 			cherokee_buffer_add (&conn->local_directory, index, index_len);
-
 			ret = stat_file (use_iocache, iocache, &nocache_info, conn->local_directory.buf, &file, &info);
+
 			exists = (ret == ret_ok);
+			is_dir = S_ISDIR(info->st_mode);
+
+			cherokee_iocache_mmap_release (iocache, file);
+			cherokee_buffer_drop_endding (&conn->local_directory, index_len);
 
 			TRACE (ENTRIES, "trying index '%s', exists %d\n", index, exists);
 
-			cherokee_buffer_drop_endding (&conn->local_directory, index_len);
-
 			/* If the file doesn't exist or it is a directory, try with the next one
 			 */
-			if (!exists) continue;
-			if (S_ISDIR(info->st_mode)) continue;
+			if ((!exists) || (is_dir)) 
+				continue;
 			
 			/* Add the index file to the request and clean up
 			 */
