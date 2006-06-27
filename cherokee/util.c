@@ -455,6 +455,9 @@ cherokee_split_pathinfo (cherokee_buffer_t  *path,
 	char        *cur;
 	struct stat  st;
 	char        *last_dir = NULL;
+
+	if (init_pos > path->len)
+		return ret_not_found;
 	
 	for (cur = path->buf + init_pos; *cur; ++cur) {
 		if (*cur != '/') continue;		

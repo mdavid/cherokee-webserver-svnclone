@@ -1512,7 +1512,7 @@ cherokee_connection_get_dir_entry (cherokee_connection_t *cnt, cherokee_dirs_tab
 	 * It must be redirected to "/blog/"
 	 */
 	if ((cnt->request.len == cnt->web_directory.len) &&
-	    (cnt->request.buf[cnt->request.len-1] != '/') &&
+	    (cherokee_buffer_end_char (&cnt->request) != '/') &&
 	    (strcmp (cnt->request.buf, cnt->web_directory.buf) == 0))
 	{
 		cherokee_buffer_ensure_size (&cnt->redirect, cnt->request.len + 1);
