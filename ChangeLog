@@ -1,5 +1,8 @@
 2006-06-27  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* qa/run-tests.py: Added a little delay while launching the
+	threads. The objective is to resynchronize the threads.
+
 	* cherokee/util.c (cherokee_split_pathinfo): There was a case in
 	which it could end up reading a byte out of memory.
 
