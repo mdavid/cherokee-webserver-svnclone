@@ -412,6 +412,7 @@ build_response_header__authenticate (cherokee_connection_t *cnt, cherokee_buffer
 	 */
 	if (cnt->auth_type & http_auth_digest) {
 		cherokee_buffer_t new_nonce = CHEROKEE_BUF_INIT;
+
 		/* Realm
 		 */
 		cherokee_buffer_ensure_size (buffer, 32 + cnt->realm_ref->len + 4);

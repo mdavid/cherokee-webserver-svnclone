@@ -1,3 +1,10 @@
+2006-07-02  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/thread.c (process_active_connections): The
+	authentication wasn't working with the root directory because it
+	wasn't copying all the information needed from the default
+	handler. Fixed. Reported by Jose Parrella <joseparrella@cantv.net>
+
 2006-06-27  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* qa/run-tests.py: Added a little delay while launching the
