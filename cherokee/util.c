@@ -32,6 +32,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <errno.h>
 
 #ifdef HAVE_SYS_TIME_H
 # include <sys/time.h>
@@ -398,30 +399,27 @@ static pthread_mutex_t readdir_mutex = PTHREAD_MUTEX_INITIALIZER;
 int 
 cherokee_readdir (DIR *dirstream, struct dirent *entry, struct dirent **result)
 {
-#ifdef HAVE_POSIX_READDIR_R
+#ifdef HAVE_READDIR_R_2
+        /* We cannot rely on the return value of readdir_r as it
+	 * differs between various platforms (HPUX returns 0 on
+	 * success whereas Solaris returns non-zero)
+         */
+        entry->d_name[0] = '\0';
+
+        readdir_r (dirstream, entry);
+
+	if (entry->d_name[0] != '\0') {
+                *result = entry;
+		return 0;
+	}
+        
+	*result = NULL;
+	return errno;
+
+#elif defined(HAVE_READDIR_R_3)
 	return readdir_r (dirstream, entry, result);
 
 #else
-# ifdef HAVE_OLD_READDIR_R
-        int ret = 0;
-        
-        /* We cannot rely on the return value of readdir_r
-	 * as it differs between various platforms
-         * (HPUX returns 0 on success whereas Solaris returns non-zero)
-         */
-        entry->d_name[0] = '\0';
-        readdir_r(dirp, entry);
-        
-        if (entry->d_name[0] == '\0') {
-                *result = NULL;
-                ret = errno;
-        } else {
-                *result = entry;
-        }
-
-        return ret;
-
-# else
         struct dirent *ptr;
         int            ret = 0;
 	
@@ -440,8 +438,7 @@ cherokee_readdir (DIR *dirstream, struct dirent *entry, struct dirent **result)
 	
 	CHEROKEE_MUTEX_UNLOCK (&readdir_mutex);
         return ret;
-# endif
-#endif
+#endif 
 }
 
 
