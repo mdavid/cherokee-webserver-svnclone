@@ -57,7 +57,7 @@ void avl_free (struct libavl_allocator *, void *);
 /* Tree data structure. */
 struct avl_table
   {
-    struct avl_node *avl_root;          /* Tree's root. */
+    struct node_avl *avl_root;          /* Tree's root. */
     avl_comparison_func *avl_compare;   /* Comparison function. */
     void *avl_param;                    /* Extra argument to |avl_compare|. */
     struct libavl_allocator *avl_alloc; /* Memory allocator. */
@@ -66,9 +66,9 @@ struct avl_table
   };
 
 /* An AVL tree node. */
-struct avl_node
+struct node_avl
   {
-    struct avl_node *avl_link[2];  /* Subtrees. */
+    struct node_avl *avl_link[2];  /* Subtrees. */
     void *avl_data;                /* Pointer to data. */
     signed char avl_balance;       /* Balance factor. */
   };
@@ -77,24 +77,24 @@ struct avl_node
 struct avl_traverser
   {
     struct avl_table *avl_table;        /* Tree being traversed. */
-    struct avl_node *avl_node;          /* Current node in tree. */
-    struct avl_node *avl_stack[AVL_MAX_HEIGHT];
-                                        /* All the nodes above |avl_node|. */
+    struct node_avl *node_avl;          /* Current node in tree. */
+    struct node_avl *avl_stack[AVL_MAX_HEIGHT];
+                                        /* All the nodes above |node_avl|. */
     size_t avl_height;                  /* Number of nodes in |avl_parent|. */
     unsigned long avl_generation;       /* Generation number. */
   };
 
 /* Table functions. */
-struct avl_table *avl_create (avl_comparison_func *, void *,
+struct avl_table *create_avl (avl_comparison_func *, void *,
                               struct libavl_allocator *);
 struct avl_table *avl_copy (const struct avl_table *, avl_copy_func *,
                             avl_item_func *, struct libavl_allocator *);
-void avl_destroy (struct avl_table *, avl_item_func *);
+void destroy_avl (struct avl_table *, avl_item_func *);
 void **avl_probe (struct avl_table *, void *);
-void *avl_insert (struct avl_table *, void *);
+void *insert_avl (struct avl_table *, void *);
 void *avl_replace (struct avl_table *, void *);
 void *avl_delete (struct avl_table *, const void *);
-void *avl_find (const struct avl_table *, const void *);
+void *find_avl (const struct avl_table *, const void *);
 void avl_assert_insert (struct avl_table *, void *);
 void *avl_assert_delete (struct avl_table *, void *);
 

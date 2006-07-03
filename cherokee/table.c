@@ -79,7 +79,7 @@ cherokee_table_new (cherokee_table_t **tab)
 ret_t
 cherokee_table_init (cherokee_table_t *tab)
 {
-	tab->tree = avl_create (equal, NULL, NULL);
+	tab->tree = create_avl (equal, NULL, NULL);
 	if (tab->tree == NULL) {
 		return ret_error;
 	}
@@ -91,7 +91,7 @@ cherokee_table_init (cherokee_table_t *tab)
 ret_t
 cherokee_table_init_case (cherokee_table_t *tab)
 {
-	tab->tree = avl_create (equal_case, NULL, NULL);
+	tab->tree = create_avl (equal_case, NULL, NULL);
 	if (tab->tree == NULL) {
 		return ret_error;
 	}
@@ -123,7 +123,7 @@ cherokee_table_free2 (cherokee_table_t  *tab, cherokee_table_free_item_t free_fu
 ret_t
 cherokee_table_mrproper (cherokee_table_t *tab) {
 	if (tab->tree) {
-		avl_destroy (tab->tree, del_item);
+		destroy_avl (tab->tree, del_item);
 		tab->tree = NULL;
 	}
 	return ret_ok;
@@ -149,7 +149,7 @@ cherokee_table_mrproper2 (cherokee_table_t *tab, cherokee_table_free_item_t free
 		free_func (item->value);
 	}
 
-	avl_destroy (tab->tree, del_item);
+	destroy_avl (tab->tree, del_item);
 	tab->tree = NULL;
 
 	return ret_ok;
@@ -184,7 +184,7 @@ cherokee_table_add (cherokee_table_t *tab, char *key, void *value)
 	n->key   = strdup (key);
 	n->value = value;
 	
-	avl_insert (tab->tree, n);
+	insert_avl		 (tab->tree, n);
 	
 	return ret_ok;
 }
@@ -196,7 +196,7 @@ cherokee_table_get_val (cherokee_table_t *tab, char *key)
 	item_t *found;
 	
 	n.key = key;	
-	found = avl_find (tab->tree, &n);
+	found = find_avl (tab->tree, &n);
 	
 	if (found) {
 		return found->value;
@@ -212,7 +212,7 @@ cherokee_table_get (cherokee_table_t *tab, char *key, void **ret_val)
 	item_t *found;
 	
 	n.key = key;	
-	found = avl_find (tab->tree, &n);
+	found = find_avl (tab->tree, &n);
 	
 	if (found == NULL) {
 		return ret_not_found;
@@ -230,7 +230,7 @@ cherokee_table_del (cherokee_table_t *tab, char *key, void **val)
 	item_t *found;
 
 	n.key = key;
-	found = avl_find (tab->tree, &n);
+	found = find_avl (tab->tree, &n);
 
 	if (found == NULL)
 		return ret_not_found;

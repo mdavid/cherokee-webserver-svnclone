@@ -1,3 +1,9 @@
+2006-07-03  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/avl/avl.c, cherokee/avl/avl.h,
+	cherokee/session_cache.c, cherokee/table.c: Many functions renamed
+	to avoid a name confict in Solaris 11.
+
 2006-07-02  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cherokee/thread.c (process_active_connections): The
