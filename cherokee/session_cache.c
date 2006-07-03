@@ -82,7 +82,7 @@ cherokee_session_cache_new (cherokee_session_cache_t **tab)
 {
 	CHEROKEE_NEW_STRUCT (n, session_cache);
 
-	n->tree = avl_create (equal, NULL, NULL);
+	n->tree = create_avl (equal, NULL, NULL);
 
 	/* Return the object
 	 */
@@ -94,7 +94,7 @@ cherokee_session_cache_new (cherokee_session_cache_t **tab)
 ret_t 
 cherokee_session_cache_free (cherokee_session_cache_t *tab)
 {
-	avl_destroy (tab->tree, del_item);
+	destroy_avl (tab->tree, del_item);
 
 	free (tab);
 	return ret_ok;
@@ -119,7 +119,7 @@ cherokee_session_cache_add (cherokee_session_cache_t *tab,
 
 	/* Add the node to the tree
 	 */
-	avl_insert (tab->tree, node);
+	insert_avl (tab->tree, node);
 	
 	return ret_ok;
 }
