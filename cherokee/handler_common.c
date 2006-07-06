@@ -51,6 +51,10 @@
 
 #define ENTRIES "handler,common"
 
+#ifdef CHEROKEE_EMBEDDED
+# define cherokee_iocache_mmap_release(iocache,file)
+#endif
+
 
 cherokee_module_info_handler_t MODULE_INFO(common) = {
 	.module.type     = cherokee_handler,                /* type         */
