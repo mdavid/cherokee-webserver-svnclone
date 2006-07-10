@@ -638,11 +638,21 @@ ip_list : ip_or_domain ',' ip_list
 
 port : T_PORT T_NUMBER 
 {
+	   if (($2 < 0) || ($2 > 65535)) {
+			 PRINT_ERROR ("Invalid port %d\n", $2);
+			 return 1;
+	   }
+
 	   SRV(server)->port = $2;
 };
 
 port_tls : T_PORT_TLS T_NUMBER 
 {
+	   if (($2 < 0) || ($2 > 65535)) {
+			 PRINT_ERROR ("Invalid port %d\n", $2);
+			 return 1;
+	   }
+
 	   SRV(server)->port_tls = $2;
 };
 

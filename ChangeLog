@@ -1,3 +1,9 @@
+2006-07-10  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/read_config_grammar.y (port, port_tls): Added check to
+	ensure that the port number is valid. Bug reported by A. Alejandro
+	Hernández Hernández <nitrousenador@gmail.com>
+
 2006-07-03  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cherokee/avl/avl.c, cherokee/avl/avl.h,
