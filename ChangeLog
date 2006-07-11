@@ -1,3 +1,7 @@
+2006-07-11  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* 0.5.4: Released
+
 2006-07-10  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cherokee/read_config_grammar.y (port, port_tls): Added check to
