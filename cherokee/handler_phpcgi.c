@@ -64,10 +64,12 @@ cherokee_module_info_handler_t MODULE_INFO(phpcgi) = {
 static char *php_paths[] = {
 	"/usr/lib/cgi-bin/",
 	"/usr/local/bin/",
+	"/usr/bin/",
 	NULL
 };
 
 static char *php_names[] = {
+	"php-cgi",
 	"php", 
 	"php5", 
 	"php4", 

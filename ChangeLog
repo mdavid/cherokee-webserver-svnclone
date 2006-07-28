@@ -1,3 +1,8 @@
+2006-07-28  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/handler_phpcgi.c: Added two new default values for
+	RedHat/Fedora.
+
 2006-07-11  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* 0.5.4: Released

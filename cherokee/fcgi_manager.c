@@ -255,7 +255,7 @@ process_package (cherokee_fcgi_manager_t *mgr, cherokee_buffer_t *inbuf)
 
 	/* Is the package complete?
 	 */
-	if (len > inbuf->len - (FCGI_HEADER_LEN + padding))
+	if (len + padding > inbuf->len - FCGI_HEADER_LEN) 
 		return ret_ok;
 
 	/* Locate the connection
