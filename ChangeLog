@@ -1,3 +1,8 @@
+2006-07-31  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/util.c (cherokee_readdir): Windows compilation
+	fixed. Patch by Philip Pemberton <philpem@dsl.pipex.com>
+
 2006-07-28  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cherokee/handler_phpcgi.c: Added two new default values for

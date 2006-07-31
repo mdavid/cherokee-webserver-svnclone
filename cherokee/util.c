@@ -399,7 +399,8 @@ static pthread_mutex_t readdir_mutex = PTHREAD_MUTEX_INITIALIZER;
 int 
 cherokee_readdir (DIR *dirstream, struct dirent *entry, struct dirent **result)
 {
-#ifdef HAVE_READDIR_R_2
+#ifdef HAVE_READDIR_H
+# ifdef HAVE_READDIR_R_2
         /* We cannot rely on the return value of readdir_r as it
 	 * differs between various platforms (HPUX returns 0 on
 	 * success whereas Solaris returns non-zero)
@@ -412,20 +413,21 @@ cherokee_readdir (DIR *dirstream, struct dirent *entry, struct dirent **result)
                 *result = entry;
 		return 0;
 	}
-        
+
 	*result = NULL;
 	return errno;
 
-#elif defined(HAVE_READDIR_R_3)
+# elif defined(HAVE_READDIR_R_3)
 	return readdir_r (dirstream, entry, result);
+# endif
 
 #else
         struct dirent *ptr;
         int            ret = 0;
-	
+
 	CHEROKEE_MUTEX_LOCK (&readdir_mutex);
-        
-        errno = 0;        
+
+        errno = 0;
         ptr = readdir(dirstream);
         
         if (!ptr && errno != 0)
