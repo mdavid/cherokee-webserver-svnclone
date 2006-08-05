@@ -37,11 +37,7 @@
 #include "module_loader.h"
 
 
-cherokee_module_info_handler_t MODULE_INFO(server_info) = {
-	.module.type     = cherokee_handler,                   /* type         */
-	.module.new_func = cherokee_handler_server_info_new,   /* new func     */
-	.valid_methods   = http_get                            /* http methods */
-};
+HANDLER_MODULE_INFO_INIT_EASY (server_info, http_get);
 
 
 #define PAGE_HEADER                                                                                     \

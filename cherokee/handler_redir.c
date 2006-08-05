@@ -34,15 +34,10 @@
 #include "util.h"
 #include "list_ext.h"
 
-
-cherokee_module_info_handler_t MODULE_INFO(redir) = {
-	.module.type     = cherokee_handler,              /* type         */
-	.module.new_func = cherokee_handler_redir_new,    /* new func     */
-	.valid_methods   = http_all_methods               /* http methods */
-};
-
-
 #define ENTRIES "handler,redir"
+
+
+HANDLER_MODULE_INFO_INIT_EASY (redir, http_get | http_post | http_head);
 
 
 #ifndef CHEROKEE_EMBEDDED

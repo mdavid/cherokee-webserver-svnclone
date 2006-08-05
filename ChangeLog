@@ -1,3 +1,33 @@
+2006-08-05  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/handler_redir.c, cherokee/handler_error_redir.c,
+	cherokee/handler_server_info.c, cherokee/handler_admin.c,
+	cherokee/handler_dirlist.c, cherokee/handler_nn.c,
+	cherokee/handler_common.c, cherokee/validator_plain.c,
+	cherokee/validator_htpasswd.c, cherokee/handler_file.c,
+	cherokee/handler_fcgi.c, cherokee/handler_fastcgi.c,
+	cherokee/handler_scgi.c, cherokee/handler_cgi.c,
+	cherokee/validator_htdigest.c, cherokee/handler_phpcgi.c,
+	cherokee/validator_pam.c: Moved to use the new modules
+	initialization macros.
+	
+	* cherokee/module.h (HANDLER_MODULE_INFO_INIT_EASY,
+	VALIDATOR_MODULE_INFO_INIT_EASY): Added two new convenient macros.
+
+	* cherokee/socket.c (cherokee_socket_init_client_tls): gcc-2.95
+	compilation fix.
+
+2006-08-03  A.D.F  <adefacc@tin.it>
+
+	* cherokee/header.c: Removed strsep() definition. 
+
+	* cherokee/util.h: Added strsep() and strcasestr() prototypes.
+
+	* cherokee/fdpoll-select.c: Added missing include sys/time.h.
+
+	* cherokee/module.h (HANDLER_MODULE_INFO_INIT,
+	VALIDATOR_MODULE_INFO_INIT): Fixed to be compilator neutral.
+	
 2006-07-31  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cherokee/util.c (cherokee_readdir): Windows compilation

@@ -1124,13 +1124,12 @@ cherokee_socket_init_client_tls (cherokee_socket_t *socket)
 #ifdef HAVE_TLS
 	int re;
 
-	socket->is_tls = TLS;
-
 # ifdef HAVE_GNUTLS
-	const int kx_priority[] = {GNUTLS_KX_ANON_DH, 0};
-
+	const int                        kx_priority[] = {GNUTLS_KX_ANON_DH, 0};
 	gnutls_anon_client_credentials   anoncred;
 	
+	socket->is_tls = TLS;
+
 	/* Acredentials
 	 */
 	gnutls_anon_allocate_client_credentials(&anoncred);
@@ -1164,6 +1163,7 @@ cherokee_socket_init_client_tls (cherokee_socket_t *socket)
 		 (re == GNUTLS_E_INTERRUPTED));
 
 # elif defined(HAVE_OPENSSL)
+	socket->is_tls = TLS;
 
 	/* New context
 	 */

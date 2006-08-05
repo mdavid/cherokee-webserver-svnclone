@@ -39,12 +39,7 @@
 	set_env_pair (cgi, key, sizeof(key)-1, val, len)
 
 
-cherokee_module_info_handler_t MODULE_INFO(fastcgi) = {
-	.module.type     = cherokee_handler,                /* type         */
-	.module.new_func = cherokee_handler_fastcgi_new,    /* new func     */
-	.valid_methods   = http_get | http_post | http_head /* http methods */
-};
-
+HANDLER_MODULE_INFO_INIT_EASY (fastcgi, http_get | http_post | http_head);
 
 static void
 fcgi_build_header (FCGI_Header *hdr, cuchar_t type, cushort_t request_id, cuint_t content_length, cuchar_t padding)

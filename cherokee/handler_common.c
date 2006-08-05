@@ -56,11 +56,7 @@
 #endif
 
 
-cherokee_module_info_handler_t MODULE_INFO(common) = {
-	.module.type     = cherokee_handler,                /* type         */
-	.module.new_func = cherokee_handler_common_new,     /* new func     */
-	.valid_methods   = http_all_methods                 /* http methods */
-};
+HANDLER_MODULE_INFO_INIT_EASY (common, http_all_methods);
 
 
 static ret_t
