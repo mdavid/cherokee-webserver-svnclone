@@ -76,8 +76,39 @@ typedef struct {
 #define MODULE(x)              ((cherokee_module_t *) (x))
 #define MODULE_INFO_HANDLER(x) ((cherokee_module_info_handler_t *) (x))
 
-#define MODULE_INFO(name) (cherokee_ ## name ## _info)
-#define MODULE_INIT(name) (cherokee_module_ ## name ## _init)
+#define MODULE_INFO(name) cherokee_ ## name ## _info
+#define MODULE_INIT(name) cherokee_module_ ## name ## _init
+
+#define HANDLER_MODULE_INFO_INIT(name, type, func, methods)	\
+ 	cherokee_module_info_handler_t MODULE_INFO(name) = {	\
+		{						\
+			type,					\
+			func					\
+		},						\
+		(methods)					\
+ 	}				  
+
+#define VALIDATOR_MODULE_INFO_INIT(type, func, methods, name)	\
+ 	cherokee_module_info_handler_t MODULE_INFO(name) = {	\
+		{						\
+			type,					\
+			func					\
+		},						\
+		(methods)					\
+ 	}
+
+
+/* Handy definitions
+ */
+#define HANDLER_MODULE_INFO_INIT_EASY(name, methods)	                 \
+ 	cherokee_module_info_handler_t MODULE_INFO(name) = { 	         \
+		{ cherokee_handler, cherokee_handler_ ## name ## _new }, \
+		(methods) }
+
+#define VALIDATOR_MODULE_INFO_INIT_EASY(name, methods)	                     \
+ 	cherokee_module_info_handler_t MODULE_INFO(name) = { 	             \
+		{ cherokee_validator, cherokee_validator_ ## name ## _new }, \
+		(methods) }
 
 
 ret_t cherokee_module_init_base (cherokee_module_t *module);

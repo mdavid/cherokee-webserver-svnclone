@@ -70,6 +70,14 @@
 # include <syslog.h>
 #endif
 
+#ifdef HAVE_NETINET_IN_H
+# include <netinet/in.h>
+#endif
+
+#ifdef HAVE_ARPA_INET_H
+# include <arpa/inet.h>
+#endif 
+
 #if defined(HAVE_GNUTLS)
 # include <gnutls/gnutls.h>
 #elif defined(HAVE_OPENSSL)
@@ -399,7 +407,10 @@ static pthread_mutex_t readdir_mutex = PTHREAD_MUTEX_INITIALIZER;
 int 
 cherokee_readdir (DIR *dirstream, struct dirent *entry, struct dirent **result)
 {
-#ifdef HAVE_READDIR_H
+#ifndef HAVE_READDIR
+# warning "readdir() unimplemented"
+	return ENOSYS;
+#else
 # ifdef HAVE_READDIR_R_2
         /* We cannot rely on the return value of readdir_r as it
 	 * differs between various platforms (HPUX returns 0 on
@@ -419,9 +430,7 @@ cherokee_readdir (DIR *dirstream, struct dirent *entry, struct dirent **result)
 
 # elif defined(HAVE_READDIR_R_3)
 	return readdir_r (dirstream, entry, result);
-# endif
-
-#else
+# else
         struct dirent *ptr;
         int            ret = 0;
 
@@ -440,7 +449,8 @@ cherokee_readdir (DIR *dirstream, struct dirent *entry, struct dirent **result)
 	
 	CHEROKEE_MUTEX_UNLOCK (&readdir_mutex);
         return ret;
-#endif 
+# endif
+#endif
 }
 
 
@@ -626,8 +636,9 @@ static pthread_mutex_t __global_gethostbyname_mutex = PTHREAD_MUTEX_INITIALIZER;
 #endif
 
 ret_t
-cherokee_gethostbyname (const char *hostname, struct in_addr *addr)
+cherokee_gethostbyname (const char *hostname, void *_addr)
 {
+	struct in_addr *addr = _addr;
 #if !defined(HAVE_PTHREAD) || (defined(HAVE_PTHREAD) && !defined(HAVE_GETHOSTBYNAME_R))
 
         struct hostent *host;
@@ -1018,3 +1029,4 @@ cherokee_parse_query_string (cherokee_buffer_t *query_string,
 	query_string->buf[query_string->len] = '\0';
 	return ret_ok;
 }
+

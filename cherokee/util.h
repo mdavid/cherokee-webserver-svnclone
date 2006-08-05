@@ -31,20 +31,11 @@
 
 #include <cherokee/common.h>
 
-#ifdef HAVE_NETINET_IN_H
-# include <netinet/in.h>
-#endif
-
-#ifdef HAVE_ARPA_INET_H
-# include <arpa/inet.h>
-#endif 
-
 #include <time.h>
 #include <dirent.h>
 
 #include <cherokee/buffer.h>
 #include <cherokee/table.h>
-
 
 
 CHEROKEE_BEGIN_DECLS
@@ -56,8 +47,6 @@ CHEROKEE_BEGIN_DECLS
 # define cherokee_stat(path,buf) stat(path,buf)
 # define cherokee_error          errno
 #endif
-
-
 
 /* Some global information
  */
@@ -78,7 +67,6 @@ int   cherokee_estimate_va_length (char *format, va_list ap);
 
 /* Time management functions
  */
-
 struct tm *cherokee_gmtime           (const time_t *timep, struct tm *result);
 struct tm *cherokee_localtime        (const time_t *timep, struct tm *result);
 long      *cherokee_get_timezone_ref (void);
@@ -86,7 +74,7 @@ long      *cherokee_get_timezone_ref (void);
 /* Thread safe functions
  */
 int        cherokee_readdir       (DIR *dirstream, struct dirent *entry, struct dirent **result);
-ret_t      cherokee_gethostbyname (const char *hostname, struct in_addr *addr);
+ret_t      cherokee_gethostbyname (const char *hostname, void *addr);
 ret_t      cherokee_syslog        (int priority, cherokee_buffer_t *buf);
 
 /* Misc

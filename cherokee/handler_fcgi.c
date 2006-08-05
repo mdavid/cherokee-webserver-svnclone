@@ -38,12 +38,8 @@
 #define set_env(cgi,key,val,len) \
 	set_env_pair (cgi, key, sizeof(key)-1, val, len)
 
-cherokee_module_info_handler_t MODULE_INFO(fcgi) = {
-	.module.type     = cherokee_handler,                /* type         */
-	.module.new_func = cherokee_handler_fcgi_new,       /* new func     */
-	.valid_methods   = http_get | http_post | http_head /* http methods */
-};
 
+HANDLER_MODULE_INFO_INIT_EASY (fcgi, http_get | http_post | http_head);
 
 static void set_env_pair (cherokee_handler_cgi_base_t *cgi_base, 
 			  char *key, int key_len, 

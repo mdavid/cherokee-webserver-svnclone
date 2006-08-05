@@ -28,11 +28,8 @@
 #include "connection-protected.h"
 
 
-cherokee_module_info_validator_t MODULE_INFO(htdigest) = {
-	.module.type     = cherokee_validator,                 /* type     */
-	.module.new_func = cherokee_validator_htdigest_new,    /* new func */
-	.valid_methods   = http_auth_basic | http_auth_digest  /* methods  */
-};
+VALIDATOR_MODULE_INFO_INIT_EASY (htdigest, http_auth_basic | http_auth_digest);
+
 
 ret_t 
 cherokee_validator_htdigest_new (cherokee_validator_htdigest_t **htdigest, cherokee_table_t *properties)

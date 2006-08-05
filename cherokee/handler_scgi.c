@@ -33,15 +33,11 @@
 
 #define ENTRIES "handler,cgi"
 
-cherokee_module_info_handler_t MODULE_INFO(scgi) = {
-	.module.type     = cherokee_handler,                /* type         */
-	.module.new_func = cherokee_handler_scgi_new,       /* new func     */
-	.valid_methods   = http_get | http_post | http_head /* http methods */
-};
-
 #define set_env(cgi,key,val,len) \
 	add_env_pair (cgi, key, sizeof(key)-1, val, len)
 
+
+HANDLER_MODULE_INFO_INIT_EASY (scgi, http_get | http_post | http_head);
 
 static void 
 add_env_pair (cherokee_handler_cgi_base_t *cgi_base, 

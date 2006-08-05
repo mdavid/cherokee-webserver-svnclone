@@ -40,12 +40,7 @@
 #include "levenshtein_distance.h"
 
 
-cherokee_module_info_handler_t MODULE_INFO(nn) = {
-	.module.type     = cherokee_handler,            /* type         */
-	.module.new_func = cherokee_handler_nn_new,     /* new func     */
-	.valid_methods   = http_get | http_head         /* http methods */
-};
-
+HANDLER_MODULE_INFO_INIT_EASY (nn, http_get | http_head);
 
 static ret_t
 get_nearest_from_directory (char *directory, char *request, cherokee_buffer_t *output)

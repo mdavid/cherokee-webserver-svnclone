@@ -34,12 +34,7 @@
 #define ERR_STR(x) 
 
 
-cherokee_module_info_handler_t MODULE_INFO(admin) = {
-	.module.type     = cherokee_handler,               /* type         */
-	.module.new_func = cherokee_handler_admin_new,     /* new func     */
-	.valid_methods   = http_get | http_post            /* http methods */
-};
-
+HANDLER_MODULE_INFO_INIT_EASY (admin, http_get | http_post);
 
 ret_t 
 cherokee_handler_admin_new (cherokee_handler_t **hdl, void *cnt, cherokee_table_t *properties)

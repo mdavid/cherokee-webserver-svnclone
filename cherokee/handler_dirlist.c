@@ -54,12 +54,7 @@
 #define DEFAULT_NAME_LEN 40
 
 
-cherokee_module_info_handler_t MODULE_INFO(dirlist) = {
-	.module.type     = cherokee_handler,               /* type         */
-	.module.new_func = cherokee_handler_dirlist_new,   /* new func     */
-	.valid_methods   = http_get                        /* http methods */
-};
-
+HANDLER_MODULE_INFO_INIT_EASY (dirlist, http_get);
 
 struct file_entry {
 	struct list_head list_entry;
