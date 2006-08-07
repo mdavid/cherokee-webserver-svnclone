@@ -1,3 +1,17 @@
+2006-08-07  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/common-internal.h: endian.h was being included twice.
+	Fixed.
+
+2006-08-07  A.D.F  <adefacc@tin.it>
+
+	* cherokee/handler_cgi_base.c, cherokee/request.c,
+	cherokee/common-internal.h, cherokee/handler_file.c,
+	cherokee/handler_remote_control.c, cherokee/handler_webcam.c,
+	cherokee/connection.c, cherokee/server.c: Some call to
+	cherokee_buffer_add() have been replaced by
+	cherokee_buffer_add_str()
+
 2006-08-05  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cherokee/handler_redir.c, cherokee/handler_error_redir.c,

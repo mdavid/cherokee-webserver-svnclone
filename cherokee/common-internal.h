@@ -52,10 +52,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef HAVE_ENDIAN_H
-# include <endian.h>
-#endif
-
 #ifdef HAVE_SYS_VARARGS
 # include <sys/varargs.h>
 #endif

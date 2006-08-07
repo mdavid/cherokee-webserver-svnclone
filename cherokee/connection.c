@@ -458,7 +458,7 @@ build_response_header (cherokee_connection_t *cnt, cherokee_buffer_t *buffer)
 	}
 	
 	cherokee_http_code_copy (cnt->error_code, buffer);
-	cherokee_buffer_add (buffer, CRLF, 2);
+	cherokee_buffer_add_str (buffer, CRLF);
 
 	/* Add the "Connection:" header
 	 */
@@ -477,7 +477,7 @@ build_response_header (cherokee_connection_t *cnt, cherokee_buffer_t *buffer)
 	 */
 	cherokee_buffer_add_str (buffer, "Date: ");
 	cherokee_buffer_add_buffer (buffer, CONN_SRV(cnt)->bogo_now_string);
-	cherokee_buffer_add (buffer, CRLF, 2);
+	cherokee_buffer_add_str (buffer, CRLF);
 
 	/* Add the Server header
 	 */
