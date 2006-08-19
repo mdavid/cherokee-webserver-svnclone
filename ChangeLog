@@ -1,5 +1,18 @@
 2006-08-09  A.D.F  <adefacc@tin.it>
 
+	* cherokee/header.c: Now the header parser accepts multi-line
+	values.
+
+	* cherokee/macros.h: Some new macros has been added to replace
+	literal strings like '\r' or '\r\n\r\n'.
+	
+2006-08-18  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/buffer.c (cherokee_buffer_add_version): A little clean
+	up.
+
+2006-08-09  A.D.F  <adefacc@tin.it>
+
 	* cherokee/tdate_parse.c: Quite big performance patch has been
 	applied.
 
