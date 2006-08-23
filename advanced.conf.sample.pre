@@ -36,7 +36,7 @@ PanicAction %prefix%/bin/cherokee-panic
 ##
 ## Size of the TCP listen queue.
 ##
-# ListenQueue 1024
+# ListenQueueSize 1024
 
 ##
 ## ThreadNumber:  
