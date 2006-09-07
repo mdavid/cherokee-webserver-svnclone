@@ -477,7 +477,7 @@ cherokee_socket_shutdown (cherokee_socket_t *socket, int how)
 
 	re = shutdown (socket->socket, how);	
 
-	return (re == 0)? ret_ok : ret_error;
+	return (re == 0) ? ret_ok : ret_error;
 }
 
 
@@ -794,8 +794,8 @@ cherokee_read (cherokee_socket_t *socket, char *buf, int buf_size, size_t *done)
 	/* Plain read
 	 */
 	if (unlikely (buf == NULL)) {
-		static char trash[256];
-		len = recv (SOCKET_FD(socket), trash, 256, 0);
+		static char trash[4096];
+		len = recv (SOCKET_FD(socket), trash, sizeof(trash), 0);
 	} else {
 		len = recv (SOCKET_FD(socket), buf, buf_size, 0);
 	}
