@@ -1,5 +1,20 @@
 2006-09-07  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* cherokee/thread.c (process_active_connections):
+	process_active_connections(), add tests for HTTP 5xx errors too.
+
+	* cherokee/socket.c: Increase the amount (256 -> 4096) of data
+	read when cherokee_read() is called with buffer == NULL; this
+	should lower the risk to reset connection because not all data has
+	been read in linger mode. Patch by A.D.F.
+
+	* cherokee/handler_error.c: don't generate a body for HTTP
+	responses which are not allowed to have it. don't send unrelated
+	HTTP headers in case of a 304 response: which should be managed by
+	other handlers. Patch by A.D.F
+
+	* cherokee/http.h: New macro http_code_with_body
+
 	* configure.in: Adds _GNU_SOURCE definition to config.h whether
 	it's compiling with Glibc.  Patch backported by A.D.F
 
