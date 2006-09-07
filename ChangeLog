@@ -1,3 +1,8 @@
+2006-09-07  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* configure.in: Adds _GNU_SOURCE definition to config.h whether
+	it's compiling with Glibc.  Patch backported by A.D.F
+
 2006-08-23  A.D.F  <adefacc@tin.it>
 
 	* advanced.conf.sample.pre: Typo fixed.  ListenQueue was meant to
