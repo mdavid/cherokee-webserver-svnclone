@@ -1,3 +1,22 @@
+2006-09-12  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/cherokee_admin.c, cherokee/cherokee_logrotate.c:
+	Compilation fix, add include config.h. Patch by A.D.F.
+
+	* cherokee/handler_file.c: Fix comparison of ETag and
+	If-Modified-Since header fields for HTTP 304 responses. Other
+	changes to handle 304 responses properly with all required
+	headers, etc.  Patches by A.D.F, reworked by me.
+
+	* cherokee/handler_file.c: Fix formatting of ETag string both in
+	check_cached() and *_add_headers(). Patch by A.D.F.
+
+	* cherokee/handler.h: Added not_modified field
+
+	* cherokee/macros.h: New FMT_OFFSET_HEX define. Patch by A.D.F.
+
+	* cherokee/macros.h: New macros equal_str() and equal_buf_str().
+	
 2006-09-07  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cherokee/thread.c (process_active_connections):
