@@ -1,5 +1,15 @@
 2006-09-12  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* cherokee/http.c (cherokee_http_code_copy): add missing
+	http_request_entity_too_large. In case of unknown status code now
+	500 code. Patch by A.D.F.
+
+	* cherokee/buffer.c (cherokee_buffer_cnt_spn,
+	cherokee_buffer_cnt_cspn): It is safer if these are functions
+	rather than macros. Converted.
+
+	* cget/Makefile.am (INCLUDES): Fixed minor compilation issue.
+
 	* cherokee/cherokee_admin.c, cherokee/cherokee_logrotate.c:
 	Compilation fix, add include config.h. Patch by A.D.F.
 
