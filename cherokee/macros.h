@@ -41,15 +41,7 @@
 #  define CHEROKEE_END_DECLS
 #endif
 
-#ifdef __func__
-# define __cherokee_func__ __func__
-#else
-# ifdef __FUNCTION__
-#  define __cherokee_func__ __FUNCTION__
-# else
-#  define __cherokee_func__ "<unknown function>"
-# endif
-#endif
+#define __cherokee_func__ __func__
 
 #ifndef TRUE
 #  define TRUE 1
@@ -100,17 +92,25 @@
 #define EXIT_SERVER_READ_CONFIG         31
 #define EXIT_SERVER_INIT                32
 
-			       
-#define CSZLEN(str) (sizeof(str) - 1)
 
+#define CSZLEN(str) (sizeof(str) - 1)
+  
 #define LF_LF     "\n\n"        /* EOHs (End Of Headers) */
 #define CRLF_CRLF "\r\n\r\n"    /* EOHs (End Of Headers) */
 #define CRLF      "\r\n"        /* EOH (End Of Header Line) */
 #define LWS       " \t\r\n"     /* HTTP linear white space */
-#define CHR_CR    '\r'          /* carriage return */
-#define CHR_LF    '\n'          /* line feed (new line) */
-#define CHR_SP    ' '           /* space */
-#define CHR_HT    '\t'          /* horizontal tab */
+#define CHR_CR    '\r'          /* Carriage return */
+#define CHR_LF    '\n'          /* Line feed (new line) */
+#define CHR_SP    ' '           /* Space */
+#define CHR_HT    '\t'          /* Horizontal tab */
+
+
+#define equal_str(m,str) \
+	(strncasecmp(m, str, sizeof(str)-1) == 0)
+
+#define equal_buf_str(b,str)            \
+	(((b)->len == sizeof(str)-1) &&	\
+	 (strncasecmp((b)->buf, str, sizeof(str)-1) == 0))
 
 #define return_if_fail(expr,ret) \
 	if (!(expr)) {                                                      \
@@ -222,9 +222,11 @@
  */
 #if (SIZEOF_OFF_T == SIZEOF_UNSIGNED_LONG_LONG)
 # define FMT_OFFSET "%llu"
+# define FMT_OFFSET_HEX "%llx"
 # define CST_OFFSET unsigned long long
 #elif (SIZEOF_OFF_T ==  SIZEOF_UNSIGNED_LONG)
 # define FMT_OFFSET "%lu"
+# define FMT_OFFSET_HEX "%lx"
 # define CST_OFFSET unsigned long
 #else
 # error Unknown size of off_t 

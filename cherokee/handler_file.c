@@ -69,9 +69,10 @@ cherokee_handler_file_new  (cherokee_handler_t **hdl, cherokee_connection_t *cnt
 	 */
 	n->fd             = -1;
 	n->offset         = 0;
-	n->mime           = NULL;
-	n->using_sendfile = false;
 	n->info           = NULL;
+	n->mime           = NULL;
+	n->not_modified   = false;
+	n->using_sendfile = false;
 
 #ifdef CHEROKEE_EMBEDDED
 	n->use_cache      = true;
@@ -112,12 +113,16 @@ cherokee_handler_file_get_name (cherokee_handler_file_t *module, const char **na
 
 
 static ret_t
-check_cached (cherokee_handler_file_t *n)
+check_cached (cherokee_handler_file_t *fhdl)
 {
 	ret_t                  ret;
 	char                  *header;
 	cuint_t                header_len;
-	cherokee_connection_t *conn = HANDLER_CONN(n);
+	cherokee_boolean_t     has_modified_since = false;
+	cherokee_boolean_t     has_etag           = false;
+	cherokee_boolean_t     not_modified_ms    = false;
+	cherokee_boolean_t     not_modified_etag  = false;
+	cherokee_connection_t *conn               = HANDLER_CONN(fhdl);
 
 	/* Based in time
 	 */
@@ -129,6 +134,8 @@ check_cached (cherokee_handler_file_t *n)
 
 		tmp = *end;    /* save */
 		*end = '\0';   /* set  */
+
+		has_modified_since = true;
 
 		req_time = tdate_parse (header);			
 		if (req_time == -1) {
@@ -145,16 +152,17 @@ check_cached (cherokee_handler_file_t *n)
 		
 		/* The file is cached in the client
 		 */
-		if (n->info->st_mtime <= req_time) {
-			conn->error_code = http_not_modified;
-			return ret_error;	
+		if (fhdl->info->st_mtime <= req_time) {
+			not_modified_ms = true;
 		}
 	}
 	
-	/* HTTP/1.1 only headers
+	/* HTTP/1.1 only headers from now on
 	 */
-	if (conn->header.version < http_version_11)
+	if (conn->header.version < http_version_11) {
+		fhdl->not_modified = not_modified_ms;
 		return ret_ok;
+	}
 
 	/* Based in ETag
 	 */
@@ -163,11 +171,29 @@ check_cached (cherokee_handler_file_t *n)
 		int    tmp_len;
 		CHEROKEE_TEMP(tmp,100);
 		
-		tmp_len = snprintf (tmp, tmp_size, "%lx=" FMT_OFFSET "x", n->info->st_mtime, n->info->st_size);
+		has_etag = true;
 		
-		if (strncmp (header, tmp, tmp_len) == 0) {
-			conn->error_code = http_not_modified;
-			return ret_error;				
+		tmp_len = snprintf (tmp, tmp_size, "%lx=" FMT_OFFSET_HEX, fhdl->info->st_mtime, fhdl->info->st_size);
+
+		if ((header_len == tmp_len) && 
+		    (strncmp (header, tmp, tmp_len) == 0))
+		{
+			not_modified_etag = true;
+		}
+	}
+
+	/* If both If-Modified-Since and ETag have been found then
+	 * both must match in order to return a not_modified response.
+	 */
+	if (has_modified_since && has_etag) {
+		if (not_modified_ms && not_modified_etag) {
+			fhdl->not_modified = true;		
+			return ret_ok;
+		}
+	} else  {
+		if (not_modified_ms || not_modified_etag) {
+			fhdl->not_modified = true;		
+			return ret_ok;
 		}
 	}
 	
@@ -203,7 +229,7 @@ check_cached (cherokee_handler_file_t *n)
 		 * the server SHOULD return the entire entity using a
 		 * 200 (OK) response.
 		 */
-		if (n->info->st_mtime > req_time) {
+		if (fhdl->info->st_mtime > req_time) {
 			conn->error_code = http_ok;
 
 			conn->range_start = 0;
@@ -304,14 +330,13 @@ stat_local_directory (cherokee_handler_file_t *n, cherokee_connection_t *conn, c
 
 
 ret_t 
-cherokee_handler_file_init (cherokee_handler_file_t *n)
+cherokee_handler_file_init (cherokee_handler_file_t *fhdl)
 {
-	int   ret;
-	char *ext;
+	ret_t                     ret;
 	cherokee_boolean_t        use_io   = false;
 	cherokee_iocache_entry_t *io_entry = NULL;
-	cherokee_connection_t    *conn     = HANDLER_CONN(n);
-	cherokee_server_t        *srv      = HANDLER_SRV(n);
+	cherokee_connection_t    *conn     = HANDLER_CONN(fhdl);
+	cherokee_server_t        *srv      = HANDLER_SRV(fhdl);
 
 	/* Build the local file path                         1.- BUILD
 	 * Take care with "return"s until 2.
@@ -322,20 +347,35 @@ cherokee_handler_file_init (cherokee_handler_file_t *n)
 
 	/* Query the I/O cache
 	 */
-	ret = stat_local_directory (n, conn, &io_entry, &n->info);
+	ret = stat_local_directory (fhdl, conn, &io_entry, &fhdl->info);
 	if (ret != ret_ok) return ret;
 
 	/* Ensure it is a file
 	 */
-	if (S_ISDIR(n->info->st_mode)) {
+	if (S_ISDIR(fhdl->info->st_mode)) {
 		conn->error_code = http_access_denied;
 		return ret_error;
 	}
 
+	/* Look for the mime type
+	 */
+#ifndef CHEROKEE_EMBEDDED
+	if (srv->mime != NULL) {
+		char *ext;
+
+		ext = strrchr (conn->request.buf, '.');
+		if (ext != NULL) {
+			ret = cherokee_mime_get_by_suffix (srv->mime, ext+1, &fhdl->mime);
+		}
+	}
+#endif
+
 	/* Is it cached on the client?
 	 */
-	ret = check_cached(n);
-	if (ret != ret_ok) {
+	ret = check_cached (fhdl);
+	if ((ret != ret_ok) ||
+	    (fhdl->not_modified)) 
+	{
 		cherokee_buffer_drop_endding (&conn->local_directory, conn->request.len);
 		return ret;
 	}
@@ -343,10 +383,10 @@ cherokee_handler_file_init (cherokee_handler_file_t *n)
 	/* Is this file cached in the io cache?
 	 */
 #ifndef CHEROKEE_EMBEDDED
-	use_io = ((!n->use_cache) &&
+	use_io = ((!fhdl->use_cache) &&
 		  (conn->encoder == NULL) &&
 		  (conn->socket.is_tls == non_TLS) &&
-		  (n->info->st_size <= IOCACHE_MAX_FILE_SIZE) &&
+		  (fhdl->info->st_size <= IOCACHE_MAX_FILE_SIZE) &&
 		  (http_method_with_body (conn->header.method)));
 	
 	if (use_io) {
@@ -354,7 +394,7 @@ cherokee_handler_file_init (cherokee_handler_file_t *n)
 						    conn->local_directory.buf,
 						    &io_entry);
 		if (ret != ret_ok) {
-			ret = open_local_directory (n, conn);
+			ret = open_local_directory (fhdl, conn);
 			if (ret != ret_ok) {
 				cherokee_buffer_drop_endding (&conn->local_directory, conn->request.len);
 				return ret;
@@ -362,7 +402,7 @@ cherokee_handler_file_init (cherokee_handler_file_t *n)
 
 			ret = cherokee_iocache_mmap_get_w_fd (srv->iocache,
 							      conn->local_directory.buf,
-							      n->fd,
+							      fhdl->fd,
 							      &io_entry);
 		}
 
@@ -374,8 +414,8 @@ cherokee_handler_file_init (cherokee_handler_file_t *n)
 
 	/* Maybe open the file
 	 */
-	if ((n->fd < 0) && (!use_io)) {
-		ret = open_local_directory (n, conn);
+	if ((fhdl->fd < 0) && (!use_io)) {
+		ret = open_local_directory (fhdl, conn);
 		if (ret != ret_ok) {
 			cherokee_buffer_drop_endding (&conn->local_directory, conn->request.len);
 			return ret;
@@ -389,15 +429,15 @@ cherokee_handler_file_init (cherokee_handler_file_t *n)
 
 	/* Is it a directory?
 	 */
-	if (S_ISDIR(n->info->st_mode)) {
+	if (S_ISDIR(fhdl->info->st_mode)) {
 		conn->error_code = http_access_denied;
 		return ret_error;		
 	}
 
 	/* Range 1: Check the range and file size
 	 */
-	if ((conn->range_start > n->info->st_size) ||
-	    (conn->range_end   > n->info->st_size)) 
+	if ((conn->range_start > fhdl->info->st_size) ||
+	    (conn->range_end   > fhdl->info->st_size)) 
 	{
 		conn->error_code = http_range_not_satisfiable;
 		return ret_error;
@@ -412,7 +452,7 @@ cherokee_handler_file_init (cherokee_handler_file_t *n)
 	/* Range 2: Set the file length as the range end
 	 */
 	if (conn->range_end == 0) {
-		conn->range_end = n->info->st_size;
+		conn->range_end = fhdl->info->st_size;
 	} 
 
 	/* Set mmap or file position
@@ -427,40 +467,118 @@ cherokee_handler_file_init (cherokee_handler_file_t *n)
 		/* Seek the file is needed
 		 */
 		if ((conn->range_start != 0) && (conn->mmaped == NULL)) {
-			n->offset = conn->range_start;
-			lseek (n->fd, n->offset, SEEK_SET);
+			fhdl->offset = conn->range_start;
+			lseek (fhdl->fd, fhdl->offset, SEEK_SET);
 		}
 	}
-
-	/* Look for the mime type
-	 */
-#ifndef CHEROKEE_EMBEDDED
-	if (srv->mime != NULL) {
-		ext = strrchr (conn->request.buf, '.');
-		if (ext != NULL) {
-			ret = cherokee_mime_get_by_suffix (srv->mime, ext+1, &n->mime);
-		}
-	}
-#endif
 
 	/* Maybe use sendfile
 	 */
 #ifdef HAVE_SENDFILE
-	n->using_sendfile = ((conn->mmaped == NULL) &&
-			     (conn->encoder == NULL) &&
-			     (n->info->st_size >= srv->sendfile.min) && 
-			     (n->info->st_size <  srv->sendfile.max) &&
-			     (conn->socket.is_tls == non_TLS));
+	fhdl->using_sendfile = ((conn->mmaped == NULL) &&
+				(conn->encoder == NULL) &&
+				(fhdl->info->st_size >= srv->sendfile.min) && 
+				(fhdl->info->st_size <  srv->sendfile.max) &&
+				(conn->socket.is_tls == non_TLS));
 
 # ifdef HAVE_SENDFILE_BROKEN
-	n->using_sendfile = false;
+	fhdl->using_sendfile = false;
 # endif
 
-	if (n->using_sendfile) {
+	if (fhdl->using_sendfile) {
 		cherokee_connection_set_cork(conn, 1);
 	}
 #endif
 	
+	return ret_ok;
+}
+
+
+ret_t
+cherokee_handler_file_add_headers (cherokee_handler_file_t *fhdl,
+				   cherokee_buffer_t       *buffer)
+{
+	ret_t                  ret;
+	off_t                  length;
+	struct tm              modified_tm;
+	cherokee_connection_t *conn         = HANDLER_CONN(fhdl);
+
+	/* Etag
+	 */
+	if (conn->header.version >= http_version_11) { 
+		cherokee_buffer_add_va (buffer, "Etag: %lx=" FMT_OFFSET_HEX CRLF, fhdl->info->st_mtime, fhdl->info->st_size);
+	}
+
+	/* Last-Modified:
+	 */
+	cherokee_gmtime (&fhdl->info->st_mtime, &modified_tm);
+
+	cherokee_buffer_add_va (buffer,
+				"Last-Modified: %s, %02d %s %d %02d:%02d:%02d GMT"CRLF,
+				cherokee_weekdays[modified_tm.tm_wday],
+				modified_tm.tm_mday,
+				cherokee_months[modified_tm.tm_mon], 
+				modified_tm.tm_year + 1900,
+				modified_tm.tm_hour,
+				modified_tm.tm_min,
+				modified_tm.tm_sec);
+
+#ifndef CHEROKEE_EMBEDDED
+	/* Add MIME related headers: 
+	 * "Content-Type:" and "Cache-Control: max-age="
+	 */
+	if (fhdl->mime != NULL) {
+		cherokee_buffer_t *mime;
+		cuint_t            maxage;
+		
+		cherokee_mime_entry_get_type (fhdl->mime, &mime);
+		cherokee_buffer_add_str (buffer, "Content-Type: ");
+		cherokee_buffer_add_buffer (buffer, mime);
+		cherokee_buffer_add_str (buffer, CRLF);
+		
+		ret = cherokee_mime_entry_get_maxage (fhdl->mime, &maxage);             
+		if (ret == ret_ok) {
+			cherokee_buffer_add_va (buffer, "Cache-Control: max-age=%u"CRLF, maxage);
+		}
+	}
+#endif
+
+	/* If it's replying "304 Not Modified", we're done here
+	 */
+	if (fhdl->not_modified) {
+		/* The handler will manage this special reply
+		 */
+		HANDLER(fhdl)->support |= hsupport_error;
+
+		conn->error_code = http_not_modified;
+		return ret_ok;
+	}
+
+	/* We stat()'ed the file in the handler constructor
+	 */
+	length = conn->range_end - conn->range_start;		
+	if (length < 0) {
+		length = 0;
+	}
+
+	if (conn->encoder == NULL) {
+		if (conn->error_code == http_partial_content) {
+			cherokee_buffer_add_va (buffer,
+						"Content-Range: bytes " FMT_OFFSET "-"
+						FMT_OFFSET "/" FMT_OFFSET CRLF,
+						conn->range_start,
+						conn->range_end - 1,
+						fhdl->info->st_size);
+		}
+		
+		cherokee_buffer_add_va (buffer, "Content-Length: " FMT_OFFSET CRLF, length);
+
+	} else {
+		/* Can't use Keep-alive w/o "Content-length:", so
+		 */
+		conn->keepalive = 0;
+	}
+
 	return ret_ok;
 }
 
@@ -484,11 +602,6 @@ cherokee_handler_file_step (cherokee_handler_file_t *fhdl,
 						&fhdl->offset,                     /* off_t             *offset */
 						&sent);                            /* ssize_t           *sent   */
 
-		if (ret == ret_no_sys) {
-			fhdl->using_sendfile = false;
-			goto exit_sendfile;
-		}
-
 		/* cherokee_handler_file_init() activated the TCP_CORK flags.
 		 * After it, the header was sent.  And now, the first
 		 * chunk of the file with sendfile().  It's time to turn
@@ -496,6 +609,11 @@ cherokee_handler_file_step (cherokee_handler_file_t *fhdl,
 		 */
 		if (conn->tcp_cork) {
 			cherokee_connection_set_cork (conn, 0);
+		}
+
+		if (ret == ret_no_sys) {
+			fhdl->using_sendfile = false;
+			goto exit_sendfile;
 		}
 
 		if (ret < ret_ok) return ret;
@@ -544,84 +662,6 @@ exit_sendfile:
 
 	return ret_ok;
 }
-
-
-ret_t
-cherokee_handler_file_add_headers (cherokee_handler_file_t *fhdl,
-				   cherokee_buffer_t       *buffer)
-{
-	ret_t     ret;
-	off_t     length;
-	struct tm modified_tm;
-
-	/* We stat()'ed the file in the handler constructor
-	 */
-	length = HANDLER_CONN(fhdl)->range_end - HANDLER_CONN(fhdl)->range_start;		
-	if (length < 0) {
-		length = 0;
-	}
-
-	if (HANDLER_CONN(fhdl)->encoder == NULL) {
-		if(HANDLER_CONN(fhdl)->error_code == http_partial_content) {
-			cherokee_buffer_add_va (buffer,
-						"Content-Range: bytes " FMT_OFFSET "-"
-						FMT_OFFSET "/" FMT_OFFSET CRLF,
-						HANDLER_CONN(fhdl)->range_start,
-						HANDLER_CONN(fhdl)->range_end - 1,
-						fhdl->info->st_size);
-		}
-		
-		cherokee_buffer_add_va (buffer, "Content-Length: " FMT_OFFSET CRLF, length);
-
-	} else {
-		/* Can't use Keep-alive w/o "Content-length:", so
-		 */
-		HANDLER_CONN(fhdl)->keepalive = 0;
-	}
-
-	/* Add MIME related headers: 
-	 * "Content-Type:" and "Cache-Control: max-age="
-	 */
-#ifndef CHEROKEE_EMBEDDED
-	if (fhdl->mime != NULL) {
-		cherokee_buffer_t *mime;
-		cuint_t            maxage;
-
-		cherokee_mime_entry_get_type (fhdl->mime, &mime);
-		cherokee_buffer_add_str (buffer, "Content-Type: ");
-		cherokee_buffer_add_buffer (buffer, mime);
-		cherokee_buffer_add_str (buffer, CRLF);
-
-		ret = cherokee_mime_entry_get_maxage (fhdl->mime, &maxage);		
-		if (ret == ret_ok) {
-			cherokee_buffer_add_va (buffer, "Cache-Control: max-age=%d"CRLF, maxage);
-		}
-	}
-#endif
-
-	/* Etag
-	 */
-	if (HANDLER_CONN(fhdl)->header.version >= http_version_11) { 
-		cherokee_buffer_add_va (buffer, "Etag: %lx=%lx"CRLF, fhdl->info->st_mtime, fhdl->info->st_size);
-	}
-
-	/* Last-Modified:
-	 */
-	cherokee_gmtime (&fhdl->info->st_mtime, &modified_tm);
-
-	cherokee_buffer_add_va (buffer,
-				"Last-Modified: %s, %02d %s %d %02d:%02d:%02d GMT"CRLF,
-				cherokee_weekdays[modified_tm.tm_wday],
-				modified_tm.tm_mday,
-				cherokee_months[modified_tm.tm_mon], 
-				modified_tm.tm_year + 1900,
-				modified_tm.tm_hour,
-				modified_tm.tm_min,
-				modified_tm.tm_sec);
-
-	return ret_ok;
-}
-
 
 
 /*   Library init function
