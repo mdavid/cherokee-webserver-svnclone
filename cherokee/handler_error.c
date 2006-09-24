@@ -207,14 +207,26 @@ cherokee_handler_error_add_headers (cherokee_handler_error_t *hdl, cherokee_buff
 		SHOULDNT_HAPPEN;
 	}
 
-	/* "304 Not Modified" responses should be managed by other handlers,
-	 * however this test ensures that it'll never send wrong and
-	 * unrelated headers in case that a 304 response is managed
-	 * by this handler.  304 responses should only include the
-	 * Last-Modified, ETag, Expires and Cache-Control headers.
-	 */
-	if (conn->error_code == http_not_modified)
+	switch (conn->error_code) {
+	case http_range_not_satisfiable:
+		/* The handler that attended the request has put the content 
+		 * lenght in conn->range_end in order to allow it to send the
+		 * right lenght to the client.
+		 */
+		cherokee_buffer_add_va (buffer, "Content-Range: bytes */"FMT_OFFSET CRLF,
+					conn->range_end);
 		return ret_ok;
+	case http_not_modified:
+		/* "304 Not Modified" responses are managed by the individuals
+		 * handler, however this test ensures that it'll never send
+		 * wrong and unrelated headers in case that a 304 response is
+		 * managed by this handler. They should only include the
+		 * Last-Modified, ETag, Expires and Cache-Control headers.
+		 */
+		return ret_ok;
+	default:
+		break;
+	}
 
 	/* Usual headers
 	 */
