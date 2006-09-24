@@ -1,5 +1,7 @@
 2006-09-24  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* cherokee/socket.c (cherokee_socket_sendfile): Updated.
+
 	* qa/Makefile.am (test): Test rule removed.
 
 2006-09-13  Alvaro Lopez Ortega  <alvaro@alobbs.com>
