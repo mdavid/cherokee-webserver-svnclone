@@ -138,5 +138,3 @@ run-tests.py \
 133-If-None-Match.py \
 134-HTTP_headers.py
 
-test:
-	./run-tests.py
