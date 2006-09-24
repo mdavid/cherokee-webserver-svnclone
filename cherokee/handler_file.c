@@ -436,9 +436,10 @@ cherokee_handler_file_init (cherokee_handler_file_t *fhdl)
 
 	/* Range 1: Check the range and file size
 	 */
-	if ((conn->range_start > fhdl->info->st_size) ||
-	    (conn->range_end   > fhdl->info->st_size)) 
+	if (unlikely ((conn->range_start > fhdl->info->st_size) ||
+		      (conn->range_end   > fhdl->info->st_size)))
 	{
+		conn->range_end  = fhdl->info->st_size;
 		conn->error_code = http_range_not_satisfiable;
 		return ret_error;
 	}
@@ -474,7 +475,7 @@ cherokee_handler_file_init (cherokee_handler_file_t *fhdl)
 
 	/* Maybe use sendfile
 	 */
-#ifdef HAVE_SENDFILE
+#ifdef WITH_SENDFILE
 	fhdl->using_sendfile = ((conn->mmaped == NULL) &&
 				(conn->encoder == NULL) &&
 				(fhdl->info->st_size >= srv->sendfile.min) && 
@@ -557,9 +558,10 @@ cherokee_handler_file_add_headers (cherokee_handler_file_t *fhdl,
 	/* We stat()'ed the file in the handler constructor
 	 */
 	length = conn->range_end - conn->range_start;		
-	if (length < 0) {
+	if (likely (length > 0)) 
+		length++;
+	else 
 		length = 0;
-	}
 
 	if (conn->encoder == NULL) {
 		if (conn->error_code == http_partial_content) {
@@ -567,7 +569,7 @@ cherokee_handler_file_add_headers (cherokee_handler_file_t *fhdl,
 						"Content-Range: bytes " FMT_OFFSET "-"
 						FMT_OFFSET "/" FMT_OFFSET CRLF,
 						conn->range_start,
-						conn->range_end - 1,
+						conn->range_end,
 						fhdl->info->st_size);
 		}
 		
@@ -591,7 +593,7 @@ cherokee_handler_file_step (cherokee_handler_file_t *fhdl,
 	int                    size;
 	cherokee_connection_t *conn = HANDLER_CONN(fhdl);
 
-#if HAVE_SENDFILE
+#if WITH_SENDFILE
 	if (fhdl->using_sendfile) {
 		ret_t   ret;
 		ssize_t sent;
@@ -636,7 +638,7 @@ exit_sendfile:
 	/* Check the amount to read
 	 */
 	if ((fhdl->offset + buffer->size) > conn->range_end) {
-		size = conn->range_end - fhdl->offset;
+		size = conn->range_end - fhdl->offset + 1;
 	} else {
 		size = buffer->size;
 	}

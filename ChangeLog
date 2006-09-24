@@ -1,5 +1,16 @@
 2006-09-24  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* cherokee/handler_error.c (cherokee_handler_error_add_headers):
+	Management of http_range_not_satisfiable has been improved. 
+
+	* cherokee/handler_file.c (cherokee_handler_file_add_headers): It
+	was sending an incorrect Content-Range header. Fixed.
+
+	* qa/054-ContentRange.py, qa/055-ContentRange2.py,
+	qa/056-ContentRange3.py, qa/057-ContentRange4.py,
+	qa/058-ContentRange-Double.py, qa/059-ContentRange-Double2.py:
+	These tests were wrong. Fixed.
+
 	* cherokee/socket.c (cherokee_socket_sendfile): Updated.
 
 	* qa/Makefile.am (test): Test rule removed.
