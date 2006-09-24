@@ -11,7 +11,13 @@
 Port 80
 
 ##
-## PortTLS: The port to which the secure server listens. Default 443.
+## TLS Port:
+##
+## To start TLS/SSL, please be sure to generate your SSL keys (read
+## dos/How_to_generate_SSL_keys.html). Once this is done, enable the
+## service by enabling the SSL module:
+##
+## # ln -s /etc/cherokee/mods-available/ssl /etc/cherokee/mods-enabled/ssl/
 ##
 # PortTLS 443
 
