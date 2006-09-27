@@ -1,3 +1,13 @@
+2006-09-26  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/read_config_scanner.l: Added support for local paths.
+	Eg: ../example
+
+	* qa/run-tests.py (CONF_BASE): Now, it uses the example mime types
+	file instead of the system one.
+
+	* cherokee/server.c (update_bogo_now): Partially rewritten.
+
 2006-09-24  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cherokee/server.c (update_bogo_now): Date string fixed.  It was

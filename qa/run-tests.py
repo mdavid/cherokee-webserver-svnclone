@@ -95,7 +95,7 @@ CONF_BASE = """# Cherokee QA tests
                Directory / { Handler common }
                DirectoryIndex test_index.html, test_index.php, /super_test_index.php
                Encoder gzip { allow txt }
-               MimeFile /etc/cherokee/mime.types
+               MimeFile ../mime.types.sample
             """ % (PORT, www)
 
 if fcgi:

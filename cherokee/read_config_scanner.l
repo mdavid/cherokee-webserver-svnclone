@@ -33,11 +33,13 @@
 ws              [ \t]+
 integer         [-+]?[0-9]+
 comment         #.*$
+fpath_base      (\/[^\"\n\r ]*)
+fpath_local     (\.+){fpath_base}
 fpath_win       ([a-zA-Z]:[^\"\n\r]*)
-fpath           (\/[^\"\n\r ]*)|{fpath_win}
+fpath           {fpath_base}|{fpath_win}|{fpath_local}
 qstring         \"[^\"\{\}\n\r]*\"
-http            http\:\/{fpath}
-https           https\:\/{fpath}
+http            http\:\/{fpath_base}
+https           https\:\/{fpath_base}
 id              [_\-\.a-zA-Z][\.\-_a-zA-Z0-9]*
 ip4_end         [0-9]*[0-9]+
 ip4_part        [0-2]*{ip4_end}
