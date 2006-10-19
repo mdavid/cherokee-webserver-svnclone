@@ -1,3 +1,10 @@
+2006-10-19  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* doc/develop/Makefile.am (EXTRA_DIST),
+	doc/develop/draft-coar-cgi-v11-03.txt, doc/develop/rfc1952.txt,
+	doc/develop/rfc2616.txt, doc/develop/rfc2817.txt : Removed
+	RFCs. It's non-free content.
+
 2006-09-26  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cherokee/read_config_scanner.l: Added support for local paths.
