@@ -1097,7 +1097,7 @@ update_bogo_now (cherokee_server_t *srv)
 	/* Read the time
 	 */
 	newtime = time (NULL);
-	if (srv->bogo_now <= newtime) 
+	if (srv->bogo_now >= newtime) 
 		return;
 
 	/* Update the internal variable

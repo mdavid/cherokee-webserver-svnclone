@@ -1,7 +1,7 @@
 from base import *
 
 DIR   = "common_valid_methods1"
-MAGIC = "Report bugs to http://bugs.0x50.org"
+MAGIC = "Report bugs to http://bugs.cherokee-project.com"
 
 class Test (TestBase):
     def __init__ (self):

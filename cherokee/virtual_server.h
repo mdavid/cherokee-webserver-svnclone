@@ -49,7 +49,7 @@
 typedef struct {
 	struct list_head list_entry;
 
-	cherokee_buffer_t           *name;            /* Default name.   Eg: www.0x50.org */
+	cherokee_buffer_t           *name;            /* Default name.   Eg: www.alobbs.com */
 
 	cherokee_dirs_table_t        dirs;            /* Eg: (/public, common) */
 	cherokee_exts_table_t       *exts;            /* Eg: (.php,    phpcgi) */
