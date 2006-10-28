@@ -6,5 +6,5 @@ class Test (TestBase):
         self.name = "Redir to URL"
 
         self.request          = "GET /redir46/ HTTP/1.0\r\n"
-        self.conf             = "Directory /redir46 { Handler redir { URL http://www.0x50.org } }"
+        self.conf             = "Directory /redir46 { Handler redir { URL http://www.cherokee-project.com } }"
         self.expected_error   = 301
