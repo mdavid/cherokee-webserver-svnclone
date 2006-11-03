@@ -1,3 +1,11 @@
+2006-11-03  A.D.F  <adefacc@tin.it>
+
+	* cherokee/thread.c: assign http version 1.1 to header.version,
+	  instead of header.method. Backported from alo's patch in Trunk.
+
+	* cherokee/handler_error.c: build_hardcoded_response_page(), fix a
+	memory leak (on bad_request).
+
 2006-10-28  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* README, cherokee/handler_server_info.c (PAGE_HEADER),
