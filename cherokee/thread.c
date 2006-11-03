@@ -714,7 +714,7 @@ process_active_connections (cherokee_thread_t *thd)
 			if (ret != ret_ok) {
 				conn->keepalive     = 0; 
 				conn->phase         = phase_setup_connection;
-				conn->header.method = http_version_11;
+				conn->header.version = http_version_11;
 				continue;
 			}
 
