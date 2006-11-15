@@ -94,6 +94,16 @@ extern int32_t sendfile (int out_fd, int in_fd, int32_t *offset, uint32_t count)
 #include "virtual_server.h"
 
 
+/* Max. sendfile block size (bytes),
+ * limiting size of data sent by each sendfile call may:
+ * improve responsiveness, reduce memory pressure, prevent blocking calls,
+ * etc.; try to reduce block size (down to 64 KB) on small or old systems
+ * and see if something improves under heavy load.
+ */
+#define MAX_SF_BLK_SIZE		(65536 * 16)	/* limit size of block size */
+#define MAX_SF_BLK_SIZE2	(MAX_SF_BLK_SIZE + 65536) /* upper limit */
+
+
 ret_t
 cherokee_socket_init (cherokee_socket_t *socket)
 {
@@ -936,6 +946,19 @@ cherokee_socket_read (cherokee_socket_t *socket, cherokee_buffer_t *buf, size_t 
 ret_t 
 cherokee_socket_sendfile (cherokee_socket_t *socket, int fd, size_t size, off_t *offset, ssize_t *sent)
 {
+	/* If there is nothing to send then return now,
+	 * this may be needed in some systems (i.e. *BSD)
+	 * because value 0 may have special meanings or
+	 * trigger occasional hidden bugs.
+	 */
+	if (size == 0)
+		return ret_ok;
+
+	/* Limit size of data that has to be sent.
+	 */
+	if (size > MAX_SF_BLK_SIZE2)
+		size = MAX_SF_BLK_SIZE;
+
 #if defined(LINUX_SENDFILE_API) || defined(HAVE_SENDFILE64)
 
 	/* Linux sendfile
@@ -947,10 +970,10 @@ cherokee_socket_sendfile (cherokee_socket_t *socket, int fd, size_t size, off_t 
 	 * sendfile64 (int out_fd, int in_fd, off64_t *offset, size_t *count);
 	 */
 	do {
-		*sent = sendfile (SOCKET_FD(socket),            /* int     out_fd */
-				  fd,                           /* int     in_fd  */
-				  offset,                       /* off_t  *offset */
-				  size);                        /* size_t  count  */
+		*sent = sendfile (SOCKET_FD(socket),     /* int     out_fd */
+		                  fd,                    /* int     in_fd  */
+		                  offset,                /* off_t  *offset */
+		                  size);                 /* size_t  count  */
 	} while ((*sent == -1) && (errno == EINTR));
 		
 	if (*sent < 0) {
@@ -965,7 +988,7 @@ cherokee_socket_sendfile (cherokee_socket_t *socket, int fd, size_t size, off_t 
 
 #elif HAVE_SENDFILE_BROKEN
 
-	/* Some Linux 2.4 kernels doesn't support sendfile in a LFS
+	/* Some Linux 2.4 kernels don't support sendfile in a LFS
 	 * environment.
 	 */
 	return ret_no_sys;
@@ -989,6 +1012,7 @@ cherokee_socket_sendfile (cherokee_socket_t *socket, int fd, size_t size, off_t 
 	hdtrl.iov_base = NULL;
 	hdtrl.iov_len  = 0;
 
+	*sent = 0;
 
 	/* FreeBSD sendfile: in_fd and out_fd are reversed
 	 *
@@ -997,21 +1021,30 @@ cherokee_socket_sendfile (cherokee_socket_t *socket, int fd, size_t size, off_t 
 	 *           struct sf_hdtr *hdtr, off_t *sbytes, int flags);
 	 */	
 	do {
-		re = sendfile (fd,                        /* int             fd     */
-			       SOCKET_FD(socket),         /* int             s      */
-			       *offset,                   /* off_t           offset */
-			       size,                      /* size_t          nbytes */
-			       &hdr,                      /* struct sf_hdtr *hdtr   */
-			       sent,                      /* off_t          *sbytes */ 
-			       0);                        /* int             flags  */
+		re = sendfile (fd,                      /* int             fd     */
+		               SOCKET_FD(socket),       /* int             s      */
+		               *offset,                 /* off_t           offset */
+		               size,                    /* size_t          nbytes */
+		               &hdr,                    /* struct sf_hdtr *hdtr   */
+		               sent,                    /* off_t          *sbytes */
+			       0);                          /* int             flags  */
 
 	}  while (re == -1 && errno == EINTR);
 
-	if (*sent < 0) {
-		if (errno == EAGAIN) {
-			return ret_eagain;
+	if (re == -1) {
+		switch (errno) {
+		case ENOSYS:
+			return ret_no_sys;
+		case EAGAIN:
+			if (*sent < 1)
+				return ret_eagain;
+
+			/* else it's ok, something has been sent.
+			 */
+			break;
+		default:
+			return ret_error;
 		}
-		return ret_error;
 	}
 	*offset = *offset + *sent;
 
@@ -1028,12 +1061,12 @@ cherokee_socket_sendfile (cherokee_socket_t *socket, int fd, size_t size, off_t 
 	 * nwritten includes the header data sent.
 	 */
 	do {
-		*sent = sendfile (SOCKET_FD(socket),      /* socket          */
-				  fd,                     /* fd to send      */
-				  *offset,                /* where to start  */
-				  size,                   /* bytes to send   */
-				  NULL,                   /* Headers/footers */
-				  0);                     /* flags           */
+		*sent = sendfile (SOCKET_FD(socket),     /* socket          */
+		                  fd,                    /* fd to send      */
+		                  *offset,               /* where to start  */
+		                  size,                  /* bytes to send   */
+		                  NULL,                  /* Headers/footers */
+		                  0);                    /* flags           */
 	} while ((*sent == -1) && (errno == EINTR));
 
 	if (*sent < 0) {
