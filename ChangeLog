@@ -1,3 +1,26 @@
+2006-11-14  A.D.F  <adefacc@tin.it>
+
+	* cherokee/socket.c: add two new constants (MAX_SF_BLK_SIZE and
+	MAX_SF_BLK_SIZE2) (max. sendfile block size) to limit size of data
+	sent by each sendfile call, because this trick can improve things
+	a lot on small or old systems (FreeBSD 4.x, Linux 2.2, etc.),
+	specially when network speed is higher than disk speed;
+
+          NOTE: right now default is set to 1 MB
+                which should be good even for 99.99% of systems
+                (i.e. up to 10-50 GB / sec. of disk I/O).
+
+        - cherokee_socket_sendfile():
+          - if size of data to be sent is 0 then return
+            without calling sendfile;
+
+          - limit size of data to a value between
+	    MAX_SF_BLK_SIZE and MAX_SF_BLK_SIZE2;
+
+          - fix FreeBSD return error handling,
+            only (re) variable has to be tested for error value,
+            return ret_eagain only if errno == EAGAIN && *sent == 0.
+
 2006-11-03  A.D.F  <adefacc@tin.it>
 
 	* cherokee/thread.c: assign http version 1.1 to header.version,
