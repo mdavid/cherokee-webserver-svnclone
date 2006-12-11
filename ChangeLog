@@ -1,3 +1,14 @@
+2006-12-11  A.D.F  <adefacc@tin.it>
+
+	- BSD compilation fixes (macros.h, etc.);
+
+	- socket.c
+           - cherokee_socket_write() rename variable name
+	     (_nwritten -> nwr);
+
+        - iocache.c
+	   - fix a memory leak.
+	
 2006-11-14  A.D.F  <adefacc@tin.it>
 
 	* cherokee/socket.c: add two new constants (MAX_SF_BLK_SIZE and
