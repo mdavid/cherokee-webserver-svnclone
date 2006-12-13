@@ -73,6 +73,10 @@ build_hardcoded_response_page (cherokee_connection_t *cnt, cherokee_buffer_t *bu
 	cuint_t            port;
 	cherokee_buffer_t *escaped = NULL;
 
+	/* Ensure minimum size to avoid too many reallocations.
+	 */
+	cherokee_buffer_ensure_size(buffer, 768);
+
 	cherokee_buffer_add_str (buffer, "<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">" CRLF);
 	   
 	/* Add page title
@@ -194,6 +198,10 @@ ret_t
 cherokee_handler_error_add_headers (cherokee_handler_error_t *hdl, cherokee_buffer_t *buffer)
 {
 	cherokee_connection_t *conn = HANDLER_CONN(hdl);
+
+	/* Ensure minimum size to avoid too many reallocations.
+	 */
+	cherokee_buffer_ensure_size(buffer, 384);
 
 	/* It has special headers on protocol upgrading 
 	 */

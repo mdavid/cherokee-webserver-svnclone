@@ -292,14 +292,15 @@ cherokee_buffer_ensure_size (cherokee_buffer_t *buf, size_t size)
 {
 	/* Maybe it doesn't need it
 	 */
-	if (size < buf->len) 
+	if (size <= (size_t) buf->size) 
 		return ret_ok;
 
 	/* If it is a new buffer, take memory and return
 	 */
 	if (buf->buf == NULL) {
 		buf->buf = (char *) malloc (size);
-		if (unlikely (buf->buf == NULL)) return ret_nomem;
+		if (unlikely (buf->buf == NULL))
+			return ret_nomem;
 		buf->size = size;
 		return ret_ok;
 	}
@@ -307,7 +308,8 @@ cherokee_buffer_ensure_size (cherokee_buffer_t *buf, size_t size)
 	/* It already has memory, but it needs more..
 	 */
 	buf->buf = (char *) realloc(buf->buf, size);
-	if (unlikely (buf->buf == NULL)) return ret_nomem;
+	if (unlikely (buf->buf == NULL))
+		return ret_nomem;
 	buf->size = size;
 	   
 	return ret_ok;
@@ -554,7 +556,7 @@ cherokee_buffer_multiply (cherokee_buffer_t *buf, int num)
 	int i, initial_size;
 
 	initial_size = buf->len;
-	cherokee_buffer_ensure_size (buf, buf->len * num);
+	cherokee_buffer_ensure_size (buf, buf->len * num + 1);
 
 	for (i=0; i<num; i++) {
 		cherokee_buffer_add (buf, buf->buf, initial_size);
@@ -627,7 +629,7 @@ cherokee_buffer_add_version (cherokee_buffer_t *buf, int port, cherokee_version_
 
 	switch (ver) {
 	case ver_full_html:
-		cherokee_buffer_ensure_size (buf, buf->len + 29 + sizeof(PACKAGE_VERSION) + 6 + port_len + 10);
+		cherokee_buffer_ensure_size (buf, buf->len + 29 + sizeof(PACKAGE_VERSION) + 6 + port_len + 10 + 1);
 
 		cherokee_buffer_add_str (buf, 
 					 "<address>Cherokee web server " PACKAGE_VERSION " Port ");
@@ -636,7 +638,7 @@ cherokee_buffer_add_version (cherokee_buffer_t *buf, int port, cherokee_version_
 		break;
 
 	case ver_port_html:
-		cherokee_buffer_ensure_size (buf, buf->len + 34 + port_len + 10);
+		cherokee_buffer_ensure_size (buf, buf->len + 34 + port_len + 10 + 1);
 
 		cherokee_buffer_add_str (buf, "<address>Cherokee web server Port ");
 		cherokee_buffer_add (buf, port_str, port_len);
@@ -751,7 +753,7 @@ cherokee_buffer_encode_base64 (cherokee_buffer_t *buf)
 
 	/* Get memory
 	 */
-	ret = cherokee_buffer_ensure_size (&new_buf, (buf->len+4)*4/3);
+	ret = cherokee_buffer_ensure_size (&new_buf, (buf->len+4)*4/3 + 1);
 	if (unlikely (ret != ret_ok)) return ret;
 
 	/* Encode
@@ -946,7 +948,7 @@ cherokee_buffer_encode_sha1_base64 (cherokee_buffer_t *buf)
 	char             *ctmp;
 	cherokee_buffer_t encoded = CHEROKEE_BUF_INIT;
 
-	cherokee_buffer_ensure_size (&encoded, (SHA1_DIGEST_SIZE *2) + 1);	
+	cherokee_buffer_ensure_size (&encoded, (SHA1_DIGEST_SIZE * 2) + 1);	
 
 	cherokee_buffer_encode_sha1 (buf, &encoded);
 	cherokee_buffer_encode_base64 (&encoded);

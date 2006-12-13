@@ -506,6 +506,11 @@ cherokee_handler_file_add_headers (cherokee_handler_file_t *fhdl,
 	struct tm              modified_tm;
 	cherokee_connection_t *conn         = HANDLER_CONN(fhdl);
 
+	/* Ensure minimum buffer size to avoid or
+	 * at least reduce the number of reallocations.
+	 */
+	cherokee_buffer_ensure_size(buffer, 288);
+
 	/* Etag
 	 */
 	if (conn->header.version >= http_version_11) { 
