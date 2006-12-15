@@ -418,33 +418,36 @@ then
 
 		AC_MSG_CHECKING([for pthread_rwlock_t support])
 		have_pthread_rwlock_t=yes
+
 		AC_TRY_COMPILE([#include <pthread.h>],
 			[pthread_rwlock_t rwlock=PTHREAD_RWLOCK_INITIALIZER;],
 			AC_MSG_RESULT([ok]),
 
-		dnl Didn't find rwlock_t. 
-		dnl Try defining _XOPEN_SOURCE=500
-		dnl
-		oldcflags="$CFLAGS"
-		CFLAGS="$CFLAGS -D_XOPEN_SOURCE=500"
+ 		     dnl Didn't find rwlock_t. 
+		     dnl Try defining _XOPEN_SOURCE=500
+		     dnl
+		     oldcflags="$CFLAGS"
+		     CFLAGS="$CFLAGS -D_XOPEN_SOURCE=500"
 
-		AC_TRY_COMPILE([#include <pthread.h>], 
-			[pthread_rwlock_t rwlock=PTHREAD_RWLOCK_INITIALIZER;]
-		,
-			AC_MSG_RESULT([-D_XOPEN_SOURCE=500])
-			PTHREAD_CFLAGS="$PTHREAD_CFLAGS -D_XOPEN_SOURCE=500"
-			AC_SUBST(PTHREAD_CFLAGS)
-			# AC_DEFINE(_XOPEN_SOURCE, 500, [Define this if it is needed for pthread_rwlock_t support])
-		,
-			# AC_MSG_ERROR([pthread_rwlock_t support missing]))
-		))
+		     AC_TRY_COMPILE([#include <pthread.h>], 
+			    [pthread_rwlock_t rwlock=PTHREAD_RWLOCK_INITIALIZER;]
+  		     ,
+			    AC_MSG_RESULT([-D_XOPEN_SOURCE=500])
+			    PTHREAD_CFLAGS="$PTHREAD_CFLAGS -D_XOPEN_SOURCE=500"
+			    AC_SUBST(PTHREAD_CFLAGS)
+			    # AC_DEFINE(_XOPEN_SOURCE, 500, [Define this if it is needed for pthread_rwlock_t support])
+		     ,
+			    have_pthread_rwlock_t=no
+			    # AC_MSG_ERROR([pthread_rwlock_t support missing]))
+		     )
+			
+			CFLAGS="$oldcflags"
+		)
 
 		if test "$have_pthread_rwlock_t" = yes; then
 			AC_DEFINE(HAVE_PTHREAD_RWLOCK_T, 1, [Define if your pthread library includes pthread_rwlock_t])
 		fi
-
-		CFLAGS="$oldcflags"
-
+		
 		with_pthread="yes"
 	fi
 fi
