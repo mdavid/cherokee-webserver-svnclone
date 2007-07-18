@@ -184,6 +184,7 @@ cherokee_logger_w3c_flush (cherokee_logger_w3c_t *logger)
 	CHEROKEE_MUTEX_LOCK(&buffer_lock);
 
 	if (cherokee_buffer_is_empty(LOGGER_BUFFER(logger))) {
+		CHEROKEE_MUTEX_UNLOCK(&buffer_lock);
 		return ret_ok;
 	}
 	
@@ -193,6 +194,7 @@ cherokee_logger_w3c_flush (cherokee_logger_w3c_t *logger)
 		wrote = fwrite (LOGGER_BUFFER(logger)->buf, 1, LOGGER_BUFFER(logger)->len, logger->file);
 		fflush(logger->file);
 
+		CHEROKEE_MUTEX_UNLOCK(&buffer_lock);
 		return (wrote > 0) ? ret_ok : ret_error;
 	}
 

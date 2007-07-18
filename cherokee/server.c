@@ -962,6 +962,7 @@ cherokee_server_init (cherokee_server_t *srv)
 		srv->chrooted = (chroot (srv->chroot) == 0);
 		if (srv->chrooted == 0) {
 			PRINT_ERROR ("Cannot chroot() to '%s': %s\n", srv->chroot, strerror(errno));
+			return ret_error;
 		}
 	} 
 
