@@ -286,8 +286,11 @@ fdpoll_epoll_new (cherokee_fdpoll_t **fdp, int sys_limit, int limit)
 		return ret_nomem;
 	}
 
-	memset (n->epoll_rs2idx, -1, nfd->system_nfiles);
-	memset (n->epoll_idx2rs, -1, nfd->system_nfiles);
+	for (re = 0; re < nfd->system_nfiles; ++re)
+		n->epoll_rs2idx[re] = -1;
+
+	for (re = 0; re < nfd->system_nfiles; ++re)
+		n->epoll_idx2rs[re] = -1;
 
 	n->ep_fd = epoll_create (nfd->nfiles + 1);
 	if (n->ep_fd < 0) {

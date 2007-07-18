@@ -514,7 +514,7 @@ cherokee_handler_file_add_headers (cherokee_handler_file_t *fhdl,
 	/* Etag
 	 */
 	if (conn->header.version >= http_version_11) { 
-		cherokee_buffer_add_va (buffer, "Etag: %lx=" FMT_OFFSET_HEX CRLF, fhdl->info->st_mtime, fhdl->info->st_size);
+		cherokee_buffer_add_va (buffer, "ETag: %lx=" FMT_OFFSET_HEX CRLF, fhdl->info->st_mtime, fhdl->info->st_size);
 	}
 
 	/* Last-Modified:

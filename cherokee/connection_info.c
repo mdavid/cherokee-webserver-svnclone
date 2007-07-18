@@ -223,6 +223,7 @@ cherokee_connection_info_fill_up (cherokee_connection_info_t *info, cherokee_con
 ret_t 
 cherokee_connection_info_list_thread (list_t *list, void *_thread, cherokee_handler_t *self_handler)
 {
+	ret_t               ret;
 	list_t             *i;
 	cherokee_boolean_t  locked = false;
 	cherokee_thread_t  *thread = THREAD(_thread);
@@ -237,8 +238,7 @@ cherokee_connection_info_list_thread (list_t *list, void *_thread, cherokee_hand
 	 * a deadlock situation.  Check it before lock.
 	 */
 	if ((self_handler != NULL) &&
-	    (HANDLER_THREAD(self_handler) != thread))
-	{
+	    (HANDLER_THREAD(self_handler) != thread)) {
 		/* Adquire the ownership of the thread
 		 */
 		CHEROKEE_MUTEX_LOCK (&thread->ownership);
@@ -254,15 +254,16 @@ cherokee_connection_info_list_thread (list_t *list, void *_thread, cherokee_hand
 		list_add ((list_t *)n, list);
 	}
 
+	ret = ret_ok;
 	if (list_empty(list))
-		return ret_not_found;
+		ret = ret_not_found;
 
 	/* Release it
 	 */
 	if (locked)
 		CHEROKEE_MUTEX_UNLOCK (&thread->ownership);
 
-	return ret_ok;
+	return ret;
 }
 
 

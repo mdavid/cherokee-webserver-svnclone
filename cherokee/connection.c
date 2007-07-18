@@ -606,8 +606,8 @@ cherokee_connection_send_header_and_mmaped (cherokee_connection_t *cnt)
 		
 		cherokee_connection_tx_add (cnt, re);
 
-		cnt->mmaped_len -= re;
-		cnt->mmaped     += re;
+		cnt->mmaped_len -= (off_t) re;
+		cnt->mmaped      = (void *) (((char *) cnt->mmaped) + re);
 
 		return (cnt->mmaped_len <= 0) ? ret_ok : ret_eagain;
 	}
@@ -648,8 +648,8 @@ cherokee_connection_send_header_and_mmaped (cherokee_connection_t *cnt)
 		}
 		
 		offset = re - cnt->buffer.len;
-		cnt->mmaped     += offset;
-		cnt->mmaped_len -= offset;
+		cnt->mmaped      = (void *) (((char *) cnt->mmaped) + offset);
+		cnt->mmaped_len -= (off_t) offset;
 
 		cherokee_buffer_clean (&cnt->buffer);
 
@@ -796,8 +796,10 @@ cherokee_connection_send (cherokee_connection_t *cnt)
 	 */
 	if (sent == cnt->buffer.len) {
 		cherokee_buffer_clean (&cnt->buffer);
+		ret = ret_ok;
 	} else if (sent != 0) {
 		cherokee_buffer_move_to_begin (&cnt->buffer, sent);
+		ret = ret_eagain;
 	}
 	
 	/* If this connection has a handler without content-length support
@@ -807,7 +809,7 @@ cherokee_connection_send (cherokee_connection_t *cnt)
 		cnt->range_end += sent;
 	}
 
-	return ret_ok;
+	return ret;
 }
 
 

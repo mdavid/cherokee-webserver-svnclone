@@ -1238,11 +1238,16 @@ __accept_from_server (cherokee_thread_t *thd, int srv_socket, cherokee_socket_ty
 	ret = cherokee_thread_get_new_connection (thd, &new_conn);
 	if (unlikely(ret < ret_ok)) {
 		PRINT_ERROR_S ("ERROR: Trying to get a new connection object\n");
+		close (new_fd);
 		return 0;
 	}
 
 	ret = cherokee_socket_set_sockaddr (&new_conn->socket, new_fd, &new_sa);
-	if (unlikely(ret < ret_ok)) goto error;
+	if (unlikely(ret < ret_ok)) {
+		PRINT_ERROR_S ("ERROR: Trying to set sockaddr\n");
+		close (new_fd);
+		goto error;
+	}
 
 	/* May active the TLS support
          */
@@ -1259,6 +1264,7 @@ __accept_from_server (cherokee_thread_t *thd, int srv_socket, cherokee_socket_ty
 	 */
 	ret = cherokee_thread_add_connection (thd, new_conn);
 	if (unlikely (ret < ret_ok)) {
+		close (new_fd);
 		goto error;
 	}
 
@@ -1273,7 +1279,9 @@ __accept_from_server (cherokee_thread_t *thd, int srv_socket, cherokee_socket_ty
 error:
 	TRACE (ENTRIES, "error accepting connection! fd %d\n", srv_socket);
 
+	SOCKET_FD(&new_conn->socket) = -1;
 	connection_reuse_or_free (thd, new_conn);
+	CHEROKEE_MUTEX_UNLOCK (&thd->ownership);
 	return 0;
 }
 
