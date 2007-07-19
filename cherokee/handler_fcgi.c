@@ -464,6 +464,8 @@ connect_to_server (cherokee_handler_fcgi_t *hdl)
 	}
 	
 	TRACE (ENTRIES, "Connected sucessfully try=%d, fd=%d\n", try, hdl->socket.socket);
+
+	cherokee_fd_set_nonblocking (SOCKET_FD(&hdl->socket));
 	return ret_ok;
 }
 
