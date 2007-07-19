@@ -1,3 +1,26 @@
+2007-07-19  A.D.F  <adefacc@tin.it>
+
+	* cherokee/common-internal.c:
+	  - CLOSE_ON_EXEC(), removed fourth argument in fcntl() call;
+
+	* cherokee/util.c:
+	  - added cherokee_close_fd();
+
+	* cherokee/socket.c,
+	  cherokee/thread.c:
+	  - replaced socket close (fd) with cherokee_close_fd (fd);
+
+	* cherokee/thread.c
+	  - __accept_from_server(), fixed a very uncommon memory leak
+	    on a new connection object;
+	  - enlarged MUTEX_LOCK / MUTEX_UNLOCK section;
+
+	* cherokee/fcgi_manager.c,
+	  cherokee/handler_fcgi.c,
+	  cherokee/handler_scgi.c
+	  - use SOCKET_FD(socket) macro;
+	  - always set non blocking mode for new connected socket fd.
+
 2007-07-18  A.D.F  <adefacc@tin.it>
             Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
@@ -26,8 +49,7 @@
 
 	* cherokee/logger_*.c:
 	  - fixes to CHEROKEE_MUTEX_LOCK / CHEROKEE_MUTEX_UNLOCK
-	    sections;
-
+	    sections.
 
 2006-12-15  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 

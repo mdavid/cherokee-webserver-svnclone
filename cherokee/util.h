@@ -103,6 +103,8 @@ ret_t cherokee_short_path      (cherokee_buffer_t *path);
 ret_t cherokee_parse_query_string (cherokee_buffer_t *query_string,
 				   cherokee_table_t  *arguments);
 
+ret_t cherokee_close_fd        (cint_t fd);
+
 CHEROKEE_END_DECLS
 
 #endif /* CHEROKEE_UTIL_H */

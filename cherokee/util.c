@@ -1002,7 +1002,8 @@ cherokee_parse_query_string (cherokee_buffer_t *query_string,
 	{
 		char *equ, *key, *val;
 
-		if (token == NULL) continue;
+		if (*token == '\0')
+			continue;
 
 		if ((equ = strchr(token, '=')))
 		{
@@ -1028,5 +1029,26 @@ cherokee_parse_query_string (cherokee_buffer_t *query_string,
 	 */
 	query_string->buf[query_string->len] = '\0';
 	return ret_ok;
+}
+
+
+ret_t 
+cherokee_close_fd (cint_t fd)
+{
+	int re;
+	
+	if (fd < 0) {
+		return ret_error;
+	}
+	
+#ifdef _WIN32
+	re = closesocket (fd);
+#else  
+	re = close (fd);
+#endif
+
+	TRACE (ENTRIES",close_fd", "fd=%d re=%d\n", fd, re);
+	
+	return (re == 0) ? ret_ok : ret_error;
 }
 
