@@ -1,3 +1,8 @@
+2007-12-06  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/util.c: Gcrypt's "enable quick random numbers" patch
+	ported from trunk. Patch by Philip Pemberton <lists@philpem.me.uk>.
+
 2007-07-19  A.D.F  <adefacc@tin.it>
 
 	* cherokee/common-internal.c:
