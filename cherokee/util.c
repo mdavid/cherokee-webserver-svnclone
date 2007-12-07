@@ -79,6 +79,7 @@
 #endif 
 
 #if defined(HAVE_GNUTLS)
+# include <gcrypt.h>
 # include <gnutls/gnutls.h>
 #elif defined(HAVE_OPENSSL)
 # include <openssl/lhash.h>
@@ -731,6 +732,10 @@ cherokee_tls_init (void)
 	 */
 	gcry_control (GCRYCTL_SET_THREAD_CBS, &gcry_threads_pthread); 
 # endif
+	/* Try to speed up random number generation. On Linux, it
+	 * takes ages for GNUTLS to get the random numbers it needs.
+	 */
+	gcry_control (GCRYCTL_ENABLE_QUICK_RANDOM, 0);
 
 	/* Gnutls library-width initialization
 	 */
