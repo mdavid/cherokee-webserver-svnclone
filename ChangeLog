@@ -1,3 +1,14 @@
+2008-03-06  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* configure.in, cherokee/Makefile.am, cherokee/handler_proxy.c,
+	cherokee/handler_proxy.h: Removed proxy handler, it is not ready
+	for the 0.6 branch; it continues in trunk though.
+
+2008-03-06  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* BRANCHED: Cherokee 0.6 branch follows
+	  =====================================
+
 2008-03-05  Taher Shihadeh <taher@unixwars.com>
 	* admin/*: Several files needed corrections for consistency.
 	
