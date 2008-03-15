@@ -1,3 +1,12 @@
+2008-03-15  A.D.F  <adefacc@tin.it>
+
+	* admin/*.help.html:
+	  - fixed mispellings and added a few more details about
+	    range values if setable fields.
+
+	* admin/PageAdvanced.py:
+	  - fixed a mispelled word in warning help.
+
 2008-03-12  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* admin/advanced.help.html: Written. The file was empty.
