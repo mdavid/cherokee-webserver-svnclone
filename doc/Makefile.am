@@ -51,6 +51,7 @@ $(docmediacss_DATA)
 CLEANFILES = \
 $(GENERATED_FILES) 
 
+.NOTPARALLEL: $(GENERATED_FILES)
 $(GENERATED_FILES):
 	@[ -f .building ] || {        \
 		echo "Building doc..";   \
