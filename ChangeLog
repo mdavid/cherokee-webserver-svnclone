@@ -1,5 +1,9 @@
 2008-03-17  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* 0.6.0 Released
+
+2008-03-17  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
  	* qa/154-DirRedirection.py, qa/Makefile.am (EXTRA_DIST): Added new
  	QA case to cover the previous patch.
 
