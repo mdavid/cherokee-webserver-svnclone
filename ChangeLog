@@ -1,3 +1,13 @@
+2008-03-17  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+ 	* cherokee/handler_dirlist.c (check_request_finish_with_slash): It
+ 	must use the web_directory when redirecting a directory request
+ 	not ending by slash.
+
+2008-03-17  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* doc/*: Updated to latest trunk version.
+
 2008-03-16  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* doc/Makefile.am (.NOTPARALLEL): Documentation shouldn't be
@@ -5,7 +15,7 @@
 	build_docs.py compiles it all. When it compiles in pararell, make
 	calls many times to build_docs.py so the documentation is
 	regenerated and overwritten many times.
-	
+
 2008-03-15  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cherokee/handler_file.c (cherokee_handler_file_configure):
