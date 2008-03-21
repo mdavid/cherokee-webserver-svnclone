@@ -33,6 +33,7 @@
 #endif
 
 #include "handler.h"
+#include "util.h"
 
 #define ENTRIES "dirs"
 
