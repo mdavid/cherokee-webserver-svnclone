@@ -1,3 +1,13 @@
+2008-03-26  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* Makefile.am (install-data-local): It has to create /var/log and
+	/var/run when installing, otherwise it would fail after the
+	installation if DESTDIR wasn't /.
+	
+2008-03-24  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* Released 0.6.1
+
 2008-03-21  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
  	* configure.in, cherokee/Makefile.am: crypt() and PAM detection
