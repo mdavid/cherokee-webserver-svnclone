@@ -1,9 +1,17 @@
+2008-03-27  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee-admin.8, file cherokee_tweak.1, file spawn-fcgi.1:
+	Added new man pages. Written by Gunnar Wolf <gwolf@gwolf.org>.
+
+	* cherokee.1, cherokee-config.1, Makefile.am: Man pages have been
+	updated. By Gunnar Wolf <gwolf@gwolf.org>.
+
 2008-03-26  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* Makefile.am (install-data-local): It has to create /var/log and
 	/var/run when installing, otherwise it would fail after the
 	installation if DESTDIR wasn't /.
-	
+
 2008-03-24  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* Released 0.6.1
