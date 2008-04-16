@@ -265,6 +265,14 @@ iocache_entry_update_mmap (cherokee_iocache_t *iocache, cherokee_iocache_entry_t
 		return ret_deny;
 	}
 
+	/* Only map readable files
+	 * NOTE: if user is root then this test is mandatory
+	 */
+	if (unlikely ((entry->state.st_mode & (S_IRUSR | S_IRGRP | S_IROTH)) == 0)) {
+		TRACE(ENTRIES, "Not a readable file: %s\n", filename->buf);
+		return ret_deny;
+	}
+
 	/* Maybe it is already opened
 	 */
 	if (fd < 0) {

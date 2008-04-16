@@ -887,9 +887,14 @@ cherokee_buffer_read_file (cherokee_buffer_t *buf, char *filename)
 	if (r != 0)
 		return ret_error;
 
-	/* Is a regular file?
+	/* Is it a regular file?
 	 */
 	if (S_ISREG(info.st_mode) == 0)
+		return ret_error;
+
+	/* Is it readable ? (if user is root then this test is mandatory)
+	 */
+	if ((info.st_mode & (S_IRUSR | S_IRGRP | S_IROTH)) == 0)
 		return ret_error;
 
 	/* Maybe get memory

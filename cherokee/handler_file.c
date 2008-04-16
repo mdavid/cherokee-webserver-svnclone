@@ -459,11 +459,18 @@ cherokee_handler_file_init (cherokee_handler_file_t *fhdl)
 	 */
 	cherokee_buffer_drop_endding (&conn->local_directory, conn->request.len);
 
-	/* Is it a directory?
+	/* Is it a directory ?
 	 */
 	if (S_ISDIR(fhdl->info->st_mode)) {
 		conn->error_code = http_access_denied;
 		return ret_error;		
+	}
+
+	/* Is it readable ?
+	 */
+	if ((fhdl->info->st_mode & (S_IRUSR | S_IRGRP | S_IROTH)) == 0) {
+		conn->error_code = http_access_denied;
+		return ret_error;
 	}
 
 	/* Range 1: Check the range and file size
