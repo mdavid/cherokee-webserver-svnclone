@@ -1,5 +1,9 @@
 2008-05-22  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* configure.in, cherokee/Makefile.am, cherokee/handler_proxy.c,
+	cherokee/handler_proxy.h: The handler proxy has been removed. It
+	isn't ready for 0.7; development continues in trunk.
+
 	* 0.7 branch created:
 	svn://cherokee-project.com/cherokee/branches/0.7
 
