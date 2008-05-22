@@ -1,5 +1,8 @@
 2008-05-22  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* 0.7 branch created:
+	svn://cherokee-project.com/cherokee/branches/0.7
+
 	* doc/media/images/admin_behaviour.png,
 	doc/media/images/admin_encoding.png,
 	doc/media/images/admin_vserver_errors.png,
