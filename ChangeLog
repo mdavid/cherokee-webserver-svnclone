@@ -1,3 +1,8 @@
+2008-05-26  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* contrib/Makefile.am: Added an extra -I entry. It was failing to
+	compile with VPATH on Linux.
+
 2008-05-25  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* 0.7.0 released
