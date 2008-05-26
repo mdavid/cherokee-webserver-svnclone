@@ -1,3 +1,7 @@
+2008-05-25  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* 0.7.0 released
+
 2008-05-24  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cherokee/Makefile.am (INCLUDES), cget/Makefile.am: Added a new
