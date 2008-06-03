@@ -68,6 +68,7 @@ cherokee_handler_cgi_base_init (cherokee_handler_cgi_base_t              *cgi,
 	 */
 	cgi->init_phase          = hcgi_phase_build_headers;
 	cgi->content_length      = 0;
+	cgi->content_length_set  = false;
 	cgi->got_eof             = false;
 
 	cherokee_buffer_init (&cgi->executable);
@@ -751,6 +752,7 @@ parse_header (cherokee_handler_cgi_base_t *cgi, cherokee_buffer_t *buffer)
 			}
 
 			cherokee_buffer_remove_chunk (buffer, begin - buffer->buf, end2 - begin);
+			end2 = begin;
 
 			conn->error_code = code;			
 			continue;
@@ -761,14 +763,17 @@ parse_header (cherokee_handler_cgi_base_t *cgi, cherokee_buffer_t *buffer)
 
 			cherokee_buffer_add (&tmp, begin+16, end - (begin+16));
 			cgi->content_length = strtoll (tmp.buf, (char **)NULL, 10);
+			cgi->content_length_set = true;
 			cherokee_buffer_mrproper (&tmp);
 
 			cherokee_buffer_remove_chunk (buffer, begin - buffer->buf, end2 - begin);
+			end2 = begin;
 		}
 
 		else if (strncasecmp ("Location: ", begin, 10) == 0) {
 			cherokee_buffer_add (&conn->redirect, begin+10, end - (begin+10));
 			cherokee_buffer_remove_chunk (buffer, begin - buffer->buf, end2 - begin);
+			end2 = begin;
 		}
 
 		begin = end2;
@@ -834,7 +839,19 @@ cherokee_handler_cgi_base_add_headers (cherokee_handler_cgi_base_t *cgi, cheroke
 
 	/* Parse the header.. it is likely we will have something to do with it.
 	 */
-	return parse_header (cgi, outbuf);	
+	ret = parse_header (cgi, outbuf);	
+	if (unlikely (ret != ret_ok))
+		return ret;
+	
+	/* Content-Length response header
+	 */
+	if (cgi->content_length_set) {
+		cherokee_buffer_add_str      (outbuf, "Content-Length: ");
+		cherokee_buffer_add_ullong10 (outbuf, (cullong_t) cgi->content_length);
+		cherokee_buffer_add_str      (outbuf, CRLF);		
+	}
+
+	return ret_ok;
 }
 
 

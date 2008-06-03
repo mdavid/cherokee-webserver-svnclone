@@ -60,7 +60,8 @@ struct cherokee_handler_cgi_base {
 	cuint_t                            got_eof;
 	char                              *extra_param;
 	size_t                             content_length;
-
+	cherokee_boolean_t                 content_length_set;
+	
 	cherokee_buffer_t                  param; 
 	cherokee_buffer_t                  param_extra;
 	cherokee_buffer_t                  executable;
