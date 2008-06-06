@@ -1,5 +1,7 @@
 2008-06-04  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* 0.7.1 released.
+
 	* cherokee/handler_cgi_base.c (cherokee_handler_cgi_base_add_headers):
 	It was not adding the Content-Length header in any of the CGI
 	based handler.  This small change will improve performance
