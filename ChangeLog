@@ -1,3 +1,8 @@
+2008-06-06  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/virtual_server.c (cherokee_virtual_server_new_rule):
+	Fixes a wrong sanity check.
+
 2008-06-04  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* 0.7.1 released.
