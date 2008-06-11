@@ -1,3 +1,8 @@
+2008-06-11  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* admin/ModuleRequest.py (ModuleRequest._op_render): Bugfix. It
+	was not handling the regular expression in the right way.
+
 2008-06-06  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cherokee/virtual_server.c (cherokee_virtual_server_new_rule):
