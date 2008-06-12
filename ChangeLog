@@ -1,3 +1,7 @@
+2008-06-12  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* 0.7.2 released.
+
 2008-06-11  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* admin/server.py (main): Catch the KeyboardInterrupt exception
