@@ -1,3 +1,8 @@
+2008-06-13  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/main_guardian.c (save_pid_file): Bug fix: Do not try to
+	save the PID file if it couldn't be opened for writing.
+
 2008-06-12  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* configure.in: Bumped to 0.7.3
@@ -11193,7 +11198,7 @@
 	* src/server.c (look_for_new_connection): Get the addr_in
 	at accept().
 
-	* src/connection.c (cherokee_connection_log): New log writting
+	* src/connection.c (cherokee_connection_log): New log writing
 	function CLF (Common Log Format) compliant.
 
 	* src/connection.c (get_uri): HTTP/1.1 needs a Host entry,
