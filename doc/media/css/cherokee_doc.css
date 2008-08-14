@@ -5,10 +5,6 @@ p, li, dt, dd, div, pre, h1, h2, h3, h4, h5, h6 {
 */
 }
 
-body {
-  margin: 1em 5% 1em 5%;
-}
-
 div.quoteblock > div.content {
   padding-left: 2.0em;
 }
