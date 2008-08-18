@@ -1,3 +1,8 @@
+2008-08-18  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/handler_dirlist.c: Fixes an issue redirecting
+	connections when the server does not run on the port 80.
+
 2008-08-15  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* admin/PageVServer.py (PageVServer._render_vserver_guts): Fixes
