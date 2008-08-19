@@ -1,5 +1,7 @@
 2008-08-19  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
+	* 0.8.1 released
+
 	* admin/CherokeeManagement.py: Fixes a problem with the Hard
 	restart. Reported by Miguel Angel Ajo.
 
