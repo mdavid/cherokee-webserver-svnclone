@@ -2,6 +2,9 @@
 
 	* 0.8.1 released
 
+	* cherokee/handler_dirlist.c: Fixes a problem with redirections of
+	local user directories.
+	
 	* admin/CherokeeManagement.py: Fixes a problem with the Hard
 	restart. Reported by Miguel Angel Ajo.
 
