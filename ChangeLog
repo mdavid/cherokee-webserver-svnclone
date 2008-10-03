@@ -1,3 +1,9 @@
+2008-10-02  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/cache.h, cherokee/cache.c: Fixes the cache.  There were
+	a couple of bugs in the implementation that was leading the server
+	to random crashes.  The internal cache indexes work as expected.
+
 2008-09-30  Taher Shihadeh  <taher@unixwars.com>
 
 	* admin/ModuleGeoip.py, admin/ModuleDefault.py,
