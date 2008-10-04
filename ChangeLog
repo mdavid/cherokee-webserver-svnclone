@@ -1,4 +1,9 @@
-2008-10-03  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+2008-10-04  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/cache.c, cherokee/iocache.c, cherokee/iocache.h: Fixes
+	one more bug in the cache implementation. (sigh!)
+
+2008-10-02  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* configure.in: 0.9.2 Released
 
