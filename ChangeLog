@@ -1,3 +1,7 @@
+2008-10-05  Alvaro Lopez Ortega  <alvaro@alobbs.com>
+
+	* cherokee/cache.c, cherokee/iocache.c: Fixes a stability issue.
+
 2008-10-04  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* cherokee/cache.c, cherokee/iocache.c, cherokee/iocache.h: Fixes

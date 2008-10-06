@@ -391,16 +391,13 @@ fetch_info_cb (cherokee_cache_entry_t *entry)
 
 	ret = cherokee_iocache_entry_update (IOCACHE_ENTRY(entry),
 					     (iocache_stat | iocache_mmap));
-	switch (ret) {
+	switch(ret) {
 	case ret_ok:
-	case ret_error:
-		return ret;
-	case ret_deny:
-	case ret_no_sys:
+	case ret_not_found:
+	case ret_ok_and_sent:
 		return ret_ok;
 	default:
-		RET_UNKNOWN(ret);
-		return ret_error;
+		return ret;
 	}
 
 	SHOULDNT_HAPPEN;
