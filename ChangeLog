@@ -1,4 +1,9 @@
-2008-10-06  Alvaro Lopez Ortega  <alvaro@octality.com>
+2008-10-07  Alvaro Lopez Ortega  <alvaro@octality.com>
+
+	* qa/Makefile.am (EXTRA_DIST): help.py has missing from the file
+	distribution list. Reported by Eric Drechsel <ericdrex@gmail.com>
+
+2008-10-06  Alvaro Lopez Ortega  <alvaro@alobbs.com>
 
 	* 0.9.3 released
 
