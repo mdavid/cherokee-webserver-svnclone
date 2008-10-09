@@ -14,12 +14,12 @@ class ModuleErrorRedir (Module, FormHelper):
     PROPERTIES = [x[0] for x in ERROR_CODES]
 
     def __init__ (self, cfg, prefix, submit_url):
-        Module.__init__ (self, 'error_redir', cfg, prefix, submit_url)
         FormHelper.__init__ (self, 'error_redir', cfg)
+        Module.__init__ (self, 'error_redir', cfg, prefix, submit_url)
 
     def _op_render (self):
         txt = ''
-        
+
         # Render error list
         errors = self._cfg[self._prefix]
         if errors and errors.has_child():
