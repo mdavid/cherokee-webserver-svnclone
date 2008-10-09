@@ -1,3 +1,12 @@
+2008-10-09  Taher Shihadeh  <taher@unixwars.com>
+
+	* admin/ModuleGeoip.py, admin/ModuleDefault.py,
+	admin/ModuleErrorNn.py, admin/ModuleRequest.py,
+	admin/ModuleExtensions.py, admin/ModuleBalancer.py,
+	admin/ModuleDirectory.py, admin/ModuleErrorRedir.py: fixes and
+	prevents regressions on Option selection entries (issue
+	http://code.google.com/p/cherokee/issues/detail?id=147)
+
 2008-10-08  Alvaro Lopez Ortega  <alvaro@octality.com>
 
 	* cherokee/validator_htdigest.c (extract_user_entry): Fixes an
