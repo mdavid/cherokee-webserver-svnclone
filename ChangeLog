@@ -1,3 +1,7 @@
+2008-10-13  Alvaro Lopez Ortega  <alvaro@octality.com>
+
+	* cherokee/cache.c, cherokee/cache.h: Fixes a cache issue.
+
 2008-10-09  Alvaro Lopez Ortega  <alvaro@octality.com>
 
 	* 0.9.4 released
