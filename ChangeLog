@@ -8,6 +8,10 @@
 	was generating zombi processes. Patch by Antonio Perez
 	<aperez@skarcha.com>
 
+	* admin/CherokeeManagement.py (CherokeeManagement.save): Fixes a
+	bug while saving the configuration without restarting the server.
+	Patch by Antonio Perez <aperez@skarcha.com>
+	
 2008-10-09  Alvaro Lopez Ortega  <alvaro@octality.com>
 
 	* 0.9.4 released
