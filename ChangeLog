@@ -4,6 +4,10 @@
 	in a better way. IOcache clients shouldn't keep pointers to
 	unref'ed iocache objects.
 
+	* cherokee/main.c (signals_handler): Fixes graceful restart.  It
+	was generating zombi processes. Patch by Antonio Perez
+	<aperez@skarcha.com>
+
 2008-10-09  Alvaro Lopez Ortega  <alvaro@octality.com>
 
 	* 0.9.4 released
