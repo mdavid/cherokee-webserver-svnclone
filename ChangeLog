@@ -1,6 +1,8 @@
 2008-10-13  Alvaro Lopez Ortega  <alvaro@octality.com>
 
-	* cherokee/cache.c, cherokee/cache.h: Fixes a cache issue.
+	* cherokee/cache.c (cherokee_cache_entry_unref): Clean references
+	in a better way. IOcache clients shouldn't keep pointers to
+	unref'ed iocache objects.
 
 2008-10-09  Alvaro Lopez Ortega  <alvaro@octality.com>
 
