@@ -1401,9 +1401,6 @@ configure_server_property (cherokee_config_node_t *conf, void *data)
 	} else if (equal_buf_str (&conf->key, "chunked_encoding")) {
 		srv->chunked_encoding = !!atoi (conf->val.buf);
 
-	} else if (equal_buf_str (&conf->key, "iocache")) {
-		srv->iocache_enabled = !!atoi (conf->val.buf);
-
 	} else if (equal_buf_str (&conf->key, "panic_action")) {
 		cherokee_buffer_clean (&srv->panic_action);
 		cherokee_buffer_add_buffer (&srv->panic_action, &conf->val);
@@ -1500,7 +1497,8 @@ configure_server_property (cherokee_config_node_t *conf, void *data)
 		srv->group = grp->gr_gid;
 
 	} else if (equal_buf_str (&conf->key, "module_dir") ||
-		   equal_buf_str (&conf->key, "module_deps")) {
+		   equal_buf_str (&conf->key, "module_deps") ||
+		   equal_buf_str (&conf->key, "iocache")) {
 		/* Ignore it: Previously handled 
 		 */
 
