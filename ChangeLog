@@ -1,5 +1,7 @@
 2008-11-30  Alvaro Lopez Ortega  <alvaro@octality.com>
 
+	* 0.11.2 released
+
 	* cherokee/cryptor_libssl.c, cherokee/cryptor_libssl.h: Adds a
 	license exemption for OpenSSL. In case the cryptor-libssl plug-in
 	is linked with OpenSSL a license exemption is needed because the
