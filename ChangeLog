@@ -1,3 +1,10 @@
+2008-12-03  Alvaro Lopez Ortega  <alvaro@octality.com>
+
+	* cherokee/socket.c, cherokee/cryptor_libssl.c, cherokee/server.c:
+	Fixes a couple of issues with the new cryptor plug-in support. Now
+	it reports errors when something unexpected happens during the TLS
+	support initialization process.
+
 2008-11-30  Antonio Perez  <aperez@skarcha.com>
 
 	* admin/PageAdvanced.py: Advanced->I/O Cache changes didn't work.
