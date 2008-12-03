@@ -1,5 +1,7 @@
 2008-12-03  Alvaro Lopez Ortega  <alvaro@octality.com>
 
+	* 0.11.3 released
+
 	* cherokee/socket.c, cherokee/cryptor_libssl.c, cherokee/server.c:
 	Fixes a couple of issues with the new cryptor plug-in support. Now
 	it reports errors when something unexpected happens during the TLS
