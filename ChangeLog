@@ -1,3 +1,8 @@
+2008-12-17  Alvaro Lopez Ortega  <alvaro@octality.com>
+
+	* cherokee/main.c, cherokee/server.c: This patch should fix the
+	graceful restart functionality.
+
 2008-12-06  Alvaro Lopez Ortega  <alvaro@octality.com>
 
 	* cherokee/cryptor_libssl.c, admin/PageVServer.py: Fixes SSL CA
