@@ -1,5 +1,11 @@
 2008-12-18  Alvaro Lopez Ortega  <alvaro@octality.com>
 
+	* admin/PageInfoSource.py: Fixes a administration interface
+	issue. The Information Sources was failing when a source was being
+	used inside a User Directory rule.
+
+2008-12-18  Alvaro Lopez Ortega  <alvaro@octality.com>
+
 	* 0.11.5 released
 
 2008-12-10  Antonio Perez  <aperez@skarcha.com>
