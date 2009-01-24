@@ -1,5 +1,8 @@
 2009-01-24  Alvaro Lopez Ortega  <alvaro@octality.com>
 
+	* cherokee/threading.c, cherokee/threading.h: Replaces
+	HAVE_PTHREAD_H by HAVE_PTHREAD. Fix by swanson@ukfsn.org.
+
 	* cherokee/rule_extensions.c (match): Fixes PathInfo handling when
 	matching an extension rule.
 
