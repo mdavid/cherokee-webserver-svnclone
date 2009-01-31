@@ -184,7 +184,7 @@ class PageEntry (PageMenu, FormHelper):
 
         # Change the rule type
         table = TableProps()
-        e = self.AddPropOptions_Reload (table, "Rule Type", pre, RULES, "")
+        e = self.AddPropOptions_Reload (table, "Rule Type", pre, modules_available(RULES), "")
         return str(table) + e
 
     def _render_expiration (self):
