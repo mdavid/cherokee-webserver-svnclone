@@ -3,8 +3,6 @@ from Table import *
 from Module import *
 import validations
 
-NOTE_DIRECTORY = _("Public Web Directory to which content the configuration will be applied.")
-
 class ModuleDirectory (Module, FormHelper):
     validation = [('tmp!new_rule!value', validations.is_dir_formated)]
 
@@ -13,20 +11,52 @@ class ModuleDirectory (Module, FormHelper):
         Module.__init__ (self, 'directory', cfg, prefix, submit_url)
 
     def _op_render (self):
-        table = TableProps()
-        if self._prefix.startswith('tmp!'):
-            self.AddPropEntry (table, _('Web Directory'), '%s!value'%(self._prefix), NOTE_DIRECTORY)
-        else:
-            self.AddPropEntry (table, _('Web Directory'), '%s!directory'%(self._prefix), NOTE_DIRECTORY)
-        return str(table)
-        
+        txt = 'addRule(%s, 0, ["directory", "%s", "%s"]);'%(self.get_group(), self.get_condition(), self.get_name())
+        return txt
+
+    def _rule_def (self):
+        _desc = N_('Directory')
+        _is = _("is")
+        _is_hint = _("Public Web Directory to which content the configuration will be applied.")
+        _isnot = _("is not")
+        _isnot_hint = _("Public Web Directory to which content the configuration not will be applied.")
+        txt = """
+        cherokeeRules["directory"] = {
+            "desc": "%(_desc)s",
+            "conditions": {
+                "is": {
+                    "d": "%(_is)s",
+                    "h": "%(_is_hint)s"
+                    },
+                "isnot": {
+                    "d": "%(_isnot)s",
+                    "h": "%(_isnot_hint)s"
+                    }
+            },
+            "field": {
+                "type": "entry",
+                "value": ""
+            }
+        }
+        """ % (locals())
+        return txt
+
     def apply_cfg (self, values):
         if values.has_key('value'):
             dir_name = values['value']
             self._cfg['%s!directory'%(self._prefix)] = dir_name
 
+    def get_group (self):
+        return self._prefix.split('!')[-2]
+
+    def get_rule_pos (self):
+        return int(self._prefix.split('!')[-1])
+
+    def get_condition (self):
+        return self._cfg.get_val ('%s!cond'%(self._prefix))
+
     def get_name (self):
-        return self._cfg.get_val ('%s!directory'%(self._prefix))
+        return self._cfg.get_val ('%s!val'%(self._prefix))
 
     def get_type_name (self):
         return self._id.capitalize()

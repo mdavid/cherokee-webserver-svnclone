@@ -127,7 +127,7 @@ class PageEntry (PageMenu, FormHelper):
 
         # Load the rule plugin
         pre = "%s!match"%(self._conf_prefix)
-        rule = Rule (self._cfg, pre, self.submit_url, 0)
+        rule = Rule (self._cfg, pre, self.submit_url)
 
         txt += rule.get_title()
         return txt
@@ -186,9 +186,28 @@ class PageEntry (PageMenu, FormHelper):
 
     def _render_rule (self):
         txt  = "<h2>%s</h2>" % (_('Matching Rule'))
+
+        txt += '<script type="text/javascript">var cherokeeRules = new Array();'
+        
+        for r in modules_available(RULES):
+            module_name, label = r
+            rule_module = module_obj_factory (module_name, self._cfg, '', self.submit_url)
+            if '_rule_def' in dir(rule_module):
+                txt += rule_module._rule_def()
+     
+        txt += '</script>'
+
+        txt += '<script src="/static/js/rules.js" type="text/javascript"></script>'
+        txt += '<div id="rule_all"></div>'
+        txt += '<div id="rules_area"></div>'
+
+        txt += '<script> $(document).ready(function () {'
+
         pre  = "%s!match"%(self._conf_prefix)
-        rule = Rule (self._cfg, pre, self.submit_url, 0)
+        rule = Rule (self._cfg, pre, self.submit_url)
         txt += rule._op_render()
+
+        txt += '}); </script>'
 
         return txt
 

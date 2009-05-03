@@ -176,12 +176,8 @@ table td label {
 }
 
 #change_language {
-	float: right;
-	width: 120px;
-}
-
-.label_lang {
-	color: #204a87;
+	clear: both;
+	padding: 16px;
 }
 
 #language {
@@ -560,59 +556,80 @@ table.rulestable tr.odd td {
 /* PageVServer.py styles */
 /**************************/
 
-.rule_group {
-     border-radius: 10px;
-     -moz-border-radius: 10px;
-	-webkit-border-radius: 10px;
-
-	padding: 10px 8px;
-	border: #aaa 1px solid;
+.rule_dd {
+    width: 18em; 
 }
 
-.rule_group_1 {
-	margin-top: 15px;
+.rule_dd select {  
+    width: 100%; 
 }
 
-.rule_group_1, .rule_group_3, .rule_group_5, .rule_group_7, .rule_group_9 {
-	background-color: #EFF4F7;
-	border: #aaa 1px solid;
+.rule_condition {  
+    width: 10em; 
 }
 
-.rule_group_2, .rule_group_4, .rule_group_6, .rule_group_8, .rule_group_10 {
-	background-color: #FBF7DA;
-	border: #aaa 1px solid;
+.rule_condition select {
+    width: 100%; 
 }
 
-.rule_not {
-	background-color: #CC0000;
+.rule_field input { 
+    width: 100%; 
 }
 
-.rule_not_title {
-	color: white;
-	font-size: 10pt;
-	text-align: left;
+.rule_control { 
+    width: 48px; 
+    padding-left: 8px; 
 }
 
-.rule_box {
-	background-color: #fff;
-	border: #aaa 1px solid;
+.rule_control a { 
+    padding: 4px; 
+    float: left; 
 }
 
-.rule_content {
-	margin: 5px;
-     border-bottom-style: none;
+.group_cond_div { 
+    margin-bottom: 1em; 
 }
 
-.rule_toolbar {
-	padding: 0;
-	text-align: right;
+.rules_group {
+    border-radius: 4px;
+    -moz-border-radius: 4px;
+    -webkit-border-radius: 4px;
+    border: 1px solid #d4e1f1;
+    background: #fafbfd;
+    padding: 8px;
+    padding-bottom: 28px;
 }
 
-.rule_operation {
-	font-size: 10pt;
-	text-align: center;
-	margin: 10px 0px;
+.rules_group_inner {
+    border: 1px solid #d4e1f1;
+    background: #fff;
+    padding: 8px;
 }
+
+#addnewgroup {
+    float: right;
+    font-size: 95%;
+    background: #d4e1f1;
+    margin: 4px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    -moz-border-radius: 4px;
+    -webkit-border-radius: 4px;
+    border: 1px solid #d4e1f1;
+}
+
+#addnewgroup a { 
+    padding: 0; 
+    color: #7695bc;
+}
+
+#rule_all {
+    margin-top: 1em;
+    margin-bottom: 1em;
+    font-weight: bold;
+    padding-left: 8px;
+}
+
 
 /**************************/
 /* PageIcons.py styles    */
