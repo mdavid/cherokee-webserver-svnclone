@@ -19,7 +19,7 @@ class ModuleDirectory (Module, FormHelper):
         _is = _("is")
         _is_hint = _("Public Web Directory to which content the configuration will be applied.")
         _isnot = _("is not")
-        _isnot_hint = _("Public Web Directory to which content the configuration will be applied.")
+        _isnot_hint = _("Public Web Directory to which content the configuration will not be applied.")
         txt = """
         cherokeeRules["directory"] = {
             "desc": "%(_desc)s",
