@@ -7,16 +7,12 @@ from Module import *
 from consts import *
 import validations
 
-# For gettext
-N_ = lambda x: x
-
-DEFAULT_RULE_WARNING = N_('The default match ought not to be changed.')
+DEFAULT_RULE_WARNING = 'The default match ought not to be changed.'
 
 class Rule (Module, FormHelper):
-    def __init__ (self, cfg, prefix, submit_url, depth=0):
+    def __init__ (self, cfg, prefix, submit_url):
         FormHelper.__init__ (self, 'rule', cfg)
         Module.__init__ (self, 'rule', cfg, prefix, submit_url)
-        self.depth = depth
 
     def get_checks (self):
         matcher = self._cfg.get_val(self._prefix)
@@ -24,8 +20,8 @@ class Rule (Module, FormHelper):
             r = Rule(self._cfg, '%s!right'%(self._prefix), self.submit_url, self.depth+1)
             return r.get_checks()
         elif matcher in ['or', 'and']:
-            r1 = Rule(self._cfg, '%s!left'%(self._prefix), self.submit_url, self.depth+1)
-            r2 = Rule(self._cfg, '%s!right'%(self._prefix), self.submit_url, self.depth+1)
+            r1 = Rule(self._cfg, '%s!left'%(self._prefix), self.submit_url)
+            r2 = Rule(self._cfg, '%s!right'%(self._prefix), self.submit_url)
             return r1.get_checks() + r2.get_checks()
         else:
             rule_module = module_obj_factory (matcher, self._cfg, self._prefix, self.submit_url)
@@ -35,18 +31,19 @@ class Rule (Module, FormHelper):
 
     def get_title (self):
         txt = ''
+        return 'TBD'
 
         matcher = self._cfg.get_val(self._prefix)
         if not matcher:
             return _("Unknown")
 
         if matcher == 'not':
-            r = Rule(self._cfg, '%s!right'%(self._prefix), self.submit_url, self.depth+1)
-            return "%s (%s)" % (_('Not'), r.get_title())
+            r = Rule(self._cfg, '%s!right'%(self._prefix), self.submit_url)
+            return "Not (%s)"%(r.get_title())
         elif matcher in ['or', 'and']:
-            op = [_('AND'), _('OR')][matcher == 'or']
-            r1 = Rule(self._cfg, '%s!left'%(self._prefix), self.submit_url, self.depth+1)
-            r2 = Rule(self._cfg, '%s!right'%(self._prefix), self.submit_url, self.depth+1)
+            op = ['AND', 'OR'][matcher == 'or']
+            r1 = Rule(self._cfg, '%s!left'%(self._prefix), self.submit_url)
+            r2 = Rule(self._cfg, '%s!right'%(self._prefix), self.submit_url)
             return "(%s) %s (%s)"%(r1.get_title(), op, r2.get_title())
 
         rule_module = module_obj_factory (matcher, self._cfg, self._prefix, self.submit_url)
@@ -68,15 +65,15 @@ class Rule (Module, FormHelper):
     def get_type_name (self):
         matcher = self._cfg.get_val(self._prefix)
         if matcher in ['not', 'and', 'or']:
-            return _("Complex")
+            return "Complex"
         rule_module = module_obj_factory (matcher, self._cfg, self._prefix, self.submit_url)
         return rule_module.get_type_name()
 
     def _get_ops (self, pre):
-        _not = '<input type="button" value="%s" onClick="return rule_do_not(\'%s\');" />' % (_('Not'), pre)
-        _and = '<input type="button" value="%s" onClick="return rule_do_and(\'%s\');" />' % (_('And'), pre)
-        _or  = '<input type="button" value="%s" onClick="return rule_do_or(\'%s\');" />' % (_('Or'), pre)
-        _del = '<input type="button" value="%s" onClick="return rule_delete(\'%s\');" />' %(_('Remove'), pre)
+        _not = '<input type="button" value="Not" onClick="return rule_do_not(\'%s\');" />' % (pre)
+        _and = '<input type="button" value="And" onClick="return rule_do_and(\'%s\');" />' % (pre)
+        _or  = '<input type="button" value="Or" onClick="return rule_do_or(\'%s\');" />' % (pre)
+        _del = '<input type="button" value="Remove" onClick="return rule_delete(\'%s\');" />' %(pre)
         return (_not,_and,_or,_del)
 
     def _op_render (self):
@@ -84,79 +81,39 @@ class Rule (Module, FormHelper):
         pre = self._prefix
 
         matcher = self._cfg.get_val(pre)
-        if matcher == "not":
-            rule = Rule (self._cfg, "%s!right"%(self._prefix), self.submit_url, self.depth+1)
-            rule_txt = rule._op_render()
-
-            _not, _and, _or, _del = self._get_ops(pre)
-
-            NOT = _('NOT')
-            txt = """
-            <div class="rule_group rule_not">
-              <div class="rule_not_title">%(NOT)s</div>
-              %(rule_txt)s
-              <div class="rule_toolbar">%(_and)s %(_or)s %(_del)s</div>
-            </div>
-            """ % (locals())
-            return txt
-
-        elif matcher in ["or", "and"]:
-            op = [_("AND"), _("OR")][matcher == "or"]
-
-            depth = self.depth + 1
-            rule1 = Rule (self._cfg, "%s!left"%(self._prefix), self.submit_url, depth)
-            rule1_txt = rule1._op_render()
-            rule2 = Rule (self._cfg, "%s!right"%(self._prefix), self.submit_url, depth)
-            rule2_txt = rule2._op_render()
-
-            _not, _and, _or, _del = self._get_ops(pre)
-
-            prev = '!'.join(pre.split('!')[:-1])
-            prev_rule = self._cfg.get_val(prev)
-            if prev_rule == "not":
-                _not = ''
-
-            txt = """
-            <div class="rule_group rule_group_%(depth)s">
-              %(rule1_txt)s
-              <div class="rule_operation">%(op)s</div>
-              %(rule2_txt)s
-              <div class="rule_toolbar">%(_not)s %(_del)s</div>
-            </div>
-            """ % (locals())
-            return txt
 
         # Special Case: Default rule
-        if self._cfg.get_val(pre) == 'default':
+        if matcher == 'default':
             return self.Dialog (DEFAULT_RULE_WARNING, 'important-information')
 
-        # The rule hasn't been set
-        if not self._cfg.get_val(pre):
-            self._cfg[pre] = 'directory'
+        if matcher in ["or", "and"]:
+	    txt += "addGlobal('%s');"%(matcher)
+            print "Global Match %s = %s"%(pre,matcher) 
 
-        # Rule
-        table = TableProps()
-        e = self.AddPropOptions_Reload (table, _("Rule Type"), pre, modules_available(RULES), " ")
-        rule = self.Indent(str(table) + e)
-
-        # Operations
-        _not, _and, _or, _del = self._get_ops(pre)
-
-        # Allow to remove rules only if they are inside an AND or OR.
-        prev = '!'.join(pre.split('!')[:-1])
-        prev_rule = self._cfg.get_val(prev)
-        if not prev_rule in ['and', 'or']:
-            _del = ''
-            if "!match" in prev:
-                _not = ''
-
-        txt += """
-        <div class="rule_box rule_group">
-          <div class="rule_content">%(rule)s</div>
-          <div class="rule_toolbar">%(_not)s %(_and)s %(_or)s %(_del)s</div>
-        </div>""" % (locals())
+        g = 0
+        gpath = "%s!%s"%(pre,g)
+        gmatch = self._cfg.get_val(gpath)
+        while gmatch != None:
+            r = 0
+            print "Group Match %s = %s"%(gpath,gmatch) 
+            txt += "addGroup(%s, '%s');"%(g, gmatch)
+            rpath = "%s!%s!%s"%(pre,g,r)
+            rmatch = self._cfg.get_val(rpath)
+            while rmatch != None:
+                print "Rule Match %s = %s"%(rpath,rmatch) 
+                print "    Condition = %s"%(self._cfg.get_val("%s!%s"%(rpath,'cond')))
+                print "        Value = %s"%(self._cfg.get_val("%s!%s"%(rpath,'val')))
+                rule_module = module_obj_factory (rmatch, self._cfg, rpath, self.submit_url)
+                txt += rule_module._op_render()
+                r += 1
+                rpath = "%s!%s!%s"%(pre,g,r)
+                rmatch = self._cfg.get_val(rpath)
+            g += 1
+            gpath = "%s!%s"%(pre,g)
+            gmatch = self._cfg.get_val(gpath)
 
         return txt
+
 
 class RuleRender (Module, FormHelper):
     def __init__ (self, cfg, prefix, submit_url):
@@ -207,7 +164,7 @@ class RuleOp (PageMenu, FormHelper):
                 self.__move ("%s!left"%(prefix), prefix)
             else:
                 del(self._cfg[prefix])
-
+            
         else:
             print "%s '%s'" % (_('ERROR: Unknown uri'), uri)
 
