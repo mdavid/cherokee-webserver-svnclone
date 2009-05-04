@@ -3,19 +3,7 @@ from Table import *
 from Module import *
 import validations
 
-NOTE_HEADER = _("Header against which the regular expression will be evaluated.")
-NOTE_MATCH  = _("Regular expression.")
-
 LENGHT_LIMIT = 10
-
-HEADERS = [
-    ('Accept-Encoding', 'Accept-Encoding'),
-    ('Accept-Charset',  'Accept-Charset'),
-    ('Accept-Language', 'Accept-Language'),
-    ('Referer',         'Referer'),
-    ('User-Agent',      'User-Agent'),
-    ('Cookie',          'Cookie')
-]
 
 class ModuleHeader (Module, FormHelper):
     validation = [('tmp!new_rule!match', validations.is_regex)]
@@ -25,13 +13,51 @@ class ModuleHeader (Module, FormHelper):
         Module.__init__ (self, 'header', cfg, prefix, submit_url)
 
     def _op_render (self):
-        table = TableProps()
-        if self._prefix.startswith('tmp!'):
-            self.AddPropOptions_Reload (table, _('Header'), '%s!value'%(self._prefix), HEADERS, NOTE_HEADER)
-        else:
-            self.AddPropOptions_Reload (table, _('Header'), '%s!header'%(self._prefix), HEADERS, NOTE_HEADER)
-        self.AddPropEntry (table, _('Regular Expression'), '%s!match'%(self._prefix), NOTE_MATCH)
-        return str(table)
+        txt = 'addRule(%s, 0, ["header", "%s", "%s"]);'%(self.get_group(), self.get_condition(), self.get_name())
+        return txt
+
+    def _rule_def (self):
+        _desc = N_('Header')
+
+        _accept_encoding = _("Accept-Encoding match regular expression")
+        _accept_charset  = _("Accept-Charset match regular expression")
+        _accept_language = _("Accept-Encoding match regular expression")
+        _referer         = _("Referer match regular expression")
+        _user_agent      = _("User-Agent match regular expression")
+        _cookie          = _("Cookie match regular expression")
+
+	_hint = _("Header match the given regular expression")
+        txt = """
+        cherokeeRules["header"] = {
+            "desc": "%(_desc)s",
+            "conditions": {
+                "accept-encoding": {
+                    "d": "%(_accept_encoding)s"
+                    },
+                "accept-charset": {
+                    "d": "%(_accept_charset)s"
+                    },
+                "accept-language": {
+                    "d": "%(_accept_language)s"
+                    },
+                "referer": {
+                    "d": "%(_referer)s"
+                    },
+                "user-agent": {
+                    "d": "%(_user_agent)s"
+                    },
+                "cookie": {
+                    "d": "%(_cookie)s"
+                    }
+            },
+            "field": {
+                "type": "entry",
+                "value": ""
+            },
+            "hint": "%(_hint)s"
+        };
+        """ % (locals())
+        return txt
         
     def apply_cfg (self, values):
         if values.has_key('value'):
@@ -42,16 +68,17 @@ class ModuleHeader (Module, FormHelper):
             match = values['match']
             self._cfg['%s!match'%(self._prefix)] = match
 
+    def get_group (self):
+        return self._prefix.split('!')[-2]
+
+    def get_rule_pos (self):
+        return int(self._prefix.split('!')[-1])
+
+    def get_condition (self):
+        return self._cfg.get_val ('%s!cond'%(self._prefix))
+
     def get_name (self):
-        header = self._cfg.get_val ('%s!header'%(self._prefix))
-        if not header:
-            return ''
-
-        tmp  = self._cfg.get_val ('%s!match'%(self._prefix), '')
-        if len(tmp) > LENGHT_LIMIT:
-            return "%s (%s..)" % (header, tmp[:5])
-
-        return "%s (%s)" % (header, tmp)
+        return self._cfg.get_val ('%s!val'%(self._prefix))
 
     def get_type_name (self):
         return self._id.capitalize()

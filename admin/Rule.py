@@ -31,24 +31,12 @@ class Rule (Module, FormHelper):
 
     def get_title (self):
         txt = ''
-        return 'TBD'
 
         matcher = self._cfg.get_val(self._prefix)
         if not matcher:
             return _("Unknown")
 
-        if matcher == 'not':
-            r = Rule(self._cfg, '%s!right'%(self._prefix), self.submit_url)
-            return "Not (%s)"%(r.get_title())
-        elif matcher in ['or', 'and']:
-            op = ['AND', 'OR'][matcher == 'or']
-            r1 = Rule(self._cfg, '%s!left'%(self._prefix), self.submit_url)
-            r2 = Rule(self._cfg, '%s!right'%(self._prefix), self.submit_url)
-            return "(%s) %s (%s)"%(r1.get_title(), op, r2.get_title())
-
-        rule_module = module_obj_factory (matcher, self._cfg, self._prefix, self.submit_url)
-        txt += "%s: %s" % (rule_module.get_type_name(), rule_module.get_name())
-        return txt
+        return self._cfg.get_val('%s!name'%(self._prefix))
 
     def get_name (self):
         matcher = self._cfg.get_val(self._prefix)
