@@ -15,10 +15,10 @@ class ModuleDirectory (Module, FormHelper):
         return txt
 
     def _rule_def (self):
-        _desc = N_('Directory')
-        _is = _("is")
-        _is_hint = _("Public Web Directory to which content the configuration will be applied.")
-        _isnot = _("is not")
+        _desc       = N_('Directory')
+        _is         = _("is")
+        _is_hint    = _("Public Web Directory to which content the configuration will be applied.")
+        _isnot      = _("is not")
         _isnot_hint = _("Public Web Directory to which content the configuration will not be applied.")
         txt = """
         cherokeeRules["directory"] = {
@@ -37,7 +37,7 @@ class ModuleDirectory (Module, FormHelper):
                 "type": "entry",
                 "value": ""
             }
-        }
+        };
         """ % (locals())
         return txt
 

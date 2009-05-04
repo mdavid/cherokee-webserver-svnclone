@@ -3,8 +3,6 @@ from Table import *
 from Module import *
 import validations
 
-NOTE_REQUEST = _("Regular expression against which the request will be executed.")
-
 class ModuleRequest (Module, FormHelper):
     validation = [('tmp!new_rule!value', validations.is_regex)]
 
@@ -13,13 +11,60 @@ class ModuleRequest (Module, FormHelper):
         Module.__init__ (self, 'request', cfg, prefix, submit_url)
 
     def _op_render (self):
-        table = TableProps()
-        if self._prefix.startswith('tmp!'):
-            self.AddPropEntry (table, _('Regular Expression'), '%s!value'%(self._prefix), NOTE_REQUEST)
-        else:
-            self.AddPropEntry (table, _('Regular Expression'), '%s!request'%(self._prefix), NOTE_REQUEST)
-        return str(table)
-        
+        txt = 'addRule(%s, 0, ["request", "%s", "%s"]);'%(self.get_group(), self.get_condition(), self.get_name())
+        return txt
+
+    def _rule_def (self):
+        _desc = N_('Request')
+        _contains = _("contains")
+        _contains_hint = _("Request contains the given string.")
+        _doesnotcontains = _("does not contains")
+        _doesnotcontains_hint = _("Request does not contains the given string.")
+        _begins = _("begins with")
+        _begins_hint = _("Request begins with the given string.")
+        _ends = _("ends with")
+        _ends_hint = _("Request ends with the given string.")
+        _is = _("is equals to")
+        _is_hint = _("Request is the given string.")
+        _regexp = _("match regular expression")
+        _regexp_hint = _("Request match the given regular expression.")
+        txt = """
+        cherokeeRules["request"] = {
+            "desc": "%(_desc)s",
+            "conditions": {
+                "contains": {
+                    "d": "%(_contains)s",
+                    "h": "%(_contains_hint)s"
+                },
+                "doesnotcontains": {
+                    "d": "%(_doesnotcontains)s",
+                    "h": "%(_doesnotcontains_hint)s"
+                },
+                "begins": {
+                    "d": "%(_begins)s",
+                    "h": "%(_begins_hint)s"
+                },
+                "ends": {
+                    "d": "%(_ends)s",
+                    "h": "%(_ends_hint)s"
+                },
+                "is": {
+                    "d": "%(_is)s",
+                    "h": "%(_is_hint)s"
+                },
+                "regexp": {
+                    "d": "%(_regexp)s",
+                    "h": "%(_regexp_hint)s"
+                }
+            },
+            "field": {
+                "type": "entry",
+                "value": ""
+            }
+        }
+        """ % (locals())
+        return txt
+
     def _op_apply_changes (self, uri, post):
         self.ApplyChangesPrefix (self._prefix, None, post)
 
@@ -30,8 +75,17 @@ class ModuleRequest (Module, FormHelper):
         exts = values['value']
         self._cfg['%s!request'%(self._prefix)] = exts
 
+    def get_group (self):
+        return self._prefix.split('!')[-2]
+
+    def get_rule_pos (self):
+        return int(self._prefix.split('!')[-1])
+
+    def get_condition (self):
+        return self._cfg.get_val ('%s!cond'%(self._prefix))
+
     def get_name (self):
-        return self._cfg.get_val ('%s!request'%(self._prefix))
+        return self._cfg.get_val ('%s!val'%(self._prefix))
 
     def get_type_name (self):
         return _('Regular Expression')

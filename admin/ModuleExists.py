@@ -3,10 +3,6 @@ from Table import *
 from Module import *
 import validations
 
-NOTE_EXISTS  = _("Comma separated list of files. Rule applies if one exists.")
-NOTE_IOCACHE = _("Uses cache during file detection. Disable if directory contents change frequently. Enable otherwise.")
-NOTE_ANY     = _("Match the request if any file exists.")
-
 class ModuleExists (Module, FormHelper):
     validation = [('tmp!new_rule!value', validations.is_safe_id_list)]
 
@@ -29,6 +25,72 @@ class ModuleExists (Module, FormHelper):
             self.AddPropCheck (table, _('Use I/O cache'), '%s!iocache'%(self._prefix), False, NOTE_IOCACHE)
         return str(table)
 
+    def _op_render (self):
+        txt = 'addRule(%s, 0, ["directory", "%s", "%s"]);'%(self.get_group(), self.get_condition(), self.get_name())
+        return txt
+
+    def _rule_def (self):
+        _exists_any            = _("Any file exists")
+        _exists_any_hint       = _("Match the request if any file exists")
+        _exists_any_these      = _("Any of these files exists")
+        _exists_any_hint       = _("Match the request if any of the given files exist")
+        _exists_none           = _("None of these files exists")
+        _exists_none_hint      = _("Match the request if none of the given files exist")
+        _exists_none_dont      = _("None of these files doesn't exist")
+        _exists_none_dont_hint = _("Match the request if none of the given files doesn't exist")
+        _exists_all            = _("All of these files exist")
+        _exists_all_hint       = _("Match the request if all the given files exist")
+
+        txt = """
+        cherokeeRules["exists_any"] = {
+            "desc": "%(_exists_any)s",
+            "conditions": false,
+            "field": false,
+            "hint": "%(_exists_any_hint)s"
+        };
+
+        cherokeeRules["exists_any_these"] = {
+            "desc": "%(_exists_any_these)s",
+            "conditions": false,
+            "field": {
+                "type": "entry",
+                "value": ""
+            },
+            "hint": "%(_exists_any_these)s"
+        };
+
+        cherokeeRules["exists_none"] = {
+            "desc": "%(_exists_none)s",
+            "conditions": false,
+            "field": {
+                "type": "entry",
+                "value": ""
+            },
+            "hint": "%(_exists_none)s"
+        };
+
+        cherokeeRules["exists_none_dont"] = {
+            "desc": "%(_exists_none_dont)s",
+            "conditions": false,
+            "field": {
+                "type": "entry",
+                "value": ""
+            },
+            "hint": "%(_exists_none_dont)s"
+        };
+
+        cherokeeRules["exists_all"] = {
+            "desc": "%(_exists_all)s",
+            "conditions": false,
+            "field": {
+               "type": "entry",
+               "value": ""
+            },
+            "hint": "%(_exists_all_hint)s"
+        };
+        """ % (locals())
+        return txt
+
     def _op_apply_changes (self, uri, post):
         self.ApplyChangesPrefix (self._prefix, None, post)
 
@@ -39,10 +101,18 @@ class ModuleExists (Module, FormHelper):
         exts = values['value']
         self._cfg['%s!exists'%(self._prefix)] = exts
 
+    def get_group (self):
+        return self._prefix.split('!')[-2]
+
+    def get_rule_pos (self):
+        return int(self._prefix.split('!')[-1])
+
+    def get_condition (self):
+        return self._cfg.get_val ('%s!cond'%(self._prefix))
+
     def get_name (self):
-        if int(self._cfg.get_val ('%s!match_any'%(self._prefix), 0)):
-            return _("Any file")
-        return self._cfg.get_val ('%s!exists'%(self._prefix))
+        return self._cfg.get_val ('%s!val'%(self._prefix))
+
 
     def get_type_name (self):
         return _("File Exists")

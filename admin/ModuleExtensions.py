@@ -15,12 +15,12 @@ class ModuleExtensions (Module, FormHelper):
         return txt
 
     def _rule_def (self):
-        _desc = N_('Extensions');
-	_is = _("is")
-	_is_hint = _("File extension to which content the configuration will be applied.")
-        _isin = _("is in")
-        _isin_hint = _("File extension list to which content the configuration will be applied.")
-        _isnotin = _("is not in")
+        _desc         = N_('Extensions');
+	_is           = _("is")
+	_is_hint      = _("File extension to which content the configuration will be applied.")
+        _isin         = _("is in")
+        _isin_hint    = _("File extension list to which content the configuration will be applied.")
+        _isnotin      = _("is not in")
         _isnotin_hint = _("File extension list to which content the configuration will not be applied.")
 
         txt = """
@@ -44,7 +44,7 @@ class ModuleExtensions (Module, FormHelper):
                 "type": "entry",
                 "value": ""
             }
-        }
+        };
         """ % (locals())
         return txt
 
