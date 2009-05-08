@@ -187,7 +187,9 @@ class PageEntry (PageMenu, FormHelper):
     def _render_rule (self):
         txt  = "<h2>%s</h2>" % (_('Matching Rule'))
 
-        txt += '<script type="text/javascript">var cherokeeRules = new Array();'
+        txt += '<script type="text/javascript">'
+        txt += 'var cherokeeRules = new Array();'
+        txt += 'var cherokeePre = "%s";' % (self._conf_prefix)
         
         for r in modules_available(RULES):
             module_name, label = r
@@ -202,12 +204,15 @@ class PageEntry (PageMenu, FormHelper):
         txt += '<div id="rules_area"></div>'
 
         txt += '<script> $(document).ready(function () {'
+        txt += 'disableSaveRules();'
 
         pre  = "%s!match"%(self._conf_prefix)
         rule = Rule (self._cfg, pre, self.submit_url)
         txt += rule._op_render()
 
-        txt += '}); </script>'
+        txt += 'enableSaveRules();'
+        txt += '});';
+        txt += '</script>'
 
         return txt
 
