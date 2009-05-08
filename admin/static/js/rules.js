@@ -1,5 +1,6 @@
 var groupN = 0;
 var ruleN = 0;
+var enSaveRules = false;
 
 function addGlobal(cond) {
     ghtml = 'If <select id="group_all" name="group_all"><option value="or">any</option><option value= "and">all</option></select> of the following groups match:';
@@ -259,32 +260,49 @@ function getFields(el, ruleData) {
             saveRules();
 }
 
+function enableSaveRules()
+{
+    enSaveRules = true
+}
+
+function disableSaveRules()
+{
+    enSaveRules = false
+}
+
+
+
 function saveRules() 
 {
+    if (!enSaveRules) return false;
+
     var ret = {};
 
+    var ng = 0;
+    ret['save_rules'] = 'true';
+    ret['pre'] = cherokeePre;
+    ret['name'] = 'Test 1';
+
     if ($('#group_all').val() !== undefined) {
-        ret.globalCond = $("#group_all").val();
+        ret[cherokeePre + '!match'] = $("#group_all").val();
+    } else {
+        ret[cherokeePre + '!match'] = '';
     }
 
-    var ng = 0;
-    ret['conditions[]'] = [];
-    ret['groups[]'] = [];
     $(".rules_group").each(function(i){
-        ret['conditions[]'][ng] = $('#cond_'+this.id).val();
+        ret[cherokeePre + '!match!'+ng] = $('#cond_'+this.id).val();
 
         // Rules
         var nr = 0;
         $(".in_"+this.id).each(function(i){
-            ret['g'+ng+'r'+nr+'[]'] = ['','',''];
             if ($('#'+this.id).val() !== undefined) {
-                ret['g'+ng+'r'+nr+'[]'][0] = $('#'+this.id).val();
+                ret[cherokeePre + '!match!'+ng+'!'+nr] = $('#'+this.id).val();
             }
             if ($('#cond'+this.id).val() !== undefined) {
-                ret['g'+ng+'r'+nr+'[]'][1] = $('#cond'+this.id).val();
+                ret[cherokeePre + '!match!'+ng+'!'+nr+'!cond'] = $('#cond'+this.id).val();
             }
             if ($('#f'+this.id).val() !== undefined) {
-                ret['g'+ng+'r'+nr+'[]'][2] = $('#f'+this.id).val();
+                ret[cherokeePre + '!match!'+ng+'!'+nr+'!val'] = $('#f'+this.id).val();
             }
             nr ++;
         });
@@ -292,9 +310,9 @@ function saveRules()
         ng++;
     });
 
-//    $.post("save.php", 
-//            ret,
-//            function(data) {
-//                $("#savePre").html(data);
-//            });
+    $.post('/ajax/update', 
+            ret,
+            function(data) {
+                //$("#savePre").html(data);
+            });
 }
