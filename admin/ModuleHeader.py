@@ -13,7 +13,9 @@ class ModuleHeader (Module, FormHelper):
         Module.__init__ (self, 'header', cfg, prefix, submit_url)
 
     def _op_render (self):
-        txt = 'addRule(%s, 0, ["header", "%s", "%s"]);'%(self.get_group(), self.get_condition(), self.get_name())
+        txt = 'addRule(%s, 0, ["header", "%s", "%s"]);'%(self.get_group(), 
+                                                         self.get_condition(), 
+                                                         self.get_name())
         return txt
 
     def _rule_def (self):

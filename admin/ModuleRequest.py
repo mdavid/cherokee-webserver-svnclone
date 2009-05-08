@@ -11,7 +11,9 @@ class ModuleRequest (Module, FormHelper):
         Module.__init__ (self, 'request', cfg, prefix, submit_url)
 
     def _op_render (self):
-        txt = 'addRule(%s, 0, ["request", "%s", "%s"]);'%(self.get_group(), self.get_condition(), self.get_name())
+        txt = 'addRule(%s, 0, ["request", "%s", "%s"]);'%(self.get_group(), 
+                                                          self.get_condition(), 
+                                                          self.get_name())
         return txt
 
     def _rule_def (self):

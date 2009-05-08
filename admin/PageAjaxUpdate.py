@@ -26,40 +26,42 @@ class PageAjaxUpdate (WebComponent):
     
     def _save_rules (self, post):
         g = 0
-        pre = post['pre']
-        print "Save Rules"
-        print post
-        return "ok"
+        pre = "%s!match" % (post.get_val('pre'))
+
+        # FIXME: I guess is better work first on a tmp array with 
+        # the rules validated instead removing the rules in the first place...
+        del (self._cfg[pre])
+
+        # Global condition
+        self._cfg[pre] = post.get_val(pre)
+
         gpath = "%s!%s"%(pre,g)
-        gmatch = self._cfg.get_val(gpath)
+        gmatch = post.get_val(gpath)
+
         while gmatch != None:
             r = 0
-            print "Group Match %s = %s"%(gpath,gmatch)
-            txt += "addGroup(%s, '%s');"%(g, gmatch)
+            print "%s = %s"%(gpath,gmatch)
+
+            # Group condition
+            self._cfg[gpath] = gmatch
+
             rpath = "%s!%s!%s"%(pre,g,r)
-            rmatch = self._cfg.get_val(rpath)
+            rmatch = post.get_val(rpath)
             while rmatch != None:
-                print "Rule Match %s = %s"%(rpath,rmatch)
-                print "    Condition = %s"%(self._cfg.get_val("%s!%s"%(rpath,'cond')))
-                print "        Value = %s"%(self._cfg.get_val("%s!%s"%(rpath,'val')))
-                rule_module = module_obj_factory (rmatch, self._cfg, rpath, self.submit_url)
-                txt += rule_module._op_render()
+                # Rule type
+                self._cfg[rpath] = rmatch
+
+                # Rule condition
+                self._cfg["%s!cond"%(rpath)] = post.get_val("%s!cond"%(rpath))
+
+                # Rule value
+                self._cfg["%s!val"%(rpath)] = post.get_val("%s!val"%(rpath))
+
                 r += 1
                 rpath = "%s!%s!%s"%(pre,g,r)
-                rmatch = self._cfg.get_val(rpath)
+                rmatch = post.get_val(rpath)
             g += 1
             gpath = "%s!%s"%(pre,g)
-            gmatch = self._cfg.get_val(gpath)
+            gmatch = post.get_val(gpath)
 
-    def _get_post_val(self, post, key, default=None):
-        # Maybe this needs to be included in Post module
-        try:
-            val = post[key]
-        except:
-            return default
-        if not val:
-            return default
-        return val
-
-
-       
+        return "ok"

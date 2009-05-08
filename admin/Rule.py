@@ -30,13 +30,11 @@ class Rule (Module, FormHelper):
         return []
 
     def get_title (self):
-        txt = ''
-
         matcher = self._cfg.get_val(self._prefix)
         if not matcher:
             return _("Unknown")
 
-        return self._cfg.get_val('%s!name'%(self._prefix))
+        return 'TBD'
 
     def get_name (self):
         matcher = self._cfg.get_val(self._prefix)
@@ -57,13 +55,6 @@ class Rule (Module, FormHelper):
         rule_module = module_obj_factory (matcher, self._cfg, self._prefix, self.submit_url)
         return rule_module.get_type_name()
 
-    def _get_ops (self, pre):
-        _not = '<input type="button" value="Not" onClick="return rule_do_not(\'%s\');" />' % (pre)
-        _and = '<input type="button" value="And" onClick="return rule_do_and(\'%s\');" />' % (pre)
-        _or  = '<input type="button" value="Or" onClick="return rule_do_or(\'%s\');" />' % (pre)
-        _del = '<input type="button" value="Remove" onClick="return rule_delete(\'%s\');" />' %(pre)
-        return (_not,_and,_or,_del)
-
     def _op_render (self):
         txt = ""
         pre = self._prefix
@@ -75,23 +66,21 @@ class Rule (Module, FormHelper):
             return self.Dialog (DEFAULT_RULE_WARNING, 'important-information')
 
         if matcher in ["or", "and"]:
-	    txt += "addGlobal('%s');"%(matcher)
-            print "Global Match %s = %s"%(pre,matcher) 
+            txt += "addGlobal('%s');"%(matcher)
 
         g = 0
         gpath = "%s!%s"%(pre,g)
         gmatch = self._cfg.get_val(gpath)
         while gmatch != None:
             r = 0
-            print "Group Match %s = %s"%(gpath,gmatch) 
             txt += "addGroup(%s, '%s');"%(g, gmatch)
             rpath = "%s!%s!%s"%(pre,g,r)
             rmatch = self._cfg.get_val(rpath)
             while rmatch != None:
-                print "Rule Match %s = %s"%(rpath,rmatch) 
-                print "    Condition = %s"%(self._cfg.get_val("%s!%s"%(rpath,'cond')))
-                print "        Value = %s"%(self._cfg.get_val("%s!%s"%(rpath,'val')))
-                rule_module = module_obj_factory (rmatch, self._cfg, rpath, self.submit_url)
+                if rmatch.startswith('exists_'):
+                    rule_module = module_obj_factory ('exists', self._cfg, rpath, self.submit_url)
+                else:
+                    rule_module = module_obj_factory (rmatch, self._cfg, rpath, self.submit_url)
                 txt += rule_module._op_render()
                 r += 1
                 rpath = "%s!%s!%s"%(pre,g,r)

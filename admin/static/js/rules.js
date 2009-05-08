@@ -281,7 +281,6 @@ function saveRules()
     var ng = 0;
     ret['save_rules'] = 'true';
     ret['pre'] = cherokeePre;
-    ret['name'] = 'Test 1';
 
     if ($('#group_all').val() !== undefined) {
         ret[cherokeePre + '!match'] = $("#group_all").val();
