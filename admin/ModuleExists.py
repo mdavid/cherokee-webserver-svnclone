@@ -26,7 +26,10 @@ class ModuleExists (Module, FormHelper):
         return str(table)
 
     def _op_render (self):
-        txt = 'addRule(%s, 0, ["directory", "%s", "%s"]);'%(self.get_group(), self.get_condition(), self.get_name())
+        txt = 'addRule(%s, 0, ["%s", "%s", "%s"]);'%(self.get_group(), 
+                                                     self._cfg.get_val(self._prefix), 
+                                                     self.get_condition(), 
+                                                     self.get_name())
         return txt
 
     def _rule_def (self):
