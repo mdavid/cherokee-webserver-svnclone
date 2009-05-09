@@ -30,7 +30,51 @@ class Rule (Module, FormHelper):
         return []
 
     def get_title (self):
-        matcher = self._cfg.get_val(self._prefix)
+        txt = ''
+        pre = self._prefix
+
+        matcher = self._cfg.get_val(pre)
+
+        if matcher in ['and', 'or']:
+            gsep = matcher
+        else:
+            gsep = None
+
+        g = 0
+        gpath = "%s!%s"%(pre,g)
+        gmatch = self._cfg.get_val(gpath)
+        while gmatch != None:
+            r = 0
+            if gsep in ['and', 'or']:
+                txt += "("
+
+            rpath = "%s!%s!%s"%(pre,g,r)
+            rmatch = self._cfg.get_val(rpath)
+            while rmatch != None:
+                if rmatch.startswith('exists_'):
+                    rule_module = module_obj_factory ('exists', self._cfg, rpath, self.submit_url)
+                else:
+                    rule_module = module_obj_factory (rmatch, self._cfg, rpath, self.submit_url)
+
+                txt += "(%s)" % (rule_module.get_rule_condition_name())
+                r += 1
+                rpath = "%s!%s!%s"%(pre,g,r)
+                rmatch = self._cfg.get_val(rpath)
+                if rmatch != None:
+                    txt += " %s " % (_(gmatch))
+            g += 1
+            gpath = "%s!%s"%(pre,g)
+            gmatch = self._cfg.get_val(gpath)
+
+            if gsep in ['and', 'or']:
+                if gmatch != None:
+                    txt += ") %s " % (_(gsep))
+                else:
+                    txt += ")"
+
+        return txt
+
+        return self._prefix
         if not matcher:
             return _("Unknown")
 
@@ -38,22 +82,52 @@ class Rule (Module, FormHelper):
 
     def get_name (self):
         matcher = self._cfg.get_val(self._prefix)
-        if matcher in ['not', 'and', 'or']:
-            return self.get_title()
-        rule_module = module_obj_factory (matcher, self._cfg, self._prefix, self.submit_url)
-        name = rule_module.get_name()
+
+        if matcher == 'default':
+            return _("Default")
+        elif matcher in ['and', 'or']:
+            name = self.get_title()
+
+        m1 = self._cfg.get_val("%s!0!1" % (self._prefix))
+        m2 = self._cfg.get_val("%s!1!0" % (self._prefix))
+
+        if m1 == None and m2 == None:
+            rpath = "%s!0!0" % (self._prefix)
+            matcher = self._cfg.get_val(rpath)
+            if matcher.startswith('exists_'):
+                rule_module = module_obj_factory ('exists', self._cfg, rpath, self.submit_url)
+            else:
+                rule_module = module_obj_factory (matcher, self._cfg, rpath, self.submit_url)
+            name = rule_module.get_name()
+        else:
+            name = self.get_title()
 
         if not name:
             name = _("Undefined..")
 
         return name
+        
 
     def get_type_name (self):
         matcher = self._cfg.get_val(self._prefix)
-        if matcher in ['not', 'and', 'or']:
-            return "Complex"
-        rule_module = module_obj_factory (matcher, self._cfg, self._prefix, self.submit_url)
-        return rule_module.get_type_name()
+
+        if matcher == 'default':
+            return _("Default")
+        elif matcher in ['and', 'or']:
+            return _("Complex")
+
+        m1 = self._cfg.get_val("%s!0!1" % (self._prefix))
+        m2 = self._cfg.get_val("%s!1!0" % (self._prefix))
+
+        if m1 == None and m2 == None:
+            matcher = self._cfg.get_val("%s!0!0" % (self._prefix))
+            if matcher.startswith('exists_'):
+                rule_module = module_obj_factory ('exists', self._cfg, self._prefix, self.submit_url)
+            else:
+                rule_module = module_obj_factory (matcher, self._cfg, self._prefix, self.submit_url)
+            return rule_module.get_type_name()
+        
+        return _("Complex")
 
     def _op_render (self):
         txt = ""

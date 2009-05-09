@@ -62,3 +62,17 @@ class ModuleDirectory (Module, FormHelper):
 
     def get_type_name (self):
         return self._id.capitalize()
+
+    def get_rule_condition_name (self):
+        cond = self.get_condition()
+
+        if cond == 'is':
+            condTxt = _("is")
+        elif cond == 'isnot':
+            condTxt = _("is not")
+        else:
+            condTxt = _("Undefined..")
+
+        txt = "%s %s %s" % (self.get_type_name(), condTxt, self.get_name())
+        return txt
+

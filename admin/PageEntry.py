@@ -88,6 +88,7 @@ class PageEntry (PageMenu, FormHelper):
         return self._op_default (uri)
 
     def _op_apply_changes (self, uri, post):
+        return "TODO"
         # Handler properties
         pre = "%s!handler" % (self._conf_prefix)
         self.ApplyChanges_OptionModule (pre, uri, post)
@@ -102,7 +103,7 @@ class PageEntry (PageMenu, FormHelper):
             checks.append ('%s!encoder!%s' % (self._conf_prefix, e))
 
         pre = '%s!match'%(self._conf_prefix)
-        rule = Rule (self._cfg, pre, self.submit_url, 0)
+        rule = Rule (self._cfg, pre, self.submit_url)
         checks += rule.get_checks()
 
         # Apply changes
