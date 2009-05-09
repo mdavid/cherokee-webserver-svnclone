@@ -3,7 +3,7 @@ var ruleN = 0;
 var enSaveRules = false;
 
 function addGlobal(cond) {
-    ghtml = 'If <select id="group_all" name="group_all"><option value="or">any</option><option value= "and">all</option></select> of the following groups match:';
+    ghtml = 'If <select class="noautosubmit" id="group_all" name="group_all"><option value="or">any</option><option value= "and">all</option></select> of the following groups match:';
     $("#rule_all").html(ghtml);
     $("#group_all")
         .val(cond)
@@ -13,16 +13,17 @@ function addGlobal(cond) {
 function addGroup(group, cond) {
     groupN = group
 
-    ghtml = '<div class="group_cond_div">If <select id="cond_rule_group' + groupN + '"><option value="or">any</option><option value="and">all</option></select> of the following conditions are met:</div>';
+    ghtml = '<div class="group_cond_div">If <select class="noautosubmit" id="cond_rule_group' + groupN + '"><option value="or">any</option><option value="and">all</option></select> of the following conditions are met:</div>';
 
     $("<div/>")
         .attr("id", "rule_group" + groupN)
         .addClass("tableprop_block rules_group")
         .html(ghtml)
-        .val(cond)
         .appendTo("#rules_area");
 
-    $("#cond_rule_group" + groupN).change(saveRules);
+    $("#cond_rule_group" + groupN)
+        .val(cond)
+        .change(saveRules);
 
     $("<div/>")
         .attr("id", "rule_group_div" + groupN)
@@ -111,7 +112,7 @@ function addRule(group, after, ruleData) {
 
     $("<select/>")
         .attr("id", rid)
-        .addClass("in_rule_group" + group)
+        .addClass("noautosubmit in_rule_group" + group)
         .bind(
             'change',
             { "el": rid }, 
@@ -209,6 +210,7 @@ function getFields(el, ruleData) {
                 $("<select/>")
                     .attr("id", "cond" + el)
                     .appendTo("#tdcond" + el)
+                    .addClass("noautosubmit")
                     .change(
                         function() { 
                             saveRules(); 
@@ -235,6 +237,7 @@ function getFields(el, ruleData) {
                 case 'entry':
                     $('<input type="text"/>')
                         .attr("id", "f" + el)
+                        .addClass("noautosubmit")
                         .change(saveRules)
                         .appendTo("#tdval" + el);
 
@@ -243,6 +246,7 @@ function getFields(el, ruleData) {
                     $("<select/>")
                         .attr("id", "f" + el)
                         .change(saveRules)
+                        .addClass("noautosubmit")
                         .appendTo("#tdval" + el)
                     $.each(data.field.choices, function(i,item) {
                         $("<option/>")

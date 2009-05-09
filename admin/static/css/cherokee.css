@@ -259,9 +259,9 @@ table td label {
 }
 /** INFO **/
 .dialog-information {
-    background: #f3fbfb url(../images/dialog-information.png) 4px 4px no-repeat;
-    border-top: 1px solid #bacce2;
-    border-bottom: 1px solid #bacce2;
+    background: #f9fcff url(../images/dialog-information.png) 4px 4px no-repeat;
+    border-top: 1px solid #d4e1f1;
+    border-bottom: 1px solid #d4e1f1;
     padding: 1em 1em 1em 40px;
     margin: 1em 0;
 }
@@ -536,7 +536,7 @@ table tr th {
 
 /* Alternate row color in rule list */
 table.rulestable tr.odd td {
-  background-color: #f3fbfb;
+  background-color: #f9fcff;
 }
 
 /**************************/
@@ -596,6 +596,7 @@ table.rulestable tr.odd td {
     -webkit-border-radius: 4px;
     border: 1px solid #d4e1f1;
     background: #fafbfd;
+    background: #f9fcff;
     padding: 8px;
     padding-bottom: 28px;
 }
