@@ -118,4 +118,25 @@ class ModuleExists (Module, FormHelper):
 
 
     def get_type_name (self):
-        return _("File Exists")
+        val = self._cfg.get_val(self._prefix)
+        if val == 'exists_any': 
+            valTxt = _("Any file exists")
+        elif val == exists_any_these:
+            valTxt = _("Any of these files exists")
+        elif val == exists_none:
+            valTxt = _("None of these files exists")
+        elif val == exists_none_dont:
+            valTxt = _("None of these files doesn't exist")
+        elif val == exists_all:
+            valTxt = _("All of these files exist")
+        else:
+            valTxt = _("Undefined..")
+        return valTxt
+
+    def get_rule_condition_name (self):
+        if self._cfg.get_val(self._prefix) == 'exists_any':
+            txt = '%s' % (self.get_type_name())
+        else:
+            txt = '%s: "%s"' % (self.get_type_name(), self.get_name())
+        return txt
+

@@ -74,11 +74,6 @@ class Rule (Module, FormHelper):
 
         return txt
 
-        return self._prefix
-        if not matcher:
-            return _("Unknown")
-
-        return 'TBD'
 
     def get_name (self):
         matcher = self._cfg.get_val(self._prefix)

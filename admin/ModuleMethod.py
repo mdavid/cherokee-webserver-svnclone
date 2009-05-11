@@ -4,7 +4,6 @@ from Module import *
 import validations
 
 METHODS = [
-    ('',            _('Choose')),
     ('get',         'GET'),
     ('post',        'POST'),
     ('head',        'HEAD'),
@@ -27,40 +26,85 @@ METHODS = [
     ('unsubscribe', 'UNSUBSCRIBE')
 ]
 
-NOTE_METHOD  = _("The HTTP method that should match this rule.")
 
+
+from Form import *
+from Table import *
+from Module import *
+import validations
 
 class ModuleMethod (Module, FormHelper):
-    validation = [('tmp!new_rule!value', validations.is_safe_id_list)]
+    validation = []
 
     def __init__ (self, cfg, prefix, submit_url):
         FormHelper.__init__ (self, 'method', cfg)
         Module.__init__ (self, 'method', cfg, prefix, submit_url)
 
     def _op_render (self):
-        table = TableProps()
+        txt = 'addRule(%s, 0, ["method", "%s", "%s"]);'%(self.get_group(), 
+                                                            self.get_condition(), 
+                                                            self.get_name())
+        return txt
 
-        if self._prefix.startswith('tmp!'):
-            self.AddPropOptions (table, _('Method'), '%s!value'%(self._prefix), \
-                                 METHODS, NOTE_METHOD)
-        else:
-            self.AddPropOptions (table, _('Method'), '%s!method'%(self._prefix), \
-                                 METHODS[1:], NOTE_METHOD)
+    def _rule_def (self):
+        _desc       = N_('HTTP Method')
+        _is         = _("is")
+        _is_hint    = _("The HTTP method that should match this rule.")
+        _isnot      = _("is not")
+        _isnot_hint    = _("The HTTP method that should noth match this rule.")
 
-        return str(table)
+        _choices = "{"
+        for c in METHODS:
+            _choices += '"%s": "%s",' %(c[0], c[1])
+        _choices = _choices[:-1]
+        _choices += "}"
 
-    def _op_apply_changes (self, uri, post):
-        self.ApplyChangesPrefix (self._prefix, None, post)
+        txt = """
+        cherokeeRules["method"] = {
+            "desc": "%(_desc)s",
+            "conditions": {
+                "is": {
+                    "d": "%(_is)s",
+                    "h": "%(_is_hint)s"
+                    },
+                "isnot": {
+                    "d": "%(_isnot)s",
+                    "h": "%(_isnot_hint)s"
+                    }
+            },
+            "field": {
+                "type": "dropdown",
+                "choices": %(_choices)s,
+                "value": ""
+            }
+        };
+        """ % (locals())
+        return txt
 
-    def apply_cfg (self, values):
-        if not values.has_key('value'):
-            print _("ERROR, a 'value' entry is needed!")
+    def get_group (self):
+        return self._prefix.split('!')[-2]
 
-        exts = values['value']
-        self._cfg['%s!method'%(self._prefix)] = exts
+    def get_rule_pos (self):
+        return int(self._prefix.split('!')[-1])
+
+    def get_condition (self):
+        return self._cfg.get_val ('%s!cond'%(self._prefix))
 
     def get_name (self):
-        return self._cfg.get_val ('%s!method'%(self._prefix))
+        return self._cfg.get_val ('%s!val'%(self._prefix))
 
     def get_type_name (self):
-        return "HTTP method"
+        return _("HTTP Method")
+
+    def get_rule_condition_name (self):
+        cond = self.get_condition()
+
+        if cond == 'is':
+            condTxt = _("is")
+        elif cond == 'isnot':
+            condTxt = _("is not")
+        else:
+            condTxt = _("Undefined..")
+
+        txt = "%s %s %s" % (self.get_type_name(), condTxt, self.get_name())
+        return txt
