@@ -28,7 +28,7 @@ class ModuleHeader (Module, FormHelper):
         _user_agent      = _("User-Agent match regular expression")
         _cookie          = _("Cookie match regular expression")
 
-	_hint = _("Header match the given regular expression")
+        _hint = _("Header match the given regular expression")
         txt = """
         cherokeeRules["header"] = {
             "desc": "%(_desc)s",
@@ -84,3 +84,25 @@ class ModuleHeader (Module, FormHelper):
 
     def get_type_name (self):
         return self._id.capitalize()
+
+    def get_rule_condition_name (self):
+        cond = self.get_condition()
+
+        if cond == 'accept-encoding':
+            condTxt = _("Accept-Encoding match regular expression")
+        elif cond == 'accept_charset':
+            condTxt = _("Accept-Charset match regular expression")
+        elif cond == 'accept-language': 
+            condTxt = _("Accept-Encoding match regular expression")
+        elif cond == 'referer':         
+            condTxt = _("Referer match regular expression")
+        elif cond == 'user-agent':      
+            condTxt = _("User-Agent match regular expression")
+        elif cond == 'cookie':          
+            condTxt = _("Cookie match regular expression")
+        else:
+            condTxt = _("Undefined..")
+
+        txt = '%s %s: "%s"' % (self.get_type_name(), condTxt, self.get_name())
+        return txt
+

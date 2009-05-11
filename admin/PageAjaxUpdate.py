@@ -40,7 +40,6 @@ class PageAjaxUpdate (WebComponent):
 
         while gmatch != None:
             r = 0
-            print "%s = %s"%(gpath,gmatch)
 
             # Group condition
             self._cfg[gpath] = gmatch

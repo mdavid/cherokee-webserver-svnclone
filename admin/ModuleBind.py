@@ -4,8 +4,6 @@ from Module import *
 
 import validations
 
-NOTE_BIND = " "
-
 class ModuleBind (Module, FormHelper):
     validation = []
 
@@ -21,107 +19,78 @@ class ModuleBind (Module, FormHelper):
             return (num, _("Port") + " %s (%s)"%(inte, port))
         return (num, _("Port") + " %s"%(port))
 
-    def _render_new_entry (self):
-        # Build the port list
-        ports = [('', _("Choose"))]
-        for b in self._cfg.keys("server!bind"):
-            tmp = self._build_option_bind_num (b)
-            ports.append(tmp)
-
-        # Render the table
-        cfg_key = '%s!value'%(self._prefix)
-
-        table = TableProps()
-        self.AddPropOptions (table, _('Incoming Port'), cfg_key, ports, NOTE_BIND)
-        return str(table)
-
-    def _render_modify_entry (self):
-        txt     = ''
-        cfg_key = '%s!bind'%(self._prefix)
-
-        # Lits ports
-        tmp = self._cfg.keys(cfg_key)
-        if tmp:
-            txt += '<h3>%s</h3>' % (_('Selected Ports'))
-            table = Table(4, 1, style='width="100%"')
-            table += (_('Port'), _('Bind to'), _('TLS'), '')
-            for b in tmp:
-                server_bind = self._cfg.get_val('%s!%s'%(cfg_key, b))
-                port = self._cfg.get_val ("server!bind!%s!port"%(server_bind))
-                bind = self._cfg.get_val ("server!bind!%s!interface"%(server_bind), '')
-                tls_ = self._cfg.get_val ("server!bind!%s!tls"%(server_bind), False)
-                tls  = [_("No"), _("Yes")][int(tls_)]
-                js = "post_del_key('/ajax/update', '%s!%s');"%(cfg_key, b)
-                link_del = self.InstanceImage ("bin.png", _("Delete"), border="0", onClick=js)
-                table += (port, bind, tls, link_del)
-            txt += self.Indent(table)
-
-        # Don't show port already being listened to
-        left = self._cfg.keys("server!bind")
-        rule_used = []
-        for b in self._cfg.keys(cfg_key):
-            port_num = self._cfg.get_val('%s!%s'%(cfg_key,b))
-            if port_num in left:
-                left.remove(port_num)
-
-        # Find the new entry number
-        tmp = [int(x) for x in self._cfg.keys(cfg_key)]
-        if tmp:
-            tmp.sort()
-            next = str(int(tmp[-1])+1)
-        else:
-            next = '1'
-
-        if left:
-            txt += "<h3>%s</h3>" % (_('Assign new port'))
-            ports = [('', _("Choose"))]
-            for b in left:
-                tmp = self._build_option_bind_num (b)
-                ports.append (tmp)
-
-            table = TableProps()
-            self.AddPropOptions (table, _('Incoming Port'), '%s!%s'%(cfg_key,next), ports, NOTE_BIND)
-            txt += self.Indent(table)
-
+    def _op_render (self):
+        txt = 'addRule(%s, 0, ["bind", "%s", "%s"]);'%(self.get_group(), 
+                                                            self.get_condition(), 
+                                                            self.get_name())
         return txt
 
-    def _op_render (self):
-        if self._prefix.startswith('tmp!'):
-            return self._render_new_entry()
-        return self._render_modify_entry()
-    
-    def _op_apply_changes (self, uri, post):
-        self.ApplyChangesPrefix (self._prefix, None, post)
+    def _rule_def (self):
+        cfg_key = '%s!bind'%(self._prefix)
 
-    def apply_cfg (self, values):
-        if not values.has_key('value'):
-            print _("ERROR, a 'value' entry is needed!")
+        _desc       = N_('Incoming port')
+        _is         = _("is")
+        _is_hint    = _("Incoming port to which that match this rule")
+        _isnot      = _("is not")
+        _isnot_hint = _("Incoming port to which that not match this rule")
 
-        cfg_key = '%s!bind!1'%(self._prefix)
-        bind    = values['value']
+        ports = self._cfg.keys("server!bind")
+        _choices = "{"
+        if ports:
+            for b in ports:
+                tmp = self._build_option_bind_num (b)
+                _choices += '"%s": "%s," ' %(tmp[0], tmp[1])
+        _choices = _choices[:-1]
+        _choices += "}"
 
-        self._cfg[cfg_key] = bind
+        txt = """
+        cherokeeRules["bind"] = {
+            "desc": "%(_desc)s",
+            "conditions": {
+                "is": {
+                    "d": "%(_is)s",
+                    "h": "%(_is_hint)s"
+                    },
+                "isnot": {
+                    "d": "%(_isnot)s",
+                    "h": "%(_isnot_hint)s"
+                    }
+            },
+            "field": {
+                "type": "dropdown",
+                "choices": %(_choices)s,
+                "value": ""
+            }
+        };
+        """ % (locals())
+        return txt
+
+    def get_group (self):
+        return self._prefix.split('!')[-2]
+
+    def get_rule_pos (self):
+        return int(self._prefix.split('!')[-1])
+
+    def get_condition (self):
+        return self._cfg.get_val ('%s!cond'%(self._prefix))
 
     def get_name (self):
-        tmp = []
-        for b in self._cfg.keys('%s!bind'%(self._prefix)):
-            real_n = self._cfg.get_val('%s!bind!%s'%(self._prefix, b))
-            port = self._cfg.get_val('server!bind!%s!port'%(real_n))
-            tls  = self._cfg.get_val('server!bind!%s!tls'%(real_n), False)
-            tmp.append((port, bool(int(tls))))
-
-        def render_entry (e):
-            port, tls = e
-            txt = port
-            if tls:
-                txt += ' (TLS)'
-            return txt
-
-        def sort_func(x,y):
-            return cmp(int(x[0]),int(y[0]))
-
-        tmp.sort(cmp=sort_func)
-        return ", ".join([render_entry(x) for x in tmp])
+        return self._cfg.get_val ('%s!val'%(self._prefix))
 
     def get_type_name (self):
         return self._id.capitalize()
+
+    def get_rule_condition_name (self):
+        cond = self.get_condition()
+
+        if cond == 'is':
+            condTxt = _("is")
+        elif cond == 'isnot':
+            condTxt = _("is not")
+        else:
+            condTxt = _("Undefined..")
+
+
+        txt = "%s %s %s" % (self.get_type_name(), condTxt, self.get_name())
+        return txt
+

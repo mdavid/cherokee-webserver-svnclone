@@ -90,4 +90,27 @@ class ModuleRequest (Module, FormHelper):
         return self._cfg.get_val ('%s!val'%(self._prefix))
 
     def get_type_name (self):
-        return _('Regular Expression')
+        return _('Request')
+
+    def get_rule_condition_name (self):
+        cond = self.get_condition()
+
+
+        if cond == 'contains':
+            condTxt = _("contains")
+        elif cond == 'doesnotcontains':
+            condTxt = _("does not contains")
+        elif cond == 'begins':
+            condTxt = _("begins with")
+        elif cond == 'ends':
+            condTxt = _("ends with")
+        elif cond == 'is':
+            condTxt = _("is equals to")
+        elif cond == 'regexp':
+            condTxt = _("match regular expression")
+        else:
+            condTxt = _("Undefined..")
+
+        txt = "%s %s %s" % (self.get_type_name(), condTxt, self.get_name())
+        return txt
+
