@@ -43,13 +43,34 @@ class ModuleExists (Module, FormHelper):
         _exists_none_dont_hint = _("Match the request if none of the given files doesn't exist")
         _exists_all            = _("All of these files exist")
         _exists_all_hint       = _("Match the request if all the given files exist")
+        _iocache               = _("Use I/O cache")
+        _iocache_hint          = _("Uses cache during file detection. Disable if directory contents change frequently. Enable otherwise.")
+
+        iocache = """
+            "extra": {
+                "iocache": {
+                    "label": "%s",
+                    "hint": "%s",
+                    "field": {
+                        "type": "checkboxes",
+                        "choices": {
+                            "enabled": { 
+                                "label": "%s",
+                                "checked": false
+                            }
+                        }
+                    }
+                 }
+            }
+        """ % (_iocache, _iocache_hint, _("Enabled"));
 
         txt = """
         cherokeeRules["exists_any"] = {
             "desc": "%(_exists_any)s",
             "conditions": false,
             "field": false,
-            "hint": "%(_exists_any_hint)s"
+            "hint": "%(_exists_any_hint)s",
+            %(iocache)s
         };
 
         cherokeeRules["exists_any_these"] = {
@@ -59,7 +80,8 @@ class ModuleExists (Module, FormHelper):
                 "type": "entry",
                 "value": ""
             },
-            "hint": "%(_exists_any_these)s"
+            "hint": "%(_exists_any_these)s",
+            %(iocache)s
         };
 
         cherokeeRules["exists_none"] = {
@@ -69,7 +91,8 @@ class ModuleExists (Module, FormHelper):
                 "type": "entry",
                 "value": ""
             },
-            "hint": "%(_exists_none)s"
+            "hint": "%(_exists_none)s",
+            %(iocache)s
         };
 
         cherokeeRules["exists_none_dont"] = {
@@ -79,7 +102,8 @@ class ModuleExists (Module, FormHelper):
                 "type": "entry",
                 "value": ""
             },
-            "hint": "%(_exists_none_dont)s"
+            "hint": "%(_exists_none_dont)s",
+            %(iocache)s
         };
 
         cherokeeRules["exists_all"] = {
@@ -89,7 +113,8 @@ class ModuleExists (Module, FormHelper):
                "type": "entry",
                "value": ""
             },
-            "hint": "%(_exists_all_hint)s"
+            "hint": "%(_exists_all_hint)s",
+            %(iocache)s
         };
         """ % (locals())
         return txt
