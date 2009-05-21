@@ -110,6 +110,8 @@ function addRule(group, after, ruleData) {
         .attr("id", "hr" + rid)
         .insertAfter("#table" + rid);
 
+
+
     $("<select/>")
         .attr("id", rid)
         .addClass("noautosubmit in_rule_group" + group)
@@ -200,68 +202,142 @@ function delRule(group, rule)
 
 function getFields(el, ruleData) {
     var data = cherokeeRules[$("#"+el).val()];
-            // Conditions
-            $("#tdcond" + el).empty();
-            if (!data.conditions) {
-                $("#tdcond" + el).attr("style", "width: 0;");
-                $("#hint" + el).html(data.hint);
-            } else {
-                $("#tdcond" + el).attr("style", "width: 10em;");
-                $("<select/>")
-                    .attr("id", "cond" + el)
-                    .appendTo("#tdcond" + el)
-                    .addClass("noautosubmit")
-                    .change(
-                        function() { 
-                            saveRules(); 
-                            $("#hint" + el).html(data.conditions[this.value].h); 
-                        });
-
-                $.each(data.conditions, function(i,item) {
-                    $("<option/>")
-                        .attr("value", i)
-                        .html(item.d)
-                        .appendTo("#cond" + el);
+    // Conditions
+    $("#tdcond" + el).empty();
+    if (!data.conditions) {
+        $("#tdcond" + el).attr("style", "width: 0;");
+        $("#hint" + el).html(data.hint);
+    } else {
+        $("#tdcond" + el).attr("style", "width: 10em;");
+        $("<select/>")
+            .attr("id", "cond" + el)
+            .appendTo("#tdcond" + el)
+            .addClass("noautosubmit")
+            .change(
+                function() { 
+                    saveRules(); 
+                    $("#hint" + el).html(data.conditions[this.value].h); 
                 });
-        
-                if ((ruleData !== undefined) && 
-                    (ruleData[1] !== undefined)) {
-                    $("#cond" + el).val(ruleData[1]);
-                }
-                
-                $("#hint" + el).html(data.conditions[$("#cond" + el).val()].h);
-            }
-            // Field
-            $("#tdval" + el).empty();
-            switch (data.field.type) {
-                case 'entry':
-                    $('<input type="text"/>')
-                        .attr("id", "f" + el)
-                        .addClass("noautosubmit")
-                        .change(saveRules)
-                        .appendTo("#tdval" + el);
 
-                    break;
-                case 'dropdown':
-                    $("<select/>")
-                        .attr("id", "f" + el)
-                        .change(saveRules)
-                        .addClass("noautosubmit")
-                        .appendTo("#tdval" + el)
-                    $.each(data.field.choices, function(i,item) {
-                        $("<option/>")
-                            .attr("value", i)
-                            .html(item)
-                            .appendTo("#f" + el);
-                    });
+        $.each(data.conditions, function(i,item) {
+            $("<option/>")
+            .attr("value", i)
+            .html(item.d)
+            .appendTo("#cond" + el);
+        });
 
-                    break;
-            }
-            if ((ruleData !== undefined) && 
-                (ruleData[2] !== undefined)) {
-                $("#f" + el).val(ruleData[2]);
-            }
-            saveRules();
+        if ((ruleData !== undefined) && 
+            (ruleData[1] !== undefined)) {
+            $("#cond" + el).val(ruleData[1]);
+        }
+
+        $("#hint" + el).html(data.conditions[$("#cond" + el).val()].h);
+    }
+
+    // Field
+    $("#tdval" + el).empty();
+    switch (data.field.type) {
+    case 'entry':
+        $('<input type="text"/>')
+            .attr("id", "f" + el)
+            .addClass("noautosubmit")
+            .change(saveRules)
+            .appendTo("#tdval" + el);
+
+        break;
+    case 'dropdown':
+        $("<select/>")
+            .attr("id", "f" + el)
+            .change(saveRules)
+            .addClass("noautosubmit")
+            .appendTo("#tdval" + el)
+        $.each(data.field.choices, function(i,item) {
+            $("<option/>")
+                .attr("value", i)
+                .html(item)
+                .appendTo("#f" + el);
+        });
+
+        break;
+    }
+
+    if ((ruleData !== undefined) && 
+        (ruleData[2] !== undefined)) {
+        $("#f" + el).val(ruleData[2]);
+    }
+
+    // Extra
+    if ($(".ext_"+rid).size() > 0) {
+        $(".ext_"+rid).remove();
+        $(".exth_"+rid).remove();
+    }
+    if (data.extra !== undefined) {
+        $.each(data.extra, function(i,item) {
+            return createExtra(el, i, item);
+        });
+    }
+    saveRules();
+}
+
+function createExtra(rid, id, item) 
+{
+    var ex = "ext_" + id + "_" + rid;
+
+    $("<tr/>")
+        .attr("id", ex)
+        .addClass("ext_" + rid)
+        .appendTo("#table" + rid);
+    $("<td>")
+        .attr("id", "l" + ex)
+        .appendTo("#" + ex);
+    $("<td/>")
+        .attr({
+            "id": "tdex" + ex,
+            "colspan": "3"
+        })
+        .appendTo("#" + ex);
+
+
+    $("<tr/>")
+        .attr("id", "h" + ex)
+        .addClass("exth_" + rid)
+        .appendTo("#table" + rid);
+    $("<td>").appendTo("#h" + ex);
+    $("<td/>")
+        .attr({
+            "id": "hd" + ex,
+            "colspan": "3"
+        })
+        .appendTo("#h" + ex);
+
+    $("<label/>")
+        .html(item.label)
+        .appendTo("#l" + ex);
+
+    $("<div/>")
+        .attr("id", "hint" + ex)
+        .addClass("comment")
+        .html(item.hint)
+        .appendTo("#hd" + ex);
+
+
+    switch (item.field.type) {
+    case 'checkbox':
+        $('<input type="checkbox"/>')
+            .attr("id", "f" + ex)
+            .addClass("noautosubmit")
+            .attr("style", "float: left;")
+            .val(item.field.id)
+            .appendTo("#tdex" + ex);
+            //.change(saveRules)
+        $("<label/>")
+            .attr("for", "f" + ex)
+            .attr("style", "float: left; margin-left: 4px;")
+            .html(item.field.label)
+            .appendTo("#tdex" + ex);
+        break;
+    }
+
 }
 
 function enableSaveRules()
