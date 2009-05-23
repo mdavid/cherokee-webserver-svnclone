@@ -57,7 +57,7 @@ function addGroup(group, cond) {
 
 
 
-function addRule(group, after, ruleData) {
+function addRule(group, after, ruleData, extraData) {
     ruleN++;
     rid = "_r" + group + "_" + ruleN;
     locRule = ruleN;
@@ -135,7 +135,7 @@ function addRule(group, after, ruleData) {
         if (ruleData[0] !== undefined) $("#" + rid).val(ruleData[0]);
     }
 
-    getFields(rid, ruleData); 
+    getFields(rid, ruleData, extraData); 
 
     // Add button
     $("<a/>")
@@ -200,7 +200,7 @@ function delRule(group, rule)
 }
 
 
-function getFields(el, ruleData) {
+function getFields(el, ruleData, extraData) {
     var data = cherokeeRules[$("#"+el).val()];
     // Conditions
     $("#tdcond" + el).empty();
@@ -273,13 +273,19 @@ function getFields(el, ruleData) {
     }
     if (data.extra !== undefined) {
         $.each(data.extra, function(i,item) {
-            return createExtra(el, i, item);
+    	    if ((extraData !== undefined) &&
+    	        (extraData[i] !== undefined)) {
+                valExtra = extraData[i];
+            } else {
+                valExtra = '';
+            }
+            return createExtra(el, i, item, valExtra);
         });
     }
     saveRules();
 }
 
-function createExtra(rid, id, item) 
+function createExtra(rid, id, item, val) 
 {
     var ex = "ext_" + id + "_" + rid;
 
@@ -328,14 +334,42 @@ function createExtra(rid, id, item)
             .addClass("noautosubmit")
             .attr("style", "float: left;")
             .val(item.field.id)
-            .appendTo("#tdex" + ex);
-            //.change(saveRules)
+            .appendTo("#tdex" + ex)
+            .change(saveRules);
         $("<label/>")
             .attr("for", "f" + ex)
             .attr("style", "float: left; margin-left: 4px;")
             .html(item.field.label)
             .appendTo("#tdex" + ex);
+        if (val == 'true') {
+            $("#f"+ex).attr("checked", "checked");
+        }
         break;
+    case 'entry':
+        $('<input type="text"/>')
+            .attr("id", "f" + ex)
+            .addClass("noautosubmit")
+            .change(saveRules)
+            .val(val)
+            .appendTo("#tdex" + ex);
+
+        break;
+    case 'dropdown':
+        $("<select/>")
+            .attr("id", "f" + el)
+            .change(saveRules)
+            .addClass("noautosubmit")
+            .val(val)
+            .appendTo("#tdex" + ex)
+        $.each(data.field.choices, function(i,item) {
+            $("<option/>")
+                .attr("value", i)
+                .html(item)
+                .appendTo("#f" + ex);
+        });
+
+        break;
+ 
     }
 
 }
@@ -383,6 +417,22 @@ function saveRules()
             if ($('#f'+this.id).val() !== undefined) {
                 ret[cherokeePre + '!match!'+ng+'!'+nr+'!val'] = $('#f'+this.id).val();
             }
+
+            // Extras
+            var rid = this.id;
+            $(".ext_"+this.id).each(function(i){
+                var fid = $('#f'+this.id).attr("id");
+                var fv = '';
+                if ($("#"+fid).attr("type") == 'checkbox') {
+                    fv = $("#"+fid).attr("checked");
+                } else {
+                    fv = $("#"+fid).val();
+                }
+                fid = fid.replace("fext_","");
+                fid = fid.replace("_"+rid, "");
+                ret[cherokeePre + '!match!'+ng+'!'+nr+'!'+fid] = fv;
+            });
+
             nr ++;
         });
 
