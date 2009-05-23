@@ -56,6 +56,13 @@ class PageAjaxUpdate (WebComponent):
                 # Rule value
                 self._cfg["%s!val"%(rpath)] = post.get_val("%s!val"%(rpath))
 
+                # Extra fields
+                extras = (extra for extra in post if extra.startswith("%s!"%(rpath)))
+
+                for extra in extras: 
+                    if not extra.endswith(('cond', 'val')):
+                        self._cfg[extra] = post.get_val(extra)
+
                 r += 1
                 rpath = "%s!%s!%s"%(pre,g,r)
                 rmatch = post.get_val(rpath)

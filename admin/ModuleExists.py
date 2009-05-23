@@ -26,10 +26,14 @@ class ModuleExists (Module, FormHelper):
         return str(table)
 
     def _op_render (self):
-        txt = 'addRule(%s, 0, ["%s", "%s", "%s"]);'%(self.get_group(), 
+        # iocache field
+        extraJS = '{ "iocache": "%s" }' %(self._cfg.get_val ('%s!iocache'%(self._prefix)))
+
+        txt = 'addRule(%s, 0, ["%s", "%s", "%s"], %s);'%(self.get_group(), 
                                                      self._cfg.get_val(self._prefix), 
                                                      self.get_condition(), 
-                                                     self.get_name())
+                                                     self.get_name(),
+                                                     extraJS)
         return txt
 
     def _rule_def (self):
@@ -52,13 +56,10 @@ class ModuleExists (Module, FormHelper):
                     "label": "%s",
                     "hint": "%s",
                     "field": {
-                        "type": "checkboxes",
-                        "choices": {
-                            "enabled": { 
-                                "label": "%s",
-                                "checked": false
-                            }
-                        }
+                        "type": "checkbox",
+                        "id": "enabled",
+                        "label": "%s",
+                        "checked": false
                     }
                  }
             }
@@ -146,13 +147,13 @@ class ModuleExists (Module, FormHelper):
         val = self._cfg.get_val(self._prefix)
         if val == 'exists_any': 
             valTxt = _("Any file exists")
-        elif val == exists_any_these:
+        elif val == 'exists_any_these':
             valTxt = _("Any of these files exists")
-        elif val == exists_none:
+        elif val == 'exists_none':
             valTxt = _("None of these files exists")
-        elif val == exists_none_dont:
+        elif val == 'exists_none_dont':
             valTxt = _("None of these files doesn't exist")
-        elif val == exists_all:
+        elif val == 'exists_all':
             valTxt = _("All of these files exist")
         else:
             valTxt = _("Undefined..")
