@@ -357,7 +357,8 @@ init_entry_property (cherokee_config_node_t *conf, void *data)
 			entry->expiration = cherokee_expiration_time;
 			ret = cherokee_config_node_read (conf, "time", &tmp);
 			if (ret != ret_ok) {
-				LOG_ERROR_S ("Expiration 'time' without a time property\n");
+				LOG_ERROR (CHEROKEE_ERROR_VSERVER_TIME_MISSING,
+					   vserver->priority, rule_prio);
 				return ret_error;
 			}
 
@@ -376,7 +377,8 @@ init_entry_property (cherokee_config_node_t *conf, void *data)
 		/* Ignore: Previously handled 
 		 */
 	} else {
-		LOG_CRITICAL ("Virtual Server parser: Unknown key \"%s\"\n", conf->key.buf);
+		LOG_CRITICAL (CHEROKEE_ERROR_VSERVER_RULE_UNKNOWN_KEY,
+			      conf->key.buf, vserver->priority, rule_prio);
 		return ret_error;
 	}
 
@@ -449,7 +451,7 @@ cherokee_virtual_server_new_rule (cherokee_virtual_server_t  *vserver,
 	/* Sanity check
 	 */
 	if (cherokee_buffer_is_empty (type)) {
-		LOG_CRITICAL ("Rule match prio=%d must include a type property\n", priority);
+		LOG_CRITICAL (CHEROKEE_ERROR_VSERVER_TYPE_MISSING, vserver->priority, priority);
 		return ret_error;
 	}
 
@@ -504,7 +506,8 @@ add_rule (cherokee_config_node_t    *config,
 	 */
 	prio = atoi (config->key.buf);
 	if (prio <= CHEROKEE_RULE_PRIO_NONE) {
-		LOG_CRITICAL ("Invalid priority: '%s'\n", config->key.buf);
+		LOG_CRITICAL (CHEROKEE_ERROR_VSERVER_BAD_PRIORITY,
+			      config->key.buf, vserver->priority);
 		return ret_error;
 	}
 
@@ -512,7 +515,8 @@ add_rule (cherokee_config_node_t    *config,
 	 */
 	ret = cherokee_config_node_get (config, "match", &subconf);
 	if (ret != ret_ok) {
-		LOG_CRITICAL ("Rule prio=%d needs a 'match' section\n", prio);
+		LOG_CRITICAL (CHEROKEE_ERROR_VSERVER_RULE_MATCH_MISSING,
+			      vserver->priority, prio);
 		return ret_error;
 	}
 
@@ -552,7 +556,7 @@ configure_match (cherokee_config_node_t    *config,
 	cherokee_server_t      *srv       = SRV(vserver->server_ref);
 
 	if (cherokee_buffer_is_empty (&config->val)) {
-		LOG_CRITICAL_S ("A virtual server 'match' must be specified\n");
+		LOG_CRITICAL (CHEROKEE_ERROR_VSERVER_MATCH_MISSING, vserver->priority);
 		return ret_error;
 	}
 
@@ -560,7 +564,8 @@ configure_match (cherokee_config_node_t    *config,
 	 */
 	ret = cherokee_plugin_loader_get (&srv->loader, config->val.buf, &info);
 	if (ret < ret_ok) {
-		LOG_CRITICAL ("Couldn't load vrule module '%s'\n", config->val.buf);
+		LOG_CRITICAL (CHEROKEE_ERROR_VSERVER_LOAD_MODULE,
+			      config->val.buf, vserver->priority);
 		return ret_error;
 	}
 
@@ -599,7 +604,8 @@ add_evhost (cherokee_config_node_t *config, cherokee_virtual_server_t *vserver)
 	 */
 	ret = cherokee_plugin_loader_get (&srv->loader, config->val.buf, &info);
 	if (ret < ret_ok) {
-		LOG_CRITICAL ("Couldn't load evhost module '%s'\n", config->val.buf);
+		LOG_CRITICAL (CHEROKEE_ERROR_VSERVER_LOAD_MODULE,
+			      config->val.buf, vserver->priority);
 		return ret_error;
 	}
 
@@ -646,7 +652,8 @@ add_logger (cherokee_config_node_t    *config,
 	 */
 	ret = cherokee_plugin_loader_get (&srv->loader, config->val.buf, &info);
 	if (ret < ret_ok) {
-		LOG_CRITICAL ("Couldn't load logger module '%s'\n", config->val.buf);
+		LOG_CRITICAL (CHEROKEE_ERROR_VSERVER_LOAD_MODULE,
+			      config->val.buf, vserver->priority);
 		return ret_error;
 	}
 
@@ -796,7 +803,8 @@ configure_virtual_server_property (cherokee_config_node_t *conf, void *data)
  	} else if (equal_buf_str (&conf->key, "collect_statistics")) { 
 		/* DEPRECATED: Ignore */
 	} else {
-		LOG_CRITICAL ("Virtual Server: Unknown key '%s'\n", conf->key.buf);
+		LOG_CRITICAL (CHEROKEE_ERROR_VSERVER_UNKNOWN_KEY,
+			      conf->key.buf, vserver->priority);
 		return ret_error;
 	}
 
@@ -805,7 +813,6 @@ configure_virtual_server_property (cherokee_config_node_t *conf, void *data)
 
 static ret_t
 configure_collector (cherokee_virtual_server_t *vserver, 
-		     cherokee_virtual_server_t *vsrv,
 		     cherokee_config_node_t    *config)
 {
 	ret_t                 ret;
@@ -850,7 +857,7 @@ cherokee_virtual_server_configure (cherokee_virtual_server_t *vserver,
 	/* Information collectors
 	 */
 	if (VSERVER_SRV(vserver)->collector) {
-		ret = configure_collector (vserver, vserver, config);
+		ret = configure_collector (vserver, config);
 		if (ret != ret_ok) {
 			return ret_error;
 		}
@@ -859,12 +866,12 @@ cherokee_virtual_server_configure (cherokee_virtual_server_t *vserver,
 	/* Perform some sanity checks
 	 */
 	if (cherokee_buffer_is_empty (&vserver->name)) {
-		LOG_CRITICAL ("Virtual host prio=%d needs a nick\n", prio);
+		LOG_CRITICAL (CHEROKEE_ERROR_VSERVER_NICK_MISSING, prio);
 		return ret_error;
 	}
 
 	if (cherokee_buffer_is_empty (&vserver->root)) {
-		LOG_CRITICAL ("Virtual host '%s' needs a document_root\n", vserver->name.buf);
+		LOG_CRITICAL (CHEROKEE_ERROR_VSERVER_DROOT_MISSING, vserver->name.buf);
 		return ret_error;
 	}
 
