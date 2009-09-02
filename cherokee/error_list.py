@@ -11,6 +11,21 @@ up."""
 SYSTEM_ISSUE = """The issue seems to be related to your system."""
 
 
+# cherokee/connection.c
+#
+e('CONNECTION_AUTH',
+  title = "Unknown authentication method",
+  desc  = "To-do")
+
+e('CONNECTION_LOCAL_DIR',
+  title = "Could not build the local directory string",
+  desc  = "To-do")
+
+e('CONNECTION_GET_VSERVER',
+  title = "Couldn't get virtual server: '%s'",
+  desc  = "To-do")
+
+
 # cherokee/ncpus.c
 #
 e('NCPUS_PSTAT',
