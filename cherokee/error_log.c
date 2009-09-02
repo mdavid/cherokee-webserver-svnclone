@@ -100,13 +100,13 @@ report_error (cherokee_buffer_t *buf)
 
 
 static void 
-render_python_error (cherokee_error_type_t  type,
-		     const char            *filename,
-		     int                    line,
-		     int                    error_num,
-		     cherokee_error_t      *error,
-		     cherokee_buffer_t     *output,
-		     va_list                ap)
+render_python_error (cherokee_error_type_t   type,
+		     const char             *filename,
+		     int                     line,
+		     int                     error_num,
+		     const cherokee_error_t *error,
+		     cherokee_buffer_t      *output,
+		     va_list                 ap)
 {
 	cherokee_buffer_t tmp = CHEROKEE_BUF_INIT;
 	
@@ -209,13 +209,13 @@ render_python_error (cherokee_error_type_t  type,
 
 
 static void 
-render_human_error (cherokee_error_type_t  type,
-		    const char            *filename,
-		    int                    line,
-		    int                    error_num,
-		    cherokee_error_t      *error,
-		    cherokee_buffer_t     *output,
-		    va_list                ap)
+render_human_error (cherokee_error_type_t   type,
+		    const char             *filename,
+		    int                     line,
+		    int                     error_num,
+		    const cherokee_error_t *error,
+		    cherokee_buffer_t      *output,
+		    va_list                 ap)
 {
 	UNUSED (error_num);
 	
@@ -261,8 +261,8 @@ render (cherokee_error_type_t  type,
 	va_list                ap,
 	cherokee_buffer_t     *error_str)
 {
-	cherokee_error_t   *error;
-	cherokee_boolean_t  readable;
+	const cherokee_error_t *error;
+	cherokee_boolean_t      readable;
 
 	/* Get the error information
 	 */

@@ -8,8 +8,30 @@ CODING_BUG = """Looks like a bug in the plug-in that you're trying to
 use. Please report it to its author or maintainer so he can fix it
 up."""
 
+# cherokee/utils.c
+#
+e('UTIL_F_GETFL',
+  title = "fcntl (F_GETFL, fd=%d, 0): ${errno}",
+  desc  = CODING_BUG)
 
-# cherokee/avl.h
+e('UTIL_F_SETFL',
+  title = "fcntl (F_GETFL, fd=%d, flags=%d (+%s)): ${errno}",
+  desc  = CODING_BUG)
+
+e('UTIL_F_GETFD',
+  title = "fcntl (F_GETFD, fd=%d, 0): ${errno}",
+  desc  = CODING_BUG)
+
+e('UTIL_F_SETFD',
+  title = "fcntl (F_GETFD, fd=%d, flags=%d (+%s)): ${errno}",
+  desc  = CODING_BUG)
+
+e('UTIL_MKDIR',
+  title = "Could not mkdir '%s': ${errno}",
+  desc  = "Most probably there you have to adjust some permissions.")
+
+
+# cherokee/avl.c
 #
 e('AVL_PREVIOUS',
   title = "AVL Tree inconsistency: Right child",
@@ -24,7 +46,7 @@ e('AVL_BALANCE',
   desc  = CODING_BUG)
 
 
-# cherokee/buffer.h
+# cherokee/buffer.c
 #
 e('BUFFER_NEG_ESTIMATION',
   title = "Buffer: Bad memory estimation. The format '%s' estimated a negative length: %d.",
