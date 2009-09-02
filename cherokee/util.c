@@ -1327,7 +1327,7 @@ cherokee_buf_add_bogonow (cherokee_buffer_t  *buf,
 		cherokee_bogotime_try_update();
 	}
 
-	cherokee_buffer_add_va (buf, "[%02d/%02d/%d %02d:%02d:%02d.%03d]",
+	cherokee_buffer_add_va (buf, "%02d/%02d/%d %02d:%02d:%02d.%03d",
 				cherokee_bogonow_tmloc.tm_mday, 
 				cherokee_bogonow_tmloc.tm_mon, 
 				cherokee_bogonow_tmloc.tm_year + 1900,
@@ -1341,20 +1341,27 @@ cherokee_buf_add_bogonow (cherokee_buffer_t  *buf,
 
 ret_t
 cherokee_buf_add_backtrace (cherokee_buffer_t *buf,
-			    int                n_skip)
+			    int                n_skip,
+			    const char        *new_line,
+			    const char        *line_pre)
 {
 #if HAVE_BACKTRACE
 	void    *array[128];
 	size_t   size;
 	char   **strings;
 	size_t   i;
+	int      line_pre_len;
 	
 	size = backtrace (array, 128);
 	strings = backtrace_symbols (array, size);
+	line_pre_len = strlen (line_pre);
 	
 	for (i=n_skip; i < size; i++) {
-		cherokee_buffer_add      (buf, strings[i], strlen(strings[i]));
-		cherokee_buffer_add_char (buf, '\n');
+		if (line_pre_len > 0) {
+			cherokee_buffer_add (buf, line_pre, line_pre_len);
+		}
+		cherokee_buffer_add (buf, strings[i], strlen(strings[i]));
+		cherokee_buffer_add (buf, new_line, strlen(new_line));
 	}
  
 	free (strings);

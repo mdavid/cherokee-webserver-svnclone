@@ -241,10 +241,11 @@ init_entry_property (cherokee_config_node_t *conf, void *data)
 	ret_t                      ret;
 	cherokee_buffer_t         *tmp;
 	cherokee_list_t           *i;
-	cherokee_plugin_info_t    *info    = NULL;
-	cherokee_virtual_server_t *vserver = ((void **)data)[0];
-	cherokee_config_entry_t   *entry   = ((void **)data)[1];
-	cherokee_server_t         *srv     = VSERVER_SRV(vserver);
+	cherokee_plugin_info_t    *info      = NULL;
+	cherokee_virtual_server_t *vserver   = ((void **)data)[0];
+	cherokee_config_entry_t   *entry     = ((void **)data)[1];
+	int                        rule_prio = POINTER_TO_INT(((void **)data)[2]);
+	cherokee_server_t         *srv       = VSERVER_SRV(vserver);
 
 	if (equal_buf_str (&conf->key, "allow_from")) {
 		ret = cherokee_config_node_read_list (conf, NULL, add_access, entry);
@@ -332,7 +333,8 @@ init_entry_property (cherokee_config_node_t *conf, void *data)
 			return ret;
 
 		if ((entry->authentication & vinfo->valid_methods) != entry->authentication) {
-			LOG_CRITICAL ("Unsupported methods '%s'\n", tmp->buf);
+			LOG_CRITICAL (CHEROKEE_ERROR_VSERVER_BAD_METHOD,
+				      tmp->buf, vserver->priority, rule_prio);
 			return ret_error;
 		}		
 
@@ -385,10 +387,11 @@ init_entry_property (cherokee_config_node_t *conf, void *data)
 static ret_t 
 init_entry (cherokee_virtual_server_t *vserver, 
 	    cherokee_config_node_t    *config, 
+	    int                        rule_prio,
 	    cherokee_config_entry_t   *entry)
 {
 	ret_t  ret;
-	void  *params[2] = { vserver, entry };
+	void  *params[3] = { vserver, entry, INT_TO_POINTER(rule_prio) };
 
 	ret = cherokee_config_node_while (config, init_entry_property, (void *)params);
 	if (ret != ret_ok)
@@ -456,11 +459,10 @@ cherokee_virtual_server_new_rule (cherokee_virtual_server_t  *vserver,
 	 */
 	if (equal_buf_str (type, "default")) {
 		func_new = (rule_func_new_t) cherokee_rule_default_new;
-
 	} else {
 		ret = cherokee_plugin_loader_get (&srv->loader, type->buf, &info);
 		if (ret < ret_ok) {
-			LOG_CRITICAL ("ERROR: Couldn't load rule module '%s'\n", type->buf);
+			LOG_CRITICAL (CHEROKEE_ERROR_VSERVER_LOAD_MODULE, type->buf, priority);
 			return ret_error;
 		}
 
@@ -520,7 +522,7 @@ add_rule (cherokee_config_node_t    *config,
 
 	/* config_node -> config_entry
 	 */
-	ret = init_entry (vserver, config, &rule->config);
+	ret = init_entry (vserver, config, prio, &rule->config);
 	if (ret != ret_ok) 
 		goto failed;
 
