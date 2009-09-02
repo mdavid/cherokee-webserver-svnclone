@@ -8,6 +8,34 @@ CODING_BUG = """Looks like a bug in the plug-in that you're trying to
 use. Please report it to its author or maintainer so he can fix it
 up."""
 
+SYSTEM_ISSUE = """The issue seems to be related to your system."""
+
+
+# cherokee/ncpus.c
+#
+e('NCPUS_PSTAT',
+  title = "pstat_getdynamic() failed: '${errno}'",
+  desc  = SYSTEM_ISSUE)
+
+e('NCPUS_HW_NCPU',
+  title = "sysctl(CTL_HW:HW_NCPU) failed: '${errno}'",
+  desc  = SYSTEM_ISSUE)
+
+e('NCPUS_SYSCONF',
+  title = "sysconf(_SC_NPROCESSORS_ONLN) failed: '${errno}'",
+  desc  = SYSTEM_ISSUE)
+
+
+# cherokee/init.c
+#
+e('INIT_CPU_NUMBER',
+  title = "Couldn't figure the CPU/core number of your server. Read %d, set to 1")
+
+e('INIT_GET_FD_LIMIT',
+  title = "Couldn't get the file descriptor limit of your system",
+  desc  = SYSTEM_ISSUE)
+  
+
 # cherokee/utils.c
 #
 e('UTIL_F_GETFL',
