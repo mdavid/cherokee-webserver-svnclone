@@ -116,7 +116,7 @@ def check_parameters (dirs):
                                       r'\(CHEROKEE_ERROR_([\w_]+)[ ,\n]*' +\
                                       r'(.*)\);', content, re.MULTILINE)
 
-            matches_errno = re.findall (r'LOG_ERRNO[ ]*' +\
+            matches_errno = re.findall (r'LOG_ERRNO[_S ]*' +\
                                         r'\(.+,.+,[ \n]*CHEROKEE_ERROR_([\w_]+)[ ,\n]*' +\
                                         r'(.*)\);', content, re.MULTILINE)
 
