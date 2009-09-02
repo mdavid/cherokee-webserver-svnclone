@@ -132,12 +132,57 @@ e('PLUGIN_NO_INFO',
 e('VSERVER_BAD_METHOD',
   title = "Unsupported method '%s'",
   admin = "/vserver/%d/rule/%d",
-  desc  = "")
+  desc  = "(TO DO)")
+
+e('VSERVER_TIME_MISSING',
+  title = "Expiration time without a 'time' property",
+  admin = "/vserver/%d/rule/%d",
+  desc  = "(TO DO)")
+
+e('VSERVER_RULE_UNKNOWN_KEY',
+  title = "Virtual Server Rule, Unknown key '%s'",
+  admin = "/vserver/%d/rule/%d",
+  desc  = "(TO DO)")
+
+e('VSERVER_TYPE_MISSING',
+  title = "Rule matches must specify a 'type' property",
+  admin = "/vserver/%d/rule/%d",
+  desc  = "(TO DO)")
 
 e('VSERVER_LOAD_MODULE',
   title = "Could not load rule module '%s'",
   admin = "/vserver/%d",
   desc  = "The server could not load a plug-in file. This might be due to some problem in the installation.")
+
+e('VSERVER_BAD_PRIORITY',
+  title = "Invalid priority '%s'",
+  admin = "/vserver/%d",
+  desc  = "(TO DO)")
+
+e('VSERVER_RULE_MATCH_MISSING',
+  title = "Rules must specify a 'match' property",
+  admin = "/vserver/%d/rule/%d",
+  desc  = "(TO DO)")
+  
+e('VSERVER_MATCH_MISSING',
+  title = "Virtual Server must specify a 'match' property",
+  admin = "/vserver/%d",
+  desc  = "(TO DO)")
+
+e('VSERVER_UNKNOWN_KEY',
+  title = "Virtual Server, Unknown key '%s'",
+  admin = "/vserver/%d",
+  desc  = "(TO DO)")
+
+e('VSERVER_NICK_MISSING',
+  title = "Virtual Server  without a 'nick' property",
+  admin = "/vserver/%d",
+  desc  = "(TO DO)")
+
+e('VSERVER_DROOT_MISSING',
+  title = "Virtual Server  without a 'document_root' property",
+  admin = "/vserver/%d",
+  desc  = "(TO DO)")
 
 
 # cherokee/regex.c
