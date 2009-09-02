@@ -1315,6 +1315,9 @@ configure_server_property (cherokee_config_node_t *conf, void *data)
 	} else if (equal_buf_str (&conf->key, "chunked_encoding")) {
 		srv->chunked_encoding = !!atoi (conf->val.buf);
 
+	} else if (equal_buf_str (&conf->key, "readable_errors")) {
+		cherokee_readable_errors = !!atoi (conf->val.buf);
+
 	} else if (equal_buf_str (&conf->key, "panic_action")) {
 		cherokee_buffer_clean (&srv->panic_action);
 		cherokee_buffer_add_buffer (&srv->panic_action, &conf->val);

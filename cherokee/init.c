@@ -32,10 +32,14 @@
 #include "threading.h"
 #include "spawner.h"
 
-cuint_t           cherokee_cacheline_size;
-cint_t            cherokee_cpu_number;
-cuint_t           cherokee_fdlimit;
-cherokee_buffer_t cherokee_tmp_dir;
+/* Global variables
+ */
+cuint_t              cherokee_cacheline_size;
+cint_t               cherokee_cpu_number;
+cuint_t              cherokee_fdlimit;
+cherokee_buffer_t    cherokee_tmp_dir;
+cherokee_boolean_t   cherokee_admin_child;
+cherokee_null_bool_t cherokee_readable_errors;
 
 static cherokee_boolean_t _cherokee_init = false;
 
@@ -88,6 +92,9 @@ cherokee_init (void)
 	 */
 	cherokee_buffer_init (&cherokee_tmp_dir);
 	cherokee_tmp_dir_copy (&cherokee_tmp_dir);
+
+	cherokee_admin_child     = false;
+	cherokee_readable_errors = NULLB_NULL;
 
 	_cherokee_init = true;
 	return ret_ok;

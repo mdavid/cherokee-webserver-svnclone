@@ -58,6 +58,21 @@ getopt/getopt.c  \
 getopt/getopt1.c \
 getopt/gettext.h
 
+
+#
+# File generation rules
+#
+BUILT_SOURCES = \
+errors.h \
+errors_defs.h
+
+errors.h: errors.py error_list.py
+	python errors.py --errors $@
+
+errors_defs.h: errors.py error_list.py
+	python errors.py --defines $@
+
+
 #
 # Check whether external libraries can be used
 #
@@ -1232,6 +1247,7 @@ shm.h \
 shm.c
 endif
 
+
 libcherokee_base_la_SOURCES = \
 $(zlib_src) \
 $(internal_pcre_src) \
@@ -1271,6 +1287,8 @@ util.h \
 util.c \
 error_log.h \
 error_log.c \
+errors.h \
+errors_defs.h \
 human_strcmp.h \
 human_strcmp.c \
 trace.h \
@@ -1698,6 +1716,10 @@ win32_misc.c
 
 EXTRA_DIST = \
 pcre/LICENCE \
+errors.py \
+error_list.py \
+errors.h \
+errors_defs.h \
 $(shm_src) \
 $(pcre_src) \
 $(win32_src) \
@@ -1710,4 +1732,4 @@ $(WINDOWS_PORT_FILES) \
 $(cryptor_libssl_dist)
 
 distclean-local:
-	$(RM) -f loader.autoconf.h loader.autoconf.inc
+	$(RM) -f loader.autoconf.h loader.autoconf.inc errors.h errors_defs.h
