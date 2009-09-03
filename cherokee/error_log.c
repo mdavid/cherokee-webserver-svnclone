@@ -172,6 +172,16 @@ render_python_error (cherokee_error_type_t   type,
 		skip_args (&ap, error->admin_url);
 	}
 
+	/* Debug information */
+	if (error->debug) {
+		cherokee_buffer_add_str     (output, "'debug': \"");
+		cherokee_buffer_add_va_list (output, error->debug, ap);
+		cherokee_buffer_add_str     (output, "\", ");
+
+		/* ARGS: Skip 'debug' */
+		skip_args (&ap, error->debug);
+	}
+
 	/* Version */
 	cherokee_buffer_add_str (output, "'version': \"");	
 	cherokee_buffer_add_str (output, PACKAGE_VERSION);
