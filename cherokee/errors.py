@@ -22,7 +22,7 @@ class CherokeeError:
         self.description = kwargs.get('desc', '').replace('\n',' ')
         self.url_admin   = kwargs.get('admin', '')
         self.help        = kwargs.get('help', [])
-
+        self.debug       = kwargs.get('debug', '')
 
 _errors = []
 
@@ -97,7 +97,7 @@ def check_parameters (dirs):
 
     # Known
     for error in _errors:
-        tmp = error.title + error.description + error.url_admin
+        tmp = error.title + error.description + error.url_admin + error.debug
         tmp = tmp.replace('%%', '')
         known_errors_params [error.id] = tmp.count('%')
 
@@ -207,12 +207,17 @@ def generate_C_errors ():
             txt += 'NULL, '
 
         if err.url_admin:
-            txt += '"%s"' % (err.url_admin)
+            txt += '"%s", ' % (err.url_admin)
+        else:
+            txt += 'NULL, '
+
+        if err.debug:
+            txt += '"%s"' % (err.debug)
         else:
             txt += 'NULL'
 
         txt += ' },\n'
-    txt += '  {  -1, NULL, NULL, NULL}\n'
+    txt += '  {  -1, NULL, NULL, NULL, NULL}\n'
     txt += '};\n'
     return txt
 
