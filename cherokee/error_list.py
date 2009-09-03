@@ -11,6 +11,26 @@ up."""
 SYSTEM_ISSUE = """The issue seems to be related to your system."""
 
 
+# cherokee/header.c
+#
+e('HEADER_EMPTY',
+  title = "Calling cherokee_header_parse() with an empty header",
+  desc  = CODING_BUG)
+
+e('HEADER_NO_EOH',
+  title = "Could not find the End Of Header",
+  desc  = CODING_BUG,
+  debug = "len=%d, buf=%s")
+
+e('HEADER_TOO_MANY_CRLF',
+  title = "Too many initial CRLF",
+  desc  = CODING_BUG)
+
+e('HEADER_ADD_HEADER',
+  title = "Failed to store a header entry while parsing",
+  desc  = CODING_BUG)
+
+
 # cherokee/socket.c
 #
 e('SOCKET_SET_KEEPALIVE',
