@@ -11,6 +11,69 @@ up."""
 SYSTEM_ISSUE = """The issue seems to be related to your system."""
 
 
+# cherokee/socket.c
+#
+e('SOCKET_SET_KEEPALIVE',
+  title = "Could not set SO_KEEPALIVE on fd=%d: ${errno}",
+  desc  = CODING_BUG)
+
+e('SOCKET_SET_LINGER',
+  title = "Could not set SO_LINGER on fd=%d: ${errno}",
+  desc  = CODING_BUG)
+
+e('SOCKET_RM_NAGLES',
+  title = "Could not disable Nagle's algorithm",
+  desc  = SYSTEM_ISSUE)
+
+e('SOCKET_NON_BLOCKING',
+  title = "Could not set non-blocking, fd %d",
+  desc  = CODING_BUG)
+
+e('SOCKET_NO_SOCKET',
+  title = "%s isn't a socket",
+  desc  = "The file is supposed to be a Unix socket, although it does not look like one.")
+
+e('SOCKET_REMOVE',
+  title = "Could not remove %s",
+  desc  = "Could not remove the Unix socket because: ${errno}")
+
+e('SOCKET_WRITE',
+  title = "Could not write to socket: write(%d, ..): '${errno}'",
+  desc  = CODING_BUG)
+
+e('SOCKET_READ',
+  title = "Could not read from socket: read(%d, ..): '${errno}'",
+  desc  = CODING_BUG)
+
+e('SOCKET_WRITEV',
+  title = "Could not write a vector to socket: writev(%d, ..): '${errno}'",
+  desc  = CODING_BUG)
+
+e('SOCKET_CONNECT',
+  title = "Could not connect: ${errno}",
+  desc  = SYSTEM_ISSUE)
+
+e('SOCKET_BAD_FAMILY',
+  title = "Unknown socket family: %d",
+  desc  = CODING_BUG)
+
+e('SOCKET_SET_NODELAY',
+  title = "Could not set TCP_NODELAY to fd %d: ${errno}",
+  desc  = CODING_BUG)
+
+e('SOCKET_RM_NODELAY',
+  title = "Could not remove TCP_NODELAY from fd %d: ${errno}",
+  desc  = CODING_BUG)
+
+e('SOCKET_SET_CORK',
+  title = "Could not set TCP_CORK to fd %d: ${errno}",
+  desc  = CODING_BUG)
+
+e('SOCKET_RM_CORK',
+  title = "Could not set TCP_CORK from fd %d: ${errno}",
+  desc  = CODING_BUG)
+
+
 # cherokee/thread.c
 #
 e('THREAD_RM_FD_POLL',
