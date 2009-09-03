@@ -11,6 +11,30 @@ up."""
 SYSTEM_ISSUE = """The issue seems to be related to your system."""
 
 
+# cherokee/thread.c
+#
+e('THREAD_RM_FD_POLL',
+  title = "Couldn't remove fd(%d) from fdpoll",
+  desc  = CODING_BUG)
+
+e('THREAD_HANDLER_RET',
+  title = "Unknown ret %d from handler %s",
+  desc  = CODING_BUG)
+
+e('THREAD_OUT_OF_FDS',
+  title = "Run out of file descriptors",
+  desc  = "The server is under heavy load and it has run out of file descriptors. It can be fixed by raising the file descriptor limit and restarting the server.",
+  admin = "/advanced")
+
+e('THREAD_GET_CONN_OBJ',
+  title = "Trying to get a new connection object",
+  desc  = "Either the system run out of memory, or you've hit a bug in the code.")
+
+e('THREAD_SET_SOCKADDR',
+  title = "Could not set sockaddr",
+  desc  = CODING_BUG);
+
+
 # cherokee/connection.c
 #
 e('CONNECTION_AUTH',
