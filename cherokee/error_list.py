@@ -12,6 +12,24 @@ SYSTEM_ISSUE = """The issue seems to be related to your system."""
 
 UNKNOWN_CAUSE = """We are not sure why this happened. (To-do)."""
 
+
+# cherokee/spawner.c
+#
+e('SPAWNER_SHM_INIT',
+  title = "Could initialize SHM '%s': ${errno}",
+  desc  = SYSTEM_ISSUE)
+
+e('SPAWNER_UNLOCK_SEMAPHORE',
+  title = "Couldn't unlock spawning semaphore",
+  desc  = SYSTEM_ISSUE)
+
+
+# cherokee/http.c
+#
+e('HTTP_UNKNOWN_CODE',
+  title = "Unknown HTTP status code %d")
+
+
 # cherokee/icons.c
 #
 e('ICONS_NO_DEFAULT',
