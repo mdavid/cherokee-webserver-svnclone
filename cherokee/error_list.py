@@ -10,6 +10,20 @@ up."""
 
 SYSTEM_ISSUE = """The issue seems to be related to your system."""
 
+UNKNOWN_CAUSE = """We are not sure why this happened. (To-do)."""
+
+# cherokee/icons.c
+#
+e('ICONS_NO_DEFAULT',
+  title = "A default icon is needed",
+  desc  = "Please, specify a default icon. It is the icon that Cherokee will use whenever no other icon is used.",
+  admin = "/icons")
+
+e('ICONS_ASSIGN_SUFFIX',
+  title = "Couldn't assign suffix '%s' to file '%s'",
+  desc  = UNKNOWN_CAUSE,
+  admin = "/icons")
+
 
 # cherokee/header.c
 #
