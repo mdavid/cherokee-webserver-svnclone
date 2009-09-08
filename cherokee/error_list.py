@@ -13,6 +13,36 @@ SYSTEM_ISSUE = """The issue seems to be related to your system."""
 UNKNOWN_CAUSE = """We are not sure why this happened. (To-do)."""
 
 
+# cherokee/config_reader.c
+#
+e('CONF_READ_ACCESS_FILE',
+  title = "Could not access file",
+  desc  = "The configuration file '%s' could not be accessed. Most probably the server user doesn't have enough permissions to read it.")
+
+e('CONF_READ_CHILDREN_SAME_NODE',
+  title = "'%s' and '%s' as child of the same node",
+  desc  = CODING_BUG)
+
+e('CONF_READ_PARSE',
+  title = "Parsing error",
+  desc  = "The server could not parse the configuration. Something must be wrong with formation. At this stage the lexical is checked.",
+  debug = "%s")
+
+
+# cherokee/post.c
+#
+e('POST_REMOVE_TEMP',
+  title = "Could not remove temporal file",
+  desc  = "The temporal file '%s' could not be removed.")
+
+
+# cherokee/template.c
+#
+e('TEMPLATE_NO_TOKEN',
+  title = "Token not found '%s'",
+  desc  = "It seems that the template uses an undefined token.")
+
+
 # cherokee/spawner.c
 #
 e('SPAWNER_SHM_INIT',
