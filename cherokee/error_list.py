@@ -13,6 +13,29 @@ SYSTEM_ISSUE = """The issue seems to be related to your system."""
 UNKNOWN_CAUSE = """We are not sure why this happened. (To-do)."""
 
 
+# cherokee/source_interpreter.c
+#
+e('SRC_INTER_NO_USER',
+  title = "User '%s' not found in the system",
+  desc  = "The server is configured to execute an interpreter as a different user. However, it seems that the user does not exist in the system.",
+  admin = "/source/%d")
+
+e('SRC_INTER_NO_GROUP',
+  title = "Group '%s' not found in the system",
+  desc  = "The server is configured to execute an interpreter as a different group. However, it seems that the group does not exist in the system.",
+  admin = "/source/%d")
+
+e('SRC_INTER_EMPTY_INTERPRETER',
+  title = "There is a 'Interpreter Source' witout an interpreter.",
+  desc  = "The server configuration defines an 'interpreter' information source that does not specify an interpreter.",
+  admin = "/source/%d")
+
+e('SRC_INTER_NO_INTERPRETER',
+  title = "Could find interpreter '%s'",
+  desc  = "The server configuration refers to an interpreter that is not installed in this system.",
+  admin = "/source/%d")
+
+
 # cherokee/config_reader.c
 #
 e('CONF_READ_ACCESS_FILE',
