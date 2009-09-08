@@ -1158,7 +1158,7 @@ add_source (cherokee_config_node_t *conf, void *data)
 		ret = cherokee_source_interpreter_new (&src2);
 		if (ret != ret_ok) return ret;
 		
-		ret = cherokee_source_interpreter_configure (src2, conf);
+		ret = cherokee_source_interpreter_configure (src2, conf, prio);
 		if (ret != ret_ok) return ret;
 		
 		src = SOURCE(src2);
