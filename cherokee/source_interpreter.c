@@ -240,7 +240,7 @@ check_interpreter (cherokee_source_interpreter_t *src)
 		if (ret == ret_ok) 
 			return ret_ok;
 
-		LOG_ERROR ("Could find interpreter '%s'\n", src->interpreter.buf);
+		LOG_ERROR ("Could not find interpreter '%s'\n", src->interpreter.buf);
 		return ret_error;
 	}
 	
