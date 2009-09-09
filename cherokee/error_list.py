@@ -15,6 +15,13 @@ UNKNOWN_CAUSE = """We are not sure why this happened. (To-do)."""
 BROKEN_CONFIG = """The configuration file seems to be broken."""
 
 
+# cherokee/config_entry.c
+#
+e('CONFIG_ENTRY_BAD_TYPE',
+  title = "Wrong plug-in: The module must implement a handler.",
+  desc  = "The server tried to set a handler, but the loaded plug-in contained another sort of module.")
+
+
 # cherokee/balancer_*.c
 #
 e('BALANCER_EMPTY',
