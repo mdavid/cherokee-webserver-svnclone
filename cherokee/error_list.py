@@ -14,6 +14,51 @@ UNKNOWN_CAUSE = """We are not sure why this happened. (To-do)."""
 
 BROKEN_CONFIG = """The configuration file seems to be broken."""
 
+
+# cherokee/rule_*.c
+#
+e('RULE_NO_PROPERTY',
+  title = "Rule prio=%d needs a '%s' property",
+  desc  = BROKEN_CONFIG)
+
+# cherokee/rule_request.c
+#
+e('RULE_REQUEST_NO_TABLE',
+  title = "Could not access to the RegEx table",
+  desc  = CODING_BUG)
+
+e('RULE_REQUEST_NO_PCRE_PTR',
+  title = "RegExp rule has null pcre",
+  desc  = CODING_BUG)
+
+
+# cherokee/rule_method.c
+#
+e('RULE_METHOD_UNKNOWN',
+  title = "Could not recognize HTTP method '%s'",
+  desc  = "The rule found an entry with an unsupported HTTP method. Probably this is due to... (to-do).")
+
+
+# cherokee/rule_header.c
+#
+e('RULE_HEADER_UNKNOWN',
+  title = "Unknown header '%s'",
+  desc  = "The rule found an entry with an unsupported header. Probably this is due to... (to-do).")
+
+
+# cherokee/rule_from.c
+#
+e('RULE_FROM_ENTRY',
+  title = "Couldn't parse 'from' entry: '%s'",
+  desc  = "The entries of this rule must be either IP address or network masks. Both IPv4 and IPv6 addresses and masks are supported.")
+
+# cherokee/rule_bind.c
+#
+e('RULE_BIND_PORT',
+  title = "Rule prio=%d type='bind', invalid port='%s'",
+  desc  = BROKEN_CONFIG)
+
+
 # cherokee/server.c
 #
 e('SERVER_INITGROUPS',
