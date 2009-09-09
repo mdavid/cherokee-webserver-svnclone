@@ -15,6 +15,25 @@ UNKNOWN_CAUSE = """We are not sure why this happened. (To-do)."""
 BROKEN_CONFIG = """The configuration file seems to be broken."""
 
 
+# cherokee/balancer_*.c
+#
+e('BALANCER_EMPTY',
+  title = "The Load Balancer cannot be empty",
+  desc  = BROKEN_CONFIG)
+
+e('BALANCER_UNDEFINED',
+  title = "Balancer defined without a value",
+  desc  = BROKEN_CONFIG)
+
+e('BALANCER_NO_KEY',
+  title = "Balancer: No '%s' log has been defined.",
+  desc  = BROKEN_CONFIG)
+
+e('BALANCER_BAD_SOURCE',
+  title = "Could not find source '%s'",
+  desc  = "For some reason the load balancer module is using a missing Information Source. Please.. (to-do).")
+
+
 # cherokee/encoder_*.c
 #
 e('ENCODER_DEFLATEINIT2',
