@@ -1897,3 +1897,19 @@ cherokee_find_exec_in_path (const char        *bin_name,
 	free (path);
 	return ret_not_found;
 }
+
+
+ret_t
+cherokee_atoi (const char *str, int *ret_value)
+{
+	int tmp;
+
+	errno = 0;
+	tmp = strtol (str, NULL, 10);
+	if (errno != 0) {
+		return ret_error;
+	}
+	
+	*ret_value = tmp;
+	return ret_ok;
+}
