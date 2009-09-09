@@ -15,6 +15,54 @@ UNKNOWN_CAUSE = """We are not sure why this happened. (To-do)."""
 BROKEN_CONFIG = """The configuration file seems to be broken."""
 
 
+# cherokee/handler_dirlist.c
+#
+e('HANDLER_DIRLIST_THEME',
+  title = "Couldn't load theme '%s': %s",
+  desc  = "(to-do).")
+
+e('HANDLER_DIRLIST_BAD_THEME',
+  title = "The theme is incomplete",
+  desc  = "(to-do).")
+
+
+# cherokee/handler_dbslayer.c
+#
+e('HANDLER_DBSLAYER_LANG',
+  title = "Unrecognized language '%s'",
+  desc  = "Cherokee's DBSlayer supports a number of output languages and formats, including: ..(to-do).")
+
+e('HANDLER_DBSLAYER_BALANCER',
+  title = "DBSlayer handler needs a balancer",
+  desc  = "(to-do).")
+
+
+# cherokee/handler_custom_error.c
+#
+e('HANDLER_CUSTOM_ERROR_HTTP',
+  title = "Handler custom error needs an HTTP error value.",
+  desc  = BROKEN_CONFIG)
+
+
+# cherokee/handler_cgi.c
+#
+e('HANDLER_CGI_SET_PROP',
+  title = "Setting pipe properties fd=%d: '${errno}'",
+  desc  = SYSTEM_ISSUE)
+
+e('HANDLER_CGI_SETID',
+  title = "%s: couldn't set UID %d",
+  desc  = "Most probably the server isn't running as root, and therefore it cannot switch to a new user. If you want Cherokee to be able to change use UID to execute CGIs, you'll have to run it as root.")
+
+e('HANDLER_CGI_EXECUTE',
+  title = "Could not execute '%s': %s",
+  desc  = SYSTEM_ISSUE)
+
+e('HANDLER_CGI_CREATEPROCESS',
+  title = "CreateProcess error: error=%d",
+  desc  = SYSTEM_ISSUE)
+
+
 # cherokee/config_entry.c
 #
 e('CONFIG_ENTRY_BAD_TYPE',
