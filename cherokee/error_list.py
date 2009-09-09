@@ -107,6 +107,17 @@ e('FDPOLL_KQUEUE',
   desc  = SYSTEM_ISSUE)
 
 
+# cherokee/gen_evhost.c
+#
+e('GEN_EVHOST_TPL_DROOT',
+  title = "EvHost needs a 'tpl_document_root property'",
+  desc  = BROKEN_CONFIG)
+
+e('GEN_EVHOST_PARSE',
+  title = "EvHost: Couldn't parse template '%s'",
+  desc  = "Could not parse the template definining how virtual servers are located. (to-do).")
+
+
 # cherokee/vrule_*.c
 #
 e('VRULE_NO_PROPERTY',
@@ -287,6 +298,10 @@ e('SRC_INTER_NO_INTERPRETER',
   title = "Could find interpreter '%s'",
   desc  = "The server configuration refers to an interpreter that is not installed in this system.",
   admin = "/source/%d")
+
+e('SRC_INTER_SPAWN',
+  title = "Could not spawn '%s'",
+  desc  = SYSTEM_ISSUE)
 
 
 # cherokee/config_reader.c
