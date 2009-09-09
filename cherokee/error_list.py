@@ -15,11 +15,33 @@ UNKNOWN_CAUSE = """We are not sure why this happened. (To-do)."""
 BROKEN_CONFIG = """The configuration file seems to be broken."""
 
 
+# cherokee/vrule_*.c
+#
+e('VRULE_NO_PROPERTY',
+  title = "Virtual Server Rule prio=%d needs a '%s' property",
+  desc  = BROKEN_CONFIG)
+
+
+# cherokee/vrule_target_ip.c
+#
+e('VRULE_TARGET_IP_PARSE',
+  title = "Couldn't parse 'to' entry: '%s'",
+  desc  = BROKEN_CONFIG)
+
+
+# cherokee/vrule_rehost.c
+#
+e('VRULE_REHOST_NO_DOMAIN',
+  title = "Virtual Server '%s' regex vrule needs a 'domain' entry",
+  desc  = BROKEN_CONFIG)
+
+
 # cherokee/rule_*.c
 #
 e('RULE_NO_PROPERTY',
   title = "Rule prio=%d needs a '%s' property",
   desc  = BROKEN_CONFIG)
+
 
 # cherokee/rule_request.c
 #
