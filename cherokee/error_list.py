@@ -14,6 +14,37 @@ UNKNOWN_CAUSE = """We are not sure why this happened. (To-do)."""
 
 BROKEN_CONFIG = """The configuration file seems to be broken."""
 
+# cherokee/fdpoll-port.c
+#
+e('FDPOLL_PORTS_FD_ASSOCIATE',
+  title = "fd_associate: '${errno}'",
+  desc  = SYSTEM_ISSUE)
+
+e('FDPOLL_PORTS_ASSOCIATE',
+  title = "port_associate: fd %d: '${errno}'",
+  desc  = SYSTEM_ISSUE)
+
+e('FDPOLL_PORTS_GETN',
+  title = "port_getn: '${errno}'",
+  desc  = SYSTEM_ISSUE)
+
+# cherokee/fdpoll-poll.c
+#
+e('FDPOLL_POLL_FULL',
+  title = "The FD Poll is full",
+  desc  = "The server reached the file descriptor limit. That is usually due to..(to-do). Try to increase the limit..(to-do)")
+
+e('FDPOLL_POLL_DEL',
+  title = "Could not remove fd %d (idx=%d) from the poll",
+  desc  = CODING_BUG)
+
+
+# cherokee/fdpoll-kqueue.c
+#
+e('FDPOLL_KQUEUE',
+  title = "kevent returned: '${errno}'",
+  desc  = SYSTEM_ISSUE)
+
 
 # cherokee/vrule_*.c
 #
