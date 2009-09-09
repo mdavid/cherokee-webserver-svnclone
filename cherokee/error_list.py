@@ -14,6 +14,25 @@ UNKNOWN_CAUSE = """We are not sure why this happened. (To-do)."""
 
 BROKEN_CONFIG = """The configuration file seems to be broken."""
 
+
+# cherokee/logger_*.c
+#
+e('LOGGER_NO_KEY',
+  title = "Logger: No '%s' log has been defined.",
+  desc  = BROKEN_CONFIG)
+
+
+# cherokee/logger_custom.c
+#
+e('LOGGER_CUSTOM_NO_TEMPLATE',
+  title = "A template is needed for logging connections: %s",
+  desc  = "You have to write a template for the server to... (to-do)")
+
+e('LOGGER_CUSTOM_TEMPLATE',
+  title = "Couldn't parse custom log: '%s'",
+  desc  = "The server found a problem while processing the logging template. Please, check it and.. (to-do).")
+
+
 # cherokee/fdpoll-port.c
 #
 e('FDPOLL_PORTS_FD_ASSOCIATE',
@@ -27,6 +46,7 @@ e('FDPOLL_PORTS_ASSOCIATE',
 e('FDPOLL_PORTS_GETN',
   title = "port_getn: '${errno}'",
   desc  = SYSTEM_ISSUE)
+
 
 # cherokee/fdpoll-poll.c
 #
