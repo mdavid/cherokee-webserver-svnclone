@@ -14,6 +14,33 @@ UNKNOWN_CAUSE = """We are not sure why this happened. (To-do)."""
 
 BROKEN_CONFIG = """The configuration file seems to be broken."""
 
+# cherokee/handler_*.c
+#
+e('HANDLER_REGEX_GROUPS',
+  title = "Too many groups in the regex",
+  desc  = "(to-do)")
+
+e('HANDLER_NO_BALANCER',
+  title = "The handler needs a balancer",
+  desc  = BROKEN_CONFIG)
+
+
+# cherokee/handler_server_info.c
+#
+e('HANDLER_SRV_INFO_MOD',
+  title = "Unknown module type (%d)",
+  desc  = CODING_BUG)
+
+e('HANDLER_SRV_INFO_TYPE',
+  title = "Unknown ServerInfo type: '%s'",
+  desc  = "(to-do)")
+
+
+# cherokee/handler_file.c
+#
+e('HANDLER_FILE_TIME_PARSE',
+  title = "Unparseable time '%s'")
+
 
 # cherokee/handler_fcgi.c
 #
