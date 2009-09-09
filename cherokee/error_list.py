@@ -15,6 +15,21 @@ UNKNOWN_CAUSE = """We are not sure why this happened. (To-do)."""
 BROKEN_CONFIG = """The configuration file seems to be broken."""
 
 
+# cherokee/encoder_*.c
+#
+e('ENCODER_DEFLATEINIT2',
+  title = "deflateInit2(): %s",
+  desc  = SYSTEM_ISSUE)
+
+e('ENCODER_DEFLATEEND',
+  title = "deflateEnd(): %s",
+  desc  = SYSTEM_ISSUE)
+
+e('ENCODER_DEFLATE',
+  title = "deflate(): err=%s, avail=%d",
+  desc  = SYSTEM_ISSUE)
+
+
 # cherokee/logger_*.c
 #
 e('LOGGER_NO_KEY',
