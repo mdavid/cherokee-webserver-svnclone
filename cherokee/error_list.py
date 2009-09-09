@@ -15,6 +15,34 @@ UNKNOWN_CAUSE = """We are not sure why this happened. (To-do)."""
 BROKEN_CONFIG = """The configuration file seems to be broken."""
 
 
+# cherokee/handler_fcgi.c
+#
+e('HANDLER_FCGI_VERSION',
+  title = "Parsing error: unknown version")
+
+e('HANDLER_FCGI_PARSING',
+  title = "Parsing error: unknown type")
+
+e('HANDLER_FCGI_STDERR',
+  title = "%s")
+
+e('HANDLER_FCGI_BALANCER',
+  title = "Found a FastCGI handler without a Load Balancer",
+  desc  = BROKEN_CONFIG)
+
+
+
+# cherokee/handler_error_redir.c
+#
+e('HANDLER_ERROR_REDIR_CODE',
+  title = "Wrong error code: '%s'",
+  desc  = BROKEN_CONFIG)
+
+e('HANDLER_ERROR_REDIR_URL',
+  title = "HTTP Error %d redirection: An 'url' property is required",
+  desc  = BROKEN_CONFIG)
+
+
 # cherokee/handler_dirlist.c
 #
 e('HANDLER_DIRLIST_THEME',
