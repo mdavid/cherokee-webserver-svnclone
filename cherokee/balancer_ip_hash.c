@@ -56,7 +56,7 @@ cherokee_balancer_ip_hash_configure (cherokee_balancer_t    *balancer,
 	/* Sanity check
 	 */
 	if (balancer->entries_len <= 0) {
-		LOG_CRITICAL_S ("Balancer cannot be empty\n");
+		LOG_CRITICAL_S (CHEROKEE_ERROR_BALANCER_EMPTY);
 		return ret_error;
 	}
  
