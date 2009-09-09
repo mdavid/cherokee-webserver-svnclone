@@ -14,6 +14,22 @@ UNKNOWN_CAUSE = """We are not sure why this happened. (To-do)."""
 
 BROKEN_CONFIG = """The configuration file seems to be broken."""
 
+
+# cherokee/admin_client.c
+#
+e('ADMIN_CLIENT_INTERNAL',
+  title = "Internal error",
+  desc  = CODING_BUG)
+
+e('ADMIN_CLIENT_BAD_RESPONSE',
+  title = "Uknown response len(%d): '%s'",
+  desc  = CODING_BUG)
+
+e('ADMIN_CLIENT_LITERAL',
+  title = "Could not find len(%d):'%s' in len(%d):'%s'",
+  desc  = CODING_BUG)
+
+
 # cherokee/handler_*.c
 #
 e('HANDLER_REGEX_GROUPS',
@@ -23,6 +39,13 @@ e('HANDLER_REGEX_GROUPS',
 e('HANDLER_NO_BALANCER',
   title = "The handler needs a balancer",
   desc  = BROKEN_CONFIG)
+
+
+# cherokee/handler_secdownload.c
+#
+e('HANDLER_SECDOWN_SECRET',
+  title = "Handler secdownload needs a secret",
+  desc  = "You must define a passphrase. .. (to-do).")
 
 
 # cherokee/handler_server_info.c
