@@ -12,6 +12,100 @@ SYSTEM_ISSUE = """The issue seems to be related to your system."""
 
 UNKNOWN_CAUSE = """We are not sure why this happened. (To-do)."""
 
+BROKEN_CONFIG = """The configuration file seems to be broken."""
+
+# cherokee/server.c
+#
+e('SERVER_INITGROUPS',
+  title = "initgroups: Unable to set groups for user `%s' and GID %d",
+  desc  = SYSTEM_ISSUE)
+
+e('SERVER_SETGID',
+  title = "Can't change group to GID %d, running with GID=%d",
+  desc  = "Most probably you the server did not have enough permissions to change its execution group.")
+
+e('SERVER_SETUID',
+  title = "Can't change group to UID %d, running with UID=%d",
+  desc  = "Most probably you the server did not have enough permissions to change its execution user.")
+
+e('SERVER_GET_FDLIMIT',
+  title = "Could not get File Descriptor limit",
+  desc  = SYSTEM_ISSUE,
+  debug = "poll_type = %d")
+
+e('SERVER_FDS_SYS_LIMIT',
+  title = "The server FD limit seems to be higher than the system limit",
+  desc  = "The opened file descriptor limit of the server is %d, while the limit of the system is %d. This is an unlikely situation. You could try to raise the opened file descriptor limit of your system.")
+
+e('SERVER_THREAD_POLL',
+  title = "The FD limit of the thread is greater than the limit of the poll",
+  desc  = "It seems that an internal server thread assumed a file descriptor limit of %d. However, its FD poll has a lower limit of %d descriptors. The limit has been reduced to the poll limit.")
+
+e('SERVER_NEW_THREAD',
+  title = "Could not create a cherokee_thread_t",
+  desc  = "This is a extremely unusual error. For some reason the server could not create a thread while launching the server.",
+  debug = "ret = %d")
+
+e('SERVER_TLS_INIT',
+  title = "Can not initialize TLS for `%s' virtual host",
+  desc  = "(To-Do)")
+
+e('SERVER_FD_SET',
+  title = "Unable to raise file descriptor limit to %d",
+  desc  = SYSTEM_ISSUE)
+
+e('SERVER_FD_GET',
+  title = "Unable to read the file descriptor limit of the system",
+  desc  = SYSTEM_ISSUE)
+
+e('SERVER_LOW_FD_LIMIT',
+  title = "The number of available file descriptors is too low",
+  desc  = "The number of available file descriptors: %d, is too low. At least there should be %d available. Please, try to raise your system file descriptor limit.")
+
+e('SERVER_UID_GET',
+  title = "Could not get information about the UID %d",
+  desc  = SYSTEM_ISSUE)
+
+e('SERVER_CHROOT',
+  title = "Could not chroot() to '%s': '${errno}'",
+  desc  = SYSTEM_ISSUE)
+
+e('SERVER_CHDIR',
+  title = "Could not chdir() to '%s': '${errno}'",
+  desc  = SYSTEM_ISSUE)
+
+e('SERVER_SOURCE',
+  title = "Invalid Source entry '%s'",
+  desc  = BROKEN_CONFIG)
+
+e('SERVER_SOURCE_TYPE',
+  title = "Source %d: An entry 'type' is required",
+  desc  = BROKEN_CONFIG)
+
+e('SERVER_SOURCE_TYPE_UNKNOWN',
+  title = "Source %d has an unknown type: '%s'",
+  desc  = BROKEN_CONFIG)
+
+e('SERVER_VSERVER_PRIO',
+  title = "Invalid Virtual Server entry '%s'",
+  desc  = BROKEN_CONFIG)
+
+e('SERVER_NO_VSERVERS',
+  title = "No virtual hosts have been configured",
+  desc  = "There should exist at least one virtual server.")
+
+e('SERVER_NO_DEFAULT_VSERVER',
+  title = "Lowest priority virtual server must be 'default'",
+  desc  = "The lowest priority virtual server should be named 'default'.")
+
+e('SERVER_FORK',
+  title = "Could not fork()",
+  desc  = SYSTEM_ISSUE)  
+
+e('SERVER_PANIC',
+  title = "Could not execute the Panic handler: '%s', status %d",
+  desc  = "Something happened with the server, and it felt panic. It tried to call an external program to report it to the administrator, but it failed.")
+
 
 # cherokee/source_interpreter.c
 #
