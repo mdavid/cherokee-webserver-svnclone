@@ -502,7 +502,7 @@ _spawn_local (cherokee_source_interpreter_t *src,
 		}
 
 		if (re < 0) {
-			LOG_ERROR ("Could spawn %s\n", tmp.buf);
+			LOG_ERROR (CHEROKEE_ERROR_SRC_INTER_SPAWN, tmp.buf);
 			exit (1);
 		}
 
