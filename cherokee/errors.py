@@ -114,11 +114,11 @@ def check_parameters (dirs):
 
             matches_log = re.findall (r'LOG_[\w_]+ ?' +\
                                       r'\(CHEROKEE_ERROR_([\w_]+)[ ,\n\t\\]*' +\
-                                      r'(.*)\);', content, re.MULTILINE)
+                                      r'(.*?)\);', content, re.MULTILINE | re.DOTALL)
 
             matches_errno = re.findall (r'LOG_ERRNO[_S ]*' +\
-                                        r'\(.+,.+,[ \n\t]*CHEROKEE_ERROR_([\w_]+)[ ,\n\t\\]*' +\
-                                        r'(.*)\);', content, re.MULTILINE)
+                                        r'\(.+?,.+?,[ \n\t]*CHEROKEE_ERROR_([\w_]+)[ ,\n\t\\]*' +\
+                                        r'(.*?)\);', content, re.MULTILINE | re.DOTALL)
 
             matches = matches_errno + matches_log
             for match in matches:

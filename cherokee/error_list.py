@@ -14,6 +14,58 @@ UNKNOWN_CAUSE = """We are not sure why this happened. (To-do)."""
 
 BROKEN_CONFIG = """The configuration file seems to be broken."""
 
+# cherokee/validator_ldap.c
+#
+e('VALIDATOR_LDAP_PROPERTY',
+  title = "The LDAP validation module requires a '%s' property",
+  desc  = "It looks like you did not fill a required property, please.. (to-do)")
+
+e('VALIDATOR_LDAP_SECURITY',
+  title = "Security problem found in LDAP validation config",
+  desc  = "LDAP validator: Potential security problem found: anonymous bind validation. Check (RFC 2251, section 4.2.2)")
+
+e('VALIDATOR_LDAP_CONNECT',
+  title = "Could not connect to LDAP: %s:%d: '${errno}'",
+  desc = SYSTEM_ISSUE)
+
+e('VALIDATOR_LDAP_V3',
+  title = "Could not set the LDAP version 3: %s",
+  desc = SYSTEM_ISSUE)
+
+e('VALIDATOR_LDAP_CA',
+  title = "Could not set CA file %s: %s",
+  desc = SYSTEM_ISSUE)
+
+e('VALIDATOR_LDAP_STARTTLS',
+  title = "Can't StartTLS, it isn't supported by LDAP client libraries",
+  desc = SYSTEM_ISSUE)
+
+e('VALIDATOR_LDAP_BIND',
+  title = "Could not bind (%s:%d): %s:%s : %s",
+  desc = SYSTEM_ISSUE)
+
+e('VALIDATOR_LDAP_SEARCH',
+  title = "Could not search in LDAP server: %s",
+  desc = SYSTEM_ISSUE)
+
+
+# cherokee/validator_file.c
+#
+e('VALIDATOR_FILE',
+  title = "Unknown path type '%s'",
+  desc  = BROKEN_CONFIG)
+
+e('VALIDATOR_FILE_NO_FILE',
+  title = "File based validators need a password file",
+  desc  = "This validation modules reads a local file in order to get the authorizated user list. The configuration specifies no file, bla, bla (to-do).")
+
+
+# cherokee/downloader.c
+#
+e('DOWNLOADER_OVERWRITE_POST',
+  title = "Overwriting post info",
+  desc  = CODING_BUG)
+
 
 # cherokee/admin_client.c
 #
@@ -203,7 +255,7 @@ e('LOGGER_CUSTOM_TEMPLATE',
 # cherokee/fdpoll-port.c
 #
 e('FDPOLL_PORTS_FD_ASSOCIATE',
-  title = "fd_associate: '${errno}'",
+  title = "fd_associate: fd %d: '${errno}'",
   desc  = SYSTEM_ISSUE)
 
 e('FDPOLL_PORTS_ASSOCIATE',
