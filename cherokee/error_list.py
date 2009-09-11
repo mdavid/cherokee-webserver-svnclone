@@ -14,6 +14,21 @@ UNKNOWN_CAUSE = """We are not sure why this happened. (To-do)."""
 
 BROKEN_CONFIG = """The configuration file seems to be broken."""
 
+# cherokee/validator_pam.c
+#
+e('VALIDATOR_PAM_DELAY',
+  title = "Setting pam fail delay failed",
+  desc  = "Cherokee could not configure PAM propertly. Most likely you have found an incompatibiliry issue between Cherokee and your system PAM library.")
+
+e('VALIDATOR_PAM_AUTH',
+  title = "User '%s' - not authenticated: %s",
+  desc  = "(to-do)")
+
+e('VALIDATOR_PAM_ACCOUNT',
+  title = "User '%s' - invalid account: %s",
+  desc  = "(to-do)")
+
+
 # cherokee/validator_ldap.c
 #
 e('VALIDATOR_LDAP_PROPERTY',
