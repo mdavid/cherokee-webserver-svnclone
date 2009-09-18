@@ -22,7 +22,7 @@ class PareError_LaunchFail (Page):
 
         self.AddMacroContent ('menu', '')
         self.AddMacroContent ('help', '')
-        self.AddMacroContent ('body', PAGE_BASIC_LAYOUT)
+        self.AddMacroContent ('body', PAGE_BASIC_LAYOUT_NOBAR)
         self.AddMacroContent ('title', 'ERROR: %s'%(self._error['title']))
         self.AddMacroContent ('content', self.Read(template))
         self.AddMacroContent ('icons_dir', CHEROKEE_ICONSDIR)
@@ -56,7 +56,7 @@ class PageError (Page):
 
         self.AddMacroContent ('menu', '')
         self.AddMacroContent ('help', '')
-        self.AddMacroContent ('body', PAGE_BASIC_LAYOUT)
+        self.AddMacroContent ('body', PAGE_BASIC_LAYOUT_NOBAR)
         self.AddMacroContent ('title', 'ERROR: %s'%(ERRORS_TITLE[self.type]))
         self.AddMacroContent ('content', self.Read(template))
         self.AddMacroContent ('cherokee_conf', self._cfg.file)
