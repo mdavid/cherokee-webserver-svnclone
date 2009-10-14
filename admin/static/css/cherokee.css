@@ -397,8 +397,7 @@ table td label {
  white-space: pre;
  font-family: monospace;
  margin: 1em 0;
- max-height: 128px;
- overflow: auto;
+ overflow-x: auto;
 }
 
 .error-page code {
