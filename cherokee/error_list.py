@@ -1,7 +1,6 @@
 # Macros
 #
 INTERNAL_ISSUE = """The server found an internal problem.
-Bla, bla, bla..
 """
 
 CODING_BUG = """Looks like a bug in the plug-in that you're trying to
@@ -18,7 +17,7 @@ BROKEN_CONFIG = """The configuration file seems to be broken."""
 #
 e('VALIDATOR_PAM_DELAY',
   title = "Setting pam fail delay failed",
-  desc  = "Cherokee could not configure PAM propertly. Most likely you have found an incompatibiliry issue between Cherokee and your system PAM library.")
+  desc  = "Cherokee could not configure PAM propertly. Most likely you have found an incompatibility issue between Cherokee and your system PAM library.")
 
 e('VALIDATOR_PAM_AUTH',
   title = "User '%s' - not authenticated: %s",
@@ -26,7 +25,7 @@ e('VALIDATOR_PAM_AUTH',
 
 e('VALIDATOR_PAM_ACCOUNT',
   title = "User '%s' - invalid account: %s",
-  desc  = "(to-do)")
+  desc  = "The specified user does not exist on the sytem.")
 
 
 # cherokee/validator_ldap.c
@@ -463,7 +462,7 @@ e('SERVER_NO_DEFAULT_VSERVER',
 
 e('SERVER_FORK',
   title = "Could not fork()",
-  desc  = SYSTEM_ISSUE)  
+  desc  = SYSTEM_ISSUE)
 
 e('SERVER_PANIC',
   title = "Could not execute the Panic handler: '%s', status %d",
@@ -884,3 +883,183 @@ e('BIND_PORT_NEEDED',
 e('BIND_COULDNT_BIND_PORT',
   title = "Could not bind() port=%d (UID=%d, GID=%d)",
   desc  = "Most probably there is another web server listening to the same port. You'll have to shut it down before launching Cherokee. It could also be a permissions issue. Remember that non-root user cannot listen to ports > 1024.")
+
+
+# cherokee/collector_rrd.c
+#
+e('COLLECTOR_EXECVE',
+  title = "execv failed cmd='%s': ${errno}",
+  desc  = SYSTEM_ISSUE)
+
+e('COLLECTOR_FORK',
+  title = "Fork failed pid=%d: ${errno}",
+  desc  = SYSTEM_ISSUE)
+
+e('COLLECTOR_WRITEACCESS',
+  title = "Cannot write in %s: ${errno}",
+  desc  = "Most likely there is a problem with permissions.")
+
+e('COLLECTOR_RRD_EMPTY',
+  title = "RRDtool empty response",
+  desc  = "(to-do)")
+
+e('COLLECTOR_RRD_ERROR',
+  title = "RRDtool: %s",
+  desc  = "(to-do)")
+
+e('COLLECTOR_SPAWN',
+  title = "Couldn't spawn rrdtool (%s)",
+  desc  = SYSTEM_ISSUE)
+
+e('COLLECTOR_NOACCESS',
+  title = "Cannot write in '%s'",
+  desc  = "Check ownership and permissions.")
+
+e('COLLECTOR_NORRDTOOL',
+  title = "Couldn't find rrdtool in PATH=%s",
+  desc  = "Either RRDtool is not installed or it is not included in your system path.")
+
+
+# cherokee/validator_mysql.c
+#
+e('VALIDATOR_MYSQL_HASH',
+  title = "Validator MySQL: Unknown hash type: '%s'",
+  desc  = CODING_BUG)
+
+e('VALIDATOR_MYSQL_KEY',
+  title = "Validator MySQL: Unknown key: '%s'",
+  desc  = CODING_BUG)
+
+e('VALIDATOR_MYSQL_USER',
+  title = "MySQL validator: a 'user' entry is needed",
+  desc  = "Make sure that a valid MySQL user-name has been provided.")
+
+e('VALIDATOR_MYSQL_DATABASE',
+  title = "MySQL validator: a 'database' entry is needed",
+  desc  = "Make sure that a valid MySQL database-name has been provided.")
+
+e('VALIDATOR_MYSQL_QUERY',
+  title = "MySQL validator: a 'query' entry is needed",
+  desc  = "Make sure that a MySQL query has been provided.")
+
+e('VALIDATOR_MYSQL_SOURCE',
+  title = "MySQL validator misconfigured: A Host or Unix socket is needed.",
+  desc  = "Make sure that a working database host is specified for MySQL validation.")
+
+e('VALIDATOR_MYSQL_NOCONN',
+  title = "Unable to connect to MySQL server: %s:%d %s",
+  desc  = "Most probably the MySQL server is down or you've mistyped a connetion parameter")
+
+
+# cherokee/error_log.c
+#
+e('ERRORLOG_PARAM',
+  title = "Unknown parameter type '%c'",
+  desc  = "Accepted parameter are 's' and 'd'")
+
+# cherokee/cryptor_libssl.c
+#
+e('SSL_SOCKET',
+  title = "Could not get the socket struct: %p",
+  desc  = SYSTEM_ISSUE)
+
+e('SSL_SRV_MATCH',
+  title = "Servername did not match: '%s'",
+  desc  = "(to-do)")
+
+e('SSL_CHANGE_CTX',
+  title = "Couldn't change the SSL context: servername='%s'",
+  desc  = SYSTEM_ISSUE)
+
+e('SSL_ALLOCATE_CTX',
+  title = "OpenSSL: Couldn't allocate OpenSSL context",
+  desc  = SYSTEM_ISSUE)
+
+e('SSL_CIPHER',
+  title = "OpenSSL: Can not set cipher list '%s': %s",
+  desc  = SYSTEM_ISSUE)
+
+e('SSL_CERTIFICATE',
+  title = "OpenSSL: Can not use certificate file '%s':  %s",
+  desc  = "(to-do)")
+
+e('SSL_KEY',
+  title = "OpenSSL: Can not use private key file '%s': %s",
+  desc  = "(to-do)")
+
+e('SSL_KEY_MATCH',
+  title = "OpenSSL: Private key does not match the certificate public key",
+  desc  = "(to-do)")
+
+e('SSL_CA_READ',
+  title = "OpenSSL: Can't read trusted CA list '%s': %s",
+  desc  = "(to-do)")
+
+e('SSL_CA_LOAD',
+  title = "SSL_load_client_CA_file '%s': %s",
+  desc  = "(to-do)")
+
+e('SSL_SESSION_ID',
+  title = "Unable to set SSL session-id context for '%s': %s",
+  desc  = SYSTEM_ISSUE)
+
+e('SSL_SNI',
+  title = "Couldn't activate TLS SNI for '%s': %s",
+  desc  = SYSTEM_ISSUE)
+
+e('SSL_CONNECTION',
+  title = "OpenSSL: Unable to create a new SSL connection from the SSL context: %s",
+  desc  = SYSTEM_ISSUE)
+
+e('SSL_FD',
+  title = "OpenSSL: Can not set fd(%d): %s",
+  desc  = SYSTEM_ISSUE)
+
+e('SSL_INIT',
+  title = "Init OpenSSL: %s",
+  desc  = SYSTEM_ISSUE)
+
+e('SSL_SW_DEFAULT',
+  title = "SSL_write: unknown errno: ${errno}",
+  desc  = SYSTEM_ISSUE)
+
+e('SSL_SW_ERROR',
+  title = "SSL_write (%d, ..) -> err=%d '%s'",
+  desc  = SYSTEM_ISSUE)
+
+e('SSL_SR_DEFAULT',
+  title = "SSL_read: unknown errno: ${errno}",
+  desc  = SYSTEM_ISSUE)
+
+e('SSL_SR_ERROR',
+  title = "OpenSSL: SSL_read (%d, ..) -> err=%d '%s'",
+  desc  = SYSTEM_ISSUE)
+
+e('SSL_CREATE_CTX',
+  title = "OpenSSL: Unable to create a new SSL context: %s",
+  desc  = SYSTEM_ISSUE)
+
+e('SSL_CTX_LOAD',
+  title = "OpenSSL: '%s': %s",
+  desc  = SYSTEM_ISSUE)
+
+e('SSL_CTX_SET',
+  title = "OpenSSL: cannot set certificate verification paths: %s",
+  desc  = SYSTEM_ISSUE)
+
+e('SSL_SNI_SRV',
+  title = "OpenSSL: Couldn't set SNI server name: %s",
+  desc  = "(to-do)")
+
+e('SSL_CONNECT',
+  title = "OpenSSL: Can not connect: %s",
+  desc  = SYSTEM_ISSUE)
+
+e('SSL_PKCS11',
+  title = "Could not init pkcs11 engine",
+  desc  = SYSTEM_ISSUE)
+
+e('SSL_DEFAULTS',
+  title = "Could not set all defaults",
+  desc  = SYSTEM_ISSUE)
+
