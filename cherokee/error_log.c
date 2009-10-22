@@ -58,7 +58,7 @@ skip_args (va_list *ap, const char *prev_string)
 			va_arg ((*ap), int);
 			break;
 		default:
-//			LOG_CRITICAL ("Unknown parameter type '%c'\n", p);
+//			LOG_CRITICAL (CHEROKEE_ERROR_ERRORLOG_PARAM, p);
 			break;
 		}
 

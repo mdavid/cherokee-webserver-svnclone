@@ -122,11 +122,11 @@ spawn_rrdtool (cherokee_collector_rrd_t *rrd)
 		/* Execute it */
 		re = execv(argv[0], argv);
 
-		LOG_ERRNO (errno, cherokee_err_error, "execv failed cmd='%s': ${errno}\n", argv[0]);
+		LOG_ERRNO (errno, cherokee_err_error, CHEROKEE_ERROR_COLLECTOR_EXECVE, argv[0]);
 		exit (EXIT_ERROR);
 
         case -1:
-		LOG_ERRNO (errno, cherokee_err_error, "Fork failed pid=%d: ${errno}\n", pid);
+		LOG_ERRNO (errno, cherokee_err_error, CHEROKEE_ERROR_COLLECTOR_FORK, pid);
                 break;
 
         default:
@@ -204,7 +204,7 @@ check_and_create_db (cherokee_collector_rrd_t *rrd,
 	*slash = '\0';
 	re = access (path_database->buf, W_OK);
 	if (re != 0) {
-		LOG_ERRNO (errno, cherokee_err_error, "Cannot write in %s: ${errno}\n", path_database->buf);
+		LOG_ERRNO (errno, cherokee_err_error, CHEROKEE_ERROR_COLLECTOR_WRITEACCESS, path_database->buf);
 		return ret_error;
 	}
 	*slash = '/';
@@ -307,11 +307,11 @@ command_rrdtool (cherokee_collector_rrd_t *rrd,
 	}
 
 	if (cherokee_buffer_is_empty (buf)) {
-		LOG_ERROR_S ("RRDtool empty response\n");
+		LOG_ERROR_S (CHEROKEE_ERROR_COLLECTOR_RRD_EMPTY);
 		return ret_error;
 
 	} else if (strncmp (buf->buf, "ERROR", 5) == 0) {
-		LOG_ERROR ("RRDtool: %s\n", buf->buf);
+		LOG_ERROR (CHEROKEE_ERROR_COLLECTOR_RRD_ERROR, buf->buf);
 		return ret_error;
 	}
 
@@ -328,7 +328,7 @@ update_generic (cherokee_collector_rrd_t *rrd_srv,
 	 */
 	ret = spawn_rrdtool (rrd_srv);
 	if (ret != ret_ok) {
-		LOG_ERROR ("Couldn't spawn rrdtool (%s)\n", rrd_srv->path_rrdtool.buf);
+		LOG_ERROR (CHEROKEE_ERROR_COLLECTOR_SPAWN, rrd_srv->path_rrdtool.buf);
 		kill_and_clean(rrd_srv, false);
 		return ret_error;
 	}
@@ -373,11 +373,11 @@ check_img_dir (cherokee_collector_rrd_t *rrd_srv)
 
 	re = access (rrd_srv->database_dir.buf, W_OK);
 	if (re != 0) {
-		mkdir (rrd_srv->database_dir.buf, 0775);		
+		mkdir (rrd_srv->database_dir.buf, 0775);
 
 		re = access (rrd_srv->database_dir.buf, W_OK);
 		if (re != 0) {
-			LOG_CRITICAL ("Cannot write in '%s'\n", rrd_srv->database_dir.buf);
+			LOG_CRITICAL (CHEROKEE_ERROR_COLLECTOR_NOACCESS, rrd_srv->database_dir.buf);
 			return ret_error;
 		}
 	}
@@ -975,11 +975,11 @@ cherokee_collector_rrd_new (cherokee_collector_rrd_t **rrd,
 	} else {
 		ret = cherokee_find_exec_in_path ("rrdtool", &n->path_rrdtool);
 		if (ret != ret_ok) {
-			LOG_ERROR ("Couldn't find rrdtool in PATH=%s\n", getenv("PATH"));
+			LOG_ERROR (CHEROKEE_ERROR_COLLECTOR_NORRDTOOL, getenv("PATH"));
 			return ret_error;
 		}
 	}
-	   
+
 	ret = cherokee_config_node_get (config, "database_dir", &subconf);
 	if (ret == ret_ok) {
 		cherokee_buffer_add_buffer (&n->database_dir, &subconf->val);
