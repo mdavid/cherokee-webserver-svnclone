@@ -487,7 +487,7 @@ e('SRC_INTER_EMPTY_INTERPRETER',
   admin = "/source/%d")
 
 e('SRC_INTER_NO_INTERPRETER',
-  title = "Could find interpreter '%s'",
+  title = "Couldn't find interpreter '%s'",
   desc  = "The server configuration refers to an interpreter that is not installed in this system.",
   admin = "/source/%d")
 
@@ -529,7 +529,7 @@ e('TEMPLATE_NO_TOKEN',
 # cherokee/spawner.c
 #
 e('SPAWNER_SHM_INIT',
-  title = "Could initialize SHM '%s': ${errno}",
+  title = "Couldn't initialize SHM '%s': ${errno}",
   desc  = SYSTEM_ISSUE)
 
 e('SPAWNER_UNLOCK_SEMAPHORE',
@@ -760,7 +760,7 @@ e('BUFFER_AVAIL_SIZE',
   desc  = CODING_BUG)
 
 e('BUFFER_OPEN_FILE',
-  title = "Could open the file: %s, ${errno}",
+  title = "Couldn't open the file: %s, ${errno}",
   desc  = "Please check that the file exists and the server has read access.")
 
 e('BUFFER_READ_FILE',
