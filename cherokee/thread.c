@@ -740,63 +740,63 @@ process_active_connections (cherokee_thread_t *thd)
 			}
 			break;
 
-		case phase_read_post:
-			len = 0;
-			ret = cherokee_connection_recv (conn, POST_BUF(&conn->post), &len);
+/* 		case phase_read_post: */
+/* 			len = 0; */
+/* 			ret = cherokee_connection_recv (conn, POST_BUF(&conn->post), &len); */
 
-			switch (ret) {
-			case ret_eagain:
-				continue;
+/* 			switch (ret) { */
+/* 			case ret_eagain: */
+/* 				continue; */
 
-			case ret_ok:
-				if ((conn->post.size > 0) &&
-				    ((conn->post.received + len) > conn->post.size))
-				{
-					size_t remain = 0;
+/* 			case ret_ok: */
+/* 				if ((conn->post.size > 0) && */
+/* 				    ((conn->post.received + len) > conn->post.size)) */
+/* 				{ */
+/* 					size_t remain = 0; */
 
-					remain = len - (conn->post.size - conn->post.received);
-					len = conn->post.size - conn->post.received;
+/* 					remain = len - (conn->post.size - conn->post.received); */
+/* 					len = conn->post.size - conn->post.received; */
 
-					cherokee_buffer_add (&conn->incoming_header,
-							conn->post.info.buf + len,
-							remain);
+/* 					cherokee_buffer_add (&conn->incoming_header, */
+/* 							conn->post.info.buf + len, */
+/* 							remain); */
 
-					cherokee_buffer_drop_ending (POST_BUF(&conn->post),
-							remain);
-				}
+/* 					cherokee_buffer_drop_ending (POST_BUF(&conn->post), */
+/* 							remain); */
+/* 				} */
 
-				cherokee_post_commit_buf (&conn->post, len);
-				if (cherokee_post_got_all (&conn->post)) {
-					break;
-				}
-				continue;
+/* 				cherokee_post_commit_buf (&conn->post, len); */
+/* 				if (cherokee_post_got_all (&conn->post)) { */
+/* 					break; */
+/* 				} */
+/* 				continue; */
 
-			case ret_eof:
-				/* Finish..
-				 */
-				if (!cherokee_post_got_all (&conn->post)) {
-					conns_freed++;
-					goto shutdown;
-				}
+/* 			case ret_eof: */
+/* 				/\* Finish.. */
+/* 				 *\/ */
+/* 				if (!cherokee_post_got_all (&conn->post)) { */
+/* 					conns_freed++; */
+/* 					goto shutdown; */
+/* 				} */
 
-				cherokee_post_commit_buf (&conn->post, len);
-				break;
+/* 				cherokee_post_commit_buf (&conn->post, len); */
+/* 				break; */
 
-			case ret_error:
-				conns_freed++;
-				goto shutdown;
+/* 			case ret_error: */
+/* 				conns_freed++; */
+/* 				goto shutdown; */
 
-			default:
-				RET_UNKNOWN(ret);
-				conns_freed++;
-				goto shutdown;
-			}
+/* 			default: */
+/* 				RET_UNKNOWN(ret); */
+/* 				conns_freed++; */
+/* 				goto shutdown; */
+/* 			} */
 
-			/* Turn the connection in write mode
-			 */
-			conn_set_mode (thd, conn, socket_writing);
-			conn->phase = phase_setup_connection;
-			break;
+/* 			/\* Turn the connection in write mode */
+/* 			 *\/ */
+/* 			conn_set_mode (thd, conn, socket_writing); */
+/* 			conn->phase = phase_setup_connection; */
+/* 			break; */
 
 
 		case phase_reading_header:
@@ -909,13 +909,13 @@ process_active_connections (cherokee_thread_t *thd)
 
 			/* If it's a POST we've to read more data
 			 */
-			if (http_method_with_input (conn->header.method)) {
-				if (! cherokee_post_got_all (&conn->post)) {
-					conn_set_mode (thd, conn, socket_reading);
-					conn->phase = phase_read_post;
-					continue;
-				}
-			}
+/* 			if (http_method_with_input (conn->header.method)) { */
+/* 				if (! cherokee_post_got_all (&conn->post)) { */
+/* 					conn_set_mode (thd, conn, socket_reading); */
+/* 					conn->phase = phase_read_post; */
+/* 					continue; */
+/* 				} */
+/* 			} */
 
 			conn->phase = phase_setup_connection;
 
