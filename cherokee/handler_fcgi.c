@@ -295,7 +295,7 @@ cherokee_handler_fcgi_new (cherokee_handler_t **hdl, void *cnt, cherokee_module_
 
 	/* Properties
 	 */
-	n->post_phase = fcgi_post_phase_surplus;
+	n->post_phase = fcgi_post_phase_read;
 	n->src_ref    = NULL;
 
 	cherokee_socket_init (&n->socket);
@@ -579,11 +579,11 @@ static ret_t
 send_no_post (cherokee_handler_fcgi_t *hdl, cherokee_buffer_t *buf)
 {
 	switch (hdl->post_phase) {
-	case fcgi_post_phase_surplus:
+	case fcgi_post_phase_read:
 		add_empty_packet (hdl, FCGI_STDIN);
-		hdl->post_phase = fcgi_post_phase_step;
+		hdl->post_phase = fcgi_post_phase_write;
 
-	case fcgi_post_phase_step:
+	case fcgi_post_phase_write:
 		return do_send (hdl, buf);
 
 	default:
@@ -637,13 +637,13 @@ send_post (cherokee_handler_fcgi_t *hdl,
 
 		/* Close STDIN if it was the last chunck
 		 */
-		if (hdl->post_read >= post->len) {
+		if (hdl->post_read >= conn->post.len) {
 			add_empty_packet (hdl, FCGI_STDIN);
 		}
 
 		hdl->post_phase = fcgi_post_phase_write;
 
-	case fcgi_post_write:
+	case fcgi_post_phase_write:
 		TRACE (ENTRIES, "Post write, buf.len=%d (header len %d)\n", buf->len, sizeof(FCGI_Header));
 
 		if (! cherokee_buffer_is_empty (buf)) {
@@ -666,7 +666,7 @@ send_post (cherokee_handler_fcgi_t *hdl,
 			return ret_eagain;
 		}
 
-		if (hdl->post_read < post->len) {
+		if (hdl->post_read < conn->post.len) {
 			hdl->post_phase = fcgi_post_phase_read;
 			return ret_eagain;
 		}
@@ -740,7 +740,7 @@ cherokee_handler_fcgi_init (cherokee_handler_fcgi_t *hdl)
 	case hcgi_phase_send_post:
 		/* Send the Post
 		 */
-		if (hdl->post_len > 0) {
+		if (conn->post.len > 0) {
 			return send_post (hdl, &hdl->write_buffer);
 		} else {
 			ret = send_no_post (hdl, &hdl->write_buffer);

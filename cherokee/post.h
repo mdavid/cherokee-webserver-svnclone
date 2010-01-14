@@ -26,12 +26,18 @@
 #define CHEROKEE_POST_H
 
 typedef enum {
+        post_enc_regular,
+        post_enc_chunked
+} cherokee_post_encoding_t;
+
+typedef enum {
 	cherokee_post_read_header_init,
 	cherokee_post_read_header_100cont
 } cherokee_port_rh_phase_t;
 
 typedef struct {
 	off_t                    len;
+	cherokee_post_encoding_t encoding;
 	cherokee_port_rh_phase_t read_header_phase;
 	cherokee_buffer_t        read_header_100cont;
 	cherokee_buffer_t        header_surplus;
