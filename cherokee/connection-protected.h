@@ -74,9 +74,9 @@ typedef enum {
 	phase_tls_handshake,
 	phase_reading_header,
 	phase_processing_header,
-	phase_read_post,
 	phase_setup_connection,
 	phase_init,
+	phase_read_post,
 	phase_add_headers,
 	phase_send_headers,
 	phase_steping,
@@ -284,6 +284,7 @@ ret_t cherokee_connection_step                   (cherokee_connection_t *conn);
 
 /* Headers
  */
+ret_t cherokee_connection_read_post              (cherokee_connection_t *conn);
 ret_t cherokee_connection_build_header           (cherokee_connection_t *conn);
 ret_t cherokee_connection_get_request            (cherokee_connection_t *conn);
 ret_t cherokee_connection_parse_range            (cherokee_connection_t *conn);
