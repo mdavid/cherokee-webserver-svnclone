@@ -824,7 +824,9 @@ process_active_connections (cherokee_thread_t *thd)
 
 			/* Read from the client
 			 */
-			ret = cherokee_connection_recv (conn, &conn->incoming_header, &len);
+			ret = cherokee_connection_recv (conn,
+							&conn->incoming_header,
+							DEFAULT_RECV_SIZE, &len);
 			switch (ret) {
 			case ret_ok:
 				break;
