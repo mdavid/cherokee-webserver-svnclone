@@ -1775,7 +1775,7 @@ cherokee_connection_get_request (cherokee_connection_t *conn)
 	 */
 	if (http_method_with_input (conn->header.method))
 	{
-		ret = cherokee_post_read_header (&post->conn, conn);
+		ret = cherokee_post_read_header (&conn->post, conn);
 		if (unlikely (ret != ret_ok)) {
 			return ret;
 		}
@@ -1885,7 +1885,7 @@ cherokee_connection_get_request (cherokee_connection_t *conn)
 	/* Check Upload limit
 	 */
 	if ((CONN_VSRV(conn)->post_max_len > 0) &&
-	    (conn->post.size > CONN_VSRV(conn)->post_max_len))
+	    (conn->post.len > CONN_VSRV(conn)->post_max_len))
 	{
 		conn->error_code = http_request_entity_too_large;
 		return ret_error;
