@@ -206,8 +206,9 @@ prepare_and_set_post (cherokee_admin_client_t *admin, const char *str, cuint_t s
 	/* Build and set the post object
 	 */
 	cherokee_post_init (&admin->post);
-	cherokee_post_set_len (&admin->post, str_len);
-	cherokee_post_append (&admin->post, str, str_len, &written);
+//	cherokee_post_set_len (&admin->post, str_len);
+//	cherokee_post_append (&admin->post, str, str_len, &written);
+#warning "fixme"
 	cherokee_downloader_post_set (downloader, &admin->post);
 }
 

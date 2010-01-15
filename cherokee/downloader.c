@@ -470,8 +470,9 @@ cherokee_downloader_step (cherokee_downloader_t *downloader,
 		 */
 		if (downloader->post != NULL) {
 			req->method = http_post;
-			cherokee_post_walk_reset (downloader->post);
-			req->post_len = downloader->post->size;
+//			cherokee_post_walk_reset (downloader->post);
+			// req->post_len = downloader->post->size;
+#warning "TODO"
 		}
 
 		/* Build the request header
@@ -505,7 +506,8 @@ cherokee_downloader_step (cherokee_downloader_t *downloader,
 		TRACE(ENTRIES, "Phase %s\n", "send_post");
 
 		if (downloader->post != NULL) {
-			ret = cherokee_post_walk_to_socket (downloader->post, &downloader->socket);
+//			ret = cherokee_post_walk_to_socket (downloader->post, &downloader->socket);
+#warning "TODO"
 			if (unlikely(ret != ret_ok))
 				return ret;
 		}
