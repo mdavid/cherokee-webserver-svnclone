@@ -258,7 +258,7 @@ ret_t cherokee_connection_send                   (cherokee_connection_t *conn);
 ret_t cherokee_connection_send_header            (cherokee_connection_t *conn);
 ret_t cherokee_connection_send_header_and_mmaped (cherokee_connection_t *conn);
 ret_t cherokee_connection_send_switching         (cherokee_connection_t *conn);
-ret_t cherokee_connection_recv                   (cherokee_connection_t *conn, cherokee_buffer_t *buffer, off_t *len);
+ret_t cherokee_connection_recv                   (cherokee_connection_t *conn, cherokee_buffer_t *buffer, off_t to_read, off_t *len);
 
 /* Internal
  */

@@ -39,6 +39,7 @@ ret_t
 cherokee_post_init (cherokee_post_t *post)
 {
 	post->len               = 0;
+	post->has_info          = false;
 	post->encoding          = post_enc_regular;
 	post->read_header_phase = cherokee_post_read_header_init;
 
@@ -52,6 +53,7 @@ ret_t
 cherokee_post_clean (cherokee_post_t *post)
 {
 	post->len               = 0;
+	post->has_info          = false;
 	post->encoding          = post_enc_regular;
 	post->read_header_phase = cherokee_post_read_header_init;
 
@@ -130,6 +132,7 @@ parse_header (cherokee_post_t       *post,
 		return ret_error;
 	}
 
+	TRACE (ENTRIES, "Post claims to be %llu bytes long\n", post->len);
 	return ret_ok;
 }
 
@@ -147,7 +150,7 @@ reply_100_continue (cherokee_post_t       *post,
 		return ret;
 	}
 
-	if (written == post->read_header_100cont.len) {
+	if (written >= post->read_header_100cont.len) {
 		TRACE(ENTRIES, "Sent a '100 Continue' response.\n");
 		return ret_ok;
 	}
@@ -179,12 +182,19 @@ remove_surplus (cherokee_post_t       *post,
 		return ret_ok;
 	}
 
+	TRACE (ENTRIES, "POST surplus: moving %d bytes\n", post_chunk_len);
+
 	/* Move the surplus
 	 */
 	cherokee_buffer_add (&post->header_surplus,
-			     conn->incoming_header.buf + header_len, post_chunk_len);
+			     conn->incoming_header.buf + header_len,
+			     post_chunk_len);
 
-	cherokee_buffer_remove_chunk (&conn->incoming_header, header_len, post_chunk_len);
+	cherokee_buffer_remove_chunk (&conn->incoming_header,
+				      header_len, post_chunk_len);
+
+	TRACE (ENTRIES, "POST surplus: incoming_header is %d bytes (header len=%d)\n",
+	       conn->incoming_header.len, header_len);
 
 	return ret_ok;
 }
@@ -208,12 +218,14 @@ cherokee_post_read_header (cherokee_post_t *post,
 			return ret;
 		}
 
+		post->has_info = true;
+
 		ret = remove_surplus (post, conn);
 		if (unlikely (ret != ret_ok)) {
 			return ret;
 		}
 
-		/* "Expect: 100-continue"
+		/* Expect: 100-continue
 		 * http://www.w3.org/Protocols/rfc2616/rfc2616-sec8.html
 		 */
 		ret = cherokee_header_get_known (&conn->header, header_expect, &info, &info_len);
@@ -225,12 +237,10 @@ cherokee_post_read_header (cherokee_post_t *post,
 		post->read_header_phase = cherokee_post_read_header_100cont;
 
 	case cherokee_post_read_header_100cont:
-		ret = reply_100_continue (post, conn);
-		if (ret != ret_ok) {
-			return ret_ok;
-		}
+		return reply_100_continue (post, conn);
 	}
 
 	SHOULDNT_HAPPEN;
 	return ret_error;
 }
+

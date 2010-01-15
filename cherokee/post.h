@@ -37,6 +37,7 @@ typedef enum {
 
 typedef struct {
 	off_t                    len;
+	cherokee_boolean_t       has_info;
 	cherokee_post_encoding_t encoding;
 	cherokee_port_rh_phase_t read_header_phase;
 	cherokee_buffer_t        read_header_100cont;
@@ -54,6 +55,7 @@ ret_t cherokee_post_init           (cherokee_post_t *post);
 ret_t cherokee_post_clean          (cherokee_post_t *post);
 ret_t cherokee_post_mrproper       (cherokee_post_t *post);
 
+ret_t cherokee_post_has_info       (cherokee_post_t *post);
 ret_t cherokee_post_read_header    (cherokee_post_t *post, void *conn);
 
 CHEROKEE_END_DECLS

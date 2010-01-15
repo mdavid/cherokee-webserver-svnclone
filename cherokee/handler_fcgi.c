@@ -565,11 +565,11 @@ do_send (cherokee_handler_fcgi_t *hdl, cherokee_buffer_t *buffer)
 	}
 
 	cherokee_buffer_move_to_begin (buffer, written);
+	TRACE (ENTRIES, "sent=%d, remaining=%d\n", written, buffer->len);
 
-	TRACE (ENTRIES, "sent remaining=%d\n", buffer->len);
-
-	if (! cherokee_buffer_is_empty (buffer))
+	if (! cherokee_buffer_is_empty (buffer)) {
 		return ret_eagain;
+	}
 
 	return ret_ok;
 }
@@ -578,6 +578,8 @@ do_send (cherokee_handler_fcgi_t *hdl, cherokee_buffer_t *buffer)
 static ret_t
 send_no_post (cherokee_handler_fcgi_t *hdl, cherokee_buffer_t *buf)
 {
+	TRACE (ENTRIES, "Post: %s\n", "has no post");
+
 	switch (hdl->post_phase) {
 	case fcgi_post_phase_read:
 		add_empty_packet (hdl, FCGI_STDIN);
@@ -598,6 +600,7 @@ send_post (cherokee_handler_fcgi_t *hdl,
 	   cherokee_buffer_t       *buf)
 {
 	ret_t                    ret;
+	off_t                    to_read;
 	off_t                    len          = 0;
 	cherokee_connection_t   *conn         = HANDLER_CONN(hdl);
 	static FCGI_Header       empty_header = {0,0,0,0,0,0,0,0};
@@ -615,15 +618,20 @@ send_post (cherokee_handler_fcgi_t *hdl,
 		/* Take a chunck of post
 		 */
 		if (cherokee_buffer_is_empty (&conn->post.header_surplus)) {
-			ret = cherokee_connection_recv (conn, buf, &len);
+			to_read = MIN((conn->post.len - hdl->post_read), DEFAULT_RECV_SIZE);
+
+			TRACE (ENTRIES, "Post reading from client (to_read=%d)\n", to_read);
+			ret = cherokee_connection_recv (conn, buf, to_read, &len);
+			TRACE (ENTRIES, "Post read from client: ret=%d len=%d\n", ret, len);
+
 			if (ret != ret_ok) {
 				return ret;
 			}
 			hdl->post_read += len;
 		} else {
 			cherokee_buffer_add_buffer (buf, &conn->post.header_surplus);
-			cherokee_buffer_clean (&conn->post.header_surplus);
 			hdl->post_read += conn->post.header_surplus.len;
+			cherokee_buffer_clean (&conn->post.header_surplus);
 		}
 
 		TRACE (ENTRIES, "Post buffer.len %d\n", buf->len);
@@ -740,12 +748,13 @@ cherokee_handler_fcgi_init (cherokee_handler_fcgi_t *hdl)
 	case hcgi_phase_send_post:
 		/* Send the Post
 		 */
-		if (conn->post.len > 0) {
+		if (conn->post.has_info) {
 			return send_post (hdl, &hdl->write_buffer);
 		} else {
 			ret = send_no_post (hdl, &hdl->write_buffer);
-			if (ret != ret_ok)
+			if (ret != ret_ok) {
 				return ret;
+			}
 		}
 		break;
 	}
@@ -755,4 +764,3 @@ cherokee_handler_fcgi_init (cherokee_handler_fcgi_t *hdl)
 	cherokee_buffer_clean (&hdl->write_buffer);
 	return ret_ok;
 }
-
