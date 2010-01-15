@@ -1128,9 +1128,43 @@ process_active_connections (cherokee_thread_t *thd)
 				}
 			}
 
+			/* Figure next state
+			 */
+			if (! http_method_with_input (conn->header.method)) {
+				conn->phase = phase_add_headers;
+				goto add_headers;
+			}
+
+			conn_set_mode (thd, conn, socket_reading);
+			conn->phase = phase_read_post;
+
+		case phase_read_post:
+
+			/* Read/Send the POST info
+			 */
+			ret = cherokee_connection_read_post (conn);
+			switch (ret) {
+			case ret_ok:
+				break;
+			case ret_eagain:
+				continue;
+			case ret_eof:
+			case ret_error:
+				conn->error_code = http_internal_error;
+				cherokee_connection_setup_error_handler (conn);
+				continue;
+			default:
+				RET_UNKNOWN(ret);
+			}
+
+			/* Turn the connection in write mode
+			 */
+			conn_set_mode (thd, conn, socket_writing);
 			conn->phase = phase_add_headers;
 
 		case phase_add_headers:
+		add_headers:
+
 			/* Build the header
 			 */
 			ret = cherokee_connection_build_header (conn);

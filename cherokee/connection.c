@@ -712,6 +712,17 @@ build_response_header (cherokee_connection_t *conn, cherokee_buffer_t *buffer)
 
 
 ret_t
+cherokee_connection_read_post (cherokee_connection_t *conn)
+{
+	if (conn->handler->read_post == NULL) {
+		return ret_ok;
+	}
+
+	return cherokee_handler_read_post (conn->handler);
+}
+
+
+ret_t
 cherokee_connection_build_header (cherokee_connection_t *conn)
 {
 	ret_t              ret;

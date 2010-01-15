@@ -44,8 +44,6 @@ typedef struct {
 	cherokee_buffer_t        header_surplus;
 } cherokee_post_t;
 
-
-
 #define POST(x) ((cherokee_post_t *)(x))
 
 
