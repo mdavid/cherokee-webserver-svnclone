@@ -292,8 +292,9 @@ do_read (cherokee_post_t   *post,
 
 
 static ret_t
-do_send_socket (cherokee_socket_t *sock,
-		cherokee_buffer_t *buffer)
+do_send_socket (cherokee_socket_t        *sock,
+		cherokee_buffer_t        *buffer,
+		cherokee_socket_status_t *blocking)
 {
 	ret_t  ret;
 	size_t written = 0;
@@ -306,6 +307,8 @@ do_send_socket (cherokee_socket_t *sock,
 		if (written > 0) {
 			break;
 		}
+
+		*blocking = socket_writing;
 		return ret_eagain;
 	default:
 		return ret_error;
@@ -323,10 +326,11 @@ do_send_socket (cherokee_socket_t *sock,
 
 
 ret_t
-cherokee_post_send_to_socket (cherokee_post_t   *post,
-			      cherokee_socket_t *sock_in,
-			      cherokee_socket_t *sock_out,
-			      cherokee_buffer_t *tmp)
+cherokee_post_send_to_socket (cherokee_post_t          *post,
+			      cherokee_socket_t        *sock_in,
+			      cherokee_socket_t        *sock_out,
+			      cherokee_buffer_t        *tmp,
+			      cherokee_socket_status_t *blocking)
 {
 	ret_t              ret;
 	cherokee_buffer_t *buffer = tmp ? tmp : &post->send.buffer;
@@ -336,7 +340,13 @@ cherokee_post_send_to_socket (cherokee_post_t   *post,
 		TRACE (ENTRIES, "Post send, phase: %s\n", "read");
 
 		ret = do_read (post, sock_in, buffer);
-		if (ret != ret_ok) {
+		switch (ret) {
+		case ret_ok:
+			break;
+		case ret_eagain:
+			*blocking = socket_reading;
+			return ret_eagain;
+		default:
 			return ret;
 		}
 
@@ -347,7 +357,7 @@ cherokee_post_send_to_socket (cherokee_post_t   *post,
 		TRACE (ENTRIES, "Post send, phase: %s\n", "write");
 
 		if (! cherokee_buffer_is_empty (buffer)) {
-			ret = do_send_socket (sock_out, buffer);
+			ret = do_send_socket (sock_out, buffer, blocking);
 			switch (ret) {
                         case ret_ok:
                                 break;
@@ -367,7 +377,7 @@ cherokee_post_send_to_socket (cherokee_post_t   *post,
 		}
 
 		if (post->send.read < post->len) {
-			post->send.phase = cherokee_post_send_phase_write;
+			post->send.phase = cherokee_post_send_phase_read;
 			return ret_eagain;
 		}
 
