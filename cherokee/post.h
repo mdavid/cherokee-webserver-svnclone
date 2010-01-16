@@ -25,6 +25,10 @@
 #ifndef CHEROKEE_POST_H
 #define CHEROKEE_POST_H
 
+#include "common.h"
+#include "socket.h"
+
+
 typedef enum {
         post_enc_regular,
         post_enc_chunked
@@ -33,15 +37,27 @@ typedef enum {
 typedef enum {
 	cherokee_post_read_header_init,
 	cherokee_post_read_header_100cont
-} cherokee_port_rh_phase_t;
+} cherokee_post_rh_phase_t;
+
+typedef enum {
+	cherokee_post_send_phase_read,
+	cherokee_post_send_phase_write
+} cherokee_post_send_phase_t;
 
 typedef struct {
 	off_t                    len;
 	cherokee_boolean_t       has_info;
 	cherokee_post_encoding_t encoding;
-	cherokee_port_rh_phase_t read_header_phase;
+	cherokee_post_rh_phase_t read_header_phase;
 	cherokee_buffer_t        read_header_100cont;
 	cherokee_buffer_t        header_surplus;
+
+	struct {
+		off_t                      read;
+		cherokee_post_send_phase_t phase;
+		cherokee_buffer_t          buffer;
+	} send;
+
 } cherokee_post_t;
 
 #define POST(x) ((cherokee_post_t *)(x))
@@ -55,6 +71,20 @@ ret_t cherokee_post_mrproper       (cherokee_post_t *post);
 
 ret_t cherokee_post_has_info       (cherokee_post_t *post);
 ret_t cherokee_post_read_header    (cherokee_post_t *post, void *conn);
+
+ret_t cherokee_post_send_reset     (cherokee_post_t   *post);
+
+ret_t cherokee_post_send_to_socket (cherokee_post_t   *post,
+				    cherokee_socket_t *sock_in,
+				    cherokee_socket_t *sock_out,
+				    cherokee_buffer_t *buffer);
+
+ret_t cherokee_post_send_to_fd     (cherokee_post_t   *post,
+				    cherokee_socket_t *sock_in,
+				    int                fd,
+				    int               *fd_eagain,
+				    cherokee_buffer_t *buffer);
+
 
 CHEROKEE_END_DECLS
 

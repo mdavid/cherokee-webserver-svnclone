@@ -1459,6 +1459,7 @@ $(static_collector_rrd_src) \
 \
 $(static_handler_file_src) \
 $(static_handler_dirlist_src) \
+$(static_handler_cgi_src) \
 $(static_handler_fcgi_src) \
 $(static_handler_redir_src) \
 $(static_handler_error_redir_src) \
@@ -1557,7 +1558,6 @@ collector.c
 #$(static_handler_scgi_src)
 #$(static_handler_uwsgi_src)
 #$(static_handler_fastcgi_src)
-#$(static_handler_cgi_src)
 #$(static_handler_proxy_src)
 
 
@@ -1645,6 +1645,7 @@ $(dynamic_handler_file_lib) \
 $(dynamic_handler_server_info_lib) \
 $(dynamic_handler_render_rrd_lib) \
 $(dynamic_handler_dirlist_lib) \
+$(dynamic_handler_cgi_lib) \
 $(dynamic_handler_fcgi_lib) \
 $(dynamic_handler_redir_lib) \
 $(dynamic_handler_ssi_lib) \
@@ -1676,7 +1677,6 @@ $(dynamic_balancer_ip_hash_lib)
 #$(dynamic_handler_scgi_lib)
 #$(dynamic_handler_uwsgi_lib)
 #$(dynamic_handler_fastcgi_lib)
-#$(dynamic_handler_cgi_lib)
 #$(dynamic_handler_proxy_lib)
 
 

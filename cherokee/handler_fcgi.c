@@ -617,16 +617,11 @@ send_post (cherokee_handler_fcgi_t *hdl,
 				return ret;
 			}
 
-			printf ("A-%d -> ", hdl->post_read);
 			hdl->post_read += len;
-			printf ("%d\n", hdl->post_read);
 		} else {
-			cherokee_buffer_add_buffer (buf, &conn->post.header_surplus);
-
-			printf ("B-%d -> ", hdl->post_read);
 			hdl->post_read += conn->post.header_surplus.len;
-			printf ("%d\n", hdl->post_read);
 
+			cherokee_buffer_add_buffer (buf, &conn->post.header_surplus);
 			cherokee_buffer_clean (&conn->post.header_surplus);
 		}
 
@@ -675,7 +670,6 @@ send_post (cherokee_handler_fcgi_t *hdl,
 			return ret_eagain;
 		}
 
-		printf ("hdl->post_read %d < conn->post.len %d\n", hdl->post_read, conn->post.len);
 		TRACE (ENTRIES, "Post %s\n", "finished");
 		return ret_ok;
 
