@@ -43,6 +43,10 @@ cherokee_post_init (cherokee_post_t *post)
 	post->encoding          = post_enc_regular;
 	post->read_header_phase = cherokee_post_read_header_init;
 
+	post->send.phase        = cherokee_post_send_phase_read;
+	post->send.read         = 0;
+
+	cherokee_buffer_init (&post->send.buffer);
 	cherokee_buffer_init (&post->read_header_100cont);
 	cherokee_buffer_init (&post->header_surplus);
 
@@ -57,6 +61,10 @@ cherokee_post_clean (cherokee_post_t *post)
 	post->encoding          = post_enc_regular;
 	post->read_header_phase = cherokee_post_read_header_init;
 
+	post->send.phase        = cherokee_post_send_phase_read;
+	post->send.read         = 0;
+
+	cherokee_buffer_mrproper (&post->send.buffer);
 	cherokee_buffer_mrproper (&post->read_header_100cont);
 	cherokee_buffer_mrproper (&post->header_surplus);
 
@@ -66,6 +74,7 @@ cherokee_post_clean (cherokee_post_t *post)
 ret_t
 cherokee_post_mrproper (cherokee_post_t *post)
 {
+	cherokee_buffer_mrproper (&post->send.buffer);
 	cherokee_buffer_mrproper (&post->read_header_100cont);
 	cherokee_buffer_mrproper (&post->header_surplus);
 
@@ -244,3 +253,211 @@ cherokee_post_read_header (cherokee_post_t *post,
 	return ret_error;
 }
 
+static ret_t
+do_read (cherokee_post_t   *post,
+	 cherokee_socket_t *sock_in,
+	 cherokee_buffer_t *buffer)
+{
+	ret_t  ret;
+	off_t  to_read;
+	size_t len;
+
+	/* Surplus from header read
+	 */
+	if (! cherokee_buffer_is_empty (&post->header_surplus)) {
+		TRACE (ENTRIES, "Post appending %d surplus bytes\n", post->header_surplus.len);
+		post->send.read += post->header_surplus.len;
+
+		cherokee_buffer_add_buffer (buffer, &post->header_surplus);
+		cherokee_buffer_clean (&post->header_surplus);
+
+		return ret_ok;
+	}
+
+	/* Read
+	 */
+	to_read = MIN((post->len - post->send.read), POST_READ_SIZE);
+
+	TRACE (ENTRIES, "Post reading from client (to_read=%d)\n", to_read);
+	ret = cherokee_socket_bufread (sock_in, buffer, to_read, &len);
+	TRACE (ENTRIES, "Post read from client: ret=%d len=%d\n", ret, len);
+
+	if (ret != ret_ok) {
+		return ret;
+	}
+
+	post->send.read += len;
+	return ret_ok;
+}
+
+
+static ret_t
+do_send_socket (cherokee_socket_t *sock,
+		cherokee_buffer_t *buffer)
+{
+	ret_t  ret;
+	size_t written = 0;
+
+	ret = cherokee_socket_bufwrite (sock, buffer, &written);
+	switch (ret) {
+	case ret_ok:
+		break;
+	case ret_eagain:
+		if (written > 0) {
+			break;
+		}
+		return ret_eagain;
+	default:
+		return ret_error;
+	}
+
+	cherokee_buffer_move_to_begin (buffer, written);
+	TRACE (ENTRIES, "sent=%d, remaining=%d\n", written, buffer->len);
+
+	if (! cherokee_buffer_is_empty (buffer)) {
+		return ret_eagain;
+	}
+
+	return ret_ok;
+}
+
+
+ret_t
+cherokee_post_send_to_socket (cherokee_post_t   *post,
+			      cherokee_socket_t *sock_in,
+			      cherokee_socket_t *sock_out,
+			      cherokee_buffer_t *tmp)
+{
+	ret_t              ret;
+	cherokee_buffer_t *buffer = tmp ? tmp : &post->send.buffer;
+
+	switch (post->send.phase) {
+	case cherokee_post_send_phase_read:
+		TRACE (ENTRIES, "Post send, phase: %s\n", "read");
+
+		ret = do_read (post, sock_in, buffer);
+		if (ret != ret_ok) {
+			return ret;
+		}
+
+		TRACE (ENTRIES, "Post buffer.len %d\n", buffer->len);
+		post->send.phase = cherokee_post_send_phase_write;
+
+	case cherokee_post_send_phase_write:
+		TRACE (ENTRIES, "Post send, phase: %s\n", "write");
+
+		if (! cherokee_buffer_is_empty (buffer)) {
+			ret = do_send_socket (sock_out, buffer);
+			switch (ret) {
+                        case ret_ok:
+                                break;
+                        case ret_eagain:
+                                return ret_eagain;
+                        case ret_eof:
+                        case ret_error:
+                                return ret_error;
+                        default:
+				RET_UNKNOWN(ret);
+				return ret_error;
+                        }
+		}
+
+		if (! cherokee_buffer_is_empty (buffer)) {
+			return ret_eagain;
+		}
+
+		if (post->send.read < post->len) {
+			post->send.phase = cherokee_post_send_phase_write;
+			return ret_eagain;
+		}
+
+		TRACE (ENTRIES, "Post send: %s\n", "finished");
+
+		cherokee_buffer_mrproper (&post->send.buffer);
+		return ret_ok;
+
+	default:
+		SHOULDNT_HAPPEN;
+	}
+
+	return ret_error;
+}
+
+
+ret_t
+cherokee_post_send_to_fd (cherokee_post_t   *post,
+			  cherokee_socket_t *sock_in,
+			  int                fd,
+			  int               *fd_eagain,
+			  cherokee_buffer_t *tmp)
+{
+	ret_t              ret;
+	int                r;
+	cherokee_buffer_t *buffer = tmp ? tmp : &post->send.buffer;
+
+
+	switch (post->send.phase) {
+	case cherokee_post_send_phase_read:
+		TRACE (ENTRIES, "Post send, phase: %s\n", "read");
+
+		ret = do_read (post, sock_in, buffer);
+		if (ret != ret_ok) {
+			return ret;
+		}
+
+		TRACE (ENTRIES, "Post buffer.len %d\n", buffer->len);
+		post->send.phase = cherokee_post_send_phase_write;
+
+	case cherokee_post_send_phase_write:
+		TRACE (ENTRIES, "Post send, phase: write. Has %d bytes to send\n", buffer->len);
+
+		if (! cherokee_buffer_is_empty (buffer)) {
+			r = write (fd, buffer->buf, buffer->len);
+			if (r < 0) {
+				if (errno == EAGAIN) {
+					if (fd_eagain) {
+						*fd_eagain = fd;
+					}
+					return ret_eagain;
+				}
+
+				TRACE(ENTRIES, "errno %d: %s\n", errno, strerror(errno));
+				return ret_error;
+
+			} else if (r == 0) {
+				return ret_eagain;
+			}
+
+			cherokee_buffer_move_to_begin (buffer, r);
+		}
+
+		if (! cherokee_buffer_is_empty (buffer)) {
+			return ret_eagain;
+		}
+
+		if (post->send.read < post->len) {
+			post->send.phase = cherokee_post_send_phase_read;
+			return ret_eagain;
+		}
+
+		TRACE (ENTRIES, "Post send: %s\n", "finished");
+
+		cherokee_buffer_mrproper (&post->send.buffer);
+		return ret_ok;
+
+	default:
+		SHOULDNT_HAPPEN;
+	}
+
+	return ret_error;
+}
+
+
+ret_t
+cherokee_post_send_reset (cherokee_post_t *post)
+{
+	post->send.read  = 0;
+	post->send.phase = cherokee_post_send_phase_read;
+
+	return ret_ok;
+}
