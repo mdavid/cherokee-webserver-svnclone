@@ -308,6 +308,7 @@ do_send_socket (cherokee_socket_t        *sock,
 			break;
 		}
 
+		TRACE (ENTRIES, "Post write: EAGAIN, wrote nothing of %d\n", buffer->len);
 		*blocking = socket_writing;
 		return ret_eagain;
 	default:
@@ -354,7 +355,7 @@ cherokee_post_send_to_socket (cherokee_post_t          *post,
 		post->send.phase = cherokee_post_send_phase_write;
 
 	case cherokee_post_send_phase_write:
-		TRACE (ENTRIES, "Post send, phase: %s\n", "write");
+		TRACE (ENTRIES, "Post send, phase: write. Buffered: %d bytes\n", buffer->len);
 
 		if (! cherokee_buffer_is_empty (buffer)) {
 			ret = do_send_socket (sock_out, buffer, blocking);

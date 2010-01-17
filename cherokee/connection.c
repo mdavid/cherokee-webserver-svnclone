@@ -299,7 +299,7 @@ cherokee_connection_clean (cherokee_connection_t *conn)
 		conn->polling_fd = -1;
 	}
 
-	cherokee_post_mrproper (&conn->post);
+	cherokee_post_clean (&conn->post);
 	cherokee_buffer_mrproper (&conn->encoder_buffer);
 
 	cherokee_buffer_clean (&conn->request);
