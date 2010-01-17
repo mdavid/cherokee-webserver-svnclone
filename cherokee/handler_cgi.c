@@ -430,16 +430,26 @@ cherokee_handler_cgi_init (cherokee_handler_cgi_t *cgi)
 ret_t
 cherokee_handler_cgi_read_post (cherokee_handler_cgi_t *cgi)
 {
-	ret_t                  ret;
-	cherokee_connection_t *conn = HANDLER_CONN(cgi);
+	ret_t                     ret;
+	cherokee_connection_t    *conn     = HANDLER_CONN(cgi);
+	cherokee_socket_status_t  blocking = socket_closed;
 
 	if (! conn->post.has_info) {
 		return ret_ok;
 	}
 
-	ret = cherokee_post_send_to_fd (&conn->post, &conn->socket, cgi->pipeOutput, NULL, NULL);
-	if (ret != ret_ok) {
-		TRACE (ENTRIES",post", "Sending POST fd=%d, ret=%d\n", cgi->pipeOutput, ret);
+	ret = cherokee_post_send_to_fd (&conn->post, &conn->socket,
+					cgi->pipeOutput, NULL, &blocking);
+	switch (ret) {
+	case ret_ok:
+		break;
+	case ret_eagain:
+		if (blocking == socket_writing) {
+			cherokee_thread_deactive_to_polling (HANDLER_THREAD(cgi), conn,
+							     cgi->pipeOutput, 1, false);
+		}
+		return ret_eagain;
+	default:
 		return ret;
 	}
 
