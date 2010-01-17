@@ -1462,6 +1462,7 @@ $(static_handler_dirlist_src) \
 $(static_handler_cgi_src) \
 $(static_handler_fcgi_src) \
 $(static_handler_scgi_src) \
+$(static_handler_uwsgi_src) \
 $(static_handler_redir_src) \
 $(static_handler_error_redir_src) \
 $(static_handler_error_nn_src) \
@@ -1648,6 +1649,7 @@ $(dynamic_handler_dirlist_lib) \
 $(dynamic_handler_cgi_lib) \
 $(dynamic_handler_fcgi_lib) \
 $(dynamic_handler_scgi_lib) \
+$(dynamic_handler_uwsgi_lib) \
 $(dynamic_handler_redir_lib) \
 $(dynamic_handler_ssi_lib) \
 $(dynamic_handler_secdownload_lib) \
