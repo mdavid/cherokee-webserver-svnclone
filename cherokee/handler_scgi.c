@@ -409,6 +409,7 @@ cherokee_handler_scgi_read_post (cherokee_handler_scgi_t *hdl)
 		return ret_eagain;
 
 	default:
+		conn->error_code = http_bad_gateway;
 		return ret;
 	}
 
