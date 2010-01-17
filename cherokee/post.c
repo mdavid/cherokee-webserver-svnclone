@@ -396,11 +396,11 @@ cherokee_post_send_to_socket (cherokee_post_t          *post,
 
 
 ret_t
-cherokee_post_send_to_fd (cherokee_post_t   *post,
-			  cherokee_socket_t *sock_in,
-			  int                fd,
-			  int               *fd_eagain,
-			  cherokee_buffer_t *tmp)
+cherokee_post_send_to_fd (cherokee_post_t          *post,
+			  cherokee_socket_t        *sock_in,
+			  int                       fd_out,
+			  cherokee_buffer_t        *tmp,
+			  cherokee_socket_status_t *blocking)
 {
 	ret_t              ret;
 	int                r;
@@ -412,7 +412,13 @@ cherokee_post_send_to_fd (cherokee_post_t   *post,
 		TRACE (ENTRIES, "Post send, phase: %s\n", "read");
 
 		ret = do_read (post, sock_in, buffer);
-		if (ret != ret_ok) {
+		switch (ret) {
+		case ret_ok:
+			break;
+		case ret_eagain:
+			*blocking = socket_reading;
+			return ret_eagain;
+		default:
 			return ret;
 		}
 
@@ -423,12 +429,10 @@ cherokee_post_send_to_fd (cherokee_post_t   *post,
 		TRACE (ENTRIES, "Post send, phase: write. Has %d bytes to send\n", buffer->len);
 
 		if (! cherokee_buffer_is_empty (buffer)) {
-			r = write (fd, buffer->buf, buffer->len);
+			r = write (fd_out, buffer->buf, buffer->len);
 			if (r < 0) {
 				if (errno == EAGAIN) {
-					if (fd_eagain) {
-						*fd_eagain = fd;
-					}
+					*blocking = socket_writing;
 					return ret_eagain;
 				}
 

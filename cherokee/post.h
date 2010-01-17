@@ -80,12 +80,11 @@ ret_t cherokee_post_send_to_socket (cherokee_post_t          *post,
 				    cherokee_buffer_t        *buffer,
 				    cherokee_socket_status_t *blocking);
 
-ret_t cherokee_post_send_to_fd     (cherokee_post_t   *post,
-				    cherokee_socket_t *sock_in,
-				    int                fd,
-				    int               *fd_eagain,
-				    cherokee_buffer_t *buffer);
-
+ret_t cherokee_post_send_to_fd     (cherokee_post_t          *post,
+				    cherokee_socket_t        *sock_in,
+				    int                       fd_out,
+				    cherokee_buffer_t        *tmp,
+				    cherokee_socket_status_t *blocking);
 
 CHEROKEE_END_DECLS
 

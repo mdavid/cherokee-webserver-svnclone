@@ -397,7 +397,6 @@ cherokee_handler_scgi_read_post (cherokee_handler_scgi_t *hdl)
 
 	ret = cherokee_post_send_to_socket (&conn->post, &conn->socket,
 					    &hdl->socket, NULL, &blocking);
-
 	switch (ret) {
 	case ret_ok:
 		break;
