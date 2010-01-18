@@ -1557,7 +1557,6 @@ collector.h \
 collector.c
 
 #$(static_handler_admin_src)
-#$(static_handler_uwsgi_src)
 #$(static_handler_fastcgi_src)
 #$(static_handler_proxy_src)
 
@@ -1677,7 +1676,6 @@ $(dynamic_balancer_round_robin_lib) \
 $(dynamic_balancer_ip_hash_lib)
 
 #$(dynamic_handler_admin_lib)
-#$(dynamic_handler_uwsgi_lib)
 #$(dynamic_handler_fastcgi_lib)
 #$(dynamic_handler_proxy_lib)
 
