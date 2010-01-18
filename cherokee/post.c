@@ -277,6 +277,9 @@ do_read (cherokee_post_t   *post,
 	/* Read
 	 */
 	to_read = MIN((post->len - post->send.read), POST_READ_SIZE);
+	if (to_read <= 0) {
+		return ret_ok;
+	}
 
 	TRACE (ENTRIES, "Post reading from client (to_read=%d)\n", to_read);
 	ret = cherokee_socket_bufread (sock_in, buffer, to_read, &len);

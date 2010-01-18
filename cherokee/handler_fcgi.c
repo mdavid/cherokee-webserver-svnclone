@@ -608,16 +608,17 @@ send_post (cherokee_handler_fcgi_t *hdl,
 		 */
 		if (cherokee_buffer_is_empty (&conn->post.header_surplus)) {
 			to_read = MIN((conn->post.len - hdl->post_read), POST_READ_SIZE);
+			if (to_read > 0) {
+				TRACE (ENTRIES, "Post reading from client (to_read=%d)\n", to_read);
+				ret = cherokee_connection_recv (conn, buf, to_read, &len);
+				TRACE (ENTRIES, "Post read from client: ret=%d len=%d\n", ret, len);
 
-			TRACE (ENTRIES, "Post reading from client (to_read=%d)\n", to_read);
-			ret = cherokee_connection_recv (conn, buf, to_read, &len);
-			TRACE (ENTRIES, "Post read from client: ret=%d len=%d\n", ret, len);
+				if (ret != ret_ok) {
+					return ret;
+				}
 
-			if (ret != ret_ok) {
-				return ret;
+				hdl->post_read += len;
 			}
-
-			hdl->post_read += len;
 		} else {
 			hdl->post_read += conn->post.header_surplus.len;
 

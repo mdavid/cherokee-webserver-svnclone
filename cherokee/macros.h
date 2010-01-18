@@ -157,16 +157,13 @@
 	(cherokee_buffer_case_cmp_str(b,str) == 0)
 
 #define return_if_fail(expr,ret) \
-	if (!(expr)) {                                                      \
-		fprintf (stderr,                                            \
-       		         "file %s: line %d (%s): assertion `%s' failed\n",  \
-                          __FILE__,                                         \
-                          __LINE__,                                         \
-                          __cherokee_func__,                                \
-                          #expr);                                           \
-	        return (ret);                                               \
-	}
-
+	do {								\
+		if (!(expr)) {						\
+			PRINT_ERROR ("assertion `%s' failed\n", #expr);	\
+			CHEROKEE_PRINT_BACKTRACE;			\
+			return (ret);					\
+		}							\
+	} while(0)
 
 #define SHOULDNT_HAPPEN \
 	do { fprintf (stderr, "file %s:%d (%s): this should not happen\n",  \

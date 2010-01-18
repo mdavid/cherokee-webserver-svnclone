@@ -403,8 +403,9 @@ cherokee_handler_scgi_read_post (cherokee_handler_scgi_t *hdl)
 
 	case ret_eagain:
 		if (blocking == socket_writing) {
-			cherokee_thread_deactive_to_polling (HANDLER_THREAD(hdl), conn,
-							     hdl->socket.socket, 1, false);
+			cherokee_thread_deactive_to_polling (HANDLER_THREAD(hdl),
+							     conn, hdl->socket.socket,
+							     FDPOLL_MODE_WRITE, false);
 		}
 		return ret_eagain;
 
