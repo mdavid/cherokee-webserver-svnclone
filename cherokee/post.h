@@ -58,6 +58,13 @@ typedef struct {
 		cherokee_buffer_t          buffer;
 	} send;
 
+	struct {
+		cherokee_boolean_t         last;
+		off_t                      processed;
+		cherokee_buffer_t          buffer;
+		cherokee_boolean_t         retransmit;
+	} chunked;
+
 } cherokee_post_t;
 
 #define POST(x) ((cherokee_post_t *)(x))
@@ -69,10 +76,19 @@ ret_t cherokee_post_init           (cherokee_post_t *post);
 ret_t cherokee_post_clean          (cherokee_post_t *post);
 ret_t cherokee_post_mrproper       (cherokee_post_t *post);
 
-ret_t cherokee_post_has_info       (cherokee_post_t *post);
 ret_t cherokee_post_read_header    (cherokee_post_t *post, void *conn);
+ret_t cherokee_post_has_info       (cherokee_post_t *post);
+int   cherokee_post_read_finished  (cherokee_post_t *post);
 
-ret_t cherokee_post_send_reset     (cherokee_post_t   *post);
+/* Read
+ */
+ret_t cherokee_post_read           (cherokee_post_t          *post,
+				    cherokee_socket_t        *sock_in,
+				    cherokee_buffer_t        *buffer);
+
+/* Read + Send
+ */
+ret_t cherokee_post_send_reset     (cherokee_post_t          *post);
 
 ret_t cherokee_post_send_to_socket (cherokee_post_t          *post,
 				    cherokee_socket_t        *sock_in,

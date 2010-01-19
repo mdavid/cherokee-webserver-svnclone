@@ -298,7 +298,6 @@ cherokee_handler_fcgi_new (cherokee_handler_t **hdl, void *cnt, cherokee_module_
 	 */
 	n->post_phase = fcgi_post_phase_read;
 	n->src_ref    = NULL;
-	n->post_read  = 0;
 
 	cherokee_socket_init (&n->socket);
 	cherokee_buffer_init (&n->write_buffer);
@@ -412,11 +411,18 @@ add_extra_fcgi_env (cherokee_handler_fcgi_t *hdl, cuint_t *last_header_offset)
 	cherokee_buffer_t            buffer   = CHEROKEE_BUF_INIT;
 	cherokee_connection_t       *conn     = HANDLER_CONN(hdl);
 
-	/* CONTENT_LENGTH
+	/* POST management
 	 */
 	if (http_method_with_input (conn->header.method)) {
-		cherokee_buffer_add_ullong10 (&buffer, conn->post.len);
-		set_env (cgi_base, "CONTENT_LENGTH", buffer.buf, buffer.len);
+		if (conn->post.encoding == post_enc_regular) {
+			cherokee_buffer_add_ullong10 (&buffer, conn->post.len);
+			set_env (cgi_base, "CONTENT_LENGTH", buffer.buf, buffer.len);
+
+		} else if (conn->post.encoding == post_enc_chunked) {
+			TRACE (ENTRIES",post", "Setting Chunked Post: %s flag\n", "retransmit");
+			set_env (cgi_base, "CONTENT_TRANSFER_ENCODING", "chunked", 7);
+			conn->post.chunked.retransmit = true;
+		}
 	}
 
 	/* Add PATH_TRANSLATED only it there is pathinfo
@@ -512,7 +518,7 @@ build_header (cherokee_handler_fcgi_t *hdl, cherokee_buffer_t *buffer)
 	/* No POST?
 	 */
 	if ((! http_method_with_input (conn->header.method)) || (! conn->post.has_info)) {
-		TRACE (ENTRIES, "Post: %s\n", "has no post");
+		TRACE (ENTRIES",post", "Post: %s\n", "has no post");
 		add_empty_packet (hdl, FCGI_STDIN);
 	}
 
@@ -588,15 +594,13 @@ static ret_t
 send_post (cherokee_handler_fcgi_t *hdl,
 	   cherokee_buffer_t       *buf)
 {
-	ret_t                    ret;
-	off_t                    to_read;
-	off_t                    len          = 0;
-	cherokee_connection_t   *conn         = HANDLER_CONN(hdl);
-	static FCGI_Header       empty_header = {0,0,0,0,0,0,0,0};
+	ret_t                  ret;
+	cherokee_connection_t *conn         = HANDLER_CONN(hdl);
+	static FCGI_Header     empty_header = {0,0,0,0,0,0,0,0};
 
 	switch (hdl->post_phase) {
 	case fcgi_post_phase_read:
-		TRACE (ENTRIES, "Post %s\n", "read");
+		TRACE (ENTRIES",post", "Post %s\n", "read");
 
 		/* Add space for the header, it'll filled out later on..
 		 */
@@ -606,27 +610,12 @@ send_post (cherokee_handler_fcgi_t *hdl,
 
 		/* Take a chunck of post
 		 */
-		if (cherokee_buffer_is_empty (&conn->post.header_surplus)) {
-			to_read = MIN((conn->post.len - hdl->post_read), POST_READ_SIZE);
-			if (to_read > 0) {
-				TRACE (ENTRIES, "Post reading from client (to_read=%d)\n", to_read);
-				ret = cherokee_connection_recv (conn, buf, to_read, &len);
-				TRACE (ENTRIES, "Post read from client: ret=%d len=%d\n", ret, len);
-
-				if (ret != ret_ok) {
-					return ret;
-				}
-
-				hdl->post_read += len;
-			}
-		} else {
-			hdl->post_read += conn->post.header_surplus.len;
-
-			cherokee_buffer_add_buffer (buf, &conn->post.header_surplus);
-			cherokee_buffer_clean (&conn->post.header_surplus);
+		ret = cherokee_post_read (&conn->post, &conn->socket, buf);
+		if (ret != ret_ok) {
+			return ret;
 		}
 
-		TRACE (ENTRIES, "Post buffer.len %d\n", buf->len);
+		TRACE (ENTRIES",post", "Post buffer.len %d\n", buf->len);
 
 		/* Complete the header
 		 */
@@ -637,14 +626,14 @@ send_post (cherokee_handler_fcgi_t *hdl,
 
 		/* Close STDIN if it was the last chunck
 		 */
-		if (hdl->post_read >= conn->post.len) {
+		if (cherokee_post_read_finished (&conn->post)) {
 			add_empty_packet (hdl, FCGI_STDIN);
 		}
 
 		hdl->post_phase = fcgi_post_phase_write;
 
 	case fcgi_post_phase_write:
-		TRACE (ENTRIES, "Post write, buf.len=%d (header len %d)\n", buf->len, sizeof(FCGI_Header));
+		TRACE (ENTRIES",post", "Post write, buf.len=%d (header len %d)\n", buf->len, sizeof(FCGI_Header));
 
 		if (! cherokee_buffer_is_empty (buf)) {
 			ret = do_send (hdl, buf);
@@ -666,12 +655,12 @@ send_post (cherokee_handler_fcgi_t *hdl,
 			return ret_eagain;
 		}
 
-		if (hdl->post_read < conn->post.len) {
+		if (! cherokee_post_read_finished (&conn->post)) {
 			hdl->post_phase = fcgi_post_phase_read;
 			return ret_eagain;
 		}
 
-		TRACE (ENTRIES, "Post %s\n", "finished");
+		TRACE (ENTRIES",post", "Post %s\n", "finished");
 		return ret_ok;
 
 	default:
