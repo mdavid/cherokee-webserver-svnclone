@@ -1476,6 +1476,7 @@ $(static_handler_custom_error_src) \
 $(static_handler_server_info_src) \
 $(static_handler_render_rrd_src) \
 $(static_handler_dbslayer_src) \
+$(static_handler_admin_src) \
 \
 $(static_logger_ncsa_src) \
 $(static_logger_custom_src) \
@@ -1557,7 +1558,6 @@ spawner.c \
 collector.h \
 collector.c
 
-#$(static_handler_admin_src)
 #$(static_handler_fastcgi_src)
 
 
@@ -1660,6 +1660,7 @@ $(dynamic_handler_error_redir_lib) \
 $(dynamic_handler_error_nn_lib) \
 $(dynamic_handler_common_lib) \
 $(dynamic_handler_dbslayer_lib) \
+$(dynamic_handler_admin_lib) \
 $(dynamic_encoder_gzip_lib) \
 $(dynamic_encoder_deflate_lib) \
 $(dynamic_logger_ncsa_lib) \
@@ -1676,7 +1677,6 @@ $(dynamic_cryptor_libssl_lib) \
 $(dynamic_balancer_round_robin_lib) \
 $(dynamic_balancer_ip_hash_lib)
 
-#$(dynamic_handler_admin_lib)
 #$(dynamic_handler_fastcgi_lib)
 
 

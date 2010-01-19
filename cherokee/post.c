@@ -466,12 +466,12 @@ cherokee_post_read (cherokee_post_t   *post,
 {
 	off_t to_read;
 
-	if (post->encoding == post_enc_regular) {
-		to_read = MIN((post->len - post->send.read), POST_READ_SIZE);
-		return do_read_plain (post, sock_in, buffer, to_read);
+	if (post->encoding == post_enc_chunked) {
+		return do_read_chunked (post, sock_in, buffer);
 	}
 
-	return do_read_chunked (post, sock_in, buffer);
+	to_read = MIN((post->len - post->send.read), POST_READ_SIZE);
+	return do_read_plain (post, sock_in, buffer, to_read);
 }
 
 
