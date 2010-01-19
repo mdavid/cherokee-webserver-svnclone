@@ -287,10 +287,10 @@ cherokee_handler_fcgi_new (cherokee_handler_t **hdl, void *cnt, cherokee_module_
 	 */
 	MODULE(n)->init         = (handler_func_init_t) cherokee_handler_fcgi_init;
 	MODULE(n)->free         = (module_func_free_t) cherokee_handler_fcgi_free;
+	HANDLER(n)->read_post   = (handler_func_read_post_t) cherokee_handler_fcgi_read_post;
 
 	/* Virtual methods: implemented by handler_cgi_base
 	 */
-	HANDLER(n)->read_post   = (handler_func_read_post_t) cherokee_handler_fcgi_read_post;
 	HANDLER(n)->add_headers = (handler_func_add_headers_t) cherokee_handler_cgi_base_add_headers;
 	HANDLER(n)->step        = (handler_func_step_t) cherokee_handler_cgi_base_step;
 
