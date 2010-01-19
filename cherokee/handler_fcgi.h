@@ -46,7 +46,6 @@ typedef struct {
 	cherokee_source_t            *src_ref;
 	cherokee_socket_t             socket;
 	cherokee_handler_fcgi_post_t  post_phase;
-	cuint_t                       post_read;
 	cherokee_buffer_t             write_buffer;
 } cherokee_handler_fcgi_t;
 

@@ -38,15 +38,20 @@
 ret_t
 cherokee_post_init (cherokee_post_t *post)
 {
-	post->len               = 0;
-	post->has_info          = false;
-	post->encoding          = post_enc_regular;
-	post->read_header_phase = cherokee_post_read_header_init;
+	post->len                = 0;
+	post->has_info           = false;
+	post->encoding           = post_enc_regular;
+	post->read_header_phase  = cherokee_post_read_header_init;
 
-	post->send.phase        = cherokee_post_send_phase_read;
-	post->send.read         = 0;
+	post->send.phase         = cherokee_post_send_phase_read;
+	post->send.read          = 0;
+
+	post->chunked.last       = false;
+	post->chunked.processed  = 0;
+	post->chunked.retransmit = false;
 
 	cherokee_buffer_init (&post->send.buffer);
+	cherokee_buffer_init (&post->chunked.buffer);
 	cherokee_buffer_init (&post->read_header_100cont);
 	cherokee_buffer_init (&post->header_surplus);
 
@@ -56,15 +61,20 @@ cherokee_post_init (cherokee_post_t *post)
 ret_t
 cherokee_post_clean (cherokee_post_t *post)
 {
-	post->len               = 0;
-	post->has_info          = false;
-	post->encoding          = post_enc_regular;
-	post->read_header_phase = cherokee_post_read_header_init;
+	post->len                = 0;
+	post->has_info           = false;
+	post->encoding           = post_enc_regular;
+	post->read_header_phase  = cherokee_post_read_header_init;
 
-	post->send.phase        = cherokee_post_send_phase_read;
-	post->send.read         = 0;
+	post->send.phase         = cherokee_post_send_phase_read;
+	post->send.read          = 0;
+
+	post->chunked.last       = false;
+	post->chunked.processed  = 0;
+	post->chunked.retransmit = false;
 
 	cherokee_buffer_mrproper (&post->send.buffer);
+	cherokee_buffer_mrproper (&post->chunked.buffer);
 	cherokee_buffer_mrproper (&post->read_header_100cont);
 	cherokee_buffer_mrproper (&post->header_surplus);
 
@@ -75,6 +85,7 @@ ret_t
 cherokee_post_mrproper (cherokee_post_t *post)
 {
 	cherokee_buffer_mrproper (&post->send.buffer);
+	cherokee_buffer_mrproper (&post->chunked.buffer);
 	cherokee_buffer_mrproper (&post->read_header_100cont);
 	cherokee_buffer_mrproper (&post->header_surplus);
 
@@ -107,10 +118,13 @@ parse_header (cherokee_post_t       *post,
 	ret = cherokee_header_get_known (&conn->header, header_transfer_encoding, &info, &info_len);
 	if (ret == ret_ok) {
 		if (strncasecmp (info, "chunked", MIN(info_len, 7)) == 0) {
+			TRACE (ENTRIES, "Post type: %s\n", "chunked");
 			post->encoding = post_enc_chunked;
 			return ret_ok;
 		}
 	}
+
+	TRACE (ENTRIES, "Post type: %s\n", "plain");
 
 	/* Check "Content-Length"
 	 */
@@ -177,30 +191,40 @@ remove_surplus (cherokee_post_t       *post,
 {
 	ret_t   ret;
 	cuint_t header_len;
-	cint_t  post_chunk_len;
+	cint_t  surplus_len;
 
-	/* Check the HTTP request length
+	/* Get the HTTP request length
 	 */
 	ret = cherokee_header_get_length (&conn->header, &header_len);
 	if (unlikely(ret != ret_ok)) {
 		return ret;
 	}
 
-	post_chunk_len = MIN (conn->incoming_header.len - header_len, post->len);
-	if (post_chunk_len <= 0) {
+	/* Get the POST length
+	 */
+	if (post->len > 0) {
+		/* Plain post: read what's pointed by Content-Length
+		 */
+		surplus_len = MIN (conn->incoming_header.len - header_len, post->len);
+	} else {
+		/* Chunked: Assume everything after the header is POST
+		 */
+		surplus_len = conn->incoming_header.len - header_len;
+	}
+	if (surplus_len <= 0) {
 		return ret_ok;
 	}
 
-	TRACE (ENTRIES, "POST surplus: moving %d bytes\n", post_chunk_len);
+	TRACE (ENTRIES, "POST surplus: moving %d bytes\n", surplus_len);
 
 	/* Move the surplus
 	 */
 	cherokee_buffer_add (&post->header_surplus,
 			     conn->incoming_header.buf + header_len,
-			     post_chunk_len);
+			     surplus_len);
 
 	cherokee_buffer_remove_chunk (&conn->incoming_header,
-				      header_len, post_chunk_len);
+				      header_len, surplus_len);
 
 	TRACE (ENTRIES, "POST surplus: incoming_header is %d bytes (header len=%d)\n",
 	       conn->incoming_header.len, header_len);
@@ -253,13 +277,120 @@ cherokee_post_read_header (cherokee_post_t *post,
 	return ret_error;
 }
 
+
 static ret_t
-do_read (cherokee_post_t   *post,
-	 cherokee_socket_t *sock_in,
-	 cherokee_buffer_t *buffer)
+process_chunk (cherokee_post_t   *post,
+	       cherokee_buffer_t *in,
+	       cherokee_buffer_t *out)
+{
+	char    *p;
+	char    *begin;
+	char    *end;
+        ssize_t  content_size;
+
+        TRACE (ENTRIES, "Post in-buffer len=%d\n", in->len);
+
+	p     = in->buf;
+	begin = in->buf;
+
+        while (true) {
+                end = in->buf + in->len;
+
+                /* Iterate through the number
+		 */
+                while ((p < end) &&
+                       (((*p >= '0') && (*p <= '9')) ||
+                        ((*p >= 'a') && (*p <= 'f')) ||
+                        ((*p >= 'A') && (*p <= 'F'))))
+                        p++;
+
+                if (unlikely (p+2 > end)) {
+                        return ret_ok;
+		}
+
+                /* Check the CRLF after the length
+		 */
+                if (p[0] != CHR_CR) {
+                        return ret_error;
+		}
+                if (p[1] != CHR_LF) {
+                        return ret_error;
+		}
+
+		p += 2;
+
+                /* Read the length
+		 */
+                content_size = (size_t) strtoul (begin, NULL, 16);
+                if (unlikely (content_size < 0)) {
+                        return ret_error;
+		}
+
+                /* Check if there's enough info
+		 */
+                if (content_size == 0) {
+                        post->chunked.last = true;
+
+		} else if (p + content_size + 2 > end) {
+                        TRACE (ENTRIES, "Unfinished chunk(len="FMT_OFFSET"), has=%d, out->len="FMT_OFFSET"\n",
+                               content_size, (int)(end-p), out->len);
+			break;
+                }
+
+		/* Last block check
+		 */
+                if (post->chunked.last) {
+                        TRACE(ENTRIES, "Last chunk: %s\n", "exiting");
+
+			if (post->chunked.retransmit) {
+				cherokee_buffer_add_str (out, "0" CRLF);
+			}
+			begin = p;
+			break;
+		}
+
+		/* Move the information
+		 */
+		if (post->chunked.retransmit) {
+			cherokee_buffer_add (out, begin, (p + content_size + 2) - begin);
+		} else {
+			cherokee_buffer_add (out, p, content_size);
+		}
+
+                TRACE (ENTRIES, "Processing chunk len=%d\n", content_size);
+
+                /* Next iteration
+		 */
+                begin = p + content_size + 2;
+		p = begin;
+	}
+
+	/* Clean up in-buffer
+	 */
+	if (begin != in->buf) {
+		cherokee_buffer_move_to_begin (in, begin - in->buf);
+	}
+
+	/* Very unlikely, but still possible
+	 */
+	if (! cherokee_buffer_is_empty(in)) {
+		TRACE (ENTRIES, "There are %d left-over bytes in the post buffer -> incoming header", in->len);
+/* 		cherokee_buffer_add_buffer (&conn->incoming_header, in); */
+/* 		cherokee_buffer_clean (in); */
+	}
+
+	TRACE (ENTRIES, "Un-chunked buffer len=%d\n", out->len);
+	return ret_ok;
+}
+
+
+static ret_t
+do_read_plain (cherokee_post_t   *post,
+	       cherokee_socket_t *sock_in,
+	       cherokee_buffer_t *buffer,
+	       off_t              to_read)
 {
 	ret_t  ret;
-	off_t  to_read;
 	size_t len;
 
 	/* Surplus from header read
@@ -276,7 +407,6 @@ do_read (cherokee_post_t   *post,
 
 	/* Read
 	 */
-	to_read = MIN((post->len - post->send.read), POST_READ_SIZE);
 	if (to_read <= 0) {
 		return ret_ok;
 	}
@@ -291,6 +421,74 @@ do_read (cherokee_post_t   *post,
 
 	post->send.read += len;
 	return ret_ok;
+}
+
+
+static ret_t
+do_read_chunked (cherokee_post_t   *post,
+		 cherokee_socket_t *sock_in,
+		 cherokee_buffer_t *buffer)
+{
+	ret_t ret;
+
+	/* Try to read
+	 */
+	ret = do_read_plain (post, sock_in, &post->chunked.buffer, POST_READ_SIZE);
+	switch(ret) {
+	case ret_ok:
+		break;
+	case ret_eagain:
+		return ret_eagain;
+	default:
+		RET_UNKNOWN(ret);
+		return ret_error;
+	}
+
+	/* Process the buffer
+	 */
+	ret = process_chunk (post, &post->chunked.buffer, buffer);
+	if (unlikely (ret != ret_ok)) {
+		return ret_error;
+	}
+
+	if (post->chunked.last) {
+		cherokee_buffer_mrproper (&post->chunked.buffer);
+	}
+
+	return ret_ok;
+}
+
+
+ret_t
+cherokee_post_read (cherokee_post_t   *post,
+		    cherokee_socket_t *sock_in,
+		    cherokee_buffer_t *buffer)
+{
+	off_t to_read;
+
+	if (post->encoding == post_enc_regular) {
+		to_read = MIN((post->len - post->send.read), POST_READ_SIZE);
+		return do_read_plain (post, sock_in, buffer, to_read);
+	}
+
+	return do_read_chunked (post, sock_in, buffer);
+}
+
+
+int
+cherokee_post_read_finished (cherokee_post_t *post)
+{
+	switch (post->encoding) {
+	case post_enc_regular:
+		return (post->send.read >= post->len);
+	case post_enc_chunked:
+		return post->chunked.last;
+	default:
+		break;
+	}
+
+	SHOULDNT_HAPPEN;
+	return 1;
 }
 
 
@@ -343,7 +541,7 @@ cherokee_post_send_to_socket (cherokee_post_t          *post,
 	case cherokee_post_send_phase_read:
 		TRACE (ENTRIES, "Post send, phase: %s\n", "read");
 
-		ret = do_read (post, sock_in, buffer);
+		ret = cherokee_post_read (post, sock_in, buffer);
 		switch (ret) {
 		case ret_ok:
 			break;
@@ -380,7 +578,7 @@ cherokee_post_send_to_socket (cherokee_post_t          *post,
 			return ret_eagain;
 		}
 
-		if (post->send.read < post->len) {
+		if (! cherokee_post_read_finished (post)) {
 			post->send.phase = cherokee_post_send_phase_read;
 			return ret_eagain;
 		}
@@ -414,7 +612,7 @@ cherokee_post_send_to_fd (cherokee_post_t          *post,
 	case cherokee_post_send_phase_read:
 		TRACE (ENTRIES, "Post send, phase: %s\n", "read");
 
-		ret = do_read (post, sock_in, buffer);
+		ret = cherokee_post_read (post, sock_in, buffer);
 		switch (ret) {
 		case ret_ok:
 			break;
@@ -453,7 +651,7 @@ cherokee_post_send_to_fd (cherokee_post_t          *post,
 			return ret_eagain;
 		}
 
-		if (post->send.read < post->len) {
+		if (! cherokee_post_read_finished (post)) {
 			post->send.phase = cherokee_post_send_phase_read;
 			return ret_eagain;
 		}
