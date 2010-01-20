@@ -859,15 +859,6 @@ process_active_connections (cherokee_thread_t *thd)
 				cherokee_collector_log_request (THREAD_SRV(thd)->collector);
 			}
 
-			/* If it's a POST we've to read more data
-			 */
-/* 			if (http_method_with_input (conn->header.method)) { */
-/* 				if (! cherokee_post_got_all (&conn->post)) { */
-/* 					conn_set_mode (thd, conn, socket_reading); */
-/* 					conn->phase = phase_read_post; */
-/* 					continue; */
-/* 				} */
-/* 			} */
 
 			conn->phase = phase_setup_connection;
 
