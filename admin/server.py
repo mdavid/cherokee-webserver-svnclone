@@ -66,6 +66,10 @@ def main():
     else:
         print _("Server %(version)s running.. PID=%(pid)d Socket=%(scgi_port)s") % (locals())
 
+    # Read configuration file
+    CTK.cfg.file = cfg_file
+    CTK.cfg.load()
+
     # Run the server
     if scgi_port.isdigit():
         CTK.run (port=8000)

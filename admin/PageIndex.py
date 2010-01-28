@@ -29,7 +29,7 @@ class Render():
         None
 
     def __call__ (self):
-        return "Hello there"
+        return "Config version: %s" %(CTK.cfg.get_val('config!version'))
 
 
 CTK.publish ('/', Render)
