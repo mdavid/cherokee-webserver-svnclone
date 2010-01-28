@@ -1353,7 +1353,7 @@ AM_CONDITIONAL(INSTALL_ADMIN, test "x$wants_admin" != "xno")
 dnl
 dnl Clean files generated from *.pre
 dnl
-pres="constants.h cherokee.conf.sample performance.conf.sample http-cherokee.xml admin/configured.py contrib/cherokee"
+pres="constants.h cherokee.conf.sample performance.conf.sample http-cherokee.xml admin/configured.py admin-classic/configured.py contrib/cherokee"
 AC_MSG_NOTICE([Deleting .pre files])
 rm -f $pres
 
@@ -1503,6 +1503,13 @@ packages/windows/Makefile
 packages/windows/cherokee.nsi
 www/Makefile
 dbslayer/Makefile
+admin-classic/Makefile
+admin-classic/static/Makefile
+admin-classic/static/js/Makefile
+admin-classic/static/css/Makefile
+admin-classic/static/images/Makefile
+admin-classic/static/images/flags/Makefile
+admin-classic/static/images/wizards/Makefile
 admin/Makefile
 admin/static/Makefile
 admin/static/js/Makefile

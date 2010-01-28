@@ -1,209 +1,42 @@
 #!/usr/bin/env python
 
+# -*- coding: utf-8 -*-
+#
+# Cherokee-admin
+#
+# Authors:
+#      Alvaro Lopez Ortega <alvaro@alobbs.com>
+#
+# Copyright (C) 2001-2010 Alvaro Lopez Ortega
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of version 2 of the GNU General Public
+# License as published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+# 02110-1301, USA.
+#
+
+import CTK
 import os
-import re
 import sys
-import stat
-import time
-import pyscgi
-import thread
 import signal
-import socket
 import gettext
-import traceback
 
-# Application modules
-#
-from config import *
+# Cherokee imports
 from configured import *
-from Post import *
-from PageStatus import *
-from PageGeneral import *
-from PageIcon import *
-from PageMime import *
-from PageVServer import *
-from PageVServers import *
-from PageEntry import *
-from PageAdvanced import *
-from PageFeedback import *
-from PageError import *
-from PageNewConfig import *
-from PageAjaxUpdate import *
-from PageInfoSource import *
-from CherokeeManagement import *
-from config_version import *
 
-# Constants
-#
-MODIFIED_CHECK_ELAPSE = 1
-
-# Globals
-#
-cfg = None
-SELECTED_LANGUAGE = False
-
-# Request handler
-#
-class Handler(pyscgi.SCGIHandler):
-    def __init__ (self, *args, **kwords):
-        pyscgi.SCGIHandler.__init__ (self, *args)
-
-    def handle_request (self):
-        global cfg
-
-        page    = None
-        headers = ""
-        body    = ""
-        status  = "200 OK"
-        uri     = self.env['REQUEST_URI']
-
-        # Translation
-        if (not SELECTED_LANGUAGE and
-            self.env.has_key('HTTP_ACCEPT_LANGUAGE')):
-            try:
-                langs = self.env['HTTP_ACCEPT_LANGUAGE']
-            except:
-                langs = None
-
-            select_language (langs)
-
-        # Ensure that the configuration file is writable
-        if not cfg.has_tree():
-            if not uri.startswith('/create_config'):
-                page = PageNewConfig (cfg)
-        elif not cfg.is_writable():
-            page = PageError (cfg, PageError.CONFIG_NOT_WRITABLE)
-        elif not os.path.isdir(CHEROKEE_ICONSDIR):
-            page = PageError (cfg, PageError.ICONS_DIR_MISSING)
-
-        if page:
-            body = page.HandleRequest (uri, Post())
-
-            if body and body[0] == '/':
-                self.send ("Status: 302 Moved Temporarily\r\n" + \
-                           "Location: %s\r\n\r\n" % (body))
-                return
-            else:
-                self.send ('Status: 200 OK\r\n\r\n' + body)
-                return
-
-        # Check the URL
-        if uri.startswith('/general'):
-            page = PageGeneral(cfg)
-        elif uri.startswith('/icon'):
-            page = PageIcon(cfg)
-        elif uri.startswith('/mime'):
-            page = PageMime(cfg)
-        elif uri.startswith('/advanced'):
-            page = PageAdvanced(cfg)
-        elif uri.startswith('/feedback'):
-            page = PageFeedback(cfg)
-        elif uri == '/vserver' or \
-             uri == '/vserver/' or \
-             uri == '/vserver/ajax_update' or\
-             uri.startswith('/vserver/wizard'):
-            page = PageVServers(cfg)
-        elif uri.startswith('/vserver/'):
-            if "/rule/" in uri:
-                page = PageEntry(cfg)
-            else:
-                page = PageVServer(cfg)
-        elif uri.startswith('/source'):
-            page = PageInfoSource(cfg)
-        elif uri.startswith('/apply_ajax'):
-            self.handle_post()
-            post = Post(self.post)
-            post_restart = post.get_val('restart')
-
-            manager = cherokee_management_get (cfg)
-            manager.save (restart = post_restart)
-            cherokee_management_reset()
-
-            body = _('Configuration saved.')
-            if post_restart == 'graceful':
-                body += _(' Graceful restart performed.')
-            elif post_restart == 'hard':
-                body += _(' Hard restart performed.')
-
-        elif uri.startswith('/change_language'):
-            self.handle_post()
-            post = Post(self.post)
-            post_lang = post.get_val('language')
-
-            select_language(post_lang)
-            body = '/'
-
-        elif uri.startswith('/launch'):
-            manager = cherokee_management_get (cfg)
-            error = manager.launch()
-            if error:
-                page = PageError_LaunchFail (cfg, error)
-            else:
-                body = "/"
-        elif uri.startswith('/stop'):
-            manager = cherokee_management_get (cfg)
-            manager.stop()
-            cherokee_management_reset()
-            body = "/"
-        elif uri.startswith('/create_config'):
-            tmp = PageNewConfig (cfg)
-            body = tmp.HandleRequest(uri, Post(''))
-            if body:
-                cfg = Config (cfg.file)
-            else:
-                tmp = PageError (cfg, PageError.CONFIG_NOT_WRITABLE)
-                body = tmp._op_render()
-
-        elif uri.startswith('/ajax/update'):
-            page = PageAjaxUpdate (cfg)
-        elif uri.startswith('/rule'):
-            page = RuleOp(cfg)
-        elif uri == '/':
-            page = PageStatus(cfg)
-        else:
-            body = "/"
-
-        # Handle post
-        self.handle_post()
-        post = Post (self.post)
-
-        # Execute page
-        if page:
-            try:
-                body = page.HandleRequest(uri, post)
-            except:
-                trace = traceback.format_exc()
-                page = PageInternelError (trace)
-                body = page.HandleRequest (uri, Post())
-                self.send ('Status: 500 Internal Server Error\r\n\r\n' + body)
-                return
-
-        # Is it a redirection?
-        if body[0] == '/':
-            status   = "302 Moved Temporarily"
-            headers += "Location: %s\r\n" % (body)
-
-        # Send result
-        content = 'Status: %s\r\n' % (status) + \
-                  headers + '\r\n' + body
-        return self.send (content)
+# Pages
+import PageIndex
 
 
-def select_language (langs):
-    global SELECTED_LANGUAGE
-
-    if langs:
-        languages = [l for s in langs.split(',') for l in s.split(';') if not '=' in l]
-        try:
-            gettext.translation('cherokee', LOCALEDIR, languages).install()
-        except:
-            pass
-
-    SELECTED_LANGUAGE = True
-
-
-# Server
-#
 def main():
     # Gettext initialization
     gettext.install('cherokee')
@@ -224,30 +57,6 @@ def main():
     pathname, scriptname = os.path.split(sys.argv[0])
     os.chdir(os.path.abspath(pathname))
 
-    # SCGI server
-    if scgi_port.isdigit():
-        srv = pyscgi.ServerFactory (True, handler_class=Handler, host="127.0.0.1", port=int(scgi_port))
-    else:
-        # Remove the unix socket if it already exists
-        try:
-            mode = os.stat (scgi_port)[stat.ST_MODE]
-            if stat.S_ISSOCK(mode):
-                print "Removing an old '%s' unix socket.." %(scgi_port)
-                os.unlink (scgi_port)
-        except OSError:
-            pass
-
-        srv = pyscgi.ServerFactory (True, handler_class=Handler, unix_socket=scgi_port)
-
-    srv.socket.settimeout (MODIFIED_CHECK_ELAPSE)
-
-    # Read configuration file
-    global cfg
-    cfg = Config(cfg_file)
-
-    # Update the configuration file if needed
-    config_version_update_cfg (cfg)
-
     # Let the user know what is going on
     version = VERSION
     pid     = os.getpid()
@@ -257,14 +66,19 @@ def main():
     else:
         print _("Server %(version)s running.. PID=%(pid)d Socket=%(scgi_port)s") % (locals())
 
-    # Iterate until the user exists
-    try:
-        while True:
-            srv.handle_request()
-    except KeyboardInterrupt:
-        print "\r", _("Server exiting..")
+    # Run the server
+    if scgi_port.isdigit():
+        CTK.run (port=8000)
+    else:
+        # Remove the unix socket if it already exists
+        try:
+            mode = os.stat (scgi_port)[stat.ST_MODE]
+            if stat.S_ISSOCK(mode):
+                print "Removing an old '%s' unix socket.." %(scgi_port)
+                os.unlink (scgi_port)
+        except OSError:
+            pass
+        CTK.run (unix_socket=scgi_port)
 
-    srv.server_close()
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
