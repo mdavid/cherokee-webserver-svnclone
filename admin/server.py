@@ -24,17 +24,21 @@
 # 02110-1301, USA.
 #
 
-import CTK
 import os
 import sys
 import signal
 import gettext
+
+# Import CTK
+sys.path.append (os.path.abspath (os.path.realpath(__file__) + '/../CTK'))
+import CTK
 
 # Cherokee imports
 from configured import *
 
 # Pages
 import PageIndex
+import PageGeneral
 
 
 def main():
