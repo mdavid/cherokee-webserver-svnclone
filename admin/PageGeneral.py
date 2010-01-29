@@ -41,6 +41,9 @@ NOTE_IPV6    = N_('Set to enable the IPv6 support. The OS must support IPv6 for 
 NOTE_TOKENS  = N_('This option allows to choose how the server identifies itself.')
 NOTE_TIMEOUT = N_('Time interval until the server closes inactive connections.')
 
+HELPS = [('config_general',    N_("General Configuration")),
+         ('config_quickstart', N_("Configuration Quickstart"))]
+
 
 def apply():
     return {'ret': 'ok'}
@@ -56,13 +59,13 @@ class NetworkWidget (CTK.Container):
 
         self += CTK.RawHTML ("<h2>%s</h2>" %(_('Support')))
         table = CTK.PropsTableAuto (URL_APPLY)
-        table.Add (_('IPv6'), CTK.CheckCfg('server!ipv6', True), NOTE_IPV6)
+        table.Add (_('IPv6'), CTK.CheckCfg('server!ipv6', True), _(NOTE_IPV6))
         self += table
 
         self += CTK.RawHTML ("<h2>%s</h2>" %(_('Network behavior')))
         table = CTK.PropsTableAuto (URL_APPLY)
         table.Add (_('Timeout (<i>secs</i>)'), CTK.TextCfg('server!timeout'), _(NOTE_TIMEOUT))
-        table.Add (_('Server Tokens'),         CTK.ComboCfg('server!server_tokens', PRODUCT_TOKENS), NOTE_TOKENS)
+        table.Add (_('Server Tokens'),         CTK.ComboCfg('server!server_tokens', PRODUCT_TOKENS), _(NOTE_TOKENS))
         self += table
 
 
@@ -74,7 +77,7 @@ class Render():
         tabs.Add (_('Network'),         NetworkWidget())
         tabs.Add (_('Ports to listen'), PortsWidget())
 
-        page = Page.Base()
+        page = Page.Base (HELPS)
         page += CTK.RawHTML(txt)
         page += tabs
 
