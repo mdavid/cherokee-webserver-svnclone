@@ -85,22 +85,20 @@ class PermsWidget (CTK.Container):
 
         table = CTK.PropsTableAuto (URL_APPLY)
         self += CTK.RawHTML ("<h2>%s</h2>" %(_('Execution Permissions')))
-        table.Add (_('User'),   CTK.TextCfg('server!user'),   _(NOTE_USER))
-        table.Add (_('Group'),  CTK.TextCfg('server!group'),  _(NOTE_GROUP))
-        table.Add (_('Chroot'), CTK.TextCfg('server!chroot'), _(NOTE_CHROOT))
+        table.Add (_('User'),   CTK.TextCfg('server!user',   True),  _(NOTE_USER))
+        table.Add (_('Group'),  CTK.TextCfg('server!group',  True), _(NOTE_GROUP))
+        table.Add (_('Chroot'), CTK.TextCfg('server!chroot', True), _(NOTE_CHROOT))
         self += table
 
 class Render():
     def __call__ (self):
-        txt = "<h1>%s</h1>" %(_('General Settings'))
-
         tabs = CTK.Tab()
         tabs.Add (_('Network'),            NetworkWidget())
         tabs.Add (_('Ports to listen'),    PortsWidget())
         tabs.Add (_('Server Permissions'), PermsWidget())
 
         page = Page.Base (HELPS)
-        page += CTK.RawHTML(txt)
+        page += CTK.RawHTML("<h1>%s</h1>" %(_('General Settings')))
         page += tabs
 
         return page.Render()
