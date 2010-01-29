@@ -36,14 +36,19 @@ import CTK
 # Cherokee imports
 from configured import *
 
-# Pages
-import PageIndex
-import PageGeneral
+
+def i18n_init():
+    # Gettext initialization
+    gettext.install('cherokee')
+
+    # Register N_
+    import __builtin__
+    __builtin__.__dict__['N_'] = lambda x: x
 
 
 def main():
-    # Gettext initialization
-    gettext.install('cherokee')
+    # Translation support
+    i18n_init()
 
     # Read the arguments
     try:
@@ -89,4 +94,12 @@ def main():
         CTK.run (unix_socket=scgi_port)
 
 if __name__ == "__main__":
+    # Init the translation system
+    i18n_init()
+
+    # Import the Pages
+    import PageIndex
+    import PageGeneral
+
+    # Run
     main()
