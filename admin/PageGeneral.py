@@ -24,22 +24,16 @@
 
 import CTK
 import Page
+import Cherokee
+from consts import *
 
 URL_BASE  = '/general'
 URL_APPLY = '/general/apply'
 
-PRODUCT_TOKENS = [
-    ('',        N_('Default')),
-    ('product', N_('Product only')),
-    ('minor',   N_('Product + Minor version')),
-    ('minimal', N_('Product + Minimal version')),
-    ('os',      N_('Product + Platform')),
-    ('full',    N_('Full Server string'))
-]
-
 NOTE_IPV6    = N_('Set to enable the IPv6 support. The OS must support IPv6 for this to work.')
 NOTE_TOKENS  = N_('This option allows to choose how the server identifies itself.')
 NOTE_TIMEOUT = N_('Time interval until the server closes inactive connections.')
+NOTE_TLS     = N_('Which, if any, should be the TLS/SSL backend.')
 
 HELPS = [('config_general',    N_("General Configuration")),
          ('config_quickstart', N_("Configuration Quickstart"))]
@@ -59,7 +53,8 @@ class NetworkWidget (CTK.Container):
 
         self += CTK.RawHTML ("<h2>%s</h2>" %(_('Support')))
         table = CTK.PropsTableAuto (URL_APPLY)
-        table.Add (_('IPv6'), CTK.CheckCfg('server!ipv6', True), _(NOTE_IPV6))
+        table.Add (_('IPv6'),             CTK.CheckCfg('server!ipv6', True), _(NOTE_IPV6))
+        table.Add (_('SSL/TLS back-end'), CTK.ComboCfg('server!tls', Cherokee.modules_available(CRYPTORS)), _(NOTE_TLS))
         self += table
 
         self += CTK.RawHTML ("<h2>%s</h2>" %(_('Network behavior')))
