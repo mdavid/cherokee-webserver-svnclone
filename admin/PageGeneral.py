@@ -37,9 +37,9 @@ PRODUCT_TOKENS = [
     ('full',    N_('Full Server string'))
 ]
 
-NOTE_IPV6   = N_('Set to enable the IPv6 support. The OS must support IPv6 for this to work.')
-NOTE_TOKENS = N_('This option allows to choose how the server identifies itself.')
-
+NOTE_IPV6    = N_('Set to enable the IPv6 support. The OS must support IPv6 for this to work.')
+NOTE_TOKENS  = N_('This option allows to choose how the server identifies itself.')
+NOTE_TIMEOUT = N_('Time interval until the server closes inactive connections.')
 
 
 def apply():
@@ -54,14 +54,15 @@ class NetworkWidget (CTK.Container):
     def __init__ (self):
         CTK.Container.__init__ (self)
 
+        self += CTK.RawHTML ("<h2>%s</h2>" %(_('Support')))
         table = CTK.PropsTableAuto (URL_APPLY)
         table.Add (_('IPv6'), CTK.CheckCfg('server!ipv6', True), NOTE_IPV6)
-        self += CTK.RawHTML ("<h2>%s</h2>" %(_('Support')))
         self += table
 
-        table = CTK.PropsTableAuto (URL_APPLY)
-        table.Add (_('Server Tokens'), CTK.ComboCfg('server!server_tokens', PRODUCT_TOKENS), NOTE_TOKENS)
         self += CTK.RawHTML ("<h2>%s</h2>" %(_('Network behavior')))
+        table = CTK.PropsTableAuto (URL_APPLY)
+        table.Add (_('Timeout (<i>secs</i>)'), CTK.TextCfg('server!timeout'), _(NOTE_TIMEOUT))
+        table.Add (_('Server Tokens'),         CTK.ComboCfg('server!server_tokens', PRODUCT_TOKENS), NOTE_TOKENS)
         self += table
 
 
