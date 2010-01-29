@@ -25,6 +25,26 @@
 import CTK
 import Page
 
+URL_BASE  = '/general'
+URL_APPLY = '/general/apply'
+
+PRODUCT_TOKENS = [
+    ('',        N_('Default')),
+    ('product', N_('Product only')),
+    ('minor',   N_('Product + Minor version')),
+    ('minimal', N_('Product + Minimal version')),
+    ('os',      N_('Product + Platform')),
+    ('full',    N_('Full Server string'))
+]
+
+NOTE_IPV6   = N_('Set to enable the IPv6 support. The OS must support IPv6 for this to work.')
+NOTE_TOKENS = N_('This option allows to choose how the server identifies itself.')
+
+
+
+def apply():
+    return {'ret': 'ok'}
+
 class PortsWidget (CTK.Container):
     def __init__ (self):
         CTK.Container.__init__ (self)
@@ -33,12 +53,21 @@ class PortsWidget (CTK.Container):
 class NetworkWidget (CTK.Container):
     def __init__ (self):
         CTK.Container.__init__ (self)
-        self += CTK.RawHTML ('Network Content')
+
+        table = CTK.PropsTableAuto (URL_APPLY)
+        table.Add (_('IPv6'), CTK.CheckCfg('server!ipv6', True), NOTE_IPV6)
+        self += CTK.RawHTML ("<h2>%s</h2>" %(_('Support')))
+        self += table
+
+        table = CTK.PropsTableAuto (URL_APPLY)
+        table.Add (_('Server Tokens'), CTK.ComboCfg('server!server_tokens', PRODUCT_TOKENS), NOTE_TOKENS)
+        self += CTK.RawHTML ("<h2>%s</h2>" %(_('Network behavior')))
+        self += table
 
 
 class Render():
     def __call__ (self):
-        txt = "<h1>%s</h1>" % (_('General Settings'))
+        txt = "<h1>%s</h1>" %(_('General Settings'))
 
         tabs = CTK.Tab()
         tabs.Add (_('Network'),         NetworkWidget())
@@ -50,5 +79,5 @@ class Render():
 
         return page.Render()
 
-
-CTK.publish ('^/general', Render)
+CTK.publish ('^%s'%(URL_BASE), Render)
+CTK.publish ('^%s'%(URL_APPLY), apply, method="POST")

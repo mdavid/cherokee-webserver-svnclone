@@ -5,8 +5,6 @@ from Table import *
 from Entry import *
 from Form import *
 
-# For gettext
-N_ = lambda x: x
 
 PRODUCT_TOKENS = [
     ('',        N_('Default')),
