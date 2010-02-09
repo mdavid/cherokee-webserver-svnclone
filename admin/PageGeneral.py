@@ -26,6 +26,7 @@ import CTK
 import Page
 import Cherokee
 from consts import *
+from configured import *
 
 URL_BASE  = '/general'
 URL_APPLY = '/general/apply'
@@ -52,24 +53,26 @@ class NetworkWidget (CTK.Container):
     def __init__ (self):
         CTK.Container.__init__ (self)
 
-        table = CTK.PropsTableAuto (URL_APPLY)
+        table = CTK.PropsAuto (URL_APPLY)
         table.Add (_('IPv6'),             CTK.CheckCfg('server!ipv6', True), _(NOTE_IPV6))
         table.Add (_('SSL/TLS back-end'), CTK.ComboCfg('server!tls', Cherokee.modules_available(CRYPTORS)), _(NOTE_TLS))
         self += CTK.RawHTML ("<h2>%s</h2>" %(_('Support')))
         self += table
 
-        table = CTK.PropsTableAuto (URL_APPLY)
+        table = CTK.PropsAuto (URL_APPLY)
         table.Add (_('Timeout (<i>secs</i>)'), CTK.TextCfg('server!timeout'), _(NOTE_TIMEOUT))
         table.Add (_('Server Tokens'),         CTK.ComboCfg('server!server_tokens', PRODUCT_TOKENS), _(NOTE_TOKENS))
         self += CTK.RawHTML ("<h2>%s</h2>" %(_('Network behavior')))
         self += table
 
-        table = CTK.PropsTableAuto (URL_APPLY)
-        table.Add (_('Graphs Type'), CTK.ComboCfg('server!collector', Cherokee.modules_available(COLLECTORS)), _(NOTE_COLLECTORS))
+        modul = CTK.PluginSelector('server!collector', Cherokee.modules_available(COLLECTORS))
+        table = CTK.PropsAuto (URL_APPLY)
+        table.Add (_('Graphs Type'), modul.selector_widget, _(NOTE_COLLECTORS), False)
         self += CTK.RawHTML ("<h2>%s</h2>" %(_('Information Collector')))
         self += table
+        self += modul
 
-        table = CTK.PropsTableAuto (URL_APPLY)
+        table = CTK.PropsAuto (URL_APPLY)
         table.Add (_('Upload Tracking'), CTK.ComboCfg('server!post_track', Cherokee.modules_available(POST_TRACKERS)), _(NOTE_POST_TRACKS))
         self += CTK.RawHTML ("<h2>%s</h2>" %(_('Upload Tracking')))
         self += table
@@ -83,7 +86,7 @@ class PermsWidget (CTK.Container):
     def __init__ (self):
         CTK.Container.__init__ (self)
 
-        table = CTK.PropsTableAuto (URL_APPLY)
+        table = CTK.PropsAuto (URL_APPLY)
         self += CTK.RawHTML ("<h2>%s</h2>" %(_('Execution Permissions')))
         table.Add (_('User'),   CTK.TextCfg('server!user',   True),  _(NOTE_USER))
         table.Add (_('Group'),  CTK.TextCfg('server!group',  True), _(NOTE_GROUP))
@@ -97,7 +100,7 @@ class Render():
         tabs.Add (_('Ports to listen'),    PortsWidget())
         tabs.Add (_('Server Permissions'), PermsWidget())
 
-        page = Page.Base (HELPS)
+        page = Page.Base (_("General"), HELPS)
         page += CTK.RawHTML("<h1>%s</h1>" %(_('General Settings')))
         page += tabs
 

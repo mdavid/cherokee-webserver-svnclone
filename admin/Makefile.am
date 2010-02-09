@@ -33,8 +33,14 @@ adminpy_SCRIPTS = $(admin_scripts)
 
 if INSTALL_ADMIN
 admin_data = \
+theme.html \
 server.py \
-PageIndex.py
+consts.py \
+config_version.py \
+Cherokee.py \
+Page.py \
+PageIndex.py \
+plugins/rrd.py
 endif
 
 adminpy_DATA = $(admin_data)
