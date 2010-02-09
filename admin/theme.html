@@ -3,12 +3,16 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
  <head>
+   <title>%(title)s - Cherokee Admin</title>
 %(head)s
  </head>
  <body%(body_props)s>
- <small>Themed page</small>
- <div class="help">%(helps)s</div>
-%(body)s
- <div align="right"><a href="http://www.cherokee-project.com/">Cherokee</a></div>
+   <div class="help">%(helps)s</div>
+   %(html)s
+
+   <div align="right"><a href="http://www.cherokee-project.com/">Cherokee</a></div>
+
+   <!-- Plase Javascript at the end -->
+   %(js)s
  </body>
 </html>

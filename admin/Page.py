@@ -26,7 +26,7 @@ import os
 import CTK
 
 class Base (CTK.Page):
-    def __init__ (self, helps=None, headers=None):
+    def __init__ (self, title, helps=None, headers=None):
         # Look for the theme file
         srcdir = os.path.dirname (os.path.realpath (__file__))
         theme_file = os.path.join (srcdir, 'theme.html')
@@ -38,6 +38,7 @@ class Base (CTK.Page):
         # Help
         self.helps = helps
         template['helps'] = self._render_helps()
+        template['title'] = title
 
     def _render_helps (self):
         txt = ''
