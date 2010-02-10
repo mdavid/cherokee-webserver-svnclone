@@ -79,6 +79,12 @@ def is_exec_path (value):
         raise ValueError, _('It is not executable')
     return value
 
+def is_exec_file (value):
+    value = is_exec_path (value)
+    if not os.path.isfile(path):
+        raise ValueError, _('Path is not a regular file')
+    return value
+
 def is_extension_list (value):
     re = []
     for p in split_list(value):

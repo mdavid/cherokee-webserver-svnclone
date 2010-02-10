@@ -32,9 +32,6 @@ def apply():
     None
 
 class Plugin_rrd (CTK.Plugin):
-    def apply (self):
-        return {'ret': 'ok'}
-
     def __init__ (self, key):
         CTK.Plugin.__init__ (self, key)
 
@@ -46,6 +43,6 @@ class Plugin_rrd (CTK.Plugin):
 
         # Input Validation
         VALS = [('%s!database_dir'%(key), validations.is_local_dir_exists),
-                ('%s!rrdtool_path'%(key), validations.is_exec_path)]
+                ('%s!rrdtool_path'%(key), validations.is_exec_file)]
 
-        CTK.publish ('^%s'%(URL_APPLY), apply, validation=VALS, method="POST")
+        CTK.publish ('^%s'%(URL_APPLY), self.apply, validation=VALS, method="POST")
