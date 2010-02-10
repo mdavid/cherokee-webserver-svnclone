@@ -29,9 +29,12 @@ NOTE_DB_DIR  = N_("Directory where the RRDtool databases should be written.")
 NOTE_RRDTOOL = N_("Path to the rrdtool binary. By default the server will look in the PATH.")
 
 def apply():
-    return {'ret': 'ok'}
+    None
 
 class Plugin_rrd (CTK.Plugin):
+    def apply (self):
+        return {'ret': 'ok'}
+
     def __init__ (self, key):
         CTK.Plugin.__init__ (self, key)
 
