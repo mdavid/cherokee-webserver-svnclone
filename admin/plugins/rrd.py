@@ -21,6 +21,7 @@
 #
 
 import CTK
+import validations
 
 URL_APPLY = '/plugin/rrd/apply'
 
@@ -34,19 +35,14 @@ class Plugin_rrd (CTK.Plugin):
     def __init__ (self, key):
         CTK.Plugin.__init__ (self, key)
 
+        # GUI
         table = CTK.PropsAuto (URL_APPLY)
         table.Add (_('RRD Database directory'), CTK.TextCfg('%s!database_dir'%(self.key), True), _(NOTE_DB_DIR))
         table.Add (_('Custom rrdtool binary'),  CTK.TextCfg('%s!rrdtool_path'%(self.key), True), _(NOTE_RRDTOOL))
         self += table
 
+        # Input Validation
+        VALS = [('%s!database_dir'%(key), (validations.is_local_dir_exists, 'cfg')),
+                ('%s!rrdtool_path'%(key),  validations.is_exec_path)]
 
-CTK.publish ('^%s'%(URL_APPLY), apply, method="POST")
-
-
-
-
-
-
-
-
-
+        CTK.publish ('^%s'%(URL_APPLY), apply, validation=VALS, method="POST")
