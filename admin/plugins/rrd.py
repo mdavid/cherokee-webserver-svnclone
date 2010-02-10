@@ -28,8 +28,6 @@ URL_APPLY = '/plugin/rrd/apply'
 NOTE_DB_DIR  = N_("Directory where the RRDtool databases should be written.")
 NOTE_RRDTOOL = N_("Path to the rrdtool binary. By default the server will look in the PATH.")
 
-def apply():
-    None
 
 class Plugin_rrd (CTK.Plugin):
     def __init__ (self, key):
