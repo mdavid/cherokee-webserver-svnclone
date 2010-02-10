@@ -42,7 +42,7 @@ class Plugin_rrd (CTK.Plugin):
         self += table
 
         # Input Validation
-        VALS = [('%s!database_dir'%(key), (validations.is_local_dir_exists, 'cfg')),
-                ('%s!rrdtool_path'%(key),  validations.is_exec_path)]
+        VALS = [('%s!database_dir'%(key), validations.is_local_dir_exists),
+                ('%s!rrdtool_path'%(key), validations.is_exec_path)]
 
         CTK.publish ('^%s'%(URL_APPLY), apply, validation=VALS, method="POST")

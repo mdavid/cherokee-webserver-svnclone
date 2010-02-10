@@ -1,3 +1,4 @@
+import CTK
 import string
 import os.path
 from util import split_list
@@ -127,10 +128,10 @@ def is_ipv6 (value):
         raise ValueError, _('Malformed IPv6')
     return value
 
-def is_local_dir_exists (value, cfg, nochroot=False):
+def is_local_dir_exists (value, nochroot=False):
     value = is_path (value)
 
-    chroot = cfg.get_val('server!chroot')
+    chroot = CTK.cfg.get_val('server!chroot')
     if chroot and not nochroot:
         path = os.path.normpath (chroot + os.path.sep + value)
     else:
@@ -144,10 +145,10 @@ def is_local_dir_exists (value, cfg, nochroot=False):
 
     return value
 
-def is_local_file_exists (value, cfg, nochroot=False):
+def is_local_file_exists (value, nochroot=False):
     value = is_path (value)
 
-    chroot = cfg.get_val('server!chroot')
+    chroot = CTK.cfg.get_val('server!chroot')
     if chroot and not nochroot:
         path = os.path.normpath (chroot + os.path.sep + value)
     else:
@@ -161,11 +162,11 @@ def is_local_file_exists (value, cfg, nochroot=False):
 
     return value
 
-def parent_is_dir (value, cfg, nochroot=False):
+def parent_is_dir (value, nochroot=False):
     value = is_path (value)
 
     dirname, filename = os.path.split(value)
-    is_local_dir_exists (dirname, cfg, nochroot)
+    is_local_dir_exists (dirname, nochroot)
 
     return value
 
@@ -280,10 +281,10 @@ def is_url_or_path (value):
 
     raise ValueError, 'Not a URL, nor a path'
 
-def is_dev_null_or_local_dir_exists (value, cfg, nochroot=False):
+def is_dev_null_or_local_dir_exists (value, nochroot=False):
     if value == '/dev/null':
         return value
-    return is_local_dir_exists (value, cfg, nochroot)
+    return is_local_dir_exists (value, nochroot)
 
 def is_information_source (value):
     # /unix/path
@@ -312,9 +313,9 @@ def is_time (value):
 
     return value
 
-def is_new_host (value, cfg, nochroot):
-    for h in cfg.keys('vserver'):
-        if value == cfg.get_val('vserver!%s!nick'%(h)):
+def is_new_host (value, nochroot):
+    for h in CTK.cfg.keys('vserver'):
+        if value == CTK.cfg.get_val('vserver!%s!nick'%(h)):
             raise ValueError, _('Virtual host nick is already being used.')
     return value
 
