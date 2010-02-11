@@ -26,22 +26,14 @@ import os
 import CTK
 
 class Base (CTK.Page):
-    def __init__ (self, title, helps=None, headers=None):
+    def __init__ (self, title, headers=None, **kwargs):
         # Look for the theme file
         srcdir = os.path.dirname (os.path.realpath (__file__))
         theme_file = os.path.join (srcdir, 'theme.html')
 
-        # Parent's constructor
+        # Set up the template
         template = CTK.Template (filename = theme_file)
-        CTK.Page.__init__ (self, template, headers)
-
-        # Help
-        self.helps = helps
-        template['helps'] = self._render_helps()
         template['title'] = title
 
-    def _render_helps (self):
-        txt = ''
-        for ref, name in self.helps:
-            txt += '<div class="help_entry"><a href="/help/%s.html">%s</a></div>' %(ref, name)
-        return txt
+        # Parent's constructor
+        CTK.Page.__init__ (self, template, headers, **kwargs)

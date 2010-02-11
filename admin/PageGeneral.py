@@ -65,17 +65,19 @@ class NetworkWidget (CTK.Container):
         self += CTK.RawHTML ("<h2>%s</h2>" %(_('Network behavior')))
         self += table
 
-        modul = CTK.PluginSelector('server!collector', Cherokee.modules_available(COLLECTORS))
         table = CTK.PropsAuto (URL_APPLY)
+        modul = CTK.PluginSelector('server!collector', Cherokee.modules_available(COLLECTORS))
         table.Add (_('Graphs Type'), modul.selector_widget, _(NOTE_COLLECTORS), False)
         self += CTK.RawHTML ("<h2>%s</h2>" %(_('Information Collector')))
         self += table
         self += modul
 
         table = CTK.PropsAuto (URL_APPLY)
-        table.Add (_('Upload Tracking'), CTK.ComboCfg('server!post_track', Cherokee.modules_available(POST_TRACKERS)), _(NOTE_POST_TRACKS))
+        modul = CTK.PluginSelector('server!post_track', Cherokee.modules_available(POST_TRACKERS))
+        table.Add (_('Upload Tracking'), modul.selector_widget, _(NOTE_POST_TRACKS), False)
         self += CTK.RawHTML ("<h2>%s</h2>" %(_('Upload Tracking')))
         self += table
+        self += modul
 
 class PortsWidget (CTK.Container):
     def __init__ (self):
@@ -100,7 +102,7 @@ class Render():
         tabs.Add (_('Ports to listen'),    PortsWidget())
         tabs.Add (_('Server Permissions'), PermsWidget())
 
-        page = Page.Base (_("General"), HELPS)
+        page = Page.Base (_("General"), helps=HELPS)
         page += CTK.RawHTML("<h1>%s</h1>" %(_('General Settings')))
         page += tabs
 
