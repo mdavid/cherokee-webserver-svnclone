@@ -24,6 +24,9 @@ import CTK
 import validations
 
 URL_APPLY = '/plugin/rrd/apply'
+HELPS     = [('prueba1', 'RRD Ayuda Primera'),
+             ('prueba2', 'RRD Ayuda Segunda'),
+             ('prueba3', 'RRD Ayuda Tercera')]
 
 NOTE_DB_DIR  = N_("Directory where the RRDtool databases should be written.")
 NOTE_RRDTOOL = N_("Path to the rrdtool binary. By default the server will look in the PATH.")
