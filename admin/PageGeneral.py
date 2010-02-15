@@ -31,6 +31,7 @@ from configured import *
 URL_BASE  = '/general'
 URL_APPLY = '/general/apply'
 
+NOTE_ADD_PORT    = N_('Defines a port that the server will listen to')
 NOTE_IPV6        = N_('Set to enable the IPv6 support. The OS must support IPv6 for this to work.')
 NOTE_TOKENS      = N_('This option allows to choose how the server identifies itself.')
 NOTE_TIMEOUT     = N_('Time interval until the server closes inactive connections.')
@@ -46,6 +47,18 @@ HELPS = [('config_general',    N_("General Configuration")),
 
 
 def apply():
+    # Add a new port
+    port = CTK.post.pop('new_port')
+    if port:
+        # Look for the next entry
+        pre = CTK.cfg.get_next_entry_prefix ('server!bind')
+        CTK.cfg['%s!port'%(pre)] = port
+
+    # Modifications
+    for k in CTK.post:
+        print "->%s<-"%(k)
+        CTK.cfg[k] = CTK.post[k]
+
     return {'ret': 'ok'}
 
 
@@ -79,10 +92,58 @@ class NetworkWidget (CTK.Container):
         self += table
         self += modul
 
+
+class PortsTable (CTK.Table):
+    def __init__ (self, refreshable, **kwargs):
+        CTK.Table.__init__(self)
+
+        has_tls = CTK.cfg.get_val('server!tls')
+
+        # Header
+        self[(1,1)] = [CTK.RawHTML(x) for x in (_('Port'), _('Bind to'), _('TLS'), '')]
+        self.set_header (row=True, num=1)
+
+        # Entries
+        n = 2
+        for k in CTK.cfg.keys('server!bind'):
+            pre = 'server!bind!%s'%(k)
+
+            port   = CTK.TextCfg ('%s!port'%(pre),      False, {'size': 8})
+            listen = CTK.TextCfg ('%s!interface'%(pre), True,  {'size': 45})
+            tls    = CTK.CheckCfg('%s!tls'%(pre),       False, {'disabled': not has_tls})
+            delete = CTK.Image ({'src': '/CTK/images/del.png', 'alt': 'Del'})
+
+            from CTK.Refreshable import REFRESHABLE_UPDATE_JS as update_js
+
+            delete.bind('click', CTK.JS.Ajax (URL_APPLY,
+                                              data     = {pre: ''},
+                                              complete = update_js %({'id': refreshable.id,
+                                                                      'url': refreshable.url})))
+            self[(n,1)] = [port, listen, tls, delete]
+            n += 1
+
 class PortsWidget (CTK.Container):
     def __init__ (self):
         CTK.Container.__init__ (self)
-        self += CTK.RawHTML ('Ports Content')
+
+        # List ports
+        refresh = CTK.Refreshable()
+        refresh.register (lambda: PortsTable(refresh).Render())
+
+        self += CTK.RawHTML ("<h2>%s</h2>" % (_('Listening to ports')))
+        self += refresh
+
+        # Add new entry
+        new_field  = CTK.TextCfg('new_port')
+        new_submit = CTK.Submitter (URL_APPLY)
+        new_submit += new_field
+
+        new_submit.bind ('submit_success', refresh.JS_to_refresh())
+        new_submit.bind ('submit_success', new_field.JS_to_clean())
+
+        table = CTK.PropsAuto (URL_APPLY)
+        table.Add (_('Add new port'), new_submit, _(NOTE_ADD_PORT), use_submitter=False)
+        self += table
 
 class PermsWidget (CTK.Container):
     def __init__ (self):
