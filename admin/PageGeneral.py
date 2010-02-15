@@ -25,6 +25,8 @@
 import CTK
 import Page
 import Cherokee
+import validations
+
 from consts import *
 from configured import *
 
@@ -45,6 +47,16 @@ NOTE_CHROOT      = N_('Jail the server inside the directory. Don\'t use it as th
 HELPS = [('config_general',    N_("General Configuration")),
          ('config_quickstart', N_("Configuration Quickstart"))]
 
+VALIDATIONS = [
+    ("server!ipv6",              validations.is_boolean),
+    ("server!timeout",           validations.is_number),
+    ("server!bind!.*!port",      validations.is_tcp_port),
+    ("server!bind!.*!interface", validations.is_ip),
+    ("server!bind!.*!tls",       validations.is_boolean),
+    ("server!chroot",            validations.is_local_dir_exists),
+    ("new_port",                 validations.is_tcp_port)
+]
+
 
 def apply():
     # Add a new port
@@ -56,7 +68,6 @@ def apply():
 
     # Modifications
     for k in CTK.post:
-        print "->%s<-"%(k)
         CTK.cfg[k] = CTK.post[k]
 
     return {'ret': 'ok'}
@@ -170,4 +181,4 @@ class Render():
         return page.Render()
 
 CTK.publish ('^%s'%(URL_BASE), Render)
-CTK.publish ('^%s'%(URL_APPLY), apply, method="POST")
+CTK.publish ('^%s'%(URL_APPLY), apply, validation=VALIDATIONS, method="POST")
