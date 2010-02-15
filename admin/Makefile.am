@@ -40,7 +40,8 @@ config_version.py \
 Cherokee.py \
 Page.py \
 PageIndex.py \
-plugins/rrd.py
+plugins/rrd.py \
+plugins/post_track.py
 endif
 
 adminpy_DATA = $(admin_data)
