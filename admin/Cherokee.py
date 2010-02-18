@@ -48,6 +48,9 @@ class PID:
         self.pid       = None
         self._pid_file = None
 
+        # Initialize
+        self.refresh()
+
     def refresh (self):
         # It might be alive
         if self.pid and _pid_is_alive (self.pid):
@@ -55,26 +58,35 @@ class PID:
 
         # Need a PID
         self._read_pid_file()
-        if not self._pid:
+        if not self.pid:
             self._figure_pid()
 
     def _read_pid_file (self):
         # Check the configuration
         self._pid_file = CTK.cfg.get_val("server!pid_file")
+        if not self._pid_file:
+            return
 
         # Read the file
         try:
-            with open(self._pid_file, "r") as f:
-                self.pid = int(f.readline())
-        except IOError: pass
+            f = open(self._pid_file, 'r')
+        except: return
+
+        self.pid = int(f.readline())
+
+        try: f.close()
+        except: pass
 
     def _figure_pid (self):
         # Execture ps
         try:
-            with os.popen ("ps aux") as cmd:
-                ps = cmd.read()
-        except:
-            return
+            f = os.popen ("ps aux")
+        except: return
+
+        ps = f.read()
+
+        try: f.close()
+        except: pass
 
         # Try to find the Cherokee process
         for l in ps.split("\n"):
@@ -84,25 +96,16 @@ class PID:
 
 
 class Server:
-    def __init__ (self):
-        None
-#        self.pid = PID()
-#        self.pid.refresh()
-
     def is_alive (self):
         return _pid_is_alive(pid.pid)
-#        return __pid_is_alive(self.pid.pid)
 
     def stop (self):
-#        pid = pid.pid
-#       pid = self.pid.pid
         if not pid.pid: return
 
         # Kill the process
         return _pid_kill(pid.pid)
 
     def restart (self, graceful=True):
-#        pid = self.pid.pid
         if not pid.pid: return
 
         try:
@@ -153,6 +156,7 @@ class Server:
 
         time.sleep (LAUNCH_DELAY)
         return None
+
 
 class Modules:
     def __init__ (self):

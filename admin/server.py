@@ -37,26 +37,12 @@ import CTK
 from configured import *
 
 
-def i18n_init():
-    # Gettext initialization
+def init (scgi_port, cfg_file):
+    # Translation support
     gettext.install('cherokee')
 
-    # Register N_
     import __builtin__
     __builtin__.__dict__['N_'] = lambda x: x
-
-
-def main():
-    # Translation support
-    i18n_init()
-
-    # Read the arguments
-    try:
-        scgi_port = sys.argv[1]
-        cfg_file  = sys.argv[2]
-    except:
-        print _("Incorrect parameters: PORT CONFIG_FILE")
-        raise SystemExit
 
     # Try to avoid zombie processes
     if hasattr(signal, "SIGCHLD"):
@@ -79,6 +65,8 @@ def main():
     CTK.cfg.file = cfg_file
     CTK.cfg.load()
 
+
+def run (scgi_port):
     # Run the server
     if scgi_port.isdigit():
         CTK.run (port=8000)
@@ -93,13 +81,22 @@ def main():
             pass
         CTK.run (unix_socket=scgi_port)
 
+
 if __name__ == "__main__":
-    # Init the translation system
-    i18n_init()
+    # Read the arguments
+    try:
+        scgi_port = sys.argv[1]
+        cfg_file  = sys.argv[2]
+    except:
+        print _("Incorrect parameters: PORT CONFIG_FILE")
+        raise SystemExit
+
+    # Init
+    init (scgi_port, cfg_file)
 
     # Import the Pages
     import PageIndex
     import PageGeneral
 
     # Run
-    main()
+    run (scgi_port)
