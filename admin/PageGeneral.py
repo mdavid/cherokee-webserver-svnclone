@@ -172,7 +172,7 @@ class Render():
         tabs = CTK.Tab()
         tabs.Add (_('Network'),            NetworkWidget())
         tabs.Add (_('Ports to listen'),    PortsWidget())
-        tabs.Add (_('Server Permissions'), PermsWidget())
+        tabs.Add (_('Permissions'), PermsWidget())
 
         page = Page.Base (_("General"), helps=HELPS)
         page += CTK.RawHTML("<h1>%s</h1>" %(_('General Settings')))
