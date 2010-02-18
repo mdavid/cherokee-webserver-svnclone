@@ -56,6 +56,8 @@ class PID:
         if self.pid and _pid_is_alive (self.pid):
             return
 
+        self.pid = None
+
         # Need a PID
         self._read_pid_file()
         if not self.pid:
