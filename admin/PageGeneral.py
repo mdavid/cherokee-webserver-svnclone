@@ -79,7 +79,7 @@ class NetworkWidget (CTK.Container):
 
         table = CTK.PropsAuto (URL_APPLY)
         table.Add (_('IPv6'),             CTK.CheckCfg('server!ipv6', True), _(NOTE_IPV6))
-        table.Add (_('SSL/TLS back-end'), CTK.ComboCfg('server!tls', Cherokee.modules_available(CRYPTORS)), _(NOTE_TLS))
+        table.Add (_('SSL/TLS back-end'), CTK.ComboCfg('server!tls', Cherokee.modules.filter_available(CRYPTORS)), _(NOTE_TLS))
         self += CTK.RawHTML ("<h2>%s</h2>" %(_('Support')))
         self += CTK.Indenter(table)
 
@@ -90,14 +90,14 @@ class NetworkWidget (CTK.Container):
         self += CTK.Indenter(table)
 
         table = CTK.PropsAuto (URL_APPLY)
-        modul = CTK.PluginSelector('server!collector', Cherokee.modules_available(COLLECTORS))
+        modul = CTK.PluginSelector('server!collector', Cherokee.modules.filter_available(COLLECTORS))
         table.Add (_('Graphs Type'), modul.selector_widget, _(NOTE_COLLECTORS), False)
         self += CTK.RawHTML ("<h2>%s</h2>" %(_('Information Collector')))
         self += CTK.Indenter(table)
         self += CTK.Indenter(modul)
 
         table = CTK.PropsAuto (URL_APPLY)
-        modul = CTK.PluginSelector('server!post_track', Cherokee.modules_available(POST_TRACKERS))
+        modul = CTK.PluginSelector('server!post_track', Cherokee.modules.filter_available(POST_TRACKERS))
         table.Add (_('Upload Tracking'), modul.selector_widget, _(NOTE_POST_TRACKS), False)
         self += CTK.RawHTML ("<h2>%s</h2>" %(_('Upload Tracking')))
         self += CTK.Indenter(table)
