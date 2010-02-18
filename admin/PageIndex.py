@@ -26,23 +26,39 @@ import CTK
 import Page
 import Cherokee
 
+from configured import *
+
 class ServerInfo (CTK.Table):
     def __init__ (self):
         CTK.Table.__init__ (self)
 
-        self.add ('Status', ['Stopped', 'Running'][Cherokee.server.is_alive()])
-        self.add ('PID',    Cherokee.pid.pid)
+        self.add (_('Status'),      ['Stopped', 'Running'][Cherokee.server.is_alive()])
+        self.add (_('PID'),         Cherokee.pid.pid)
+        self.add (_('Version'),     VERSION)
+        self.add (_("Default WWW"), self._get_droot())
+        self.add (_("Prefix"),      PREFIX)
 
     def add (self, title, string):
         self += [CTK.RawHTML(title), CTK.RawHTML(str(string))]
 
+    def _get_droot (self):
+        tmp = [int(x) for x in CTK.cfg.keys('vserver')]
+        tmp.sort()
+
+        if not tmp:
+            return WWWROOT
+
+        return CTK.cfg.get_val ('vserver!%d!document_root'%(tmp[0]), WWWROOT)
+
+
 class Render():
-    def __init__ (self):
+    def __call__ (self):
+        Cherokee.pid.refresh()
+
         self.page = Page.Base(_("Index"))
         self.page += CTK.RawHTML (_('<h1>Welcome to Cherokee-Admin</h1>'))
         self.page += ServerInfo()
 
-    def __call__ (self):
         return self.page.Render()
 
 
