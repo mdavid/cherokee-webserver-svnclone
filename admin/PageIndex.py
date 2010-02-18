@@ -23,13 +23,27 @@
 #
 
 import CTK
+import Page
+import Cherokee
+
+class ServerInfo (CTK.Table):
+    def __init__ (self):
+        CTK.Table.__init__ (self)
+
+        self.add ('Status', ['Stopped', 'Running'][Cherokee.server.is_alive()])
+        self.add ('PID',    Cherokee.pid.pid)
+
+    def add (self, title, string):
+        self += [CTK.RawHTML(title), CTK.RawHTML(str(string))]
 
 class Render():
     def __init__ (self):
-        None
+        self.page = Page.Base(_("Index"))
+        self.page += CTK.RawHTML (_('<h1>Welcome to Cherokee-Admin</h1>'))
+        self.page += ServerInfo()
 
     def __call__ (self):
-        return "Config version: %s" %(CTK.cfg.get_val('config!version'))
+        return self.page.Render()
 
 
 CTK.publish ('/', Render)

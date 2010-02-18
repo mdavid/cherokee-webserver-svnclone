@@ -22,100 +22,105 @@
 # 02110-1301, USA.
 #
 
+import CTK
+
+# Python
 import os
-import sys
 import time
-import stat
 import signal
 
-from select import select
 from subprocess import *
+from select import select
 
+# Cheroke-admin
 from consts import *
 from configured import *
 from config_version import *
 
-DEFAULT_DELAY    = 2
-WAIT_SERVER_STOP = 10
-PID_TIMEOUT      = 2
-DEFAULT_PATH     = ['/usr/local/sbin', '/usr/local/bin',
-                    '/usr/sbin', '/usr/bin', '/sbin', '/bin']
 
-DEFAULT_PID_LOCATIONS = [
-    '/var/run/cherokee.pid',
-    os.path.join (PREFIX, 'var/run/cherokee.pid')
-]
-
-CHEROKEE_MIN_DEFAULT_CONFIG = """# Default configuration
-server!pid_file = %s
-vserver!1!nick = default
-vserver!1!document_root = /tmp
-vserver!1!rule!1!match = default
-vserver!1!rule!1!handler = common
-""" % (DEFAULT_PID_LOCATIONS[0])
-
-# Cherokee Management 'factory':
-#
-
-cherokee_management = None
-
-def cherokee_management_get (cfg):
-    global cherokee_management
-
-    # Fast path
-    if cherokee_management:
-        return cherokee_management
-
-    # Needs to create a new object
-    cherokee_management = CherokeeManagement(cfg)
-    return cherokee_management
-
-def cherokee_management_reset ():
-    global cherokee_management
-    cherokee_management = None
+DEFAULT_PATH = ['/usr/local/sbin', '/usr/local/bin', '/usr/sbin', '/usr/bin', '/sbin', '/bin']
+LAUNCH_DELAY = 2
 
 
-# Cherokee Management class
-#
 
-class CherokeeManagement:
-    def __init__ (self, cfg):
-        self._cfg           = cfg
-        self._pid_prev      = None
-        self._pid_prev_time = 0
-        self._pid_mtime     = None
-        self._is_child      = False
+class PID:
+    def __init__ (self):
+        self.pid       = None
+        self._pid_file = None
 
-    # Public
-    #
-
-    def save (self, restart=None):
-        self._cfg.save()
-
-        if not restart or restart.lower() == 'no':
+    def refresh (self):
+        # It might be alive
+        if self.pid and _pid_is_alive (self.pid):
             return
-        if restart.lower() == 'graceful':
-            self._restart (graceful=True)
-        else:
-            self._restart()
+
+        # Need a PID
+        self._read_pid_file()
+        if not self._pid:
+            self._figure_pid()
+
+    def _read_pid_file (self):
+        # Check the configuration
+        self._pid_file = CTK.cfg.get_val("server!pid_file")
+
+        # Read the file
+        try:
+            with open(self._pid_file, "r") as f:
+                self.pid = int(f.readline())
+        except IOError: pass
+
+    def _figure_pid (self):
+        # Execture ps
+        try:
+            with os.popen ("ps aux") as cmd:
+                ps = cmd.read()
+        except:
+            return
+
+        # Try to find the Cherokee process
+        for l in ps.split("\n"):
+            if "cherokee " in l and "-C %s"%(CTK.cfg.file) in l:
+                pid = filter (lambda x: x.isdigit(), l.split())[0]
+                self.pid = int(pid)
+
+
+class Server:
+    def __init__ (self):
+        None
+#        self.pid = PID()
+#        self.pid.refresh()
 
     def is_alive (self):
-        pid = self._get_pid()
-        if not pid:
-            return False
+        return _pid_is_alive(pid.pid)
+#        return __pid_is_alive(self.pid.pid)
 
-        return is_PID_alive (pid)
+    def stop (self):
+#        pid = pid.pid
+#       pid = self.pid.pid
+        if not pid.pid: return
+
+        # Kill the process
+        return _pid_kill(pid.pid)
+
+    def restart (self, graceful=True):
+#        pid = self.pid.pid
+        if not pid.pid: return
+
+        try:
+            os.kill (pid.pid, (signal.SIGUSR1,signal.SIGHUP)[graceful])
+        except:
+            pass
 
     def launch (self):
         def daemonize():
             os.setsid()
 
-        # Ensure the a minimum path is set
+        # Ensure the a minimum $PATH is set
         environ = os.environ.copy()
         if not "PATH" in environ:
             environ["PATH"] = ':'.join(DEFAULT_PATH)
 
-        p = Popen ([CHEROKEE_SERVER, '--admin_child', '-C', self._cfg.file],
+        # Launch the process
+        p = Popen ([CHEROKEE_SERVER, '--admin_child', '-C', CTK.cfg.file],
                    stdout=PIPE, stderr=PIPE, env=environ,
                    preexec_fn=daemonize, close_fds=True)
 
@@ -123,6 +128,7 @@ class CherokeeManagement:
         stdout_fd, stderr_fd = stdout_f.fileno(), stderr_f.fileno()
         stdout,    stderr    = '', ''
 
+        # Check the first few lines of the output
         while True:
             r,w,e = select([stdout_fd, stderr_fd], [], [stdout_fd, stderr_fd], 1)
 
@@ -138,247 +144,103 @@ class CherokeeManagement:
             if nl != -1:
                 for e in ["{'type': ", 'ERROR', '(error) ', '(critical) ']:
                     if e in stderr:
-                        self.__stop_process (p.pid)
+                        _pid_kill (p.pid)
                         return stderr
                 stderr = stderr[nl+1:]
 
             if stdout.count('\n') > 1:
                 break
 
-        self._pid_prev = p.pid
-        self._is_child = True
-        time.sleep (DEFAULT_DELAY)
+        time.sleep (LAUNCH_DELAY)
         return None
 
-    def stop (self):
-        # Stop Cherokee Guardian
-        pid = self._get_pid()
-
-        self.__stop_process (pid)
-        self._is_child = False
-
-    def create_config (self, file, template_file):
-        if os.path.exists (file):
-            return True
-
-        dirname = os.path.dirname(file)
-        if not os.path.exists (dirname):
-            try:
-                os.mkdir (dirname)
-            except:
-                return False
-
-        content = "config!version = %s\n" %(config_version_get_current())
-
-        conf_sample = os.path.join(CHEROKEE_ADMINDIR, template_file)
-        if os.path.exists (conf_sample):
-            content += open(conf_sample, 'r').read()
-        else:
-            content += CHEROKEE_MIN_DEFAULT_CONFIG
-
+class Modules:
+    def __init__ (self):
+        # Get server info
         try:
-            f = open(file, 'w+')
-            f.write (content)
-            f.close()
+            f = os.popen ("%s -i" % (CHEROKEE_WORKER))
+            self._server_info = f.read()
         except:
-            return False
+            self._server_info = ''
 
-        return True
-
-    # Protected
-    #
-    def _get_pid (self):
-        # Read the PID file
-        pid_file = self._cfg.get_val("server!pid_file")
-        if pid_file:
-            try:
-                s = os.stat(pid_file)
-                mtime = s[stat.ST_MTIME]
-            except:
-                mtime = None
-
-            if (mtime and
-                mtime != self._pid_mtime):
-                self._pid_prev  = self.__read_pid_file (pid_file)
-                self._pid_mtime = mtime
-
-            return self._pid_prev
-
-        # Previous PID may work
-        now = time.time()
-        if ((self._pid_prev_time and self._pid_prev) and
-            (self._pid_prev_time + PID_TIMEOUT > now)):
-            return self._pid_prev
-
-        # Try to figure the PID
-        pid = self.__try_to_figure_pid()
-        if pid:
-            self._pid_prev      = pid
-            self._pid_prev_time = now
-            return self._pid_prev
-
-        return self._pid_prev
-
-    def _restart (self, graceful=False):
-        pid = self._get_pid()
-        if not pid:
-            return
-
-        try:
-            if graceful:
-                os.kill (pid, signal.SIGHUP)
-            else:
-                os.kill (pid, signal.SIGUSR1)
-        except:
-            pass
-
-    # Private
-    #
-    def __try_to_figure_pid (self):
-        try:
-            f  = os.popen ("ps aux")
-            ps = f.read()
-        except:
-            return None
-
-        try:
-            f.close()
-        except: pass
-
-        for l in ps.split("\n"):
-            if "cherokee " in l and "-C %s"%(self._cfg.file) in l:
-                pid = filter (lambda x: x.isdigit(), l.split())[0]
-                return int(pid)
-        return None
-
-    def __read_pid_file (self, file):
-        if not os.access (file, os.R_OK):
-            return
-        f = open (file, "r")
-        try:
-            pid = int(f.readline())
-        except:
-            return None
         try: f.close()
         except: pass
-        return pid
 
-    def __stop_process (self, pid):
-        if not pid:
-            return
+    def get_info_section (self, filter):
+        filter_string = " %s: " % (filter)
 
+        for line in self._server_info.split("\n"):
+            if line.startswith (filter_string):
+                line = line.replace (filter_string, "")
+                return line.split(" ")
+        return []
+
+    def has_plugin (self, name):
         try:
-            os.kill (pid, signal.SIGTERM)
-            self.__wait_process (pid)
+            mods = filter(lambda x: name in x, os.listdir(CHEROKEE_PLUGINDIR))
+            if len(mods) >= 1:
+                return True
         except:
             pass
 
-    def __wait_process (self, pid):
-        if self._is_child:
-            try: os.waitpid (pid, 0)
-            except: pass
-        else:
-            retries = 0
-            while is_PID_alive (pid) and (retries < WAIT_SERVER_STOP):
-                time.sleep (1)
-                retries += 1
+        return name in self.get_info_section("Built-in")
 
-def is_PID_alive (pid):
+    def has_polling_method (self, name):
+        return name in self.get_info_section("Polling methods")
+
+    def filter_available (self, module_list):
+        new_module_list = []
+
+        for entry in module_list:
+            assert (type(entry) == tuple)
+            assert (len(entry) == 2)
+            plugin, name = entry
+
+            if (not len(plugin) or
+                self.has_plugin (plugin)):
+                new_module_list.append(entry)
+
+        return new_module_list
+
+
+#
+# Globals
+#
+pid     = PID()
+server  = Server()
+modules = Modules()
+
+
+#
+# Helper functions
+#
+def _pid_is_alive (pid):
     if not pid:
         return False
 
-    if sys.platform.startswith('linux') or \
-       sys.platform.startswith('sunos') or \
-       sys.platform.startswith('irix'):
-        return os.path.exists('/proc/%s'%(pid))
-
-    elif sys.platform == 'darwin' or \
-         "bsd" in sys.platform.lower():
-        f = os.popen('/bin/ps -p %s'%(pid))
-        alive = len(f.readlines()) >= 2
-        try:
-            f.close()
-        except: pass
-        return alive
-
-    elif sys.platform == 'win32':
-        None
-
-    raise 'TODO'
-
-
-#
-# Plug-in checking
-#
-
-_server_info = None
-
-def cherokee_get_server_info ():
-    global _server_info
-
-    if _server_info == None:
-        try:
-            f = os.popen ("%s -i" % (CHEROKEE_WORKER))
-        except:
-            msg = _("ERROR: Couldn't execute '%s -i'")
-            print msg % (CHEROKEE_WORKER)
-
-        _server_info = f.read()
-
-        try:
-            f.close()
-        except: pass
-
-    return _server_info
-
-
-_built_in_lists = {}
-
-def cherokee_build_info_has (filter, module):
-    # Let's see whether it's built-in
-    global _built_in_lists
-
-    if not _built_in_lists.has_key(filter):
-        _built_in_lists[filter] = {}
-
-        cont = cherokee_get_server_info()
-
-        try:
-            filter_string = " %s: " % (filter)
-            for l in cont.split("\n"):
-                if l.startswith(filter_string):
-                    line = l.replace (filter_string, "")
-                    _built_in_lists[filter] = line.split(" ")
-                    break
-        except:
-            pass
-
-    return module in _built_in_lists[filter]
-
-def cherokee_has_plugin (module):
-    # Check for the dynamic plug-in
     try:
-        mods = filter(lambda x: module in x, os.listdir(CHEROKEE_PLUGINDIR))
-        if len(mods) >= 1:
-            return True
+        os.kill (pid, 0)
+    except OSError:
+        return False
+
+    return True
+
+def _pid_kill (pid):
+    # Kill it
+    try:
+        os.kill (pid, signal.SIGTERM)
     except:
-        pass
+        return not _pid_is_alive(pid)
 
-    return cherokee_build_info_has ("Built-in", module)
+    # Ensure it died
+    retries = 3
+    while retries and _pid_is_alive(pid):
+        try:
+            os.waitpid (pid, 0)
+            return True
+        except OSError:
+            time.sleep(1)
+            retries -= 1
 
-def cherokee_has_polling_method (module):
-    return cherokee_build_info_has ("Polling methods", module)
-
-def modules_available (module_list):
-    new_module_list = []
-
-    for entry in module_list:
-        assert (type(entry) == tuple)
-        assert (len(entry) == 2)
-        plugin, name = entry
-
-        if not len(plugin) or \
-            cherokee_has_plugin (plugin):
-            new_module_list.append(entry)
-
-    return new_module_list
+    # Did not succeed
+    return False
