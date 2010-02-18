@@ -26,17 +26,30 @@ import CTK
 import Page
 import Cherokee
 
+import os
+import time
+
 from configured import *
+
+BETA_TESTER_NOTICE = N_("""
+<h3>Beta testing</h3> <p>Individuals like yourself who download and
+test the latest developer snapshots of Cherokee Web Server help us to
+create the highest quality product. For that, we thank you.</p>
+""")
+
 
 class ServerInfo (CTK.Table):
     def __init__ (self):
         CTK.Table.__init__ (self)
+        self.id = "server_info_table"
 
-        self.add (_('Status'),      ['Stopped', 'Running'][Cherokee.server.is_alive()])
-        self.add (_('PID'),         Cherokee.pid.pid)
-        self.add (_('Version'),     VERSION)
-        self.add (_("Default WWW"), self._get_droot())
-        self.add (_("Prefix"),      PREFIX)
+        self.add (_('Status'),             ['Stopped', 'Running'][Cherokee.server.is_alive()])
+        self.add (_('PID'),                Cherokee.pid.pid or _("Not running"))
+        self.add (_('Version'),            VERSION)
+        self.add (_("Default WWW"),        self._get_droot())
+        self.add (_("Prefix"),             PREFIX)
+        self.add (_("Configuration File"), CTK.cfg.file or _("Not found"))
+        self.add (_("Modified"),           self._get_cfg_ctime())
 
     def add (self, title, string):
         self += [CTK.RawHTML(title), CTK.RawHTML(str(string))]
@@ -50,13 +63,23 @@ class ServerInfo (CTK.Table):
 
         return CTK.cfg.get_val ('vserver!%d!document_root'%(tmp[0]), WWWROOT)
 
+    def _get_cfg_ctime (self):
+        info = os.stat(CTK.cfg.file)
+        return time.ctime(info.st_ctime)
+
 
 class Render():
     def __call__ (self):
         Cherokee.pid.refresh()
 
-        self.page = Page.Base(_("Index"))
-        self.page += CTK.RawHTML (_('<h1>Welcome to Cherokee-Admin</h1>'))
+        self.page = Page.Base(_('Welcome to Cherokee Admin'))
+        self.page += CTK.RawHTML ("<h1>%s</h1>"% _('Welcome to Cherokee Admin'))
+
+        if 'b' in VERSION:
+            notice  = CTK.Notice()
+            notice += CTK.RawHTML(_(BETA_TESTER_NOTICE))
+            self.page += notice
+
         self.page += ServerInfo()
 
         return self.page.Render()
