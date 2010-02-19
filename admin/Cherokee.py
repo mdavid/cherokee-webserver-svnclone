@@ -27,6 +27,7 @@ import CTK
 # Python
 import os
 import time
+import errno
 import signal
 
 from subprocess import *
@@ -240,11 +241,13 @@ def _pid_kill (pid):
 
     # Ensure it died
     retries = 3
-    while retries and _pid_is_alive(pid):
+    while retries:
         try:
             os.waitpid (pid, 0)
             return True
-        except OSError:
+        except OSError, e:
+            if e[0] == errno.ECHILD:
+                return True
             time.sleep(1)
             retries -= 1
 
