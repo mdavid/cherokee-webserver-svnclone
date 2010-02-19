@@ -167,8 +167,12 @@ class Render():
         tabs.Add (_('Special Files'), SpecialFilesWidget())
         tabs.Add (_('TLS'),           TLSWidget())
 
+        notice = CTK.Notice('warning')
+        notice += CTK.RawHTML(WARNING)
+
         page = Page.Base(_('Advanced'), helps=HELPS)
-        page += CTK.RawHTML("<h1>%s</h1>" %(_('General Settings')))
+        page += CTK.RawHTML("<h1>%s</h1>" %(_('Advanced configuration')))
+        page += notice
         page += tabs
 
         return page.Render()
