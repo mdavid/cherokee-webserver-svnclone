@@ -161,7 +161,7 @@ class Server:
         return None
 
 
-class Modules:
+class Support:
     def __init__ (self):
         # Get server info
         try:
@@ -195,6 +195,15 @@ class Modules:
     def has_polling_method (self, name):
         return name in self.get_info_section("Polling methods")
 
+    def filter_polling_methods (self, methods_list):
+        polling_methods = []
+
+        for name, desc in methods_list:
+            if not name or self.has_polling_method(name):
+                polling_methods.append((name, desc))
+
+        return polling_methods
+
     def filter_available (self, module_list):
         new_module_list = []
 
@@ -215,7 +224,7 @@ class Modules:
 #
 pid     = PID()
 server  = Server()
-modules = Modules()
+support = Support()
 
 
 #

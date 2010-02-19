@@ -97,6 +97,7 @@ if __name__ == "__main__":
     # Import the Pages
     import PageIndex
     import PageGeneral
+    import PageAdvanced
 
     # Run
     run (scgi_port)
