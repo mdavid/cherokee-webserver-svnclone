@@ -35,10 +35,10 @@ URL_APPLY = '/advanced/apply'
 
 VALIDATIONS = [
     ("server!fdlimit",                validations.is_positive_int),
-    ("server!pid_file",              (validations.parent_is_dir, 'cfg')),
+    ("server!pid_file",               validations.parent_is_dir),
     ("server!sendfile_min",           validations.is_positive_int),
     ("server!sendfile_max",           validations.is_positive_int),
-    ('server!panic_action',          (validations.is_local_file_exists, 'cfg')),
+    ('server!panic_action',           validations.is_local_file_exists),
     ('server!listen_queue',           validations.is_positive_int),
     ('server!max_connection_reuse',   validations.is_positive_int),
     ('server!log_flush_lapse',        validations.is_positive_int),
@@ -52,10 +52,10 @@ VALIDATIONS = [
     ("server!iocache!max_file_size",  validations.is_positive_int),
     ("server!iocache!lasting_stat",   validations.is_positive_int),
     ("server!iocache!lasting_mmap",   validations.is_positive_int),
-    ("server!tls!dh_param512",       (validations.is_local_file_exists, 'cfg')),
-    ("server!tls!dh_param1024",      (validations.is_local_file_exists, 'cfg')),
-    ("server!tls!dh_param2048",      (validations.is_local_file_exists, 'cfg')),
-    ("server!tls!dh_param4096",      (validations.is_local_file_exists, 'cfg'))
+    ("server!tls!dh_param512",        validations.is_local_file_exists),
+    ("server!tls!dh_param1024",       validations.is_local_file_exists),
+    ("server!tls!dh_param2048",       validations.is_local_file_exists),
+    ("server!tls!dh_param4096",       validations.is_local_file_exists)
 ]
 
 WARNING = N_("""<p><b>WARNING</b>: This section contains advanced
