@@ -38,18 +38,29 @@ create the highest quality product. For that, we thank you.</p>
 """)
 
 
+def Launch():
+    if not Cherokee.server.is_alive():
+        Cherokee.server.launch()
+    return CTK.HTTP_Redir('/')
+
+def Stop():
+    Cherokee.pid.refresh()
+    Cherokee.server.stop()
+    return CTK.HTTP_Redir('/')
+
 class ServerInfo (CTK.Table):
     def __init__ (self):
         CTK.Table.__init__ (self)
         self.id = "server_info_table"
+        self.set_header (column=True, num=1)
 
-        self.add (_('Status'),             ['Stopped', 'Running'][Cherokee.server.is_alive()])
-        self.add (_('PID'),                Cherokee.pid.pid or _("Not running"))
-        self.add (_('Version'),            VERSION)
-        self.add (_("Default WWW"),        self._get_droot())
-        self.add (_("Prefix"),             PREFIX)
-        self.add (_("Configuration File"), CTK.cfg.file or _("Not found"))
-        self.add (_("Modified"),           self._get_cfg_ctime())
+        self.add (_('Status'),       ['Stopped', 'Running'][Cherokee.server.is_alive()])
+        self.add (_('PID'),          Cherokee.pid.pid or _("Not running"))
+        self.add (_('Version'),      VERSION)
+        self.add (_("Default WWW"),  self._get_droot())
+        self.add (_("Prefix"),       PREFIX)
+        self.add (_("Config File"),  CTK.cfg.file or _("Not found"))
+        self.add (_("Modified"),     self._get_cfg_ctime())
 
     def add (self, title, string):
         self += [CTK.RawHTML(title), CTK.RawHTML(str(string))]
@@ -85,4 +96,6 @@ class Render():
         return self.page.Render()
 
 
-CTK.publish ('/', Render)
+CTK.publish ('^/$',       Render)
+CTK.publish ('^/launch$', Launch)
+CTK.publish ('^/stop$',   Stop)
