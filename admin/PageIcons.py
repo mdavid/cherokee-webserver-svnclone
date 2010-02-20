@@ -41,7 +41,20 @@ def apply():
     new_exts = CTK.post.pop('new_exts')
     if new_exts:
         icon = CTK.post.get_val('new_exts_icon')
+        if not icon:
+            return {'ret': 'ok'}
+
         CTK.cfg['icons!suffix!%s'%(icon)] = new_exts
+        return {'ret': 'ok'}
+
+    # New file
+    new_file = CTK.post.pop('new_file')
+    if new_file:
+        icon = CTK.post.get_val('new_file_icon')
+        if not icon:
+            return {'ret': 'ok'}
+
+        CTK.cfg['icons!file!%s'%(icon)] = new_file
         return {'ret': 'ok'}
 
     # Modifications
@@ -79,7 +92,7 @@ class IconCombo (CTK.Widget):
         if not selected:
             file_options.insert (0, ('', _('Choose..')))
         else:
-            image.props['src'] = os.path.join('/icons_local', k)
+            self.image.props['src'] = os.path.join('/icons_local', key)
 
         # Combo
         self.combo = CTK.ComboCfg (key, file_options, {'class': "required"})
@@ -89,6 +102,49 @@ class IconCombo (CTK.Widget):
         render.js += ICON_COMBO_JS %({'id_img':   self.image.id,
                                       'id_combo': self.combo.id})
         return render
+
+class FilesTable (CTK.Container):
+    def __init__ (self, refreshable, **kwargs):
+        CTK.Container.__init__ (self, **kwargs)
+
+        # List
+        icons = CTK.cfg.keys('icons!file')
+        if icons:
+            table = CTK.Table()
+            table.id = "icon_files"
+            table += [None, CTK.RawHTML(_('Match')), CTK.RawHTML(_('Files'))]
+            table.set_header(1)
+
+            for k in icons:
+                pre     = 'icons!file!%s'%(k)
+                image   = CTK.Image ({'src': os.path.join ('/icons_local', k)})
+                submit  = CTK.Submitter (URL_APPLY)
+                submit += CTK.TextCfg (pre, props={'size': '46'})
+                delete  = CTK.Image ({'src': '/CTK/images/del.png', 'alt': 'Del'})
+                table  += [image, CTK.RawHTML(k), submit, delete]
+
+                delete.bind('click', CTK.JS.Ajax (URL_APPLY, data = {pre: ''},
+                                                  complete = refreshable.JS_to_refresh()))
+
+            self += table
+
+        # Nex file
+        nfile  = CTK.TextField({'name': "new_file", 'class': "noauto"})
+        icombo = IconCombo ("new_file_icon")
+        button = CTK.SubmitterButton (_('Add'))
+
+        table = CTK.Table()
+        table.set_header(1)
+        table += [None, CTK.RawHTML(_('Icon')), CTK.RawHTML(_('File'))]
+        table += [icombo.image, icombo, nfile, button]
+
+        submit = CTK.Submitter(URL_APPLY)
+        submit.bind ('submit_success', refreshable.JS_to_refresh())
+        submit += table
+
+        self += CTK.RawHTML ("<h2>%s</h2>" %_('Add new file match'))
+        self += CTK.Indenter (submit)
+
 
 class ExtensionsTable (CTK.Container):
     def __init__ (self, refreshable, **kwargs):
@@ -103,11 +159,15 @@ class ExtensionsTable (CTK.Container):
             table.set_header(1)
 
             for k in icons:
+                pre    = 'icons!suffix!%s'%(k)
                 image  = CTK.Image ({'src': os.path.join('/icons_local', k)})
+                delete = CTK.Image ({'src': '/CTK/images/del.png', 'alt': 'Del'})
                 submit = CTK.Submitter (URL_APPLY)
-                submit += CTK.TextCfg ('icons!suffix!%s'%(k), props={'size': '46'})
-                table += [image, CTK.RawHTML(k), submit]
+                submit += CTK.TextCfg (pre, props={'size': '46'})
+                table += [image, CTK.RawHTML(k), submit, delete]
 
+                delete.bind('click', CTK.JS.Ajax (URL_APPLY, data = {pre: ''},
+                                                  complete = refreshable.JS_to_refresh()))
             self += table
 
         # Nex entry
@@ -137,10 +197,21 @@ class ExtensionsWidget_Instancer (CTK.Container):
         refresh.register (lambda: ExtensionsTable(refresh).Render())
         self += refresh
 
+class FilesWidget_Instancer (CTK.Container):
+    def __init__ (self):
+        CTK.Container.__init__ (self)
+
+        # Refresher
+        refresh = CTK.Refreshable()
+        refresh.register (lambda: FilesTable(refresh).Render())
+        self += refresh
+
+
 class Render():
     def __call__ (self):
         tabs = CTK.Tab()
         tabs.Add (_('Extensions'), ExtensionsWidget_Instancer())
+        tabs.Add (_('Files'),      FilesWidget_Instancer())
 
         page = Page.Base(_('Icons'), helps=HELPS)
         page += CTK.RawHTML("<h1>%s</h1>" %(_('Icon configuration')))
