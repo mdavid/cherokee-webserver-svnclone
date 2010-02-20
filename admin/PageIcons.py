@@ -90,35 +90,27 @@ class IconCombo (CTK.Widget):
                                       'id_combo': self.combo.id})
         return render
 
-
-class ExtensionsTable (CTK.Table):
+class ExtensionsTable (CTK.Container):
     def __init__ (self, refreshable, **kwargs):
-        CTK.Table.__init__ (self, **kwargs)
-        self.id = "icon_extensions"
+        CTK.Container.__init__ (self, **kwargs)
 
+        # List
         icons = CTK.cfg.keys('icons!suffix')
         if icons:
-            self += [None, CTK.RawHTML(_('Icon File')), CTK.RawHTML(_('Extensions'))]
-            self.set_header(1)
+            table = CTK.Table()
+            table.id = "icon_extensions"
+            table += [None, CTK.RawHTML(_('Icon File')), CTK.RawHTML(_('Extensions'))]
+            table.set_header(1)
 
             for k in icons:
                 image  = CTK.Image ({'src': os.path.join('/icons_local', k)})
                 submit = CTK.Submitter (URL_APPLY)
                 submit += CTK.TextCfg ('icons!suffix!%s'%(k), props={'size': '46'})
+                table += [image, CTK.RawHTML(k), submit]
 
-                self += [image, CTK.RawHTML(k), submit]
+            self += table
 
-
-class ExtensionsWidget (CTK.Container):
-    def __init__ (self):
-        CTK.Container.__init__ (self)
-
-        # List
-        refresh = CTK.Refreshable()
-        refresh.register (lambda: ExtensionsTable(refresh).Render())
-        self += refresh
-
-        # New entry
+        # Nex entry
         exts   = CTK.TextField({'name': "new_exts", 'class': "noauto"})
         icombo = IconCombo ("new_exts_icon")
         button = CTK.SubmitterButton (_('Add'))
@@ -129,19 +121,26 @@ class ExtensionsWidget (CTK.Container):
         table += [icombo.image, icombo, exts, button]
 
         submit = CTK.Submitter(URL_APPLY)
-        submit.bind ('submit_success', refresh.JS_to_refresh())
-        submit.bind ('submit_success', exts.JS_to_clean())
+        submit.bind ('submit_success', refreshable.JS_to_refresh())
         submit.bind ('submit_success', exts.JS_to_focus())
         submit += table
 
         self += CTK.RawHTML ("<h2>%s</h2>" %_('Add new extension'))
         self += CTK.Indenter (submit)
 
+class ExtensionsWidget_Instancer (CTK.Container):
+    def __init__ (self):
+        CTK.Container.__init__ (self)
+
+        # Refresher
+        refresh = CTK.Refreshable()
+        refresh.register (lambda: ExtensionsTable(refresh).Render())
+        self += refresh
 
 class Render():
     def __call__ (self):
         tabs = CTK.Tab()
-        tabs.Add (_('Extensions'), ExtensionsWidget())
+        tabs.Add (_('Extensions'), ExtensionsWidget_Instancer())
 
         page = Page.Base(_('Icons'), helps=HELPS)
         page += CTK.RawHTML("<h1>%s</h1>" %(_('Icon configuration')))
