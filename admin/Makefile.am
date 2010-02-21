@@ -36,10 +36,16 @@ admin_data = \
 theme.html \
 server.py \
 consts.py \
+util.py \
+validations.py \
 config_version.py \
 Cherokee.py \
 Page.py \
 PageIndex.py \
+PageGeneral.py \
+PageIcons.py \
+PageMime.py \
+PageAdvanced.py \
 plugins/rrd.py \
 plugins/post_track.py
 endif
