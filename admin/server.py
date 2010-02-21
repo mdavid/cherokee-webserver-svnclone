@@ -98,6 +98,7 @@ if __name__ == "__main__":
     import PageIndex
     import PageGeneral
     import PageIcons
+    import PageMime
     import PageAdvanced
 
     # Run
