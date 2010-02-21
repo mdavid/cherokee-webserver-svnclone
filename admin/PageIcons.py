@@ -124,7 +124,9 @@ class ExtensionsTable (CTK.Container):
 
                 delete.bind('click', CTK.JS.Ajax (URL_APPLY, data = {pre: ''},
                                                   complete = refreshable.JS_to_refresh()))
-            self += table
+
+            self += CTK.RawHTML ("<h2>%s</h2>" %_('Extension List'))
+            self += CTK.Indenter (table)
 
         # Nex entry
         exts   = CTK.TextField({'name': "new_exts", 'class': "noauto"})
@@ -169,7 +171,8 @@ class FilesTable (CTK.Container):
                 delete.bind('click', CTK.JS.Ajax (URL_APPLY, data = {pre: ''},
                                                   complete = refreshable.JS_to_refresh()))
 
-            self += table
+            self += CTK.RawHTML ("<h2>%s</h2>" %_('File Matches'))
+            self += CTK.Indenter (table)
 
         # Nex file
         nfile  = CTK.TextField({'name': "new_file", 'class': "noauto"})
@@ -208,7 +211,9 @@ class SpecialWidget (CTK.Container):
 
         submit  = CTK.Submitter(URL_APPLY)
         submit += table
-        self   += submit
+
+        self += CTK.RawHTML ("<h2>%s</h2>" %_('Special Files'))
+        self += CTK.Indenter (submit)
 
 
 class ExtensionsWidget_Instancer (CTK.Container):
