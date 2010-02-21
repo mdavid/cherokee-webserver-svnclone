@@ -63,87 +63,43 @@ def apply():
     return {'ret': 'ok'}
 
 
-ICON_COMBO_JS = """
+ICON_COMBO_SET_JS = """
 $("#%(id_combo)s").change(function() {
-   $("#%(id_img)s").attr('src', "/icons_local/" + $("#%(id_combo)s option:selected").text());
+   $("#%(id_img)s").attr('src', "/icons_local/" + $("#%(id_combo)s option:selected").val());
 });
 """
+def prettyfier (filen):
+    # Remove extension
+    if '.' in filen:
+        filen = filen[:filen.rindex('.')]
 
-class IconCombo (CTK.Widget):
-    def __init__ (self, key):
+    # Remove underscores
+    filen = filen.replace('_',' ').replace('.',' ')
+
+    # Capitalize
+    return filen.capitalize()
+
+class IconComboSet (CTK.Widget):
+    def __init__ (self, key, add_choose=False, props=None):
         CTK.Widget.__init__ (self)
 
         # Check the icon files
-        file_options = []
+        file_options = ([],[('',_('Choose..'))])[add_choose]
+
         for file in os.listdir (CHEROKEE_ICONSDIR):
-            f = file.lower()
-            if (f.endswith(".jpg") or
-                f.endswith(".png") or
-                f.endswith(".gif") or
-                f.endswith(".svg")):
-                file_options.append((file, file))
+            ext = file.lower().split('.')[-1]
+            if ext in ('jpg', 'png', 'gif', 'svg'):
+                file_options.append((file, prettyfier(file)))
 
-        # Icon
-        self.image    = CTK.Image()
-        self.image.id = "image_%s" %(key)
-
-        # Check the selected option
-        selected = CTK.cfg.get_val(key)
-        if not selected:
-            file_options.insert (0, ('', _('Choose..')))
-        else:
-            self.image.props['src'] = os.path.join('/icons_local', key)
-
-        # Combo
-        self.combo = CTK.ComboCfg (key, file_options, {'class': "required"})
+        # Public widgets
+        selected = CTK.cfg.get_val (key, 'blank.png')
+        self.image = CTK.Image({'src': '/icons_local/%s'%(selected)})
+        self.combo = CTK.ComboCfg (key, file_options, props)
 
     def Render(self):
-        render = self.combo.Render()
-        render.js += ICON_COMBO_JS %({'id_img':   self.image.id,
-                                      'id_combo': self.combo.id})
+        render = CTK.Widget.Render (self)
+        render.js += ICON_COMBO_SET_JS %({'id_img': self.image.id, 'id_combo': self.combo.id})
         return render
-
-class FilesTable (CTK.Container):
-    def __init__ (self, refreshable, **kwargs):
-        CTK.Container.__init__ (self, **kwargs)
-
-        # List
-        icons = CTK.cfg.keys('icons!file')
-        if icons:
-            table = CTK.Table()
-            table.id = "icon_files"
-            table += [None, CTK.RawHTML(_('Match')), CTK.RawHTML(_('Files'))]
-            table.set_header(1)
-
-            for k in icons:
-                pre     = 'icons!file!%s'%(k)
-                image   = CTK.Image ({'src': os.path.join ('/icons_local', k)})
-                submit  = CTK.Submitter (URL_APPLY)
-                submit += CTK.TextCfg (pre, props={'size': '46'})
-                delete  = CTK.Image ({'src': '/CTK/images/del.png', 'alt': 'Del'})
-                table  += [image, CTK.RawHTML(k), submit, delete]
-
-                delete.bind('click', CTK.JS.Ajax (URL_APPLY, data = {pre: ''},
-                                                  complete = refreshable.JS_to_refresh()))
-
-            self += table
-
-        # Nex file
-        nfile  = CTK.TextField({'name': "new_file", 'class': "noauto"})
-        icombo = IconCombo ("new_file_icon")
-        button = CTK.SubmitterButton (_('Add'))
-
-        table = CTK.Table()
-        table.set_header(1)
-        table += [None, CTK.RawHTML(_('Icon')), CTK.RawHTML(_('File'))]
-        table += [icombo.image, icombo, nfile, button]
-
-        submit = CTK.Submitter(URL_APPLY)
-        submit.bind ('submit_success', refreshable.JS_to_refresh())
-        submit += table
-
-        self += CTK.RawHTML ("<h2>%s</h2>" %_('Add new file match'))
-        self += CTK.Indenter (submit)
 
 
 class ExtensionsTable (CTK.Container):
@@ -164,7 +120,7 @@ class ExtensionsTable (CTK.Container):
                 delete = CTK.Image ({'src': '/CTK/images/del.png', 'alt': 'Del'})
                 submit = CTK.Submitter (URL_APPLY)
                 submit += CTK.TextCfg (pre, props={'size': '46'})
-                table += [image, CTK.RawHTML(k), submit, delete]
+                table += [image, CTK.RawHTML(prettyfier(k)), submit, delete]
 
                 delete.bind('click', CTK.JS.Ajax (URL_APPLY, data = {pre: ''},
                                                   complete = refreshable.JS_to_refresh()))
@@ -172,13 +128,13 @@ class ExtensionsTable (CTK.Container):
 
         # Nex entry
         exts   = CTK.TextField({'name': "new_exts", 'class': "noauto"})
-        icombo = IconCombo ("new_exts_icon")
+        icombo = IconComboSet ("new_exts_icon", True, {'class': "required"})
         button = CTK.SubmitterButton (_('Add'))
 
         table = CTK.Table()
         table.set_header(1)
         table += [None, CTK.RawHTML(_('Icon')), CTK.RawHTML(_('Extensions'))]
-        table += [icombo.image, icombo, exts, button]
+        table += [icombo.image, icombo.combo, exts, button]
 
         submit = CTK.Submitter(URL_APPLY)
         submit.bind ('submit_success', refreshable.JS_to_refresh())
@@ -187,6 +143,73 @@ class ExtensionsTable (CTK.Container):
 
         self += CTK.RawHTML ("<h2>%s</h2>" %_('Add new extension'))
         self += CTK.Indenter (submit)
+        self += icombo
+
+
+class FilesTable (CTK.Container):
+    def __init__ (self, refreshable, **kwargs):
+        CTK.Container.__init__ (self, **kwargs)
+
+        # List
+        icons = CTK.cfg.keys('icons!file')
+        if icons:
+            table = CTK.Table()
+            table.id = "icon_files"
+            table += [None, CTK.RawHTML(_('Match')), CTK.RawHTML(_('Files'))]
+            table.set_header(1)
+
+            for k in icons:
+                pre     = 'icons!file!%s'%(k)
+                image   = CTK.Image ({'src': os.path.join ('/icons_local', k)})
+                submit  = CTK.Submitter (URL_APPLY)
+                submit += CTK.TextCfg (pre, props={'size': '46'})
+                delete  = CTK.Image ({'src': '/CTK/images/del.png', 'alt': 'Del'})
+                table  += [image, CTK.RawHTML(prettyfier(k)), submit, delete]
+
+                delete.bind('click', CTK.JS.Ajax (URL_APPLY, data = {pre: ''},
+                                                  complete = refreshable.JS_to_refresh()))
+
+            self += table
+
+        # Nex file
+        nfile  = CTK.TextField({'name': "new_file", 'class': "noauto"})
+        icombo = IconComboSet ("new_file_icon", True, {'class': "required"})
+        button = CTK.SubmitterButton (_('Add'))
+
+        table = CTK.Table()
+        table.set_header(1)
+        table += [None, CTK.RawHTML(_('Icon')), CTK.RawHTML(_('File'))]
+        table += [icombo.image, icombo.combo, nfile, button]
+
+        submit = CTK.Submitter(URL_APPLY)
+        submit.bind ('submit_success', refreshable.JS_to_refresh())
+        submit += table
+
+        self += CTK.RawHTML ("<h2>%s</h2>" %_('Add new file match'))
+        self += CTK.Indenter (submit)
+        self += icombo
+
+
+class SpecialWidget (CTK.Container):
+    def __init__ (self, **kwargs):
+        CTK.Container.__init__ (self, **kwargs)
+
+        table = CTK.Table()
+
+        for k, desc in [('default',          _('Default')),
+                        ('directory',        _('Directory')),
+                        ('parent_directory', _('Go to Parent'))]:
+
+            icon = CTK.cfg.get_val('icons!%s'%(k))
+            iset = IconComboSet ('icons!%s'%(k))
+            self += iset
+
+            table += [iset.image, CTK.RawHTML(desc), iset.combo]
+
+        submit  = CTK.Submitter(URL_APPLY)
+        submit += table
+        self   += submit
+
 
 class ExtensionsWidget_Instancer (CTK.Container):
     def __init__ (self):
@@ -210,8 +233,9 @@ class FilesWidget_Instancer (CTK.Container):
 class Render():
     def __call__ (self):
         tabs = CTK.Tab()
-        tabs.Add (_('Extensions'), ExtensionsWidget_Instancer())
-        tabs.Add (_('Files'),      FilesWidget_Instancer())
+        tabs.Add (_('Extensions'),    ExtensionsWidget_Instancer())
+        tabs.Add (_('Files'),         FilesWidget_Instancer())
+        tabs.Add (_('Special Icons'), SpecialWidget())
 
         page = Page.Base(_('Icons'), helps=HELPS)
         page += CTK.RawHTML("<h1>%s</h1>" %(_('Icon configuration')))
