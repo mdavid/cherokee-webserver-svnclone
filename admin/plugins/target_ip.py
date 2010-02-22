@@ -29,23 +29,6 @@ URL_APPLY = '/plugin/rrd/apply'
 NOTE_ADDRESS  = N_("IP or Subnet of the NIC that accepted the request. Example: ::1, or 10.0.0.0/8")
 WARNING_EMPTY = N_("At least one IP or Subnet entry must be defined.")
 
-VALIDATIONS = [('vserver![\d]+!match!to!.+', validations.is_ip_or_netmask)]
-
-def apply():
-    vsrv_num = re.findall (r'^%s/([\d]+)$'%(URL_APPLY), CTK.request.url)[0]
-
-    # New entry
-    new_ip = CTK.post.pop('new_ip')
-    if new_ip:
-        next = CTK.cfg.get_next_entry_prefix ('vserver!%s!match!to'%(vsrv_num))
-        CTK.cfg[next] = new_ip
-        return {'ret': 'ok'}
-
-    # Modifications
-    for k in CTK.post:
-        CTK.cfg[k] = CTK.post[k]
-    return {'ret': 'ok'}
-
 
 class AddressesTable (CTK.Container):
     def __init__ (self, refreshable, key, url_apply, **kwargs):
@@ -73,7 +56,8 @@ class AddressesTable (CTK.Container):
 
         # Add new
         table = CTK.PropsTable()
-        table.Add (_('New IP/Subnet'), CTK.TextCfg('new_ip', False, {'class':'noauto'}), _(NOTE_ADDRESS))
+        next  = CTK.cfg.get_next_entry_prefix(pre)
+        table.Add (_('New IP/Subnet'), CTK.TextCfg(next, False, {'class':'noauto'}), _(NOTE_ADDRESS))
 
         submit = CTK.Submitter(url_apply)
         submit += table
@@ -105,5 +89,5 @@ class Plugin_target_ip (CTK.Plugin):
         self += refresh
 
         # Validation, and Public URLs
-        VALS = [('%s!to!.+'%(pre), validations.is_ip_or_netmask)]
-        CTK.publish ('^%s/[\d]+$'%(URL_APPLY), apply, validation=VALS, method="POST")
+        VALS = [('%s!.+'%(pre), validations.is_ip_or_netmask)]
+        CTK.publish ('^%s/[\d]+$'%(URL_APPLY), self.apply, validation=VALS, method="POST")
