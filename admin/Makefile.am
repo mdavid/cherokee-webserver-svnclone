@@ -49,7 +49,10 @@ PageMime.py \
 PageAdvanced.py \
 plugins/rrd.py \
 plugins/post_track.py \
-plugins/evhost.py
+plugins/evhost.py \
+plugins/rehost.py \
+plugins/target_ip.py \
+plugins/wildcard.py
 endif
 
 adminpy_DATA = $(admin_data)

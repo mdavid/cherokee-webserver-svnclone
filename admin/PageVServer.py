@@ -66,6 +66,8 @@ NOTE_MATCHING_METHOD  = N_('Allows the selection of domain matching method.')
 NOTE_COLLECTOR        = N_('Whether or not it should collected statistics about the traffic of this virtual server.')
 NOTE_UTC_TIME         = N_('Time standard to use in the log file entries.')
 
+DEFAULT_HOST_NOTE     = N_("<p>The 'default' virtual server matches all the domain names.</p>")
+
 VALIDATIONS = [
     ("vserver![\d]+!user_dir",                   validations.is_safe_id),
     ("vserver![\d]+!document_root",              validations.is_dev_null_or_local_dir_exists),
@@ -92,6 +94,29 @@ def apply():
 
     return {'ret': 'ok'}
 
+class HostMatchWidget (CTK.Container):
+    def __init__ (self, vsrv_num):
+        CTK.Container.__init__ (self)
+
+        pre        = "vserver!%s" %(vsrv_num)
+        url_apply  = "%s/%s" %(URL_APPLY, vsrv_num)
+        is_default = CTK.cfg.get_lowest_entry("vserver") == int(vsrv_num)
+
+        self += CTK.RawHTML ('<h2>%s</h2>' %(_('Host names')))
+
+        if is_default:
+            notice  = CTK.Notice()
+            notice += CTK.RawHTML(DEFAULT_HOST_NOTE)
+            self += notice
+            return
+
+        table = CTK.PropsAuto (url_apply)
+        modul = CTK.PluginSelector ('%s!match'%(pre), Cherokee.support.filter_available(VRULES), vsrv_num=vsrv_num)
+        table.Add (_('Method'), modul.selector_widget, _(NOTE_MATCHING_METHOD), False)
+        self += CTK.Indenter (table)
+        self += modul
+
+
 class BasicsWidget (CTK.Container):
     def __init__ (self, vsrv_num):
         CTK.Container.__init__ (self)
@@ -99,7 +124,7 @@ class BasicsWidget (CTK.Container):
         pre        = "vserver!%s" %(vsrv_num)
         url_apply  = "%s/%s" %(URL_APPLY, vsrv_num)
         vsrv_nick  = CTK.cfg.get_val("%s!nick"%(pre), '')
-        is_default = CTK.cfg.get_lowest_entry("vserver") == vsrv_num
+        is_default = CTK.cfg.get_lowest_entry("vserver") == int(vsrv_num)
 
         # Server ID
         if not is_default:
@@ -134,18 +159,6 @@ class BasicsWidget (CTK.Container):
         self += CTK.Indenter (table)
         self += CTK.Indenter (modul)
 
-        tmp = """
-        #
-        table = CTK.PropsAuto (url_apply)
-        table.Add (_(''), CTK.TextCfg('%s!'%(pre)), _())
-        table.Add (_(''), CTK.TextCfg('%s!'%(pre)), _())
-        table.Add (_(''), CTK.TextCfg('%s!'%(pre)), _())
-        table.Add (_(''), CTK.TextCfg('%s!'%(pre)), _())
-
-        self += CTK.RawHTML ('<h2>%s</h2>' %(_('Paths')))
-        self += CTK.Indenter (table)
-"""
-
 
 class Render():
     def __call__ (self):
@@ -155,7 +168,8 @@ class Render():
 
         # Tabs
         tabs = CTK.Tab()
-        tabs.Add (_('Basics'), BasicsWidget (vsrv_num))
+        tabs.Add (_('Basics'),     BasicsWidget (vsrv_num))
+        tabs.Add (_('Host Match'), HostMatchWidget (vsrv_num))
 
         # Instance Page
         title = '%s: %s'%(_('Virtual Server'), vsrv_nam)

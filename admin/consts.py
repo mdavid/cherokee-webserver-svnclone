@@ -170,7 +170,6 @@ RULES = [
 ]
 
 VRULES = [
-    ('',           N_('Choose..')),
     ('wildcard',   N_('Wildcards')),
     ('rehost',     N_('Regular Expressions')),
     ('target_ip',  N_('Server IP'))
