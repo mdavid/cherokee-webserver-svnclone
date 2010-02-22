@@ -24,39 +24,45 @@ import re
 import CTK
 import validations
 
-URL_APPLY = '/plugin/rrd/apply'
+URL_APPLY = '/plugin/target_ip/apply'
 
 NOTE_ADDRESS  = N_("IP or Subnet of the NIC that accepted the request. Example: ::1, or 10.0.0.0/8")
 WARNING_EMPTY = N_("At least one IP or Subnet entry must be defined.")
 
+def apply_del():
+    for k in CTK.post:
+        del (CTK.cfg[k])
+    return {'ret':'ok'}
 
 class AddressesTable (CTK.Container):
     def __init__ (self, refreshable, key, url_apply, **kwargs):
         CTK.Container.__init__ (self, **kwargs)
 
-        pre     = "%s!to"%(key)
-        entries = CTK.cfg.keys(pre)
-
         # List
+        entries = CTK.cfg.keys(key)
         if entries:
-            table = CTK.Table()
-            self += CTK.Indenter(table)
+            table  = CTK.Table()
+            submit = CTK.Submitter(url_apply)
+
+            submit += table
+            self += CTK.Indenter(submit)
 
             table.set_header(1)
             table += [CTK.RawHTML(_('IP or Subnet'))]
 
             for i in entries:
-                e1 = CTK.TextCfg ("%s!%s"%(pre,i))
+                e1 = CTK.TextCfg ("%s!%s"%(key,i))
                 rm = None
                 if len(entries) >= 2:
                     rm = CTK.Image ({'src':'/CTK/images/del.png', 'alt':'Del'})
-                    rm.bind('click', CTK.JS.Ajax (url_apply, data = {"%s!%s"%(pre,i): ''},
+                    rm.bind('click', CTK.JS.Ajax ('%s/del'%(url_apply),
+                                                  data     = {"%s!%s"%(key,i): ''},
                                                   complete = refreshable.JS_to_refresh()))
                 table += [e1, rm]
 
         # Add new
         table = CTK.PropsTable()
-        next  = CTK.cfg.get_next_entry_prefix(pre)
+        next  = CTK.cfg.get_next_entry_prefix (key)
         table.Add (_('New IP/Subnet'), CTK.TextCfg(next, False, {'class':'noauto'}), _(NOTE_ADDRESS))
 
         submit = CTK.Submitter(url_apply)
@@ -64,7 +70,7 @@ class AddressesTable (CTK.Container):
         submit += CTK.SubmitterButton(_('Add'))
         submit.bind ('submit_success', refreshable.JS_to_refresh())
 
-        self += CTK.RawHTML("<h3>%s</h3>" % (_('Add new')))
+        self += CTK.RawHTML("<h3>%s</h3>" %(_('Add new')))
         self += CTK.Indenter(submit)
 
 
@@ -85,9 +91,10 @@ class Plugin_target_ip (CTK.Plugin):
             self += notice
 
         refresh = CTK.Refreshable()
-        refresh.register (lambda: AddressesTable(refresh, key, url_apply).Render())
+        refresh.register (lambda: AddressesTable(refresh, pre, url_apply).Render())
         self += refresh
 
         # Validation, and Public URLs
         VALS = [('%s!.+'%(pre), validations.is_ip_or_netmask)]
         CTK.publish ('^%s/[\d]+$'%(URL_APPLY), self.apply, validation=VALS, method="POST")
+        CTK.publish ('^%s/[\d]+/del$'%(URL_APPLY), apply_del, method="POST")
