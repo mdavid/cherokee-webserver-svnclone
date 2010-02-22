@@ -27,11 +27,6 @@ URL_APPLY = '/plugin/rehost/apply'
 NOTE_REHOST   = N_("Regular Expression against which the hosts be Host name will be compared.")
 WARNING_EMPTY = N_("At least one Regular Expression string must be defined.")
 
-def apply_del():
-    for k in CTK.post:
-        del (CTK.cfg[k])
-    return {'ret':'ok'}
-
 
 class Content (CTK.Container):
     def __init__ (self, refreshable, key, url_apply, **kwargs):
