@@ -43,11 +43,13 @@ Cherokee.py \
 Page.py \
 PageIndex.py \
 PageGeneral.py \
+PageVServer.py \
 PageIcons.py \
 PageMime.py \
 PageAdvanced.py \
 plugins/rrd.py \
-plugins/post_track.py
+plugins/post_track.py \
+plugins/evhost.py
 endif
 
 adminpy_DATA = $(admin_data)
