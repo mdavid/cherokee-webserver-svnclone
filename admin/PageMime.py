@@ -106,7 +106,7 @@ class MIME_Table_Instancer (CTK.Container):
 
 class Render():
     def __call__ (self):
-        page = Page.Base(_('Icons'), helps=HELPS)
+        page = Page.Base(_('Icons'), body_id='mime', helps=HELPS)
         page += CTK.RawHTML("<h1>%s</h1>" %(_('MIME Types')))
         page += MIME_Table_Instancer()
         return page.Render()

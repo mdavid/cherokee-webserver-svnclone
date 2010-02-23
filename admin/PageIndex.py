@@ -83,7 +83,7 @@ class Render():
     def __call__ (self):
         Cherokee.pid.refresh()
 
-        self.page = Page.Base(_('Welcome to Cherokee Admin'))
+        self.page = Page.Base(_('Welcome to Cherokee Admin'), body_id='index')
         self.page += CTK.RawHTML ("<h1>%s</h1>"% _('Welcome to Cherokee Admin'))
 
         if 'b' in VERSION:
