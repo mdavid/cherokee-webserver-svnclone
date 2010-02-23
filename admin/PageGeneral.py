@@ -127,7 +127,7 @@ class PortsTable (CTK.Table):
             port   = CTK.TextCfg ('%s!port'%(pre),      False, {'size': 8})
             listen = CTK.TextCfg ('%s!interface'%(pre), True,  {'size': 45})
             tls    = CTK.CheckCfg('%s!tls'%(pre),       False, {'disabled': not has_tls})
-            delete = CTK.Image ({'src': '/CTK/images/del.png', 'alt': 'Del'})
+            delete = CTK.ImageStock('del')
 
             from CTK.Refreshable import REFRESHABLE_UPDATE_JS as update_js
 

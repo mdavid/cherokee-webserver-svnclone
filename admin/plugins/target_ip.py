@@ -60,7 +60,7 @@ class AddressesTable (CTK.Container):
                 e1 = CTK.TextCfg ("%s!%s"%(key,i))
                 rm = None
                 if len(entries) >= 2:
-                    rm = CTK.Image ({'src':'/CTK/images/del.png', 'alt':'Del'})
+                    rm = CTK.ImageStock('del')
                     rm.bind('click', CTK.JS.Ajax ('%s/del'%(url_apply),
                                                   data     = {"%s!%s"%(key,i): ''},
                                                   complete = refreshable.JS_to_refresh()))

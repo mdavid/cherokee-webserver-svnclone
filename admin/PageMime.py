@@ -75,7 +75,7 @@ class MIME_Table (CTK.Container):
             pre = "mime!%s"%(mime)
             e1 = CTK.TextCfgAuto ('%s!extensions'%(pre), URL_APPLY, False, {'size': 35})
             e2 = CTK.TextCfgAuto ('%s!max-age'%(pre),    URL_APPLY, True,  {'size': 6, 'maxlength': 6})
-            rm = CTK.Image ({'src': '/CTK/images/del.png', 'alt': 'Del'})
+            rm = CTK.ImageStock('del')
             table += [CTK.RawHTML(mime), e1, e2, rm]
 
         self += CTK.Indenter (table)
