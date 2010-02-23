@@ -37,10 +37,16 @@ def apply_del():
 class AddressesTable (CTK.Container):
     def __init__ (self, refreshable, key, url_apply, **kwargs):
         CTK.Container.__init__ (self, **kwargs)
+        entries = CTK.cfg.keys(key)
+
+        # Warning message
+        if not entries:
+            notice = CTK.Notice('warning')
+            notice += CTK.RawHTML (WARNING_EMPTY)
+            self += notice
 
         # List
-        entries = CTK.cfg.keys(key)
-        if entries:
+        else:
             table  = CTK.Table()
             submit = CTK.Submitter(url_apply)
 
@@ -65,13 +71,23 @@ class AddressesTable (CTK.Container):
         next  = CTK.cfg.get_next_entry_prefix (key)
         table.Add (_('New IP/Subnet'), CTK.TextCfg(next, False, {'class':'noauto'}), _(NOTE_ADDRESS))
 
+        dialog = CTK.Dialog({'title':     _('Add new'),
+                             'autoOpen':  False,
+                             'draggable': False,
+                             'height':    250,
+                             'width':     700})
+
         submit = CTK.Submitter(url_apply)
         submit += table
         submit += CTK.SubmitterButton(_('Add'))
         submit.bind ('submit_success', refreshable.JS_to_refresh())
+        submit.bind ('submit_success', dialog.JS_to_close())
 
-        self += CTK.RawHTML("<h3>%s</h3>" %(_('Add new')))
-        self += CTK.Indenter(submit)
+        dialog += submit
+        self += dialog
+
+        add_new = CTK.RawHTML('<a href="#" onclick="%s">Add new..</a>'%(dialog.JS_to_show()))
+        self += add_new
 
 
 class Plugin_target_ip (CTK.Plugin):
@@ -84,12 +100,6 @@ class Plugin_target_ip (CTK.Plugin):
         self += CTK.RawHTML ("<h2>%s</h2>" % (_('Accepted Server IP addresses and subnets')))
 
         # Content
-        entries = CTK.cfg.keys(pre)
-        if not entries:
-            notice = CTK.Notice('warning')
-            notice += CTK.RawHTML (WARNING_EMPTY)
-            self += notice
-
         refresh = CTK.Refreshable()
         refresh.register (lambda: AddressesTable(refresh, pre, url_apply).Render())
         self += refresh
