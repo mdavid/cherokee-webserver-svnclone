@@ -117,7 +117,7 @@ class ExtensionsTable (CTK.Container):
             for k in icons:
                 pre    = 'icons!suffix!%s'%(k)
                 image  = CTK.Image ({'src': os.path.join('/icons_local', k)})
-                delete = CTK.Image ({'src': '/CTK/images/del.png', 'alt': 'Del'})
+                delete = CTK.ImageStock('del')
                 submit = CTK.Submitter (URL_APPLY)
                 submit += CTK.TextCfg (pre, props={'size': '46'})
                 table += [image, CTK.RawHTML(prettyfier(k)), submit, delete]
@@ -165,7 +165,7 @@ class FilesTable (CTK.Container):
                 image   = CTK.Image ({'src': os.path.join ('/icons_local', k)})
                 submit  = CTK.Submitter (URL_APPLY)
                 submit += CTK.TextCfg (pre, props={'size': '46'})
-                delete  = CTK.Image ({'src': '/CTK/images/del.png', 'alt': 'Del'})
+                delete  = CTK.ImageStock('del')
                 table  += [image, CTK.RawHTML(prettyfier(k)), submit, delete]
 
                 delete.bind('click', CTK.JS.Ajax (URL_APPLY, data = {pre: ''},
