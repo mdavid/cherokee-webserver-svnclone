@@ -11,15 +11,20 @@
  <!-- XXX: @ion: Don't know if this is the place to load the top bar... -->
    <div id="topbar">
     <img src="/static/images/cherokee-logo-bar.png" alt="Cherokee"/>
-    <a href="/">Status</a>
-    <a href="/general">General</a>
-    <a href="/icons">Icons</a>
-    <a href="/mime">Mime Types</a>
-    <a href="/advanced">Advanced</a>
+    <ul id="nav">
+    <li id="nav-status"><a href="/">Status</a></li>
+    <li id="nav-general"><a href="/general">General</a></li>
+    <li id="nav-icons"><a href="/icons">Icons</a></li>
+    <li id="nav-mime"><a href="/mime">Mime Types</a></li>
+    <li id="nav-advanced" class="selected"><a href="/advanced">Advanced</a></li>
+    </ul>
    </div>
-
+   <div id="help">
    %(helps)s
+   </div>
+   <div id="main">
    %(html)s
+   </div>
 
    <div align="right"><a href="http://www.cherokee-project.com/">Cherokee</a></div>
 
