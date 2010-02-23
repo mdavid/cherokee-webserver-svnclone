@@ -52,7 +52,9 @@ plugins/post_track.py \
 plugins/evhost.py \
 plugins/rehost.py \
 plugins/target_ip.py \
-plugins/wildcard.py
+plugins/wildcard.py \
+plugins/error_nn.py \
+plugins/error_redir.py
 endif
 
 adminpy_DATA = $(admin_data)
