@@ -160,6 +160,22 @@ class BasicsWidget (CTK.Container):
         self += CTK.Indenter (modul)
 
 
+class ErrorHandlerWidget (CTK.Container):
+    def __init__ (self, vsrv_num):
+        CTK.Container.__init__ (self)
+
+        pre        = "vserver!%s" %(vsrv_num)
+        url_apply  = "%s/%s" %(URL_APPLY, vsrv_num)
+
+        table = CTK.PropsAuto (url_apply)
+        modul = CTK.PluginSelector ('%s!error_handler'%(pre), Cherokee.support.filter_available(ERROR_HANDLERS), vsrv_num=vsrv_num)
+        table.Add (_('Method'), modul.selector_widget, _(NOTE_ERROR_HANDLER), False)
+
+        self += CTK.RawHTML ('<h2>%s</h2>' %(_('Error Handling hook')))
+        self += CTK.Indenter (table)
+        self += modul
+
+
 class Render():
     def __call__ (self):
         # Parse request
@@ -168,8 +184,9 @@ class Render():
 
         # Tabs
         tabs = CTK.Tab()
-        tabs.Add (_('Basics'),     BasicsWidget (vsrv_num))
-        tabs.Add (_('Host Match'), HostMatchWidget (vsrv_num))
+        tabs.Add (_('Basics'),        BasicsWidget (vsrv_num))
+        tabs.Add (_('Host Match'),    HostMatchWidget (vsrv_num))
+        tabs.Add (_('Error Handler'), ErrorHandlerWidget (vsrv_num))
 
         # Instance Page
         title = '%s: %s'%(_('Virtual Server'), vsrv_nam)
@@ -181,5 +198,5 @@ class Render():
         return page.Render()
 
 
-CTK.publish (r'^%s/[\d]+'%(URL_BASE), Render)
-CTK.publish (r'^%s/[\d]+'%(URL_APPLY), apply, validations=VALIDATIONS, method="POST")
+CTK.publish (r'^%s/[\d]+$'%(URL_BASE), Render)
+CTK.publish (r'^%s/[\d]+$'%(URL_APPLY), apply, validations=VALIDATIONS, method="POST")
