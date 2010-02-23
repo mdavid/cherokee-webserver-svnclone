@@ -86,7 +86,8 @@ class AddressesTable (CTK.Container):
         dialog += submit
         self += dialog
 
-        add_new = CTK.RawHTML('<a href="#" onclick="%s">Add new..</a>'%(dialog.JS_to_show()))
+        add_new = CTK.LinkIcon (content=CTK.RawHTML(_("Add new..")), icon='newwin')
+        add_new.bind ('click', dialog.JS_to_show())
         self += add_new
 
 
