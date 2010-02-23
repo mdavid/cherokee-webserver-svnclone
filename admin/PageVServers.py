@@ -22,22 +22,27 @@
 # 02110-1301, USA.
 #
 
-import os
 import CTK
+import Page
+import Cherokee
+import validations
 
-class Base (CTK.Page):
-    def __init__ (self, title, headers=None, body_id=None, **kwargs):
-        # Look for the theme file
-        srcdir = os.path.dirname (os.path.realpath (__file__))
-        theme_file = os.path.join (srcdir, 'theme.html')
+URL_BASE  = '/vserver'
+URL_APPLY = '/vserver/apply'
 
-        # Set up the template
-        template = CTK.Template (filename = theme_file)
-        template['title'] = title
+HELPS = [('config_virtual_servers', N_("Virtual Servers"))]
 
-        # <body> property
-        if body_id:
-            template['body_props'] = ' id="body-%s"' %(body_id)
 
-        # Parent's constructor
-        CTK.Page.__init__ (self, template, headers, **kwargs)
+class Render():
+    def __call__ (self):
+        layout = CTK.Layout()
+        layout.west   += CTK.RawHTML("The menu goes here")
+        layout.center += CTK.RawHTML("<p>Content goes here</p>" * 20)
+
+        page = Page.Base (_('Virtual Servers configuration'), helps=HELPS)
+        page += layout
+
+        return page.Render()
+
+
+CTK.publish (URL_BASE, Render)

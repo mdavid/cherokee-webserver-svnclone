@@ -242,7 +242,7 @@ class Render():
         tabs.Add (_('Files'),         FilesWidget_Instancer())
         tabs.Add (_('Special Icons'), SpecialWidget())
 
-        page = Page.Base(_('Icons'), helps=HELPS)
+        page = Page.Base(_('Icons'), body_id='icons', helps=HELPS)
         page += CTK.RawHTML("<h1>%s</h1>" %(_('Icon configuration')))
         page += tabs
 
