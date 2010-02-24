@@ -103,9 +103,9 @@ class ConnectionsWidget (CTK.Container):
 
         table = CTK.PropsAuto(URL_APPLY)
         self += table
-        table.Add (_('Keep Alive'),         CTK.CheckCfg('server!keepalive', True), _(NOTE_KEEPALIVE))
+        table.Add (_('Keep Alive'),         CTK.CheckCfgText('server!keepalive', True, _("Allowed")), _(NOTE_KEEPALIVE))
         table.Add (_('Max keepalive reqs'), CTK.TextCfg('server!keepalive_max_requests'), _(NOTE_KEEPALIVE_RS))
-        table.Add (_('Chunked Encoding'),   CTK.CheckCfg('server!chunked_encoding', True), _(NOTE_CHUNKED))
+        table.Add (_('Chunked Encoding'),   CTK.CheckCfgText('server!chunked_encoding', True, _("Allowed")), _(NOTE_CHUNKED))
         table.Add (_('Polling Method'),     CTK.ComboCfg('server!poll_method', Cherokee.support.filter_polling_methods(POLL_METHODS)), _(NOTE_POLLING))
         table.Add (_('Sendfile min size'),  CTK.TextCfg('server!sendfile_min', True), _(NOTE_SENDFILE_MIN))
         table.Add (_('Sendfile max size'),  CTK.TextCfg('server!sendfile_max', True), _(NOTE_SENDFILE_MAX))
@@ -130,7 +130,7 @@ class IOCacheWidget (CTK.Container):
 
         table = CTK.PropsAuto(URL_APPLY)
         self += table
-        table.Add (_('Status'),        CTK.CheckCfg('server!iocache', True), _(NOTE_IO_ENABLED))
+        table.Add (_('Status'),        CTK.CheckCfgText('server!iocache', True), _(NOTE_IO_ENABLED))
         table.Add (_('Max pages'),     CTK.TextCfg('server!iocache!max_size',      True), _(NOTE_IO_SIZE))
         table.Add (_('File Min Size'), CTK.TextCfg('server!iocache!min_file_size', True), _(NOTE_IO_MIN_SIZE))
         table.Add (_('File Max Size'), CTK.TextCfg('server!iocache!max_file_size', True), _(NOTE_IO_MAX_SIZE))
