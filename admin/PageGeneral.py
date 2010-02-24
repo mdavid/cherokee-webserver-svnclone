@@ -78,7 +78,7 @@ class NetworkWidget (CTK.Container):
         CTK.Container.__init__ (self)
 
         table = CTK.PropsAuto (URL_APPLY)
-        table.Add (_('IPv6'),             CTK.CheckCfg('server!ipv6', True), _(NOTE_IPV6))
+        table.Add (_('IPv6'),             CTK.CheckCfgText('server!ipv6', True), _(NOTE_IPV6))
         table.Add (_('SSL/TLS back-end'), CTK.ComboCfg('server!tls', Cherokee.support.filter_available(CRYPTORS)), _(NOTE_TLS))
         self += CTK.RawHTML ("<h2>%s</h2>" %(_('Support')))
         self += CTK.Indenter(table)
@@ -127,14 +127,15 @@ class PortsTable (CTK.Table):
             port   = CTK.TextCfg ('%s!port'%(pre),      False, {'size': 8})
             listen = CTK.TextCfg ('%s!interface'%(pre), True,  {'size': 45})
             tls    = CTK.CheckCfg('%s!tls'%(pre),       False, {'disabled': not has_tls})
-            delete = CTK.ImageStock('del')
+            delete = None
 
-            from CTK.Refreshable import REFRESHABLE_UPDATE_JS as update_js
-
-            delete.bind('click', CTK.JS.Ajax (URL_APPLY,
-                                              data     = {pre: ''},
-                                              complete = update_js %({'id': refreshable.id,
-                                                                      'url': refreshable.url})))
+            if len(binds) >= 2:
+                delete = CTK.ImageStock('del')
+                from CTK.Refreshable import REFRESHABLE_UPDATE_JS as update_js
+                delete.bind('click', CTK.JS.Ajax (URL_APPLY,
+                                                  data     = {pre: ''},
+                                                  complete = update_js %({'id': refreshable.id,
+                                                                          'url': refreshable.url})))
             self[(n,1)] = [port, listen, tls, delete]
             n += 1
 
@@ -148,19 +149,22 @@ class PortsWidget (CTK.Container):
 
         # Add new entry
         new_field  = CTK.TextCfg('new_port')
+        add_button = CTK.SubmitterButton (_('Add'))
+
         new_submit = CTK.Submitter (URL_APPLY)
         new_submit += new_field
-
         new_submit.bind ('submit_success', refresh.JS_to_refresh())
         new_submit.bind ('submit_success', new_field.JS_to_clean())
 
-        table = CTK.PropsAuto (URL_APPLY)
-        table.Add (_('Add new port'), new_submit, _(NOTE_ADD_PORT), use_submitter=False)
+        table = CTK.PropsTable()
+        table.Add (_('Add new port'), new_submit, _(NOTE_ADD_PORT))
 
         # Integration
         self += CTK.RawHTML ("<h2>%s</h2>" % (_('Listening to ports')))
         self += CTK.Indenter(refresh)
         self += table
+        self += add_button
+
 
 class PermsWidget (CTK.Container):
     def __init__ (self):
