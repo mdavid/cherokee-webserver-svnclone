@@ -92,7 +92,7 @@ class Render():
             self.page += notice
 
         self.page += ServerInfo()
-
+        self.page += CTK.RawHTML('<a href="/launch">Launch</a> | <a href="/stop">Stop</a>')
         return self.page.Render()
 
 
