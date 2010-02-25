@@ -68,13 +68,21 @@ NOTE_UTC_TIME         = N_('Time standard to use in the log file entries.')
 
 DEFAULT_HOST_NOTE     = N_("<p>The 'default' virtual server matches all the domain names.</p>")
 
+
+def validation_ca_list (text):
+    "Empty or local_file_exists"
+    if not text:
+        return text
+    text = validations.is_local_file_exists (text)
+    return text
+
 VALIDATIONS = [
     ("vserver![\d]+!user_dir",                   validations.is_safe_id),
     ("vserver![\d]+!document_root",              validations.is_dev_null_or_local_dir_exists),
     ("vserver![\d]+!post_max_len",               validations.is_positive_int),
     ("vserver![\d]+!ssl_certificate_file",       validations.is_local_file_exists),
     ("vserver![\d]+!ssl_certificate_key_file",   validations.is_local_file_exists),
-    ("vserver![\d]+!ssl_ca_list_file",           validations.is_local_file_exists),
+    ("vserver![\d]+!ssl_ca_list_file",           validation_ca_list),
     ("vserver![\d]+!ssl_verify_depth",           validations.is_positive_int),
     ("vserver![\d]+!logger![\d]+!filename",      validations.parent_is_dir),
     ("vserver![\d]+!logger![\d]+!command",       validations.is_local_file_exists),
@@ -176,6 +184,52 @@ class ErrorHandlerWidget (CTK.Container):
         self += modul
 
 
+class SecutiryWidgetContent (CTK.Container):
+    def __init__ (self, vsrv_num, refreshable):
+        CTK.Container.__init__ (self)
+
+        pre        = "vserver!%s" %(vsrv_num)
+        url_apply  = "%s/%s" %(URL_APPLY, vsrv_num)
+
+        # Required SSL/TLS values
+        table = CTK.PropsTable()
+        table.Add (_('Certificate'),     CTK.TextCfg ('%s!ssl_certificate_file'%(pre), True), _(NOTE_CERT))
+        table.Add (_('Certificate key'), CTK.TextCfg ('%s!ssl_certificate_key_file'%(pre), True), _(NOTE_CERT_KEY))
+
+        submit = CTK.Submitter (url_apply)
+        submit += table
+
+        self += CTK.RawHTML ('<h2>%s</h2>' % (_('Required SSL/TLS values')))
+        self += CTK.Indenter (submit)
+
+        # Advanced options
+        table = CTK.PropsTable()
+        table.Add (_('Ciphers'),               CTK.TextCfg ('%s!ssl_ciphers' %(pre), True), _(NOTE_CIPHERS))
+        table.Add (_('Client Certs. Request'), CTK.ComboCfg('%s!ssl_client_certs' %(pre), CLIENT_CERTS), _(NOTE_CLIENT_CERTS))
+
+        if CTK.cfg.get_val('%s!ssl_client_certs' %(pre)):
+            table.Add (_('CA List'), CTK.TextCfg ('%s!ssl_ca_list_file' %(pre), False), _(NOTE_CA_LIST))
+
+            if CTK.cfg.get_val('%s!ssl_ca_list_file' %(pre)):
+                table.Add (_('Verify Depth'), CTK.TextCfg ('%s!ssl_verify_depth' %(pre), False, {'size': 4}), _(NOTE_VERIFY_DEPTH))
+
+        submit = CTK.Submitter (url_apply)
+        submit.bind ('submit_success', refreshable.JS_to_refresh())
+        submit += table
+
+        self += CTK.RawHTML ('<h2>%s</h2>' % (_('Advanced options')))
+        self += CTK.Indenter (submit)
+
+class SecurityWidget (CTK.Container):
+    def __init__ (self, vsrv_num):
+        CTK.Container.__init__ (self)
+
+        # Content
+        refresh = CTK.Refreshable()
+        refresh.register (lambda: SecutiryWidgetContent(vsrv_num, refresh).Render())
+        self += CTK.Indenter (refresh)
+
+
 class Render():
     def __call__ (self):
         # Parse request
@@ -187,6 +241,7 @@ class Render():
         tabs.Add (_('Basics'),        BasicsWidget (vsrv_num))
         tabs.Add (_('Host Match'),    HostMatchWidget (vsrv_num))
         tabs.Add (_('Error Handler'), ErrorHandlerWidget (vsrv_num))
+        tabs.Add (_('Security'),      SecurityWidget (vsrv_num))
 
         # Instance Page
         title = '%s: %s'%(_('Virtual Server'), vsrv_nam)
@@ -199,4 +254,4 @@ class Render():
 
 
 CTK.publish (r'^%s/[\d]+$'%(URL_BASE), Render)
-CTK.publish (r'^%s/[\d]+$'%(URL_APPLY), apply, validations=VALIDATIONS, method="POST")
+CTK.publish (r'^%s/[\d]+$'%(URL_APPLY), apply, validation=VALIDATIONS, method="POST")
