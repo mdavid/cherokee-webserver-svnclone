@@ -35,13 +35,10 @@ HELPS = [('config_virtual_servers', N_("Virtual Servers"))]
 
 class Render():
     def __call__ (self):
-        layout = CTK.Layout()
-        layout.west   += CTK.RawHTML("The menu goes here")
-        layout.center += CTK.RawHTML("<p>Content goes here</p>" * 20)
+        title = _('Virtual Servers')
 
-        page = Page.Base (_('Virtual Servers configuration'), helps=HELPS)
-        page += layout
-
+        page = Page.Base (title, helps=HELPS)
+        page += CTK.RawHTML ("<h1>%s</h1>" % (title))
         return page.Render()
 
 

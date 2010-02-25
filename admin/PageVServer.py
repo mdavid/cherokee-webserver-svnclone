@@ -236,6 +236,10 @@ class Render():
         vsrv_num = re.findall (r'^%s/([\d]+)'%(URL_BASE), CTK.request.url)[0]
         vsrv_nam = CTK.cfg.get_val ("vserver!%s!nick" %(vsrv_num), _("Unknown"))
 
+        # Ensure the vserver exists
+        if not CTK.cfg.keys ("vserver!%s"%(vsrv_num)):
+            return CTK.HTTP_Redir("/vserver")
+
         # Tabs
         tabs = CTK.Tab()
         tabs.Add (_('Basics'),        BasicsWidget (vsrv_num))

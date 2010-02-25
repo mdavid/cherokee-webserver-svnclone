@@ -97,6 +97,7 @@ if __name__ == "__main__":
     # Import the Pages
     import PageIndex
     import PageGeneral
+    import PageVServers
     import PageVServer
     import PageIcons
     import PageMime
