@@ -32,6 +32,9 @@ URL_APPLY = '/vserver/apply'
 
 HELPS = [('config_virtual_servers', N_("Virtual Servers"))]
 
+class VServerListWidget (CTK.Box):
+    def __init__ (self):
+        CTK.Box.__init__ (self, {'id': 'vserver-list'})
 
 class Render():
     def __call__ (self):
@@ -39,6 +42,7 @@ class Render():
 
         page = Page.Base (title, helps=HELPS)
         page += CTK.RawHTML ("<h1>%s</h1>" % (title))
+        page += VServerListWidget()
         return page.Render()
 
 
