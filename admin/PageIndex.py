@@ -25,10 +25,12 @@
 import CTK
 import Page
 import Cherokee
+import gettext
 
 import os
 import time
 
+from consts import *
 from configured import *
 
 BETA_TESTER_NOTICE = N_("""
@@ -79,6 +81,32 @@ class ServerInfo (CTK.Table):
         return time.ctime(info.st_ctime)
 
 
+def Lang_Apply():
+    # Sanity check
+    langs = CTK.post.get_val('lang')
+    if not langs:
+        return {'ret': 'error', 'errors': {'lang': 'Cannot be empty'}}
+
+    # Install the new language
+    languages = [l for s in langs.split(',') for l in s.split(';') if not '=' in l]
+    try:
+        gettext.translation('cherokee', LOCALEDIR, languages).install()
+    except:
+        pass
+
+    return {'ret': 'ok', 'redirect': '/'}
+
+class LanguageSelector (CTK.Box):
+    def __init__ (self):
+        CTK.Box.__init__ (self, {'id': 'lenguage-selector'})
+
+        languages = [('', _('Choose'))] + AVAILABLE_LANGUAGES
+
+        submit = CTK.Submitter('/lang/apply')
+        submit += CTK.Combobox ({'name': 'lang'}, languages)
+        self += submit
+
+
 class Render():
     def __call__ (self):
         Cherokee.pid.refresh()
@@ -93,9 +121,11 @@ class Render():
 
         self.page += ServerInfo()
         self.page += CTK.RawHTML('<a href="/launch">Launch</a> | <a href="/stop">Stop</a>')
+        self.page += LanguageSelector()
         return self.page.Render()
 
 
-CTK.publish ('^/$',       Render)
-CTK.publish ('^/launch$', Launch)
-CTK.publish ('^/stop$',   Stop)
+CTK.publish (r'^/$',           Render)
+CTK.publish (r'^/launch$',     Launch)
+CTK.publish (r'^/stop$',       Stop)
+CTK.publish (r'^/lang/apply$', Lang_Apply, method="POST")
