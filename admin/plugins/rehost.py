@@ -68,8 +68,7 @@ class Content (CTK.Container):
         dialog = CTK.Dialog({'title':     _('Add new'),
                              'autoOpen':  False,
                              'draggable': False,
-                             'height':    250,
-                             'width':     700})
+                             'width':     480})
 
         submit = CTK.Submitter(url_apply)
         submit += table
