@@ -27,6 +27,8 @@ import Page
 import Cherokee
 import validations
 
+from util import *
+
 URL_BASE  = r'/vserver'
 URL_APPLY = r'/vserver/apply'
 
@@ -59,11 +61,16 @@ class VServerListWidget (CTK.Box):
         self += submit
 
         for k in vservers:
-            nick = CTK.cfg.get_val('vserver!%s!nick'%(k), _('Unknown'))
+            nick    = CTK.cfg.get_val('vserver!%s!nick'%(k), _('Unknown'))
+            droot   = CTK.cfg.get_val('vserver!%s!document_root'%(k), '')
+            logging = bool (CTK.cfg.get_val('vserver!%s!logger'%(k)))
+
 
             vsrv_box = CTK.Box ({'id': 'vserver-list-entry'})
             vsrv_box += CTK.Box ({'class': 'name'},     CTK.Link ('/vserver/%s'%(k), CTK.RawHTML(nick)))
             vsrv_box += CTK.Box ({'class': 'disabled'}, CTK.iPhoneCfg ('vserver!%s!disabled'%(k), False))
+            vsrv_box += CTK.Box ({'class': 'droot'},    CTK.RawHTML ('<b>Document Root</b>: %s'%(droot)))
+            vsrv_box += CTK.Box ({'class': 'logging'},  CTK.RawHTML ('<b>Access Logging</b>: %s'%(bool_to_active (logging))))
 
             submit += vsrv_box
 

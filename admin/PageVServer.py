@@ -102,6 +102,7 @@ def apply():
 
     return {'ret': 'ok'}
 
+
 class HostMatchWidget (CTK.Container):
     def __init__ (self, vsrv_num):
         CTK.Container.__init__ (self)
@@ -220,6 +221,7 @@ class SecutiryWidgetContent (CTK.Container):
         self += CTK.RawHTML ('<h2>%s</h2>' % (_('Advanced options')))
         self += CTK.Indenter (submit)
 
+
 class SecurityWidget (CTK.Container):
     def __init__ (self, vsrv_num):
         CTK.Container.__init__ (self)
@@ -248,10 +250,8 @@ class Render():
         tabs.Add (_('Security'),      SecurityWidget (vsrv_num))
 
         # Instance Page
-        title = '%s: %s'%(_('Virtual Server'), vsrv_nam)
-
-        page = Page.Base (title, helps=HELPS)
-        page += CTK.RawHTML ("<h1>%s</h1>" % (title))
+        page = Page.Base ('%s: %s' %(_('Virtual Server'), vsrv_nam), helps=HELPS)
+        page += CTK.RawHTML ('<h1><a href="/vserver">%s</a>: %s</h1>' %(_('Virtual Server'), vsrv_nam))
         page += tabs
 
         return page.Render()
