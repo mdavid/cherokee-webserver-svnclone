@@ -84,8 +84,8 @@ VALIDATIONS = [
     ("vserver![\d]+!ssl_certificate_key_file",   validations.is_local_file_exists),
     ("vserver![\d]+!ssl_ca_list_file",           validation_ca_list),
     ("vserver![\d]+!ssl_verify_depth",           validations.is_positive_int),
-    ("vserver![\d]+!logger![\d]+!filename",      validations.parent_is_dir),
-    ("vserver![\d]+!logger![\d]+!command",       validations.is_local_file_exists),
+    ("vserver![\d]+!logger!.+?!filename",        validations.parent_is_dir),
+    ("vserver![\d]+!logger!.+?!command",         validations.is_local_file_exists),
     ("vserver![\d]+!logger!x_real_ip_access$",   validations.is_ip_or_netmask_list),
 ]
 
@@ -208,22 +208,41 @@ class LogginWidgetContent (CTK.Container):
         submit += table
 
         self += CTK.RawHTML ('<h2>%s</h2>' % (_('Error logging')))
-        self += submit
+        self += CTK.Indenter (submit)
 
         # Access logger
         pre = 'vserver!%s!logger' %(vsrv_num)
 
-        table = CTK.PropsTable()
-        modul = CTK.PluginSelector (pre, Cherokee.support.filter_available(LOGGERS), vsrv_num=vsrv_num)
-        table.Add (_('Format'), modul.selector_widget, _(NOTE_LOGGERS))
-
         submit = CTK.Submitter(url_apply)
         submit.bind ('submit_success', refreshable.JS_to_refresh())
-        submit += table
-        submit += modul
+        submit += CTK.ComboCfg(pre, Cherokee.support.filter_available(LOGGERS))
+
+        table = CTK.PropsTable()
+        table.Add (_('Format'), submit, _(NOTE_LOGGERS))
+
+        format = CTK.cfg.get_val(pre)
+        if format:
+            submit = CTK.Submitter(url_apply)
+            submit.bind ('submit_success', refreshable.JS_to_refresh())
+            submit += CTK.ComboCfg('%s!access!type'%(pre), LOGGER_WRITERS)
+            table.Add (_('Write accesses to'), submit, _(NOTE_ACCESSES))
+
+            submit = CTK.Submitter(url_apply)
+            writer = CTK.cfg.get_val ('%s!access!type'%(pre))
+            if writer == 'file' or not writer:
+                submit += CTK.TextCfg('%s!access!filename'%(pre))
+                table.Add (_('Filename'), submit, _(NOTE_WRT_FILE))
+            elif writer == 'exec':
+                submit += CTK.TextCfg('%s!access!command'%(pre))
+                table.Add (_('Command'), submit, _(NOTE_WRT_EXEC))
+
+            if format == 'custom':
+                submit = CTK.Submitter(url_apply)
+                submit += CTK.TextCfg('%s!access!access_template'%(pre))
+                table.Add (_('Template: '), submit, _(NOTE_LOGGER_TEMPLATE))
 
         self += CTK.RawHTML ('<h2>%s</h2>' % (_('Access logging')))
-        self += submit
+        self += CTK.Indenter (table)
 
         # Properties
         if CTK.cfg.get_val (pre):
@@ -242,7 +261,7 @@ class LogginWidgetContent (CTK.Container):
             submit += table
 
             self += CTK.RawHTML ('<h3>%s</h3>' % (_('Logging Option')))
-            self += submit
+            self += CTK.Indenter (submit)
 
 
 
