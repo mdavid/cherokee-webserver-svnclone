@@ -27,14 +27,46 @@ import Page
 import Cherokee
 import validations
 
-URL_BASE  = '/vserver'
-URL_APPLY = '/vserver/apply'
+URL_BASE  = r'/vserver'
+URL_APPLY = r'/vserver/apply'
 
 HELPS = [('config_virtual_servers', N_("Virtual Servers"))]
+
+def apply():
+    # Modifications
+    for k in CTK.post:
+        CTK.cfg[k] = CTK.post[k]
+
+    return {'ret': 'ok'}
+
 
 class VServerListWidget (CTK.Box):
     def __init__ (self):
         CTK.Box.__init__ (self, {'id': 'vserver-list'})
+
+        # Sanity check
+        if not CTK.cfg.keys('vserver'):
+            CTK.cfg['vserver!1!nick']           = 'default'
+            CTK.cfg['vserver!1!document_root']  = '/tmp'
+            CTK.cfg['vserver!1!rule!1!match']   = 'default'
+            CTK.cfg['vserver!1!rule!1!handler'] = 'common'
+
+        # Build the Virtual Server list
+        vservers = CTK.cfg.keys('vserver')
+        vservers.sort (lambda x,y: cmp(int(x), int(y)))
+
+        submit = CTK.Submitter (URL_APPLY)
+        self += submit
+
+        for k in vservers:
+            nick = CTK.cfg.get_val('vserver!%s!nick'%(k), _('Unknown'))
+
+            vsrv_box = CTK.Box ({'id': 'vserver-list-entry'})
+            vsrv_box += CTK.Box ({'class': 'name'},     CTK.Link ('/vserver/%s'%(k), CTK.RawHTML(nick)))
+            vsrv_box += CTK.Box ({'class': 'disabled'}, CTK.iPhoneCfg ('vserver!%s!disabled'%(k), False))
+
+            submit += vsrv_box
+
 
 class Render():
     def __call__ (self):
@@ -47,3 +79,4 @@ class Render():
 
 
 CTK.publish (URL_BASE, Render)
+CTK.publish (URL_APPLY, apply, method="POST")
