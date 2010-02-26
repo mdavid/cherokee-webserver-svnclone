@@ -4,6 +4,19 @@ import glob
 import socket
 
 #
+# Strings
+#
+def bool_to_active (b):
+    return (_('Deactived'), _('Active'))[bool(b)]
+
+def bool_to_onoff (b):
+    return (_('Off'), _('On'))[bool(b)]
+
+def bool_to_yesno (b):
+    return (_('No'), _('Yes'))[bool(b)]
+
+
+#
 # Virtual Server
 #
 
