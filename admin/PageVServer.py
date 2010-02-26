@@ -185,6 +185,77 @@ class ErrorHandlerWidget (CTK.Container):
         self += modul
 
 
+class LogginWidgetContent (CTK.Container):
+    def __init__ (self, vsrv_num, refreshable):
+        CTK.Container.__init__ (self)
+
+        pre        = "vserver!%s" %(vsrv_num)
+        url_apply  = "%s/%s" %(URL_APPLY, vsrv_num)
+        writers    = [('', N_('Disabled'))] + LOGGER_WRITERS
+
+        # Error writer
+        table = CTK.PropsTable()
+        table.Add (_('Write errors to'), CTK.ComboCfg('%s!error_writer!type'%(pre), writers), _(NOTE_ERRORS))
+
+        writer = CTK.cfg.get_val ('%s!error_writer!type'%(pre))
+        if writer == 'file':
+            table.Add (_('Filename'), CTK.TextCfg('%s!error_writer!filename'%(pre)), _(NOTE_WRT_FILE))
+        elif writer == 'exec':
+            table.Add (_('Command'), CTK.TextCfg('%s!error_writer!command'%(pre)), _(NOTE_WRT_EXEC))
+
+        submit = CTK.Submitter(url_apply)
+        submit.bind ('submit_success', refreshable.JS_to_refresh())
+        submit += table
+
+        self += CTK.RawHTML ('<h2>%s</h2>' % (_('Error logging')))
+        self += submit
+
+        # Access logger
+        pre = 'vserver!%s!logger' %(vsrv_num)
+
+        table = CTK.PropsTable()
+        modul = CTK.PluginSelector (pre, Cherokee.support.filter_available(LOGGERS), vsrv_num=vsrv_num)
+        table.Add (_('Format'), modul.selector_widget, _(NOTE_LOGGERS))
+
+        submit = CTK.Submitter(url_apply)
+        submit.bind ('submit_success', refreshable.JS_to_refresh())
+        submit += table
+        submit += modul
+
+        self += CTK.RawHTML ('<h2>%s</h2>' % (_('Access logging')))
+        self += submit
+
+        # Properties
+        if CTK.cfg.get_val (pre):
+            table = CTK.PropsTable()
+            table.Add (_('Time standard'), CTK.ComboCfg ('%s!utc_time'%(pre), UTC_TIME), _(NOTE_UTC_TIME))
+            table.Add (_('Accept Forwarded IPs'), CTK.CheckCfg ('%s!x_real_ip_enabled'%(pre), False), _(NOTE_X_REAL_IP))
+
+            if int (CTK.cfg.get_val('%s!x_real_ip_enabled'%(pre), "0")):
+                table.Add (_('Don\'t check origin'), CTK.CheckCfg ('%s!x_real_ip_access_all'%(pre), False), _(NOTE_X_REAL_IP_ALL))
+
+                if not int (CTK.cfg.get_val ('%s!x_real_ip_access_all'%(pre), "0")):
+                    table.Add (_('Accept from Hosts'), CTK.TextCfg ('%s!x_real_ip_access'%(pre)), _(NOTE_X_REAL_IP_ACCESS))
+
+            submit = CTK.Submitter(url_apply)
+            submit.bind ('submit_success', refreshable.JS_to_refresh())
+            submit += table
+
+            self += CTK.RawHTML ('<h3>%s</h3>' % (_('Logging Option')))
+            self += submit
+
+
+
+class LogginWidget (CTK.Container):
+    def __init__ (self, vsrv_num):
+        CTK.Container.__init__ (self)
+
+        # Content
+        refresh = CTK.Refreshable()
+        refresh.register (lambda: LogginWidgetContent(vsrv_num, refresh).Render())
+        self += CTK.Indenter (refresh)
+
+
 class SecutiryWidgetContent (CTK.Container):
     def __init__ (self, vsrv_num, refreshable):
         CTK.Container.__init__ (self)
@@ -247,6 +318,7 @@ class Render():
         tabs.Add (_('Basics'),        BasicsWidget (vsrv_num))
         tabs.Add (_('Host Match'),    HostMatchWidget (vsrv_num))
         tabs.Add (_('Error Handler'), ErrorHandlerWidget (vsrv_num))
+        tabs.Add (_('Logging'),       LogginWidget (vsrv_num))
         tabs.Add (_('Security'),      SecurityWidget (vsrv_num))
 
         # Instance Page
