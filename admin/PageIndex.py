@@ -33,11 +33,21 @@ import time
 from consts import *
 from configured import *
 
+
+
 BETA_TESTER_NOTICE = N_("""
 <h3>Beta testing</h3> <p>Individuals like yourself who download and
 test the latest developer snapshots of Cherokee Web Server help us to
 create the highest quality product. For that, we thank you.</p>
 """)
+
+PROUD_USERS_WEB = "http://www.cherokee-project.com/cherokee-domain-list.html"
+
+PROUD_USERS_NOTICE = N_("""
+We would love to know that you are using Cherokee. Submit your domain
+name and it will be <a target="_blank" href="%s">listed on the
+Cherokee Project web site</a>.
+""" %(PROUD_USERS_WEB))
 
 
 def Launch():
@@ -99,12 +109,35 @@ def Lang_Apply():
 class LanguageSelector (CTK.Box):
     def __init__ (self):
         CTK.Box.__init__ (self, {'id': 'lenguage-selector'})
-
         languages = [('', _('Choose'))] + AVAILABLE_LANGUAGES
 
         submit = CTK.Submitter('/lang/apply')
         submit += CTK.Combobox ({'name': 'lang'}, languages)
+
+        self += CTK.RawHTML('<h3>%s</h3>' %(_('Lenguaje')))
         self += submit
+
+
+def ProudUsers_Apply():
+    # TODO: OWS goes here
+    return {'ret': 'ok'}
+
+class ProudUsers (CTK.Box):
+    def __init__ (self):
+        CTK.Box.__init__ (self, {'id': 'proud-users'})
+
+        dialog = CTK.Dialog({'title': _('Thank you!'), 'autoOpen': False, 'draggable': False})
+        dialog.AddButton (_('Close'), "close")
+        dialog += CTK.RawHTML ("<p>The information has been successfully sent.</p>")
+
+        submit = CTK.Submitter('/proud/apply')
+        submit += CTK.SubmitterButton (_('Send domains'))
+        submit.bind ('submit_success', dialog.JS_to_show())
+
+        self += CTK.RawHTML('<h3>%s</h3>' %(_('Proud Cherokee Users')))
+        self += CTK.Box ({'id': 'notice'}, CTK.RawHTML (PROUD_USERS_NOTICE))
+        self += submit
+        self += dialog
 
 
 class Render():
@@ -122,10 +155,13 @@ class Render():
         self.page += ServerInfo()
         self.page += CTK.RawHTML('<a href="/launch">Launch</a> | <a href="/stop">Stop</a>')
         self.page += LanguageSelector()
+        self.page += ProudUsers()
+
         return self.page.Render()
 
 
-CTK.publish (r'^/$',           Render)
-CTK.publish (r'^/launch$',     Launch)
-CTK.publish (r'^/stop$',       Stop)
-CTK.publish (r'^/lang/apply$', Lang_Apply, method="POST")
+CTK.publish (r'^/$',            Render)
+CTK.publish (r'^/launch$',      Launch)
+CTK.publish (r'^/stop$',        Stop)
+CTK.publish (r'^/lang/apply$',  Lang_Apply, method="POST")
+CTK.publish (r'^/proud/apply$', ProudUsers_Apply, method="POST")
