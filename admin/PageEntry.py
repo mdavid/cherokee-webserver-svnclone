@@ -69,19 +69,37 @@ ENCODE_OPTIONS = [
 
 
 
+def apply():
+    for k in CTK.post:
+        CTK.cfg[k] = CTK.post[k]
+    return {'ret': 'ok'}
+
+
 class EncodingWidget (CTK.Container):
-    def __init__ (self, vsrv, rule):
+    def __init__ (self, vsrv, rule, apply):
         CTK.Container.__init__ (self)
 
 
 class RuleWidget (CTK.Container):
-    def __init__ (self, vsrv, rule):
+    def __init__ (self, vsrv, rule, apply, refresh):
         CTK.Container.__init__ (self)
         pre = 'vserver!%s!rule!%s!match' %(vsrv, rule)
 
-        self += CTK.RawHTML ("<h2>%s</h2>" % (_('Matching Rule')))
-        self += Rule(pre)
+        submit = CTK.Submitter(apply)
+        submit += Rule(pre)
+        submit.bind ('submit_success', refresh.JS_to_refresh())
 
+        self += CTK.RawHTML ("<h2>%s</h2>" % (_('Matching Rule')))
+        self += submit
+
+class Header (CTK.Container):
+    def __init__ (self, refreshable, vsrv_num, rule_num, vsrv_nam):
+        CTK.Container.__init__(self)
+
+        rule = Rule ('vserver!%s!rule!%s!match' %(vsrv_num, rule_num))
+        rule_nam = rule.GetName()
+
+        self += CTK.RawHTML ('<h1><a href="/vserver">%s</a>: <a href="/vserver/%s">%s</a>: %s</h1>' %(_('Virtual Server'), vsrv_num, vsrv_nam, rule_nam))
 
 class Render():
     def __call__ (self):
@@ -89,21 +107,24 @@ class Render():
         vsrv_num, rule_num = re.findall (URL_BASE, CTK.request.url)[0]
         vsrv_nam = CTK.cfg.get_val ("vserver!%s!nick" %(vsrv_num), _("Unknown"))
 
-        rule = Rule ('vserver!%s!rule!%s!match' %(vsrv_num, rule_num))
-        rule_nam = rule.GetName()
+        url_apply = '/vserver/%s/rule/%s/apply' %(vsrv_num, rule_num)
 
         # Ensure the rule exists
         if not CTK.cfg.keys('vserver!%s!rule!%s'%(vsrv_num, rule_num)):
             return CTK.HTTP_Redir ('/vserver/%s' %(vsrv_num))
 
+        # Header refresh
+        refresh = CTK.Refreshable()
+        refresh.register (lambda: Header(refresh, vsrv_num, rule_num, vsrv_nam).Render())
+
         # Tabs
         tabs = CTK.Tab()
-        tabs.Add (_('Rule'),     RuleWidget (vsrv_num, rule_num))
-        tabs.Add (_('Encoding'), EncodingWidget (vsrv_num, rule_num))
+        tabs.Add (_('Rule'),     RuleWidget (vsrv_num, rule_num, url_apply, refresh))
+        tabs.Add (_('Encoding'), EncodingWidget (vsrv_num, rule_num, url_apply))
 
         # Page
         page = Page.Base ('%s: %s: %s' %(_('Virtual Server'), vsrv_nam, rule_num), helps=HELPS)
-        page += CTK.RawHTML ('<h1><a href="/vserver">%s</a>: <a href="/vserver/%s">%s</a>: %s</h1>' %(_('Virtual Server'), vsrv_num, vsrv_nam, rule_nam))
+        page += refresh
         page += tabs
 
         return page.Render()
