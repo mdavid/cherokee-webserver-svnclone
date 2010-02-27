@@ -23,12 +23,32 @@
 import CTK
 from Rule import RulePlugin
 
-HELPS = []
+URL_APPLY = '/plugin/directory/apply'
+
+NOTE_DIRECTORY = N_("Public Web Directory to which content the configuration will be applied.")
+
+def apply():
+    # New
+    new_dir = CTK.post.pop('tmp!directory')
+    if new_dir:
+        vsrv_num = re.findall (r'^%s/([\d]+)'%(URL_APPLY), CTK.request.url)[0]
+        print "NEW DIR", new_dir, "vsrv", vsrv_num
+        return {'ret': 'ok'}
+
+    # Modifications
+    for k in CTK.post:
+        CTK.cfg[k] = CTK.post[k]
+    return {'ret': 'ok'}
+
 
 class Plugin_directory (RulePlugin):
     def __init__ (self, key, **kwargs):
         RulePlugin.__init__ (self, key, **kwargs)
-        self += CTK.RawHTML ("soy un directorio")
+
+        table = CTK.PropsTable()
+        table.Add (_('Web Directory'), CTK.TextCfg('%s!directory'%(key)), _(NOTE_DIRECTORY))
+        self += table
 
     def GetName (self):
-        return "Directory %s" %('something')
+        directory = CTK.cfg.get_val ('%s!directory' %(self.key), '')
+        return "Directory %s" %(directory)
