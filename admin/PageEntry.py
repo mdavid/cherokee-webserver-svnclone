@@ -73,12 +73,14 @@ class EncodingWidget (CTK.Container):
     def __init__ (self, vsrv, rule):
         CTK.Container.__init__ (self)
 
+
 class RuleWidget (CTK.Container):
     def __init__ (self, vsrv, rule):
         CTK.Container.__init__ (self)
+        pre = 'vserver!%s!rule!%s!match' %(vsrv, rule)
 
         self += CTK.RawHTML ("<h2>%s</h2>" % (_('Matching Rule')))
-        self += Rule (vsrv, rule)
+        self += Rule(pre)
 
 
 class Render():
@@ -86,7 +88,13 @@ class Render():
         # Parse request
         vsrv_num, rule_num = re.findall (URL_BASE, CTK.request.url)[0]
         vsrv_nam = CTK.cfg.get_val ("vserver!%s!nick" %(vsrv_num), _("Unknown"))
-        rule_nam = rule_num
+
+        rule = Rule ('vserver!%s!rule!%s!match' %(vsrv_num, rule_num))
+        rule_nam = rule.GetName()
+
+        # Ensure the rule exists
+        if not CTK.cfg.keys('vserver!%s!rule!%s'%(vsrv_num, rule_num)):
+            return CTK.HTTP_Redir ('/vserver/%s' %(vsrv_num))
 
         # Tabs
         tabs = CTK.Tab()

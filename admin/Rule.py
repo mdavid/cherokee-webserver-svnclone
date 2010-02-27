@@ -24,6 +24,77 @@
 
 import CTK
 
+DEFAULT_RULE_WARNING = N_('The default match ought not to be changed.')
+
+
+class RulePlugin (CTK.Plugin):
+    def __init__ (self, key, **kwargs):
+        CTK.Plugin.__init__ (self, key, **kwargs)
+
+    def GetName (self):
+        raise NotImplementedError
+
+
 class Rule (CTK.Box):
-    def __init__ (self, vsrv, rule):
+    def __init__ (self, key):
         CTK.Box.__init__ (self)
+        self.key = key
+
+    def GetName (self):
+        # Default Rule
+        value = CTK.cfg.get_val (self.key)
+        if value == 'default':
+            return _('Default')
+
+        # Logic ops
+        elif value == "and":
+            rule1 = Rule ('%s!left' %(self.key))
+            rule2 = Rule ('%s!right'%(self.key))
+            return '(%s AND %s)' %(rule1.GetName(), rule2.GetName())
+
+        elif value == "or":
+            rule1 = Rule ('%s!left' %(self.key))
+            rule2 = Rule ('%s!right'%(self.key))
+            return '(%s OR %s)' %(rule1.GetName(), rule2.GetName())
+
+        elif value == "not":
+            rule = Rule ('%s!right'%(self.key))
+            return '(NOT %s)' %(rule.GetName())
+
+        # Regular rules
+        plugin = CTK.instance_plugin (value, self.key)
+        return plugin.GetName()
+
+    def Render (self):
+        # Default Rule
+        value = CTK.cfg.get_val (self.key)
+        if value == 'default':
+            notice = CTK.Notice ('important-information')
+            notice += CTK.RawHTML (DEFAULT_RULE_WARNING)
+            self += notice
+            return
+
+        # Special rule types
+        elif value == "and":
+            self.props['class'] = 'rule-and'
+            self += Rule ('%s!left' %(self.key))
+            self += Rule ('%s!right'%(self.key))
+            return
+
+        elif value == "or":
+            self.props['class'] = 'rule-or'
+            self += Rule ('%s!left' %(self.key))
+            self += Rule ('%s!right'%(self.key))
+            return
+
+        elif value == "not":
+            self.props['class'] = 'rule-not'
+            self += Rule ('%s!right'%(self.key))
+            return
+
+        # Regular rules
+        plugin = CTK.instance_plugin (value, self.key)
+        self += plugin
+
+        # Render
+        return CTK.Box.Render (self)
