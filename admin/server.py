@@ -99,6 +99,8 @@ if __name__ == "__main__":
     import PageGeneral
     import PageVServers
     import PageVServer
+    import PageEntry
+    import PageSources
     import PageIcons
     import PageMime
     import PageAdvanced
