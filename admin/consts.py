@@ -158,15 +158,15 @@ ERROR_CODES = [
 RULES = [
     ('directory',  N_('Directory')),
     ('extensions', N_('Extensions')),
-    ('request',    N_('Regular Expression')),
-    ('header',     N_('Header')),
-    ('exists',     N_('File Exists')),
-    ('method',     N_('HTTP Method')),
-    ('bind',       N_('Incoming IP/Port')),
-    ('fullpath',   N_('Full Path')),
-    ('from',       N_('Connected from')),
-    ('url_arg',    N_('URL Argument')),
-    ('geoip',      N_('GeoIP'))
+#    ('request',    N_('Regular Expression')),
+#    ('header',     N_('Header')),
+#    ('exists',     N_('File Exists')),
+#    ('method',     N_('HTTP Method')),
+#    ('bind',       N_('Incoming IP/Port')),
+#    ('fullpath',   N_('Full Path')),
+#    ('from',       N_('Connected from')),
+#    ('url_arg',    N_('URL Argument')),
+#    ('geoip',      N_('GeoIP'))
 ]
 
 VRULES = [

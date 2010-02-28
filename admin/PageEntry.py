@@ -85,12 +85,12 @@ class RuleWidget (CTK.Container):
         CTK.Container.__init__ (self)
         pre = 'vserver!%s!rule!%s!match' %(vsrv, rule)
 
-        submit = CTK.Submitter(apply)
-        submit += Rule(pre)
-        submit.bind ('submit_success', refresh.JS_to_refresh())
+        rule = Rule (pre)
+        rule.bind ('submit_success', refresh.JS_to_refresh())
 
         self += CTK.RawHTML ("<h2>%s</h2>" % (_('Matching Rule')))
-        self += submit
+        self += rule
+
 
 class Header (CTK.Container):
     def __init__ (self, refreshable, vsrv_num, rule_num, vsrv_nam):
@@ -100,6 +100,7 @@ class Header (CTK.Container):
         rule_nam = rule.GetName()
 
         self += CTK.RawHTML ('<h1><a href="/vserver">%s</a>: <a href="/vserver/%s">%s</a>: %s</h1>' %(_('Virtual Server'), vsrv_num, vsrv_nam, rule_nam))
+
 
 class Render():
     def __call__ (self):

@@ -22,14 +22,15 @@
 # 02110-1301, USA.
 #
 
+import re
 import CTK
 
 DEFAULT_RULE_WARNING = N_('The default match ought not to be changed.')
 
 
 class RulePlugin (CTK.Plugin):
-    def __init__ (self, key, **kwargs):
-        CTK.Plugin.__init__ (self, key, **kwargs)
+    def __init__ (self, key):
+        CTK.Plugin.__init__ (self, key)
 
     def GetName (self):
         raise NotImplementedError
