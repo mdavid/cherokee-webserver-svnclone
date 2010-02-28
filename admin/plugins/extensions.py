@@ -25,22 +25,22 @@ import CTK
 from Rule import RulePlugin
 from util import *
 
-URL_APPLY = '/plugin/directory/apply'
+URL_APPLY = '/plugin/extensions/apply'
 
-NOTE_DIRECTORY = N_("Public Web Directory to which content the configuration will be applied.")
+NOTE_EXTENSIONS = N_("Comma-separated list of File Extension to which the configuration will be applied.")
 
 def apply():
     # POST info
     key      = CTK.post.pop ('key', None)
     vsrv_num = CTK.post.pop ('vsrv_num', None)
-    new_dir  = CTK.post.pop ('tmp!directory', None)
+    new_ext  = CTK.post.pop ('tmp!extensions', None)
 
     # New
-    if new_dir:
+    if new_ext:
         next_rule, next_pre = cfg_vsrv_rule_get_next ('vserver!%s'%(vsrv_num))
 
-        CTK.cfg['%s!match'%(next_pre)]            = 'directory'
-        CTK.cfg['%s!match!directory'%(next_pre)] = new_dir
+        CTK.cfg['%s!match'%(next_pre)]            = 'extensions'
+        CTK.cfg['%s!match!extensions'%(next_pre)] = new_ext
 
         return {'ret': 'ok', 'redirect': '/vserver/%s/rule/%s' %(vsrv_num, next_rule)}
 
@@ -50,12 +50,12 @@ def apply():
     return {'ret': 'ok'}
 
 
-class Plugin_directory (RulePlugin):
+class Plugin_extensions (RulePlugin):
     def __init__ (self, key, **kwargs):
         RulePlugin.__init__ (self, key)
 
         table = CTK.PropsTable()
-        table.Add (_('Web Directory'), CTK.TextCfg('%s!directory'%(key)), _(NOTE_DIRECTORY))
+        table.Add (_('Extensions'), CTK.TextCfg('%s!extensions'%(key)), _(NOTE_EXTENSIONS))
 
         submit = CTK.Submitter (URL_APPLY)
         submit += CTK.Hidden ('key', key)
@@ -67,5 +67,6 @@ class Plugin_directory (RulePlugin):
         CTK.publish (URL_APPLY, apply, method="POST")
 
     def GetName (self):
-        directory = CTK.cfg.get_val ('%s!directory' %(self.key), '')
-        return "Directory %s" %(directory)
+        tmp = CTK.cfg.get_val ('%s!extensions' %(self.key), '')
+        extensions = ', '.join (tmp.split(','))
+        return "Extensions %s" %(extensions)

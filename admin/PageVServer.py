@@ -126,6 +126,25 @@ class HostMatchWidget (CTK.Container):
         self += modul
 
 
+class BehaviorWidget (CTK.Container):
+    def __init__ (self, vsrv_num):
+        CTK.Container.__init__ (self)
+
+        pre        = "vserver!%s" %(vsrv_num)
+        url_apply  = "%s/%s" %(URL_APPLY, vsrv_num)
+
+        # Add new rule
+        rules = [('',_('Choose..'))] + RULES
+
+        table = CTK.PropsAuto (url_apply)
+        modul = CTK.PluginSelector ('tmp', rules, vsrv_num=vsrv_num)
+        table.Add (_('Rule Type'), modul.selector_widget, '', False)
+
+        self += CTK.RawHTML ('<h2>%s</h2>' %(_('Add new rule')))
+        self += CTK.Indenter (table)
+        self += CTK.Indenter (modul)
+
+
 class BasicsWidget (CTK.Container):
     def __init__ (self, vsrv_num):
         CTK.Container.__init__ (self)
@@ -336,6 +355,7 @@ class Render():
         tabs = CTK.Tab()
         tabs.Add (_('Basics'),        BasicsWidget (vsrv_num))
         tabs.Add (_('Host Match'),    HostMatchWidget (vsrv_num))
+        tabs.Add (_('Behavior'),      BehaviorWidget (vsrv_num))
         tabs.Add (_('Error Handler'), ErrorHandlerWidget (vsrv_num))
         tabs.Add (_('Logging'),       LogginWidget (vsrv_num))
         tabs.Add (_('Security'),      SecurityWidget (vsrv_num))
