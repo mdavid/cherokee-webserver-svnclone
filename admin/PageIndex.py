@@ -60,6 +60,7 @@ def Stop():
     Cherokee.server.stop()
     return CTK.HTTP_Redir('/')
 
+
 class ServerInfo (CTK.Table):
     def __init__ (self):
         CTK.Table.__init__ (self)
@@ -121,6 +122,7 @@ class LanguageSelector (CTK.Box):
 def ProudUsers_Apply():
     # TODO: OWS goes here
     return {'ret': 'ok'}
+
 
 class ProudUsers (CTK.Box):
     def __init__ (self):
