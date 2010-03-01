@@ -133,6 +133,9 @@ class BehaviorWidget (CTK.Container):
         pre        = "vserver!%s" %(vsrv_num)
         url_apply  = "%s/%s" %(URL_APPLY, vsrv_num)
 
+        # List
+        self += CTK.RawHTML ('<p>The behavior rule list goes here. Still WIP.</p>')
+
         # Add new rule
         rules = [('',_('Choose..'))] + RULES
 
@@ -140,10 +143,17 @@ class BehaviorWidget (CTK.Container):
         modul = CTK.PluginSelector ('tmp', rules, vsrv_num=vsrv_num)
         table.Add (_('Rule Type'), modul.selector_widget, '', False)
 
-        self += CTK.RawHTML ('<h2>%s</h2>' %(_('Add new rule')))
-        self += CTK.Indenter (table)
-        self += CTK.Indenter (modul)
+        dialog = CTK.Dialog({'title':     _('Add new'),
+                             'autoOpen':  False,
+                             'draggable': False,
+                             'width':     480})
+        dialog += table
+        dialog += modul
 
+        add_new = CTK.LinkIcon (content=CTK.RawHTML(_("Add new..")), icon='newwin')
+        add_new.bind ('click', dialog.JS_to_show())
+        self += add_new
+        self += dialog
 
 class BasicsWidget (CTK.Container):
     def __init__ (self, vsrv_num):
