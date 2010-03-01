@@ -24,6 +24,53 @@
 
 import os
 import CTK
+import Cherokee
+
+SAVED_NOTICE  = N_("The configuration has been saved.")
+SAVED_RESTART = N_("Would you like to apply the changes to the running server now?")
+
+URL_SAVE          = r'/save'
+URL_SAVE_GRACEFUL = r'/save/apply/graceful'
+URL_SAVE_HARD     = r'/save/apply/hard'
+URL_SAVE_NONE     = r'/save/apply/none'
+
+def Restart (mode):
+    if mode == 'graceful':
+        Cherokee.server.restart (graceful=True)
+
+    elif mode == 'hard':
+        Cherokee.server.restart (graceful=False)
+
+    return {'ret': 'ok'}
+
+
+class Save:
+    def __call__ (self, dialog):
+        # Save
+        CTK.cfg.save()
+
+        # Prompt about the reset
+        all = CTK.Box({'id': "buttons"})
+        all += CTK.RawHTML ('<p>%s</p>' %(SAVED_RESTART))
+
+        submit = CTK.Submitter (URL_SAVE_NONE)
+        submit += CTK.SubmitterButton (_('Do not restart'))
+        submit.bind ('submit_success', dialog.JS_to_close())
+        all += submit
+
+        submit = CTK.Submitter (URL_SAVE_GRACEFUL)
+        submit += CTK.SubmitterButton (_('Graceful restart'))
+        submit.bind ('submit_success', dialog.JS_to_close())
+        all += submit
+
+        submit = CTK.Submitter (URL_SAVE_HARD)
+        submit += CTK.SubmitterButton (_('Hard restart'))
+        submit.bind ('submit_success', dialog.JS_to_close())
+        all += submit
+
+        render = all.Render()
+        return render.toStr()
+
 
 class Base (CTK.Page):
     def __init__ (self, title, headers=None, body_id=None, **kwargs):
@@ -39,5 +86,18 @@ class Base (CTK.Page):
         if body_id:
             template['body_props'] = ' id="body-%s"' %(body_id)
 
+        # Save dialog
+        dialog = CTK.DialogProxy ('/save', {'title': _(SAVED_NOTICE), 'autoOpen': False, 'draggable': False, 'width': 500})
+        CTK.publish (URL_SAVE, Save, dialog=dialog)
+
         # Parent's constructor
         CTK.Page.__init__ (self, template, headers, **kwargs)
+
+        # Add the 'Save' dialog
+        self += dialog
+        self += CTK.RawHTML (js="$('#nav-save-a').bind ('click', function(){ %s });" %(dialog.JS_to_show()))
+
+
+CTK.publish (URL_SAVE_GRACEFUL, Restart, mode='graceful')
+CTK.publish (URL_SAVE_HARD,     Restart, mode='hard')
+CTK.publish (URL_SAVE_NONE,     Restart, mode='none')
