@@ -158,7 +158,7 @@ ERROR_CODES = [
 RULES = [
     ('directory',  N_('Directory')),
     ('extensions', N_('Extensions')),
-#    ('request',    N_('Regular Expression')),
+    ('request',    N_('Regular Expression')),
 #    ('header',     N_('Header')),
      ('exists',     N_('File Exists')),
 #    ('method',     N_('HTTP Method')),

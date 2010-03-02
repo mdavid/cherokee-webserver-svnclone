@@ -24,8 +24,8 @@ import CTK
 import RuleSimple
 import validations
 
-NOTE_DIRECTORY = N_("Public Web Directory to which content the configuration will be applied.")
+NOTE_REQUEST = N_("Regular expression against which the request will be executed.")
 
-class Plugin_directory (RuleSimple.PluginSimple):
+class Plugin_request (RuleSimple.PluginSimple):
     def __init__ (self, key, **kwargs):
-        RuleSimple.PluginSimple.__init__ (self, key, _('Web Directory'), "directory", NOTE_DIRECTORY, _('Directory'), validations.is_path, **kwargs)
+        RuleSimple.PluginSimple.__init__ (self, key, _('Regular Expression'), "request", NOTE_REQUEST, _('Regular Expression'), validations.is_regex, **kwargs)
