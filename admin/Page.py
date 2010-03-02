@@ -87,7 +87,7 @@ class Base (CTK.Page):
             template['body_props'] = ' id="body-%s"' %(body_id)
 
         # Save dialog
-        dialog = CTK.DialogProxy ('/save', {'title': _(SAVED_NOTICE), 'autoOpen': False, 'draggable': False, 'width': 500})
+        dialog = CTK.DialogProxyLazy (URL_SAVE, {'title': _(SAVED_NOTICE), 'autoOpen': False, 'draggable': False, 'width': 500})
         CTK.publish (URL_SAVE, Save, dialog=dialog)
 
         # Parent's constructor
