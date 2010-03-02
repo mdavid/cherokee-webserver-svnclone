@@ -94,6 +94,10 @@ if __name__ == "__main__":
     # Init
     init (scgi_port, cfg_file)
 
+    # Set up the error page
+    import PageException
+    CTK.error.page = PageException.Page
+
     # Import the Pages
     import PageIndex
     import PageGeneral
