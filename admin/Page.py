@@ -25,6 +25,7 @@
 import os
 import CTK
 import Cherokee
+import configured
 
 SAVED_NOTICE  = N_("The configuration has been saved.")
 SAVED_RESTART = N_("Would you like to apply the changes to the running server now?")
@@ -33,6 +34,7 @@ URL_SAVE          = r'/save'
 URL_SAVE_GRACEFUL = r'/save/apply/graceful'
 URL_SAVE_HARD     = r'/save/apply/hard'
 URL_SAVE_NONE     = r'/save/apply/none'
+
 
 def Restart (mode):
     if mode == 'graceful':
