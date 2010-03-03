@@ -158,7 +158,6 @@ class Render():
         self.page += CTK.RawHTML('<a href="/launch">Launch</a> | <a href="/stop">Stop</a>')
         self.page += LanguageSelector()
         self.page += ProudUsers()
-	1/0
 
         return self.page.Render()
 
