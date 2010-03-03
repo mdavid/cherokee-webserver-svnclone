@@ -98,9 +98,6 @@ class Base (CTK.Page):
         # Add the 'Save' dialog
         self += dialog
         self += CTK.RawHTML (js="$('#nav-save-a').bind ('click', function(){ %s });" %(dialog.JS_to_show()))
-        # Add style for dialog buttons
-        self += CTK.RawHTML (js="$('.ui-dialog-buttonpane :button').wrapInner('<span class=\"button-outter\"><span class=\"button-inner\"></span></span>');")
-
 
 
 CTK.publish (URL_SAVE_GRACEFUL, Restart, mode='graceful')
