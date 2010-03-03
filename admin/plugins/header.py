@@ -26,7 +26,6 @@ from Rule import RulePlugin
 from util import *
 
 URL_APPLY = '/plugin/extensions/apply'
-LENGHT_LIMIT = 10
 
 NOTE_HEADER = N_("Header against which the regular expression will be evaluated.")
 NOTE_MATCH  = N_("Regular expression.")
