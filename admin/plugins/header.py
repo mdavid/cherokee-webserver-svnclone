@@ -1,4 +1,4 @@
-# Cheroke Admin: Extensions based rule plug-in
+# Cheroke Admin
 #
 # Authors:
 #      Alvaro Lopez Ortega <alvaro@alobbs.com>
@@ -26,21 +26,36 @@ from Rule import RulePlugin
 from util import *
 
 URL_APPLY = '/plugin/extensions/apply'
+LENGHT_LIMIT = 10
 
-NOTE_EXTENSIONS = N_("Comma-separated list of File Extension to which the configuration will be applied.")
+NOTE_HEADER = N_("Header against which the regular expression will be evaluated.")
+NOTE_MATCH  = N_("Regular expression.")
+
+HEADERS = [
+    ('Accept-Encoding', 'Accept-Encoding'),
+    ('Accept-Charset',  'Accept-Charset'),
+    ('Accept-Language', 'Accept-Language'),
+    ('Referer',         'Referer'),
+    ('User-Agent',      'User-Agent'),
+    ('Cookie',          'Cookie'),
+    ('Host',            'Host')
+]
+
 
 def apply():
     # POST info
-    key      = CTK.post.pop ('key', None)
-    vsrv_num = CTK.post.pop ('vsrv_num', None)
-    new_ext  = CTK.post.pop ('tmp!extensions', None)
+    key       = CTK.post.pop ('key', None)
+    vsrv_num  = CTK.post.pop ('vsrv_num', None)
+    new_hdr   = CTK.post.pop ('tmp!header', None)
+    new_match = CTK.post.pop ('tmp!match', None)
 
     # New entry
-    if new_ext:
+    if new_hdr and new_match:
         next_rule, next_pre = cfg_vsrv_rule_get_next ('vserver!%s'%(vsrv_num))
 
-        CTK.cfg['%s!match'%(next_pre)]            = 'extensions'
-        CTK.cfg['%s!match!extensions'%(next_pre)] = new_ext
+        CTK.cfg['%s!match'%(next_pre)]        = 'header'
+        CTK.cfg['%s!match!header'%(next_pre)] = new_hdr
+        CTK.cfg['%s!match!match'%(next_pre)]  = new_match
 
         return {'ret': 'ok', 'redirect': '/vserver/%s/rule/%s' %(vsrv_num, next_rule)}
 
@@ -50,12 +65,13 @@ def apply():
     return {'ret': 'ok'}
 
 
-class Plugin_extensions (RulePlugin):
+class Plugin_header (RulePlugin):
     def __init__ (self, key, **kwargs):
         RulePlugin.__init__ (self, key)
 
         table = CTK.PropsTable()
-        table.Add (_('Extensions'), CTK.TextCfg('%s!extensions'%(key)), _(NOTE_EXTENSIONS))
+        table.Add (_('Header'),             CTK.ComboCfg('%s!header'%(key), HEADERS), _(NOTE_HEADER))
+        table.Add (_('Regular Expression'), CTK.TextCfg('%s!match'%(key)), _(NOTE_MATCH))
 
         submit = CTK.Submitter (URL_APPLY)
         submit += CTK.Hidden ('key', key)
@@ -67,6 +83,6 @@ class Plugin_extensions (RulePlugin):
         CTK.publish (URL_APPLY, apply, method="POST")
 
     def GetName (self):
-        tmp = CTK.cfg.get_val ('%s!extensions' %(self.key), '')
-        extensions = ', '.join (tmp.split(','))
-        return "Extensions %s" %(extensions)
+        header = CTK.cfg.get_val ('%s!header' %(self.key), '')
+        match  = CTK.cfg.get_val ('%s!match' %(self.key), '')
+        return "Header %s ~ %s" % (header, match)
