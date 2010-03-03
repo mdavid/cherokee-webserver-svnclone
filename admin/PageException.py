@@ -101,8 +101,6 @@ class Page (CTK.Page):
         self += CTK.RawHTML (_(NOTE_EXCEPT_SORRY))
         self += CTK.RawHTML (formater ('<pre class="backtrace">%s</pre>', traceback))
         self += CTK.RawHTML (_(NOTE_EXCEPT_COMMENT))
-        self += CTK.RawHTML (js="$('.ui-dialog-buttonpane :button').wrapInner('<span class=\"button-outter\"><span class=\"button-inner\"></span></span>');")
-
 
         submit = CTK.Submitter (URL_APPLY)
         submit.bind ('submit_success', dialog_ok.JS_to_show())
