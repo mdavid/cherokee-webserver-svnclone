@@ -36,7 +36,7 @@ URL_REPORT_HOST = 'www.cherokee-project.com'
 URL_REPORT_URL  = '/CTK_ok.html'
 
 NOTE_EXCEPT_SORRY   = N_('We apologize for any inconveniences that this may have caused.')
-NOTE_EXCEPT_COMMENT = N_('Please, send your comments to the server deverlopers. What were you doing when the issue showed up?')
+NOTE_EXCEPT_COMMENT = N_('Please, send your comments to the server developers. What were you doing when the issue showed up?')
 NOTE_EXCEPT_THANKS  = N_('Thank you for reporting the problem. The Cherokee Web Server developers will try to fix it up as soon as possible.')
 NOTE_EXCEPT_FAIL    = N_('<p>For reason, the issue could not be reported to the Cherokee project.</p><p>Please, do not hesitate to <a href="%s">report the issue</a> our bug tracking system if the problem persists.</p>') %(URL_BTS)
 
@@ -84,11 +84,11 @@ class Page (CTK.Page):
         CTK.Page.__init__ (self, template, **kwargs)
 
         # Thank you: submitted
-        dialog_ok = CTK.Dialog ({'title': _("Thank you!"), 'autoOpen': False, 'draggable': False, 'width': 500})
+        dialog_ok = CTK.Dialog ({'title': _("Thank you!"), 'autoOpen': False, 'draggable': False, 'width': 480})
         dialog_ok += CTK.RawHTML ('<p>%s</p>' %(NOTE_EXCEPT_THANKS))
         dialog_ok.AddButton (_('Close'), "close")
 
-        dialog_fail = CTK.Dialog ({'title': _("Could not report the issue"), 'autoOpen': False, 'draggable': False, 'width': 500})
+        dialog_fail = CTK.Dialog ({'title': _("Could not report the issue"), 'autoOpen': False, 'draggable': False, 'width': 480})
         dialog_fail += CTK.Notice ('error', CTK.RawHTML (NOTE_EXCEPT_FAIL))
         dialog_fail.AddButton (_('Close'), "close")
 
@@ -101,6 +101,8 @@ class Page (CTK.Page):
         self += CTK.RawHTML (_(NOTE_EXCEPT_SORRY))
         self += CTK.RawHTML (formater ('<pre class="backtrace">%s</pre>', traceback))
         self += CTK.RawHTML (_(NOTE_EXCEPT_COMMENT))
+        self += CTK.RawHTML (js="$('.ui-dialog-buttonpane :button').wrapInner('<span class=\"button-outter\"><span class=\"button-inner\"></span></span>');")
+
 
         submit = CTK.Submitter (URL_APPLY)
         submit.bind ('submit_success', dialog_ok.JS_to_show())
