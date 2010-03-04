@@ -79,7 +79,7 @@ class Plugin_method (RulePlugin):
     def __init__ (self, key, **kwargs):
         RulePlugin.__init__ (self, key)
         is_new    = key.startswith('tmp')
-        idx       = [0,1][is_new]
+        idx       = [1,0][is_new]
 
         table = CTK.PropsTable()
         table.Add (_('Method'), CTK.ComboCfg('%s!method'%(key), METHODS[idx:]), _(NOTE_METHOD))
