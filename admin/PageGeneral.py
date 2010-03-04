@@ -157,7 +157,7 @@ class PortsWidget (CTK.Container):
         submit = CTK.Submitter (URL_APPLY)
         submit += table
 
-        dialog = CTK.Dialog({'title': _('Add new port'), 'autoOpen': False, 'draggable': False, 'width': 600, 'height': 250})
+        dialog = CTK.Dialog({'title': _('New port'), 'autoOpen': False, 'draggable': False, 'width': 600, 'height': 250})
         dialog.AddButton (_("Add"),    submit.JS_to_submit())
         dialog.AddButton (_("Cancel"), "close")
         dialog += submit
@@ -188,6 +188,7 @@ class PermsWidget (CTK.Container):
         table.Add (_('Group'),  CTK.TextCfg('server!group',  True), _(NOTE_GROUP))
         table.Add (_('Chroot'), CTK.TextCfg('server!chroot', True), _(NOTE_CHROOT))
         self += CTK.Indenter(table)
+
 
 class Render():
     def __call__ (self):
