@@ -143,17 +143,18 @@ class BehaviorWidget (CTK.Container):
         modul = CTK.PluginSelector ('tmp', rules, vsrv_num=vsrv_num)
         table.Add (_('Rule Type'), modul.selector_widget, '', False)
 
-        dialog = CTK.Dialog({'title':     _('Add new'),
-                             'autoOpen':  False,
-                             'draggable': False,
-                             'width':     480})
+        dialog = CTK.Dialog({'title': _('New behavior rule'), 'autoOpen': False, 'draggable': False, 'width': 550})
         dialog += table
         dialog += modul
-
-        add_new = CTK.LinkIcon (content=CTK.RawHTML(_("Add new..")), icon='newwin')
-        add_new.bind ('click', dialog.JS_to_show())
-        self += add_new
         self += dialog
+
+        button = CTK.SubmitterButton (_('Add new rule..'))
+        button.bind ('click', dialog.JS_to_show())
+
+        submit = CTK.Submitter (url_apply)
+        submit += button
+        self += submit
+
 
 class BasicsWidget (CTK.Container):
     def __init__ (self, vsrv_num):
