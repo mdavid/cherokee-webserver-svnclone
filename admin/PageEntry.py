@@ -76,6 +76,42 @@ def apply():
         CTK.cfg[k] = CTK.post[k]
     return {'ret': 'ok'}
 
+class TimeWidget (CTK.Container):
+    class Expiration (CTK.Container):
+        def __init__ (self, pre, apply, refresh):
+            CTK.Container.__init__ (self)
+
+            table = CTK.PropsTable()
+            table.Add (_('Expiration'), CTK.ComboCfg ('%s!expiration'%(pre), EXPIRATION_TYPE), _(NOTE_EXPIRATION))
+
+            if CTK.cfg.get_val ('%s!expiration'%(pre)) == 'time':
+                table.Add (_('Time to expire'), CTK.TextCfg ('%s!expiration!time'%(pre), False), _(NOTE_EXPIRATION_TIME))
+
+            submit = CTK.Submitter (apply)
+            submit.bind ('submit_success', refresh.JS_to_refresh())
+            submit += table
+            self += submit
+
+    def __init__ (self, vsrv, rule, apply):
+        CTK.Container.__init__ (self)
+        pre = 'vserver!%s!rule!%s' %(vsrv, rule)
+
+        # Timeout
+        table = CTK.PropsTable()
+        table.Add (_('Timeout'), CTK.TextCfg ('%s!timeout'%(pre), True), _(NOTE_TIMEOUT))
+        submit = CTK.Submitter (apply)
+        submit += table
+
+        self += CTK.RawHTML ("<h2>%s</h2>" % (_('Connections timeout')))
+        self += CTK.Indenter (submit)
+
+        # Expiration
+        refresh = CTK.Refreshable()
+        refresh.register (lambda: TimeWidget.Expiration(pre, apply, refresh).Render())
+
+        self += CTK.RawHTML ("<h2>%s</h2>" % (_('Content Expiration')))
+        self += CTK.Indenter (refresh)
+
 
 class EncodingWidget (CTK.Container):
     def __init__ (self, vsrv, rule, apply):
@@ -137,6 +173,7 @@ class Render():
         tabs = CTK.Tab()
         tabs.Add (_('Rule'),     RuleWidget (vsrv_num, rule_num, url_apply, refresh))
         tabs.Add (_('Encoding'), EncodingWidget (vsrv_num, rule_num, url_apply))
+        tabs.Add (_('Time'),     TimeWidget (vsrv_num, rule_num, url_apply))
 
         # Page
         page = Page.Base ('%s: %s: %s' %(_('Virtual Server'), vsrv_nam, rule_num), helps=HELPS)
