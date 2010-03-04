@@ -76,6 +76,21 @@ def apply():
         CTK.cfg[k] = CTK.post[k]
     return {'ret': 'ok'}
 
+
+class TrafficWidget (CTK.Container):
+    def __init__ (self, vsrv, rule, apply):
+        CTK.Container.__init__ (self)
+        pre = 'vserver!%s!rule!%s' %(vsrv, rule)
+
+        table = CTK.PropsTable()
+        table.Add (_('Limit traffic to'), CTK.TextCfg ('%s!rate'%(pre), False), _(NOTE_RATE))
+        submit = CTK.Submitter (apply)
+        submit += table
+
+        self += CTK.RawHTML ("<h2>%s</h2>" % (_('Traffic Shaping')))
+        self += CTK.Indenter (submit)
+
+
 class TimeWidget (CTK.Container):
     class Expiration (CTK.Container):
         def __init__ (self, pre, apply, refresh):
@@ -171,9 +186,10 @@ class Render():
 
         # Tabs
         tabs = CTK.Tab()
-        tabs.Add (_('Rule'),     RuleWidget (vsrv_num, rule_num, url_apply, refresh))
-        tabs.Add (_('Encoding'), EncodingWidget (vsrv_num, rule_num, url_apply))
-        tabs.Add (_('Time'),     TimeWidget (vsrv_num, rule_num, url_apply))
+        tabs.Add (_('Rule'),            RuleWidget (vsrv_num, rule_num, url_apply, refresh))
+        tabs.Add (_('Encoding'),        EncodingWidget (vsrv_num, rule_num, url_apply))
+        tabs.Add (_('Time'),            TimeWidget (vsrv_num, rule_num, url_apply))
+        tabs.Add (_('Traffic Shaping'), TrafficWidget (vsrv_num, rule_num, url_apply))
 
         # Page
         page = Page.Base ('%s: %s: %s' %(_('Virtual Server'), vsrv_nam, rule_num), helps=HELPS)
