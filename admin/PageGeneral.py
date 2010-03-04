@@ -104,10 +104,11 @@ class NetworkWidget (CTK.Container):
         self += CTK.Indenter(modul)
 
 
-class PortsTable (CTK.Table):
+class PortsTable (CTK.Submitter):
     def __init__ (self, refreshable, **kwargs):
-        CTK.Table.__init__(self)
+        CTK.Submitter.__init__ (self, URL_APPLY)
 
+        table   = CTK.Table()
         binds   = CTK.cfg.keys('server!bind')
         has_tls = CTK.cfg.get_val('server!tls')
 
@@ -116,8 +117,9 @@ class PortsTable (CTK.Table):
             return
 
         # Header
-        self[(1,1)] = [CTK.RawHTML(x) for x in (_('Port'), _('Bind to'), _('TLS'), '')]
-        self.set_header (row=True, num=1)
+        table[(1,1)] = [CTK.RawHTML(x) for x in (_('Port'), _('Bind to'), _('TLS'), '')]
+        table.set_header (row=True, num=1)
+        self += table
 
         # Entries
         n = 2
@@ -136,8 +138,9 @@ class PortsTable (CTK.Table):
                                                   data     = {pre: ''},
                                                   complete = update_js %({'id': refreshable.id,
                                                                           'url': refreshable.url})))
-            self[(n,1)] = [port, listen, tls, delete]
+            table[(n,1)] = [port, listen, tls, delete]
             n += 1
+
 
 class PortsWidget (CTK.Container):
     def __init__ (self):
@@ -147,23 +150,32 @@ class PortsWidget (CTK.Container):
         refresh = CTK.Refreshable()
         refresh.register (lambda: PortsTable(refresh).Render())
 
-        # Add new entry
-        new_field  = CTK.TextCfg('new_port')
-        add_button = CTK.SubmitterButton (_('Add'))
-
-        new_submit = CTK.Submitter (URL_APPLY)
-        new_submit += new_field
-        new_submit.bind ('submit_success', refresh.JS_to_refresh())
-        new_submit.bind ('submit_success', new_field.JS_to_clean())
-
+        # Add new - dialog
         table = CTK.PropsTable()
-        table.Add (_('Add new port'), new_submit, _(NOTE_ADD_PORT))
+        table.Add (_('Port'), CTK.TextCfg ('new_port', False, {'class':'noauto'}), _(NOTE_ADD_PORT))
+
+        submit = CTK.Submitter (URL_APPLY)
+        submit += table
+
+        dialog = CTK.Dialog({'title': _('Add new port'), 'autoOpen': False, 'draggable': False, 'width': 600, 'height': 250})
+        dialog.AddButton (_("Add"),    submit.JS_to_submit())
+        dialog.AddButton (_("Cancel"), "close")
+        dialog += submit
+
+        submit.bind ('submit_success', refresh.JS_to_refresh())
+        submit.bind ('submit_success', dialog.JS_to_close())
+
+        # Add new
+        button = CTK.SubmitterButton (_('Add new port..'))
+        button.bind ('click', dialog.JS_to_show())
+        button_s = CTK.Submitter (URL_APPLY)
+        button_s += button
 
         # Integration
         self += CTK.RawHTML ("<h2>%s</h2>" % (_('Listening to ports')))
         self += CTK.Indenter(refresh)
-        self += table
-        self += add_button
+        self += button_s
+        self += dialog
 
 
 class PermsWidget (CTK.Container):
