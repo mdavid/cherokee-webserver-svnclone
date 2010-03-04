@@ -70,28 +70,26 @@ class Rule (CTK.Box):
         # Default Rule
         value = CTK.cfg.get_val (self.key)
         if value == 'default':
-            notice = CTK.Notice ('important-information')
-            notice += CTK.RawHTML (DEFAULT_RULE_WARNING)
-            self += notice
-            return
+            self += CTK.Notice ('important-information', CTK.RawHTML (DEFAULT_RULE_WARNING))
+            return CTK.Box.Render (self)
 
         # Special rule types
         elif value == "and":
             self.props['class'] = 'rule-and'
             self += Rule ('%s!left' %(self.key))
             self += Rule ('%s!right'%(self.key))
-            return
+            return CTK.Box.Render (self)
 
         elif value == "or":
             self.props['class'] = 'rule-or'
             self += Rule ('%s!left' %(self.key))
             self += Rule ('%s!right'%(self.key))
-            return
+            return CTK.Box.Render (self)
 
         elif value == "not":
             self.props['class'] = 'rule-not'
             self += Rule ('%s!right'%(self.key))
-            return
+            return CTK.Box.Render (self)
 
         # Regular rules
         plugin = CTK.instance_plugin (value, self.key)
