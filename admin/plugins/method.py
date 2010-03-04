@@ -1,7 +1,7 @@
-# Cheroke Admin
+# Cheroke Admin: HTTP Method rule plug-in
 #
 # Authors:
-#      Alvaro Lopez Ortega <alvaro@alobbs.com>
+#      Taher Shihadeh <taher@unixwars.com>
 #
 # Copyright (C) 2009-2010 Alvaro Lopez Ortega
 #
@@ -25,36 +25,46 @@ import CTK
 from Rule import RulePlugin
 from util import *
 
-URL_APPLY = '/plugin/extensions/apply'
+URL_APPLY = '/plugin/method/apply'
 
-NOTE_HEADER = N_("Header against which the regular expression will be evaluated.")
-NOTE_MATCH  = N_("Regular expression.")
-
-HEADERS = [
-    ('Accept-Encoding', 'Accept-Encoding'),
-    ('Accept-Charset',  'Accept-Charset'),
-    ('Accept-Language', 'Accept-Language'),
-    ('Referer',         'Referer'),
-    ('User-Agent',      'User-Agent'),
-    ('Cookie',          'Cookie'),
-    ('Host',            'Host')
+METHODS = [
+    ('',          _('Choose')),
+    ('get',         'GET'),
+    ('post',        'POST'),
+    ('head',        'HEAD'),
+    ('put',         'PUT'),
+    ('options',     'OPTIONS'),
+    ('delete',      'DELETE'),
+    ('trace',       'TRACE'),
+    ('connect',     'CONNECT'),
+    ('copy',        'COPY'),
+    ('lock',        'LOCK'),
+    ('mkcol',       'MKCOL'),
+    ('move',        'MOVE'),
+    ('notify',      'NOTIFY'),
+    ('poll',        'POLL'),
+    ('propfind',    'PROPFIND'),
+    ('proppatch',   'PROPPATCH'),
+    ('search',      'SEARCH'),
+    ('subscribe',   'SUBSCRIBE'),
+    ('unlock',      'UNLOCK'),
+    ('unsubscribe', 'UNSUBSCRIBE')
 ]
 
+NOTE_METHOD  = _("The HTTP method that should match this rule.")
 
 def apply():
     # POST info
-    key       = CTK.post.pop ('key', None)
-    vsrv_num  = CTK.post.pop ('vsrv_num', None)
-    new_hdr   = CTK.post.pop ('tmp!header', None)
-    new_match = CTK.post.pop ('tmp!match', None)
+    key         = CTK.post.pop ('key', None)
+    vsrv_num    = CTK.post.pop ('vsrv_num', None)
+    new_method  = CTK.post.pop ('tmp!method', None)
 
     # New entry
-    if new_hdr and new_match:
+    if new_method:
         next_rule, next_pre = cfg_vsrv_rule_get_next ('vserver!%s'%(vsrv_num))
 
-        CTK.cfg['%s!match'%(next_pre)]        = 'header'
-        CTK.cfg['%s!match!header'%(next_pre)] = new_hdr
-        CTK.cfg['%s!match!match'%(next_pre)]  = new_match
+        CTK.cfg['%s!match'%(next_pre)]        = 'method'
+        CTK.cfg['%s!match!method'%(next_pre)] = new_method
 
         return {'ret': 'ok', 'redirect': '/vserver/%s/rule/%s' %(vsrv_num, next_rule)}
 
@@ -64,13 +74,15 @@ def apply():
     return {'ret': 'ok'}
 
 
-class Plugin_header (RulePlugin):
+
+class Plugin_method (RulePlugin):
     def __init__ (self, key, **kwargs):
         RulePlugin.__init__ (self, key)
+        is_new    = key.startswith('tmp')
+        idx       = [0,1][is_new]
 
         table = CTK.PropsTable()
-        table.Add (_('Header'),             CTK.ComboCfg('%s!header'%(key), HEADERS), _(NOTE_HEADER))
-        table.Add (_('Regular Expression'), CTK.TextCfg('%s!match'%(key)), _(NOTE_MATCH))
+        table.Add (_('Method'), CTK.ComboCfg('%s!method'%(key), METHODS[idx:]), _(NOTE_METHOD))
 
         submit = CTK.Submitter (URL_APPLY)
         submit += CTK.Hidden ('key', key)
@@ -82,6 +94,5 @@ class Plugin_header (RulePlugin):
         CTK.publish (URL_APPLY, apply, method="POST")
 
     def GetName (self):
-        header = CTK.cfg.get_val ('%s!header' %(self.key), '')
-        match  = CTK.cfg.get_val ('%s!match' %(self.key), '')
-        return "%s %s ~ %s" % (_('Header'),header, match)
+        method = CTK.cfg.get_val ('%s!method' %(self.key), '')
+        return "%s %s" % (_('Method'), method)

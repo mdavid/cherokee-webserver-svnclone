@@ -1,4 +1,4 @@
-# Cheroke Admin: RRD plug-in
+# Cheroke Admin: File Exists rule plug-in
 #
 # Authors:
 #      Alvaro Lopez Ortega <alvaro@alobbs.com>
