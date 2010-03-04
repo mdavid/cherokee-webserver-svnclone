@@ -60,7 +60,9 @@ VALIDATIONS = [
 HELPS = [
     ('config_virtual_servers_rule', N_("Behavior rules")),
     ('modules_encoders_gzip',       N_("GZip encoder")),
-    ('modules_encoders_deflate',    N_("Deflate encoder"))
+    ('modules_encoders_deflate',    N_("Deflate encoder")),
+    ('cookbook_authentication',     N_('Authentication')),
+    ('modules_validators',          N_("Authentication modules"))
 ]
 
 ENCODE_OPTIONS = [
@@ -89,6 +91,41 @@ class TrafficWidget (CTK.Container):
 
         self += CTK.RawHTML ("<h2>%s</h2>" % (_('Traffic Shaping')))
         self += CTK.Indenter (submit)
+
+
+class SecurityWidget (CTK.Container):
+    def __init__ (self, vsrv, rule, apply):
+        CTK.Container.__init__ (self)
+        pre = 'vserver!%s!rule!%s' %(vsrv, rule)
+
+        # Logging
+        table = CTK.PropsTable()
+        table.Add (_('Skip Logging'), CTK.CheckCfgText ('%s!no_log'%(pre), False), _(NOTE_NO_LOG))
+        submit = CTK.Submitter (apply)
+        submit += table
+
+        self += CTK.RawHTML ("<h2>%s</h2>" % (_('Logging')))
+        self += CTK.Indenter (submit)
+
+        # Access Restrictions
+        table = CTK.PropsTable()
+        table.Add (_('Only https'), CTK.CheckCfgText ('%s!only_secure'%(pre), False), _(NOTE_HTTPS_ONLY))
+        table.Add (_('Allow From'), CTK.TextCfg ('%s!allow_from'%(pre), True), _(NOTE_ALLOW_FROM))
+        submit = CTK.Submitter (apply)
+        submit += table
+
+        self += CTK.RawHTML ("<h2>%s</h2>" % (_('Access Restrictions')))
+        self += CTK.Indenter (submit)
+
+        # Authentication
+        modul = CTK.PluginSelector('%s!'%(pre), Cherokee.support.filter_available (VALIDATORS))
+
+        table = CTK.PropsTable()
+        table.Add (_('Validation Mechanism'), modul.selector_widget, _(NOTE_VALIDATOR))
+
+        self += CTK.RawHTML ("<h2>%s</h2>" % (_('Authentication')))
+        self += CTK.Indenter (table)
+        self += CTK.Indenter (modul)
 
 
 class TimeWidget (CTK.Container):
@@ -189,6 +226,7 @@ class Render():
         tabs.Add (_('Rule'),            RuleWidget (vsrv_num, rule_num, url_apply, refresh))
         tabs.Add (_('Encoding'),        EncodingWidget (vsrv_num, rule_num, url_apply))
         tabs.Add (_('Time'),            TimeWidget (vsrv_num, rule_num, url_apply))
+        tabs.Add (_('Security'),        SecurityWidget (vsrv_num, rule_num, url_apply))
         tabs.Add (_('Traffic Shaping'), TrafficWidget (vsrv_num, rule_num, url_apply))
 
         # Page
