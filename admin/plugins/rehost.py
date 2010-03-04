@@ -1,4 +1,4 @@
-# Cheroke Admin: RRD plug-in
+# Cheroke Admin: Regular Expressions host plug-in
 #
 # Authors:
 #      Alvaro Lopez Ortega <alvaro@alobbs.com>
