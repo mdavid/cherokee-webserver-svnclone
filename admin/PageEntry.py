@@ -58,7 +58,9 @@ VALIDATIONS = [
 ]
 
 HELPS = [
-    ('config_virtual_servers_rule', N_("Behavior rules"))
+    ('config_virtual_servers_rule', N_("Behavior rules")),
+    ('modules_encoders_gzip',       N_("GZip encoder")),
+    ('modules_encoders_deflate',    N_("Deflate encoder"))
 ]
 
 ENCODE_OPTIONS = [
@@ -78,6 +80,19 @@ def apply():
 class EncodingWidget (CTK.Container):
     def __init__ (self, vsrv, rule, apply):
         CTK.Container.__init__ (self)
+        pre = 'vserver!%s!rule!%s!encoder' %(vsrv, rule)
+        encoders = Cherokee.support.filter_available (ENCODERS)
+
+        table = CTK.PropsTable()
+        for e,e_name in encoders:
+            note  = _("Use the %s encoder whenever the client requests it.") %(_(e_name))
+            table.Add (_("%s Support") %(_(e_name)), CTK.ComboCfg('%s!%s'%(pre,e), ENCODE_OPTIONS), note)
+
+        submit = CTK.Submitter (apply)
+        submit += table
+
+        self += CTK.RawHTML ("<h2>%s</h2>" % (_('Information Encoders')))
+        self += CTK.Indenter (submit)
 
 
 class RuleWidget (CTK.Container):
