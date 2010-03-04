@@ -157,7 +157,7 @@ class PortsWidget (CTK.Container):
         submit = CTK.Submitter (URL_APPLY)
         submit += table
 
-        dialog = CTK.Dialog({'title': _('New port'), 'autoOpen': False, 'draggable': False, 'width': 600, 'height': 250})
+        dialog = CTK.Dialog({'title': _('New port'), 'autoOpen': False, 'draggable': False, 'width': 480 })
         dialog.AddButton (_("Add"),    submit.JS_to_submit())
         dialog.AddButton (_("Cancel"), "close")
         dialog += submit
