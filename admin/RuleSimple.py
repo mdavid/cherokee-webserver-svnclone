@@ -54,10 +54,12 @@ class PluginSimple (RulePlugin):
 
         self.extension = extension
         self.name_desc = name_desc
+
         url_apply = URL_APPLY %(extension)
+        props     = ({},{'class': 'noauto'})[key.startswith('tmp')]
 
         table = CTK.PropsTable()
-        table.Add (title, CTK.TextCfg('%s!%s'%(key, extension)), note)
+        table.Add (title, CTK.TextCfg('%s!%s'%(key, extension), False, props), note)
 
         submit = CTK.Submitter (url_apply)
         submit += CTK.Hidden ('key', key)

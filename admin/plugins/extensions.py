@@ -53,9 +53,10 @@ def apply():
 class Plugin_extensions (RulePlugin):
     def __init__ (self, key, **kwargs):
         RulePlugin.__init__ (self, key)
+        props = ({},{'class': 'noauto'})[key.startswith('tmp')]
 
         table = CTK.PropsTable()
-        table.Add (_('Extensions'), CTK.TextCfg('%s!extensions'%(key)), _(NOTE_EXTENSIONS))
+        table.Add (_('Extensions'), CTK.TextCfg('%s!extensions'%(key), False, props), _(NOTE_EXTENSIONS))
 
         submit = CTK.Submitter (URL_APPLY)
         submit += CTK.Hidden ('key', key)

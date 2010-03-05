@@ -67,10 +67,11 @@ def apply():
 class Plugin_header (RulePlugin):
     def __init__ (self, key, **kwargs):
         RulePlugin.__init__ (self, key)
+        props = ({},{'class': 'noauto'})[key.startswith('tmp')]
 
         table = CTK.PropsTable()
-        table.Add (_('Header'),             CTK.ComboCfg('%s!header'%(key), HEADERS), _(NOTE_HEADER))
-        table.Add (_('Regular Expression'), CTK.TextCfg('%s!match'%(key)), _(NOTE_MATCH))
+        table.Add (_('Header'),             CTK.ComboCfg('%s!header'%(key), HEADERS, props), _(NOTE_HEADER))
+        table.Add (_('Regular Expression'), CTK.TextCfg('%s!match'%(key), False, props), _(NOTE_MATCH))
 
         submit = CTK.Submitter (URL_APPLY)
         submit += CTK.Hidden ('key', key)
