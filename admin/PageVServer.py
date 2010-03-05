@@ -130,8 +130,8 @@ class BehaviorWidget (CTK.Container):
     def __init__ (self, vsrv_num):
         CTK.Container.__init__ (self)
 
-        pre        = "vserver!%s" %(vsrv_num)
-        url_apply  = "%s/%s" %(URL_APPLY, vsrv_num)
+        pre       = "vserver!%s" %(vsrv_num)
+        url_apply = "%s/%s" %(URL_APPLY, vsrv_num)
 
         # List
         self += CTK.RawHTML ('<p>The behavior rule list goes here. Still WIP.</p>')
@@ -139,21 +139,25 @@ class BehaviorWidget (CTK.Container):
         # Add new rule
         rules = [('',_('Choose..'))] + RULES
 
-        table = CTK.PropsAuto (url_apply)
+        table = CTK.PropsTable()
         modul = CTK.PluginSelector ('tmp', rules, vsrv_num=vsrv_num)
-        table.Add (_('Rule Type'), modul.selector_widget, '', False)
+        table.Add (_('Rule Type'), modul.selector_widget, '')
 
-        dialog = CTK.Dialog({'title': _('New behavior rule'), 'autoOpen': False, 'draggable': False, 'width': 550})
+        dialog = CTK.Dialog ({'title': _('Add behavior rule'), 'width': 550})
+        dialog.AddButton (_('Add'), dialog.JS_to_trigger('submit'))
+        dialog.AddButton (_('Close'), "close")
         dialog += table
         dialog += modul
-        self += dialog
 
+        # Add button
         button = CTK.SubmitterButton (_('Add new rule..'))
         button.bind ('click', dialog.JS_to_show())
 
-        submit = CTK.Submitter (url_apply)
-        submit += button
-        self += submit
+        button_s = CTK.Submitter (url_apply)
+        button_s += button
+
+        self += dialog
+        self += button_s
 
 
 class BasicsWidget (CTK.Container):

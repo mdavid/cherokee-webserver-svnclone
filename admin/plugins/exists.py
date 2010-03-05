@@ -51,7 +51,7 @@ def apply():
         CTK.cfg['%s!match'%(next_pre)]                   = 'exists'
         CTK.cfg['%s!match!match_any'%(next_pre)]         = new_any
         CTK.cfg['%s!match!iocache'%(next_pre)]           = CTK.post.pop ('tmp!iocache')
-        CTK.cfg['%s!match!match_only_file'%(next_pre)]   = CTK.post.pop ('tmp!match_only_files')
+        CTK.cfg['%s!match!match_only_files'%(next_pre)]  = CTK.post.pop ('tmp!match_only_files')
         CTK.cfg['%s!match!match_index_files'%(next_pre)] = CTK.post.pop ('tmp!match_index_files')
         if new_exists:
             CTK.cfg['%s!match!exists'%(next_pre)]        = new_exists
@@ -70,14 +70,14 @@ class Modify (CTK.Submitter):
 
         # Main table
         table = CTK.PropsTable()
-        table.Add (_('Match any file'), CTK.CheckCfg('%s!match_any'%(key), False), _(NOTE_ANY))
+        table.Add (_('Match any file'), CTK.CheckCfgText('%s!match_any'%(key), False), _(NOTE_ANY))
 
         if not int (CTK.cfg.get_val('%s!match_any'%(key), '0')):
             table.Add (_('Files'),                 CTK.TextCfg ('%s!exists'%(key),           False), _(NOTE_EXISTS))
 
-        table.Add (_('Use I/O cache'),             CTK.CheckCfg('%s!iocache'%(key),           True), _(NOTE_IOCACHE))
-        table.Add (_('Only match files'),          CTK.CheckCfg('%s!match_only_files'%(key),  True), _(NOTE_ONLY_FILES))
-        table.Add (_('If dir, check index files'), CTK.CheckCfg('%s!match_index_files'%(key), True), _(NOTE_INDEX_FILES))
+        table.Add (_('Use I/O cache'),             CTK.CheckCfgText('%s!iocache'%(key),           True), _(NOTE_IOCACHE))
+        table.Add (_('Only match files'),          CTK.CheckCfgText('%s!match_only_files'%(key),  True), _(NOTE_ONLY_FILES))
+        table.Add (_('If dir, check index files'), CTK.CheckCfgText('%s!match_index_files'%(key), True), _(NOTE_INDEX_FILES))
 
         # Submit
         self += table
@@ -104,19 +104,19 @@ class Plugin_exists (RulePlugin):
         CTK.publish (URL_APPLY, apply, method="POST")
 
     def _GUI_new (self, key, vsrv_num):
-        any = CTK.CheckCfg('%s!match_any'%(key), False, {'class': 'noauto'})
+        any = CTK.CheckCfgText('%s!match_any'%(key), False, _('Enabled'), {'class': 'noauto'})
 
         # Main table
         table = CTK.PropsTable()
         table.Add (_('Match any file'), any, _(NOTE_ANY))
-        table.Add (_('Files'),                     CTK.TextCfg ('%s!exists'%(key),           False, {'class': 'noauto'}), _(NOTE_EXISTS))
-        table.Add (_('Use I/O cache'),             CTK.CheckCfg('%s!iocache'%(key),           True, {'class': 'noauto'}), _(NOTE_IOCACHE))
-        table.Add (_('Only match files'),          CTK.CheckCfg('%s!match_only_files'%(key),  True, {'class': 'noauto'}), _(NOTE_ONLY_FILES))
-        table.Add (_('If dir, check index files'), CTK.CheckCfg('%s!match_index_files'%(key), True, {'class': 'noauto'}), _(NOTE_INDEX_FILES))
+        table.Add (_('Files'),                     CTK.TextCfg ('%s!exists'%(key), False, {'class': 'noauto'}), _(NOTE_EXISTS))
+        table.Add (_('Use I/O cache'),             CTK.CheckCfgText('%s!iocache'%(key),           True, _('Enabled'), {'class': 'noauto'}), _(NOTE_IOCACHE))
+        table.Add (_('Only match files'),          CTK.CheckCfgText('%s!match_only_files'%(key),  True, _('Enabled'), {'class': 'noauto'}), _(NOTE_ONLY_FILES))
+        table.Add (_('If dir, check index files'), CTK.CheckCfgText('%s!match_index_files'%(key), True, _('Enabled'), {'class': 'noauto'}), _(NOTE_INDEX_FILES))
 
         # Special events
         any.bind ('change',
-                  """if (! $('#%(any)s')[0].checked) {
+                  """if (! $('#%(any)s :checkbox')[0].checked) {
                            $('#%(row)s').show();
                      } else {
                            $('#%(row)s').hide();
@@ -127,7 +127,6 @@ class Plugin_exists (RulePlugin):
         submit += table
         submit += CTK.Hidden ('key', key)
         submit += CTK.Hidden ('vsrv_num', vsrv_num)
-        submit += CTK.SubmitterButton(_("Add"))
         self += submit
 
     def GetName (self):
