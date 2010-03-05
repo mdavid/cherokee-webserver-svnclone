@@ -64,14 +64,10 @@ class Content (CTK.Container):
         next  = CTK.cfg.get_next_entry_prefix (key)
         table.Add (_('New host name'), CTK.TextCfg(next, False, {'class':'noauto'}), _(NOTE_WILDCARD))
 
-        dialog = CTK.Dialog({'title':     _('Add new'),
-                             'autoOpen':  False,
-                             'draggable': False,
-                             'width':     480})
-
         submit = CTK.Submitter(url_apply)
+        dialog = CTK.Dialog2Buttons ({'title': _('Add new entry')}, _('Add'), submit.JS_to_submit())
+
         submit += table
-        submit += CTK.SubmitterButton(_('Add'))
         submit.bind ('submit_success', refreshable.JS_to_refresh())
         submit.bind ('submit_success', dialog.JS_to_close())
 
