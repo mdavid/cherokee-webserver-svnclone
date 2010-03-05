@@ -189,7 +189,7 @@ class RuleWidget (CTK.Container):
         pre = 'vserver!%s!rule!%s!match' %(vsrv, rule)
 
         rule = Rule (pre)
-        rule.bind ('submit_success', refresh.JS_to_refresh())
+        #rule.bind ('submit_success', refresh.JS_to_refresh())
 
         self += CTK.RawHTML ("<h2>%s</h2>" % (_('Matching Rule')))
         self += rule
