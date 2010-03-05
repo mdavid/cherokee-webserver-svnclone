@@ -24,6 +24,7 @@
 
 import re
 import CTK
+from consts import *
 
 DEFAULT_RULE_WARNING = N_('The default match ought not to be changed.')
 
@@ -37,9 +38,10 @@ class RulePlugin (CTK.Plugin):
 
 
 class Rule (CTK.Box):
-    def __init__ (self, key):
+    def __init__ (self, key, refresh=None):
         CTK.Box.__init__ (self)
-        self.key = key
+        self.key     = key
+        self.refresh = refresh
 
     def GetName (self):
         # Default Rule
@@ -49,17 +51,17 @@ class Rule (CTK.Box):
 
         # Logic ops
         elif value == "and":
-            rule1 = Rule ('%s!left' %(self.key))
-            rule2 = Rule ('%s!right'%(self.key))
+            rule1 = Rule ('%s!left' %(self.key), self.refresh)
+            rule2 = Rule ('%s!right'%(self.key), self.refresh)
             return '(%s AND %s)' %(rule1.GetName(), rule2.GetName())
 
         elif value == "or":
-            rule1 = Rule ('%s!left' %(self.key))
-            rule2 = Rule ('%s!right'%(self.key))
+            rule1 = Rule ('%s!left' %(self.key), self.refresh)
+            rule2 = Rule ('%s!right'%(self.key), self.refresh)
             return '(%s OR %s)' %(rule1.GetName(), rule2.GetName())
 
         elif value == "not":
-            rule = Rule ('%s!right'%(self.key))
+            rule = Rule ('%s!right'%(self.key), self.refresh)
             return '(NOT %s)' %(rule.GetName())
 
         # Regular rules
@@ -76,24 +78,33 @@ class Rule (CTK.Box):
         # Special rule types
         elif value == "and":
             self.props['class'] = 'rule-and'
-            self += Rule ('%s!left' %(self.key))
-            self += Rule ('%s!right'%(self.key))
+            self += Rule ('%s!left' %(self.key), self.refresh)
+            self += Rule ('%s!right'%(self.key), self.refresh)
             return CTK.Box.Render (self)
 
         elif value == "or":
             self.props['class'] = 'rule-or'
-            self += Rule ('%s!left' %(self.key))
-            self += Rule ('%s!right'%(self.key))
+            self += Rule ('%s!left' %(self.key), self.refresh)
+            self += Rule ('%s!right'%(self.key), self.refresh)
             return CTK.Box.Render (self)
 
         elif value == "not":
             self.props['class'] = 'rule-not'
-            self += Rule ('%s!right'%(self.key))
+            self += Rule ('%s!right'%(self.key), self.refresh)
             return CTK.Box.Render (self)
 
         # Regular rules
-        plugin = CTK.instance_plugin (value, self.key)
-        self += plugin
+        vsrv_num = self.key.split('!')[1]
+
+        table = CTK.PropsTable()
+        modul = CTK.PluginSelector (self.key, RULES, vsrv_num=vsrv_num)
+        table.Add (_('Rule Type'), modul.selector_widget, '')
+
+        self += table
+        self += modul
+
+        if self.refresh:
+            modul.selector_widget.bind ('changed', self.refresh.JS_to_refresh());
 
         # Render
         return CTK.Box.Render (self)
