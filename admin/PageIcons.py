@@ -80,8 +80,9 @@ def prettyfier (filen):
     return filen.capitalize()
 
 class IconComboSet (CTK.Widget):
-    def __init__ (self, key, add_choose=False, props=None):
+    def __init__ (self, key, add_choose=False, _props={}):
         CTK.Widget.__init__ (self)
+        props = _props.copy()
 
         # Check the icon files
         file_options = ([],[('',_('Choose..'))])[add_choose]
