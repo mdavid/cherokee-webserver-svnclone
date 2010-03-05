@@ -184,15 +184,15 @@ class EncodingWidget (CTK.Container):
 
 
 class RuleWidget (CTK.Container):
-    def __init__ (self, vsrv, rule, apply, refresh):
+    def __init__ (self, vsrv, rule, apply, refresh_header):
         CTK.Container.__init__ (self)
         pre = 'vserver!%s!rule!%s!match' %(vsrv, rule)
 
         rule = Rule (pre)
-        #rule.bind ('submit_success', refresh.JS_to_refresh())
+        rule.bind ('submit_success', refresh_header.JS_to_refresh())
 
         self += CTK.RawHTML ("<h2>%s</h2>" % (_('Matching Rule')))
-        self += rule
+        self += CTK.Indenter (rule)
 
 
 class Header (CTK.Container):
