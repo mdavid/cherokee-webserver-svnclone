@@ -28,6 +28,8 @@ from consts import *
 
 DEFAULT_RULE_WARNING = N_('The default match ought not to be changed.')
 
+URL_APPLY_LOGIC = "/rule/logic/apply"
+
 
 class RulePlugin (CTK.Plugin):
     def __init__ (self, key):
@@ -35,6 +37,21 @@ class RulePlugin (CTK.Plugin):
 
     def GetName (self):
         raise NotImplementedError
+
+def RuleButtons_apply():
+    return {'ret': 'ok'}
+
+class RuleButtons (CTK.Box):
+    def __init__ (self, key):
+        CTK.Box.__init__ (self, {'class': 'rulebuttons'})
+
+        for op in ('OR', 'AND', 'NOT'):
+            submit = CTK.Submitter (URL_APPLY_LOGIC)
+            submit += CTK.Hidden ('key', key)
+            submit += CTK.Hidden ('op', op)
+            submit += CTK.SubmitterButton (op)
+
+            self += submit
 
 
 class Rule (CTK.Box):
@@ -80,17 +97,20 @@ class Rule (CTK.Box):
             self.props['class'] = 'rule-and'
             self += Rule ('%s!left' %(self.key), self.refresh)
             self += Rule ('%s!right'%(self.key), self.refresh)
+            self += RuleButtons (self.key)
             return CTK.Box.Render (self)
 
         elif value == "or":
             self.props['class'] = 'rule-or'
             self += Rule ('%s!left' %(self.key), self.refresh)
             self += Rule ('%s!right'%(self.key), self.refresh)
+            self += RuleButtons (self.key)
             return CTK.Box.Render (self)
 
         elif value == "not":
             self.props['class'] = 'rule-not'
             self += Rule ('%s!right'%(self.key), self.refresh)
+            self += RuleButtons (self.key)
             return CTK.Box.Render (self)
 
         # Regular rules
@@ -100,11 +120,15 @@ class Rule (CTK.Box):
         modul = CTK.PluginSelector (self.key, RULES, vsrv_num=vsrv_num)
         table.Add (_('Rule Type'), modul.selector_widget, '')
 
-        self += table
-        self += modul
-
         if self.refresh:
             modul.selector_widget.bind ('changed', self.refresh.JS_to_refresh());
 
+        self += table
+        self += modul
+        self += RuleButtons (self.key)
+
         # Render
         return CTK.Box.Render (self)
+
+
+CTK.publish (r"^%s$"%(URL_APPLY_LOGIC), RuleButtons_apply, method="POST")
