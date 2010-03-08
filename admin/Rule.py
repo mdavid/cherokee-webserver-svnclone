@@ -94,49 +94,18 @@ class RuleButtons (CTK.Box):
             submit += CTK.Hidden ('key', key)
             submit += CTK.Hidden ('op', op)
             submit += CTK.SubmitterButton (op)
-
+            submit.bind ('submit_success', "$(this).trigger('changed');")
             self += submit
 
 
 class Rule (CTK.Box):
-    def __init__ (self, key, refresh=None, depth=0):
+    def __init__ (self, key, depth=0):
         assert type(key) == str
-        assert not refresh or isinstance(refresh, CTK.Refreshable)
         assert type(depth) == int
 
-        CTK.Box.__init__ (self)
-        self.key     = key
-        self.depth   = depth
-        self.refresh = refresh
-
-    def GetName (self):
-        # Default Rule
-        value = CTK.cfg.get_val (self.key)
-        if value == 'default':
-            return _('Default')
-
-        # Logic ops
-        elif value == "and":
-            rule1 = Rule ('%s!left' %(self.key), self.refresh, self.depth+1)
-            rule2 = Rule ('%s!right'%(self.key), self.refresh, self.depth+1)
-            return '(%s AND %s)' %(rule1.GetName(), rule2.GetName())
-
-        elif value == "or":
-            rule1 = Rule ('%s!left' %(self.key), self.refresh, self.depth+1)
-            rule2 = Rule ('%s!right'%(self.key), self.refresh, self.depth+1)
-            return '(%s OR %s)' %(rule1.GetName(), rule2.GetName())
-
-        elif value == "not":
-            rule = Rule ('%s!right'%(self.key), self.refresh, self.depth+1)
-            return '(NOT %s)' %(rule.GetName())
-
-        # No rule (yet)
-        if not value:
-            return ''
-
-        # Regular rules
-        plugin = CTK.instance_plugin (value, self.key)
-        return plugin.GetName()
+        CTK.Box.__init__ (self, {'class': 'rule'})
+        self.key   = key
+        self.depth = depth
 
     def Render (self):
         # Default Rule
@@ -147,22 +116,22 @@ class Rule (CTK.Box):
 
         # Special rule types
         elif value == "and":
-            self.props['class'] = 'rule-and'
-            self += Rule ('%s!left' %(self.key), self.refresh, self.depth+1)
-            self += Rule ('%s!right'%(self.key), self.refresh, self.depth+1)
+            self.props['class'] += ' rule-and'
+            self += Rule ('%s!left' %(self.key), self.depth+1)
+            self += Rule ('%s!right'%(self.key), self.depth+1)
             self += RuleButtons (self.key, self.depth)
             return CTK.Box.Render (self)
 
         elif value == "or":
-            self.props['class'] = 'rule-or'
-            self += Rule ('%s!left' %(self.key), self.refresh, self.depth+1)
-            self += Rule ('%s!right'%(self.key), self.refresh, self.depth+1)
+            self.props['class'] += ' rule-or'
+            self += Rule ('%s!left' %(self.key), self.depth+1)
+            self += Rule ('%s!right'%(self.key), self.depth+1)
             self += RuleButtons (self.key, self.depth)
             return CTK.Box.Render (self)
 
         elif value == "not":
-            self.props['class'] = 'rule-not'
-            self += Rule ('%s!right'%(self.key), self.refresh, self.depth+1)
+            self.props['class'] += ' rule-not'
+            self += Rule ('%s!right'%(self.key), self.depth+1)
             self += RuleButtons (self.key, self.depth)
             return CTK.Box.Render (self)
 
@@ -173,15 +142,41 @@ class Rule (CTK.Box):
         modul = CTK.PluginSelector (self.key, RULES, vsrv_num=vsrv_num)
         table.Add (_('Rule Type'), modul.selector_widget, '')
 
-        if self.refresh:
-            modul.selector_widget.bind ('changed', self.refresh.JS_to_refresh());
-
         self += table
         self += modul
         self += RuleButtons (self.key, self.depth)
 
         # Render
         return CTK.Box.Render (self)
+
+    def GetName (self):
+        # Default Rule
+        value = CTK.cfg.get_val (self.key)
+        if value == 'default':
+            return _('Default')
+
+        # Logic ops
+        elif value == "and":
+            rule1 = Rule ('%s!left' %(self.key), self.depth+1)
+            rule2 = Rule ('%s!right'%(self.key), self.depth+1)
+            return '(%s AND %s)' %(rule1.GetName(), rule2.GetName())
+
+        elif value == "or":
+            rule1 = Rule ('%s!left' %(self.key), self.depth+1)
+            rule2 = Rule ('%s!right'%(self.key), self.depth+1)
+            return '(%s OR %s)' %(rule1.GetName(), rule2.GetName())
+
+        elif value == "not":
+            rule = Rule ('%s!right'%(self.key), self.depth+1)
+            return '(NOT %s)' %(rule.GetName())
+
+        # No rule (yet)
+        if not value:
+            return ''
+
+        # Regular rules
+        plugin = CTK.instance_plugin (value, self.key)
+        return plugin.GetName()
 
 
 CTK.publish (r"^%s$"%(URL_APPLY_LOGIC), RuleButtons_apply, method="POST")

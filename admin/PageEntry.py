@@ -183,24 +183,30 @@ class EncodingWidget (CTK.Container):
         self += CTK.Indenter (submit)
 
 
-class RuleWidget (CTK.Container):
-    def __init__ (self, vsrv, rule, apply, refresh_header):
-        CTK.Container.__init__ (self)
-        pre = 'vserver!%s!rule!%s!match' %(vsrv, rule)
+class RuleWidget (CTK.Refreshable):
+    class Content (CTK.Container):
+        def __init__ (self, refresh, vsrv, rule, apply):
+            CTK.Container.__init__ (self)
+            pre = 'vserver!%s!rule!%s!match' %(vsrv, rule)
 
-        rule = Rule (pre, refresh_header)
-        rule.bind ('submit_success', refresh_header.JS_to_refresh())
+            rule = Rule (pre)
+            rule.bind ('changed', refresh.JS_to_refresh()+"console.log('changed');")
 
-        self += CTK.RawHTML ("<h2>%s</h2>" % (_('Matching Rule')))
-        self += CTK.Indenter (rule)
+            self += CTK.RawHTML ("<h2>%s</h2>" % (_('Matching Rule')))
+            self += CTK.Indenter (rule)
+
+    def __init__ (self, vsrv, rule, apply):
+        CTK.Refreshable.__init__ (self)
+        self.register (lambda: self.Content(self, vsrv, rule, apply).Render())
 
 
 class Header (CTK.Container):
-    def __init__ (self, refreshable, vsrv_num, rule_num, vsrv_nam):
+    def __init__ (self, refresh, vsrv_num, rule_num, vsrv_nam):
         CTK.Container.__init__(self)
 
-        rule = Rule ('vserver!%s!rule!%s!match'%(vsrv_num, rule_num), refreshable)
+        rule = Rule ('vserver!%s!rule!%s!match'%(vsrv_num, rule_num))
         rule_nam = rule.GetName()
+        rule.bind ('changed', refresh.JS_to_refresh())
 
         self += CTK.RawHTML ('<h1><a href="/vserver">%s</a>: <a href="/vserver/%s">%s</a>: %s</h1>' %(_('Virtual Server'), vsrv_num, vsrv_nam, rule_nam))
 
@@ -223,7 +229,7 @@ class Render():
 
         # Tabs
         tabs = CTK.Tab()
-        tabs.Add (_('Rule'),            RuleWidget (vsrv_num, rule_num, url_apply, refresh))
+        tabs.Add (_('Rule'),            RuleWidget (vsrv_num, rule_num, url_apply))
         tabs.Add (_('Encoding'),        EncodingWidget (vsrv_num, rule_num, url_apply))
         tabs.Add (_('Time'),            TimeWidget (vsrv_num, rule_num, url_apply))
         tabs.Add (_('Security'),        SecurityWidget (vsrv_num, rule_num, url_apply))
