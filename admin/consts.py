@@ -162,7 +162,7 @@ RULES = [
     ('header',     N_('Header')),
     ('exists',     N_('File Exists')),
     ('method',     N_('HTTP Method')),
-#    ('bind',       N_('Incoming IP/Port')),
+    ('bind',       N_('Incoming IP/Port')),
 #    ('fullpath',   N_('Full Path')),
 #    ('from',       N_('Connected from')),
 #    ('url_arg',    N_('URL Argument')),

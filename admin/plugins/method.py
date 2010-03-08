@@ -28,7 +28,7 @@ from util import *
 URL_APPLY = '/plugin/method/apply'
 
 METHODS = [
-    ('',          _('Choose')),
+    ('', _('Choose')),
     ('get',              'GET'),
     ('post',             'POST'),
     ('head',             'HEAD'),
@@ -67,9 +67,9 @@ NOTE_METHOD  = _("The HTTP method that should match this rule.")
 
 def apply():
     # POST info
-    key         = CTK.post.pop ('key', None)
-    vsrv_num    = CTK.post.pop ('vsrv_num', None)
-    new_method  = CTK.post.pop ('tmp!method', None)
+    key        = CTK.post.pop ('key', None)
+    vsrv_num   = CTK.post.pop ('vsrv_num', None)
+    new_method = CTK.post.pop ('tmp!method', None)
 
     # New entry
     if new_method:
@@ -84,7 +84,6 @@ def apply():
     for k in CTK.post:
         CTK.cfg[k] = CTK.post[k]
     return {'ret': 'ok'}
-
 
 
 class Plugin_method (RulePlugin):
@@ -102,9 +101,9 @@ class Plugin_method (RulePlugin):
         submit += table
         self += submit
 
-        # Validation, and Public URLs
-        CTK.publish (URL_APPLY, apply, method="POST")
-
     def GetName (self):
         method = CTK.cfg.get_val ('%s!method' %(self.key), '')
         return "%s %s" % (_('Method'), method)
+
+
+CTK.publish (URL_APPLY, apply, method="POST")
