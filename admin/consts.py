@@ -163,7 +163,7 @@ RULES = [
     ('exists',     N_('File Exists')),
     ('method',     N_('HTTP Method')),
     ('bind',       N_('Incoming IP/Port')),
-#    ('fullpath',   N_('Full Path')),
+    ('fullpath',   N_('Full Path')),
 #    ('from',       N_('Connected from')),
 #    ('url_arg',    N_('URL Argument')),
 #    ('geoip',      N_('GeoIP'))

@@ -52,9 +52,8 @@ class Plugin_bind (RulePlugin):
     def __init__ (self, key, **kwargs):
         RulePlugin.__init__ (self, key)
         self.vsrv_num = kwargs.pop('vsrv_num', '')
-        is_new        = key.startswith('tmp')
 
-        if is_new:
+        if key.startswith('tmp'):
             return self.GUI_new()
 
         return self.GUI_mod()
