@@ -185,19 +185,20 @@ class EncodingWidget (CTK.Container):
 
 class RuleWidget (CTK.Refreshable):
     class Content (CTK.Container):
-        def __init__ (self, refresh, vsrv, rule, apply):
+        def __init__ (self, refresh, refresh_header, vsrv, rule, apply):
             CTK.Container.__init__ (self)
             pre = 'vserver!%s!rule!%s!match' %(vsrv, rule)
 
             rule = Rule (pre)
-            rule.bind ('changed', refresh.JS_to_refresh()+"console.log('changed');")
+            rule.bind ('changed',        refresh.JS_to_refresh() + refresh_header.JS_to_refresh())
+            rule.bind ('submit_success', refresh.JS_to_refresh() + refresh_header.JS_to_refresh())
 
             self += CTK.RawHTML ("<h2>%s</h2>" % (_('Matching Rule')))
             self += CTK.Indenter (rule)
 
-    def __init__ (self, vsrv, rule, apply):
+    def __init__ (self, vsrv, rule, apply, refresh_header):
         CTK.Refreshable.__init__ (self)
-        self.register (lambda: self.Content(self, vsrv, rule, apply).Render())
+        self.register (lambda: self.Content(self, refresh_header, vsrv, rule, apply).Render())
 
 
 class Header (CTK.Container):
@@ -206,8 +207,6 @@ class Header (CTK.Container):
 
         rule = Rule ('vserver!%s!rule!%s!match'%(vsrv_num, rule_num))
         rule_nam = rule.GetName()
-        rule.bind ('changed', refresh.JS_to_refresh())
-
         self += CTK.RawHTML ('<h1><a href="/vserver">%s</a>: <a href="/vserver/%s">%s</a>: %s</h1>' %(_('Virtual Server'), vsrv_num, vsrv_nam, rule_nam))
 
 
@@ -229,7 +228,7 @@ class Render():
 
         # Tabs
         tabs = CTK.Tab()
-        tabs.Add (_('Rule'),            RuleWidget (vsrv_num, rule_num, url_apply))
+        tabs.Add (_('Rule'),            RuleWidget (vsrv_num, rule_num, url_apply, refresh))
         tabs.Add (_('Encoding'),        EncodingWidget (vsrv_num, rule_num, url_apply))
         tabs.Add (_('Time'),            TimeWidget (vsrv_num, rule_num, url_apply))
         tabs.Add (_('Security'),        SecurityWidget (vsrv_num, rule_num, url_apply))
