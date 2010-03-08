@@ -141,13 +141,20 @@ class Rule (CTK.Box):
         # Regular rules
         vsrv_num = self.key.split('!')[1]
 
+        if not CTK.cfg.get_val(self.key):
+            rules = [('', _('Select..'))] + RULES
+        else:
+            rules = RULES[:]
+
         table = CTK.PropsTable()
-        modul = CTK.PluginSelector (self.key, RULES, vsrv_num=vsrv_num)
+        modul = CTK.PluginSelector (self.key, rules, vsrv_num=vsrv_num)
         table.Add (_('Rule Type'), modul.selector_widget, '')
 
         self += table
         self += modul
-        self += RuleButtons (self.key, self.depth)
+
+        if CTK.cfg.get_val(self.key):
+            self += RuleButtons (self.key, self.depth)
 
         # Render
         return CTK.Box.Render (self)
