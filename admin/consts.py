@@ -164,7 +164,7 @@ RULES = [
     ('method',     N_('HTTP Method')),
     ('bind',       N_('Incoming IP/Port')),
     ('fullpath',   N_('Full Path')),
-#    ('from',       N_('Connected from')),
+    ('from',       N_('Connected from')),
 #    ('url_arg',    N_('URL Argument')),
 #    ('geoip',      N_('GeoIP'))
 ]
