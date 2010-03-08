@@ -33,6 +33,7 @@ adminpy_SCRIPTS = $(admin_scripts)
 
 if INSTALL_ADMIN
 admin_data = \
+static/css/cherokee-admin.css \
 theme.html \
 server.py \
 consts.py \

@@ -23,6 +23,8 @@
 #
 
 import os
+import copy
+
 import CTK
 import Cherokee
 import configured
@@ -75,7 +77,7 @@ class Save:
 
 
 class Base (CTK.Page):
-    def __init__ (self, title, headers=None, body_id=None, **kwargs):
+    def __init__ (self, title, headers=[], body_id=None, **kwargs):
         # Look for the theme file
         srcdir = os.path.dirname (os.path.realpath (__file__))
         theme_file = os.path.join (srcdir, 'theme.html')
@@ -92,8 +94,12 @@ class Base (CTK.Page):
         dialog = CTK.DialogProxyLazy (URL_SAVE, {'title': _(SAVED_NOTICE), 'autoOpen': False, 'draggable': False, 'width': 500})
         CTK.publish (URL_SAVE, Save, dialog=dialog)
 
+        # Default headers
+        heads = copy.copy (headers)
+        heads.append ('<link rel="stylesheet" type="text/css" href="/static/css/cherokee-admin.css" />')
+
         # Parent's constructor
-        CTK.Page.__init__ (self, template, headers, **kwargs)
+        CTK.Page.__init__ (self, template, heads, **kwargs)
 
         # Add the 'Save' dialog
         self += dialog
