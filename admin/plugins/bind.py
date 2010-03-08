@@ -86,6 +86,8 @@ class Plugin_bind (RulePlugin):
     def GUI_mod (self):
         pre = '%s!bind'%(self.key)
         tmp = CTK.cfg.keys (pre)
+        tmp.sort(lambda x,y: cmp(int(x), int(y)))
+
         if tmp:
             table = CTK.Table({'id': 'rule-table-bind'})
             table.set_header(1)
