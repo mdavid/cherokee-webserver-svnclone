@@ -63,16 +63,18 @@ def apply():
 class Plugin_url_arg (RulePlugin):
     def __init__ (self, key, **kwargs):
         RulePlugin.__init__ (self, key)
-        if key.startswith('tmp'):
-            props = {'class': 'noauto'}
-        else:
-            props = {}
+        self.vsrv_num = kwargs.pop('vsrv_num', '')
 
-        any   = CTK.ComboCfg('%s!match_any'%(key), OPTIONS, props)
+        if key.startswith('tmp'):
+            return self.GUI_new()
+        return self.GUI_mod()
+
+    def GUI_new (self):
+        any   = CTK.ComboCfg('%s!match_any'%(self.key), OPTIONS, {'class': 'noauto'})
         table = CTK.PropsTable()
         table.Add (_('Match type'), any, '')
-        table.Add (_('Argument'),           CTK.TextCfg('%s!arg'%(key), False, props), _(NOTE_ARGUMENT))
-        table.Add (_('Regular Expression'), CTK.TextCfg('%s!match'%(key), False, props), _(NOTE_REGEX))
+        table.Add (_('Argument'),           CTK.TextCfg('%s!arg'%(self.key), False, {'class': 'noauto'}), _(NOTE_ARGUMENT))
+        table.Add (_('Regular Expression'), CTK.TextCfg('%s!match'%(self.key), False, {'class': 'noauto'}), _(NOTE_REGEX))
 
         # Special events
         any.bind ('change', """if ($(this).val() == 0) {
@@ -81,13 +83,23 @@ class Plugin_url_arg (RulePlugin):
                                  $("#%(row)s").hide(); }""" %({'row': table[1].id}))
 
         submit = CTK.Submitter (URL_APPLY)
-        submit += CTK.Hidden ('key', key)
-        submit += CTK.Hidden ('vsrv_num', kwargs.pop('vsrv_num', ''))
+        submit += CTK.Hidden ('key', self.key)
+        submit += CTK.Hidden ('vsrv_num', self.vsrv_num)
         submit += table
         self += submit
 
-        # Validation, and Public URLs
-        CTK.publish (URL_APPLY, apply, method="POST")
+    def GUI_mod (self):
+        table = CTK.PropsTable()
+        table.Add (_('Match type'),         CTK.ComboCfg('%s!match_any'%(self.key), OPTIONS), '')
+        if not int(CTK.cfg.get_val('%s!match_any'%(self.key))):
+            table.Add (_('Argument'),       CTK.TextCfg('%s!arg'%(self.key), False), _(NOTE_ARGUMENT))
+        table.Add (_('Regular Expression'), CTK.TextCfg('%s!match'%(self.key), False), _(NOTE_REGEX))
+
+        submit = CTK.Submitter (URL_APPLY)
+        submit += CTK.Hidden ('key', self.key)
+        submit += CTK.Hidden ('vsrv_num', self.vsrv_num)
+        submit += table
+        self += submit
 
     def GetName (self):
         match = CTK.cfg.get_val ('%s!match'%(self.key), '')
@@ -97,3 +109,7 @@ class Plugin_url_arg (RulePlugin):
 
         arg = CTK.cfg.get_val ('%s!arg'%(self.key), '')
         return "Arg %s matches %s" %(arg, match)
+
+
+# Validation, and Public URLs
+CTK.publish (URL_APPLY, apply, method="POST")
