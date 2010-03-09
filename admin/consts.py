@@ -186,7 +186,7 @@ RULES = [
     ('fullpath',   N_('Full Path')),
     ('from',       N_('Connected from')),
     ('url_arg',    N_('URL Argument')),
-#    ('geoip',      N_('GeoIP'))
+    ('geoip',      N_('GeoIP'))
 ]
 
 VRULES = [

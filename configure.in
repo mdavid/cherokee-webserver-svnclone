@@ -1207,7 +1207,8 @@ AC_ARG_WITH([geoip],
             want_geoip="yes"
         else
             want_geoip="yes"
-            GEOIP_CONFIG="$withval"
+		  CPPFLAGS="${CPPFLAGS} -I${withval}/include"
+		  LDFLAGS="-L${withval}/lib ${LDFLAGS}"
         fi
         ],
         [want_geoip="yes"]
