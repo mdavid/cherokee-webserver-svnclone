@@ -308,3 +308,34 @@ class ComboFlags (CTK.ComboCfg):
         options = [(_('Countries'), countries), (_('Extras'), extras)]
 
         CTK.ComboCfg.__init__ (self, key, options, props)
+
+
+class CheckListFlags (CTK.Box):
+    def __init__ (self, key, _props={}):
+        CTK.Box.__init__ (self, {'class': 'check-list-flags'})
+
+        # Flags
+        props = _props.copy()
+        codes = ISO_3166.keys()
+        codes.sort()
+
+        # Initial values
+        selected = filter (lambda x: x, [x.strip() for x in CTK.cfg.get_val (key,'').split(',')])
+        print "selected", selected
+
+        self += CTK.RawHTML ('<b>%s</b>' %(_("Countries")))
+        for k in codes:
+            box = CTK.Box({'class': 'check-list-flags-entry'})
+            box += CTK.CheckCfg ('%s!%s' %(key, k), k in selected, props)
+            box += CTK.Image ({'src': "/static/images/flags/%s.png"%(k)})
+            box += CTK.RawHTML (ISO_3166[k])
+            self += box
+
+        self += CTK.RawHTML ('<b>%s</b>' %(_("Extras")))
+        for k in EXTRA_OPTIONS:
+            box = CTK.Box({'class': 'check-list-flags-entry'})
+            box += CTK.CheckCfg ('%s!%s' %(key, k[0]), k[0] in selected, props)
+            if len(k) == 3:
+                box += CTK.Image ({'src': "/static/images/flags/%s"%(k[2])})
+            box += CTK.RawHTML (k[1])
+            self += box

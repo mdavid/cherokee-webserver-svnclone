@@ -29,3 +29,20 @@
 	margin: 5px;
 }
 
+/* Flag list
+ */
+.check-list-flags {
+	width: 400px;
+	height: 300px;
+	overflow-y: scroll;
+	text-align: left;
+}
+
+.check-list-flags-entry img {
+	margin-right: 5px;
+	margin-left: 5px;
+}
+
+.check-list-flags-entry input {
+	margin-left: 10px;
+}
