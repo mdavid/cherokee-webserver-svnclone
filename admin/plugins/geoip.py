@@ -35,14 +35,11 @@ NOTE_COUNTRIES   = N_("""List of countries from the client IPs. It must use the
 <a target=\"_blank\" href=\"%s\">ISO 3166</a> country notation.""") % (ISO3166_URL)
 
 def apply():
-    print CTK.post
-
     # POST info
     key       = CTK.post.pop ('key', None)
     vsrv_num  = CTK.post.pop ('vsrv_num', None)
 
     # New
-    print "Phase 1"
     post_keys = CTK.post.keys()
     selected  = []
     for p in post_keys:
@@ -57,19 +54,14 @@ def apply():
         return {'ret': 'ok', 'redirect': '/vserver/%s/rule/%s' %(vsrv_num, next_rule)}
 
     # Modifications
-    print "Phase 2"
-    post_keys = CTK.post.keys()
-    selected  = []
     for p in post_keys:
         if p.startswith(key):
             value = CTK.post[p]
             if value and int(value):
                 selected.append (p[-2:])
 
-    CTK.cfg["%s!match"%(key)]           = 'geoip'
-    print "%s!match"%(key), "geoip"
-    CTK.cfg["%s!match!countries"%(key)] = ','.join(selected)
-    print "%s!match!countries"%(key), ','.join(selected)
+    CTK.cfg[key]                  = 'geoip'
+    CTK.cfg["%s!countries"%(key)] = ','.join(selected)
     return {'ret': 'ok'}
 
 
