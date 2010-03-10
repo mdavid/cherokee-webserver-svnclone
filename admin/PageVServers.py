@@ -79,7 +79,7 @@ class Render():
     def __call__ (self):
         title = _('Virtual Servers')
 
-        page = Page.Base (title, helps=HELPS)
+        page = Page.Base(title, body_id='vservers', helps=HELPS)
         page += CTK.RawHTML ("<h1>%s</h1>" % (title))
         page += VServerListWidget()
         return page.Render()
