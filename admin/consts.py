@@ -76,7 +76,7 @@ VALIDATORS = [
     ('htpasswd', N_('Htpasswd file')),
     ('htdigest', N_('Htdigest file')),
     ('ldap',     N_('LDAP server')),
-#    ('mysql',    N_('MySQL server')),
+    ('mysql',    N_('MySQL server')),
     ('pam',      N_('PAM')),
 #    ('authlist', N_('Fixed list'))
 ]
