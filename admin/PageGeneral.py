@@ -147,7 +147,7 @@ class PortsWidget (CTK.Container):
         CTK.Container.__init__ (self)
 
         # List ports
-        refresh = CTK.Refreshable()
+        refresh = CTK.Refreshable({'id': 'general_ports'})
         refresh.register (lambda: PortsTable(refresh).Render())
 
         # Add new - dialog

@@ -321,7 +321,6 @@ class CheckListFlags (CTK.Box):
 
         # Initial values
         selected = filter (lambda x: x, [x.strip() for x in CTK.cfg.get_val (key,'').split(',')])
-        print "selected", selected
 
         self += CTK.RawHTML ('<b>%s</b>' %(_("Countries")))
         for k in codes:

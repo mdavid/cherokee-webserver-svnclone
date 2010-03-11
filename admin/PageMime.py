@@ -100,7 +100,7 @@ class MIME_Table_Instancer (CTK.Container):
         CTK.Container.__init__ (self)
 
         # Refresher
-        refresh = CTK.Refreshable()
+        refresh = CTK.Refreshable ({'id': 'mime_table'})
         refresh.register (lambda: MIME_Table(refresh).Render())
         self += refresh
 

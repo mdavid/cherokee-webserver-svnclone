@@ -96,7 +96,7 @@ class Plugin_target_ip (CTK.Plugin):
         self += CTK.RawHTML ("<h2>%s</h2>" % (_('Accepted Server IP addresses and subnets')))
 
         # Content
-        refresh = CTK.Refreshable()
+        refresh = CTK.Refreshable ({'id': 'plugin_target_ip'})
         refresh.register (lambda: AddressesTable(refresh, pre, url_apply).Render())
         self += refresh
 

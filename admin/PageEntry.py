@@ -125,7 +125,7 @@ class SecurityWidget (CTK.Container):
 
         self += CTK.RawHTML ("<h2>%s</h2>" % (_('Authentication')))
         self += CTK.Indenter (table)
-        self += CTK.Indenter (modul)
+        self += modul
 
 
 class TimeWidget (CTK.Container):
@@ -158,7 +158,7 @@ class TimeWidget (CTK.Container):
         self += CTK.Indenter (submit)
 
         # Expiration
-        refresh = CTK.Refreshable()
+        refresh = CTK.Refreshable({'id': 'time_expiration'})
         refresh.register (lambda: TimeWidget.Expiration(pre, apply, refresh).Render())
 
         self += CTK.RawHTML ("<h2>%s</h2>" % (_('Content Expiration')))
@@ -197,7 +197,7 @@ class RuleWidget (CTK.Refreshable):
             self += CTK.Indenter (rule)
 
     def __init__ (self, vsrv, rule, apply, refresh_header):
-        CTK.Refreshable.__init__ (self)
+        CTK.Refreshable.__init__ (self, {'id': 'rule'})
         self.register (lambda: self.Content(self, refresh_header, vsrv, rule, apply).Render())
 
 
@@ -223,7 +223,7 @@ class Render():
             return CTK.HTTP_Redir ('/vserver/%s' %(vsrv_num))
 
         # Header refresh
-        refresh = CTK.Refreshable()
+        refresh = CTK.Refreshable ({'id': 'entry_header'})
         refresh.register (lambda: Header(refresh, vsrv_num, rule_num, vsrv_nam).Render())
 
         # Tabs

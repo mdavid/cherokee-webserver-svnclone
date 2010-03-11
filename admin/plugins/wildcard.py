@@ -89,7 +89,7 @@ class Plugin_wildcard (CTK.Plugin):
         self += CTK.RawHTML ("<h2>%s</h2>" % (_('Accepted Domains')))
 
         # Content
-        refresh = CTK.Refreshable()
+        refresh = CTK.Refreshable ({'id': 'plugin_wildcard'})
         refresh.register (lambda: Content(refresh, pre, url_apply).Render())
         self += refresh
 

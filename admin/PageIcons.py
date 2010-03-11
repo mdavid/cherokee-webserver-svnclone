@@ -222,7 +222,7 @@ class ExtensionsWidget_Instancer (CTK.Container):
         CTK.Container.__init__ (self)
 
         # Refresher
-        refresh = CTK.Refreshable()
+        refresh = CTK.Refreshable ({'id': 'icons_extensions'})
         refresh.register (lambda: ExtensionsTable(refresh).Render())
         self += refresh
 
@@ -231,7 +231,7 @@ class FilesWidget_Instancer (CTK.Container):
         CTK.Container.__init__ (self)
 
         # Refresher
-        refresh = CTK.Refreshable()
+        refresh = CTK.Refreshable ({'id': 'icons_files'})
         refresh.register (lambda: FilesTable(refresh).Render())
         self += refresh
 

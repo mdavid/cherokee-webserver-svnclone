@@ -96,7 +96,7 @@ class Plugin_exists (RulePlugin):
         if is_new:
             self._GUI_new (key, vsrv_num)
         else:
-            refresh = CTK.Refreshable()
+            refresh = CTK.Refreshable ({'id': 'plugin_exists'})
             refresh.register (lambda: Modify(key, vsrv_num, refresh).Render())
             self += refresh
 
