@@ -61,7 +61,6 @@ function mysql_hash_set_disabled() {
 }
 
 $('#auth_method').bind('change', function() {
-   console.log ('changed');
    mysql_hash_set_disabled();
 });
 
