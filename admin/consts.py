@@ -72,7 +72,7 @@ ERROR_HANDLERS = [
 
 VALIDATORS = [
     ('',         N_('None')),
-#    ('plain',    N_('Plain text file')),
+    ('plain',    N_('Plain text file')),
 #    ('htpasswd', N_('Htpasswd file')),
 #    ('htdigest', N_('Htdigest file')),
 #    ('ldap',     N_('LDAP server')),

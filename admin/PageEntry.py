@@ -118,7 +118,7 @@ class SecurityWidget (CTK.Container):
         self += CTK.Indenter (submit)
 
         # Authentication
-        modul = CTK.PluginSelector('%s!'%(pre), Cherokee.support.filter_available (VALIDATORS))
+        modul = CTK.PluginSelector('%s!auth'%(pre), Cherokee.support.filter_available (VALIDATORS))
 
         table = CTK.PropsTable()
         table.Add (_('Validation Mechanism'), modul.selector_widget, _(NOTE_VALIDATOR))
