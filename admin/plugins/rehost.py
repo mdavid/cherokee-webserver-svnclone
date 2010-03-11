@@ -90,7 +90,7 @@ class Plugin_rehost (CTK.Plugin):
         self += CTK.RawHTML ("<h2>%s</h2>" % (_('New Regular Expression')))
 
         # Content
-        refresh = CTK.Refreshable()
+        refresh = CTK.Refreshable ({'id': 'plugin_rehost'})
         refresh.register (lambda: Content(refresh, pre, url_apply).Render())
         self += refresh
 

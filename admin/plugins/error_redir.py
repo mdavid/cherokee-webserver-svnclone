@@ -109,7 +109,7 @@ class Plugin_error_redir (CTK.Plugin):
         url_apply = '%s/%s' %(URL_APPLY, vsrv_num)
 
         # Content
-        refresh = CTK.Refreshable()
+        refresh = CTK.Refreshable ({'id': 'plugin_error'})
         refresh.register (lambda: Content(refresh, key, url_apply).Render())
         self += CTK.Indenter (refresh)
 
