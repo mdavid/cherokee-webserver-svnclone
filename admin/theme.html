@@ -16,16 +16,24 @@
     <li id="nav-general"><a href="/general">General</a></li>
     <li id="nav-vservers"><a href="/vservers">vServers</a></li>
     <li id="nav-advanced"><a href="/advanced">Advanced</a></li>
-    <li id="nav-save"><a id="nav-save-a">Save</a></li>
     </ul>
    </div>
+   <div id="topdialog">
+       <div class="topmsg">Configuration have been changed and need to be applied</div>
+       <div class="buttonarea"> 
+           <a id="button_16394" href="#" class="button"><span>Save</span></a>
+           <a id="button_1894" href="#" class="button"><span>Save & Apply</span></a>
+       </div>
+   </div>
+
    <div id="help">
+   <a class="helpbutton" href="#" id="help-a"><span>Help</span></a>
    %(helps)s
    </div>
+
    <div id="main">
-     <div id="activity">Updating.. <img src="/CTK/images/loader.gif" /></div>
+     <div id="activity"><span>Updating...</span></div>
      %(html)s
-     <div align="right"><a href="http://www.cherokee-project.com/">Cherokee</a></div>
    </div>
  </div>
 
