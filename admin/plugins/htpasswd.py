@@ -26,20 +26,21 @@ import CTK
 import Auth
 import validations
 
-URL_APPLY = '/plugin/plain/apply'
-HELPS     = [('modules_validators_plain', _("Plain text"))]
+URL_APPLY = '/plugin/htpasswd/apply'
+HELPS     = [('modules_validators_htpasswd', "Htpasswd")]
 
-NOTE_PASSWD = N_("Full path to the plain text password file.")
+NOTE_PASSWD = N_("Full path to the Htpasswd formated password file.")
+
 
 def apply():
     for k in CTK.post:
         del (CTK.cfg[k])
     return {'ret':'ok'}
 
-class Plugin_plain (Auth.PluginAuth):
+class Plugin_htpasswd (Auth.PluginAuth):
     def __init__ (self, key, **kwargs):
         Auth.PluginAuth.__init__ (self, key, **kwargs)
-        self.AddCommon (supported_methods=('basic', 'digest'))
+        self.AddCommon (supported_methods=('basic',))
 
         table = CTK.PropsTable()
         table.Add (_("Password File"), CTK.TextCfg("%s!passwdfile"%(self.key), False), _(NOTE_PASSWD))
@@ -47,7 +48,7 @@ class Plugin_plain (Auth.PluginAuth):
         submit = CTK.Submitter (URL_APPLY)
         submit += table
 
-        self += CTK.RawHTML ("<h2>%s</h2>" % (_('Plain password file')))
+        self += CTK.RawHTML ("<h2>%s</h2>" % (_('Htpasswd password file')))
         self += CTK.Indenter (submit)
 
         # Publish
