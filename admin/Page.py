@@ -105,6 +105,9 @@ class Base (CTK.Page):
         self += dialog
         self += CTK.RawHTML (js="$('#nav-save-a').bind ('click', function(){ %s });" %(dialog.JS_to_show()))
 
+        # Add help link
+        self += CTK.RawHTML (js="$('#help-a').bind ('click', function(){ toggleHelp(); });")
+
 
 CTK.publish (URL_SAVE_GRACEFUL, Restart, mode='graceful')
 CTK.publish (URL_SAVE_HARD,     Restart, mode='hard')
