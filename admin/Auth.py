@@ -53,7 +53,7 @@ class PluginAuth (CTK.Plugin):
         if len(supported_methods) > 1:
             methods = VALIDATOR_METHODS
         else:
-            methods = filter (lambda x,m=method: x[0] == supported_methods[0], VALIDATOR_METHODS)
+            methods = filter (lambda x: x[0] in supported_methods, VALIDATOR_METHODS)
 
         table = CTK.PropsTable()
         table.Add (_("Methods"), CTK.ComboCfg("%s!methods"%(self.key), methods), _(NOTE_METHODS))
