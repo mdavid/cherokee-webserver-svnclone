@@ -210,6 +210,21 @@ class Header (CTK.Container):
         self += CTK.RawHTML ('<h1><a href="/vserver">%s</a>: <a href="/vserver/%s">%s</a>: %s</h1>' %(_('Virtual Server'), vsrv_num, vsrv_nam, rule_nam))
 
 
+class HandlerWidget (CTK.Container):
+    def __init__ (self, vsrv, rule, apply):
+        CTK.Container.__init__ (self)
+        pre = 'vserver!%s!rule!%s!handler' %(vsrv, rule)
+
+        modul = CTK.PluginSelector(pre, Cherokee.support.filter_available (HANDLERS))
+
+        table = CTK.PropsTable()
+        table.Add (_('Handler'), modul.selector_widget, _(NOTE_HANDLER))
+
+        self += CTK.RawHTML ('<h2>%s</h2>' %(_('Handler')))
+        self += CTK.Indenter (table)
+        self += modul
+
+
 class Render():
     def __call__ (self):
         # Parse request
@@ -229,6 +244,7 @@ class Render():
         # Tabs
         tabs = CTK.Tab()
         tabs.Add (_('Rule'),            RuleWidget (vsrv_num, rule_num, url_apply, refresh))
+        tabs.Add (_('Handler'),         HandlerWidget (vsrv_num, rule_num, url_apply))
         tabs.Add (_('Encoding'),        EncodingWidget (vsrv_num, rule_num, url_apply))
         tabs.Add (_('Time'),            TimeWidget (vsrv_num, rule_num, url_apply))
         tabs.Add (_('Security'),        SecurityWidget (vsrv_num, rule_num, url_apply))

@@ -49,6 +49,7 @@ def apply():
         del (CTK.cfg[k])
     return {'ret':'ok'}
 
+
 class Plugin_authlist (Auth.PluginAuth):
     class Content (CTK.Container):
         def __init__ (self, refresh, key):
