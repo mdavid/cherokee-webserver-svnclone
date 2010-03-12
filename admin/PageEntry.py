@@ -36,7 +36,6 @@ from configured import *
 URL_BASE  = r'^/vserver/([\d]+)/rule/([\d]+)/?$'
 URL_APPLY = r'^/vserver/([\d]+)/rule/([\d]+)/apply$'
 
-NOTE_DOCUMENT_ROOT   = N_('Allows to specify an alternative document root path.')
 NOTE_TIMEOUT         = N_('Apply a custom timeout to the connections matching this rule.')
 NOTE_HANDLER         = N_('How the connection will be handled.')
 NOTE_HTTPS_ONLY      = N_('Enable to allow access to the resource only by https.')

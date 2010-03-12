@@ -23,34 +23,32 @@
 #
 
 import CTK
-import Auth
+import Cherokee
 import validations
 
-URL_APPLY = '/plugin/htpasswd/apply'
-HELPS     = [('modules_validators_htpasswd', "Htpasswd")]
+URL_APPLY = '/plugin/handler/apply'
 
-NOTE_PASSWD = N_("Full path to the Htpasswd formated password file.")
-
+NOTE_DOCUMENT_ROOT = N_('Allows to specify an alternative Document Root path.')
 
 def commit():
     for k in CTK.post:
         CTK.cfg[k] = CTK.post[k]
     return {'ret':'ok'}
 
-class Plugin_htpasswd (Auth.PluginAuth):
-    def __init__ (self, key, **kwargs):
-        Auth.PluginAuth.__init__ (self, key, **kwargs)
-        self.AddCommon (supported_methods=('basic',))
 
+class PluginHandler (CTK.Plugin):
+    def __init__ (self, key, **kwargs):
+        CTK.Plugin.__init__ (self, key)
+        self.show_document_root = kwargs.pop('show_document_root', True)
+
+    def AddCommon (self):
         table = CTK.PropsTable()
-        table.Add (_("Password File"), CTK.TextCfg("%s!passwdfile"%(self.key), False), _(NOTE_PASSWD))
+        table.Add (_('Document Root'), CTK.TextCfg('%s!document_root'%(self.key), True), _(NOTE_DOCUMENT_ROOT))
 
         submit = CTK.Submitter (URL_APPLY)
-        submit += table
-
-        self += CTK.RawHTML ("<h2>%s</h2>" % (_('Htpasswd password file')))
-        self += CTK.Indenter (submit)
+        submit += CTK.Indenter (table)
+        self += submit
 
         # Publish
-        VALS = [("%s!passwdfile"%(self.key), validations.is_local_file_exists)]
+        VALS = [("%s!document_root"%(self.key), validations.is_dev_null_or_local_dir_exists)]
         CTK.publish ('^%s'%(URL_APPLY), commit, validation=VALS, method="POST")
