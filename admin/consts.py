@@ -44,24 +44,24 @@ PRODUCT_TOKENS = [
 
 HANDLERS = [
     ('',             N_('None')),
-    ('common',       N_('List & Send')),
-    ('file',         N_('Static content')),
-    ('dirlist',      N_('Only listing')),
-    ('redir',        N_('Redirection')),
-    ('fcgi',         N_('FastCGI')),
-    ('scgi',         N_('SCGI')),
-    ('uwsgi',        N_('uWSGI')),
-    ('proxy',        N_('HTTP reverse proxy')),
-    ('post_report',  N_('Upload reporting')),
-    ('streaming',    N_('Audio/Video streaming')),
-    ('cgi',          N_('CGI')),
-    ('ssi',          N_('Server Side Includes')),
-    ('secdownload',  N_('Hidden Downloads')),
-    ('server_info',  N_('Server Info')),
-    ('dbslayer',     N_('MySQL bridge')),
-    ('custom_error', N_('HTTP error')),
-    ('admin',        N_('Remote Administration')),
-    ('empty_gif',    N_('1x1 Transparent GIF'))
+#    ('common',       N_('List & Send')),
+#    ('file',         N_('Static content')),
+#    ('dirlist',      N_('Only listing')),
+#    ('redir',        N_('Redirection')),
+#    ('fcgi',         N_('FastCGI')),
+#    ('scgi',         N_('SCGI')),
+#    ('uwsgi',        N_('uWSGI')),
+#    ('proxy',        N_('HTTP reverse proxy')),
+#    ('post_report',  N_('Upload reporting')),
+#    ('streaming',    N_('Audio/Video streaming')),
+#    ('cgi',          N_('CGI')),
+#    ('ssi',          N_('Server Side Includes')),
+#    ('secdownload',  N_('Hidden Downloads')),
+#    ('server_info',  N_('Server Info')),
+#    ('dbslayer',     N_('MySQL bridge')),
+#    ('custom_error', N_('HTTP error')),
+#    ('admin',        N_('Remote Administration')),
+#    ('empty_gif',    N_('1x1 Transparent GIF'))
 ]
 
 ERROR_HANDLERS = [
