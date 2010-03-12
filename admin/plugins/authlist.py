@@ -32,7 +32,7 @@ HELPS     = [('modules_validators_authlist', _("Fixed list"))]
 NOTE_EMPTY = "At least one user/password pair should be configured."
 
 
-def apply():
+def commit():
     new_user = CTK.post.pop('tmp!new_user')
     new_pass = CTK.post.pop('tmp!new_pass')
     key      = CTK.post.pop('key')
@@ -46,7 +46,7 @@ def apply():
 
     # Modification
     for k in CTK.post:
-        del (CTK.cfg[k])
+        CTK.cfg[k] = CTK.post[k]
     return {'ret':'ok'}
 
 
@@ -109,4 +109,4 @@ class Plugin_authlist (Auth.PluginAuth):
 
         # Publish
         VALS = [("%s!passwdfile"%(self.key), validations.is_local_file_exists)]
-        CTK.publish ('^%s'%(URL_APPLY), apply, validation=VALS, method="POST")
+        CTK.publish ('^%s'%(URL_APPLY), commit, validation=VALS, method="POST")
