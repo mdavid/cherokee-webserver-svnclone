@@ -42,13 +42,14 @@ class PluginHandler (CTK.Plugin):
         self.show_document_root = kwargs.pop('show_document_root', True)
 
     def AddCommon (self):
-        table = CTK.PropsTable()
-        table.Add (_('Document Root'), CTK.TextCfg('%s!document_root'%(self.key), True), _(NOTE_DOCUMENT_ROOT))
+        if self.show_document_root:
+            table = CTK.PropsTable()
+            table.Add (_('Document Root'), CTK.TextCfg('%s!document_root'%(self.key), True), _(NOTE_DOCUMENT_ROOT))
 
-        submit = CTK.Submitter (URL_APPLY)
-        submit += CTK.Indenter (table)
-        self += submit
+            submit = CTK.Submitter (URL_APPLY)
+            submit += CTK.Indenter (table)
+            self += submit
 
-        # Publish
-        VALS = [("%s!document_root"%(self.key), validations.is_dev_null_or_local_dir_exists)]
-        CTK.publish ('^%s'%(URL_APPLY), commit, validation=VALS, method="POST")
+            # Publish
+            VALS = [("%s!document_root"%(self.key), validations.is_dev_null_or_local_dir_exists)]
+            CTK.publish ('^%s'%(URL_APPLY), commit, validation=VALS, method="POST")

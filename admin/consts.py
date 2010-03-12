@@ -44,7 +44,7 @@ PRODUCT_TOKENS = [
 
 HANDLERS = [
     ('',             N_('None')),
-#    ('common',       N_('List & Send')),
+    ('common',       N_('List & Send')),
     ('file',         N_('Static content')),
     ('dirlist',      N_('Only listing')),
 #    ('redir',        N_('Redirection')),
