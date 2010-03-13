@@ -29,7 +29,7 @@ import validations
 URL_APPLY = '/plugin/authlist/apply'
 HELPS     = [('modules_validators_authlist', _("Fixed list"))]
 
-NOTE_EMPTY = "At least one user/password pair should be configured."
+NOTE_EMPTY = N_("At least one user/password pair should be configured.")
 
 
 def commit():
@@ -76,7 +76,7 @@ class Plugin_authlist (Auth.PluginAuth):
                     table += [user, passwd, remove]
                 self += CTK.Indenter (table)
             else:
-                self += CTK.Indenter (CTK.Notice ('information', CTK.RawHTML(NOTE_EMPTY)))
+                self += CTK.Indenter (CTK.Notice ('information', CTK.RawHTML(_(NOTE_EMPTY))))
 
     def __init__ (self, key, **kwargs):
         Auth.PluginAuth.__init__ (self, key, **kwargs)
