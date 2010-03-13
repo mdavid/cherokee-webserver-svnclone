@@ -102,7 +102,7 @@ LOGGER_WRITERS = [
 ]
 
 BALANCERS = [
-#    ('round_robin', N_("Round Robin")),
+    ('round_robin', N_("Round Robin")),
 #    ('ip_hash',     N_("IP Hash"))
 ]
 
