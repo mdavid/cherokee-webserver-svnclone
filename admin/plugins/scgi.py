@@ -29,7 +29,7 @@ import CgiBase
 import Balancer
 from consts import *
 
-HELPS = CgiBase.HELPS + [('modules_handlers_fcgi', "FastCGI")]
+HELPS = CgiBase.HELPS + [('modules_handlers_scgi', "SCGI")]
 
 def commit():
     for k in CTK.post:
@@ -37,9 +37,9 @@ def commit():
     return {'ret':'ok'}
 
 
-class Plugin_fcgi (CgiBase.PluginHandlerCGI):
+class Plugin_scgi (CgiBase.PluginHandlerCGI):
     def __init__ (self, key, **kwargs):
-        kwargs['show_script_alias']  = True
+        kwargs['show_script_alias']  = False
         kwargs['show_change_uid']    = False
         kwargs['show_document_root'] = True
 
