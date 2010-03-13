@@ -25,7 +25,7 @@
 import CTK
 import Balancer
 
-class Plugin_round_robin (Balancer.PluginBalancer):
+class Plugin_ip_hash (Balancer.PluginBalancer):
     def __init__ (self, key, **kwargs):
         Balancer.PluginBalancer.__init__ (self, key, **kwargs)
         Balancer.PluginBalancer.AddCommon (self)
