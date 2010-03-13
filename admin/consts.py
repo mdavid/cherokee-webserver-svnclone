@@ -49,7 +49,7 @@ HANDLERS = [
     ('dirlist',      N_('Only listing')),
     ('redir',        N_('Redirection')),
     ('fcgi',         N_('FastCGI')),
-#    ('scgi',         N_('SCGI')),
+    ('scgi',         N_('SCGI')),
 #    ('uwsgi',        N_('uWSGI')),
 #    ('proxy',        N_('HTTP reverse proxy')),
 #    ('post_report',  N_('Upload reporting')),
@@ -102,8 +102,8 @@ LOGGER_WRITERS = [
 ]
 
 BALANCERS = [
-    ('round_robin', N_("Round Robin")),
-    ('ip_hash',     N_("IP Hash"))
+#    ('round_robin', N_("Round Robin")),
+#    ('ip_hash',     N_("IP Hash"))
 ]
 
 SOURCE_TYPES = [
