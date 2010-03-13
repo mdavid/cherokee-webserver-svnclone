@@ -47,7 +47,7 @@ HANDLERS = [
     ('common',       N_('List & Send')),
     ('file',         N_('Static content')),
     ('dirlist',      N_('Only listing')),
-#    ('redir',        N_('Redirection')),
+    ('redir',        N_('Redirection')),
     ('fcgi',         N_('FastCGI')),
 #    ('scgi',         N_('SCGI')),
 #    ('uwsgi',        N_('uWSGI')),
