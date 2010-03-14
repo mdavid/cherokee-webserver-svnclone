@@ -3,6 +3,14 @@ import string
 import os.path
 from util import split_list
 
+# Conditional Check
+# -----------------
+# By default the validations are not perform is there is no value to
+# check. That usually means that the configuation entry if being
+# removed. In case the entry should be always check, the function
+# could define a property 'CHECK_ON_NO_VALUE' to enforce it.
+
+
 def is_number (value):
     try:
         return str(int(value))
@@ -265,6 +273,7 @@ def is_not_empty (value):
     if len(value) <= 0:
         raise ValueError, _('Cannot be empty')
     return value
+is_not_empty.CHECK_ON_NO_VALUE = True
 
 def debug_fail (value):
     raise ValueError, _('Forced failure')

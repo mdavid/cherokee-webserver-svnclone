@@ -56,7 +56,7 @@ HANDLERS = [
     ('streaming',    N_('Audio/Video Streaming')),
     ('cgi',          N_('CGI')),
     ('ssi',          N_('Server Side Includes')),
-#    ('secdownload',  N_('Hidden Downloads')),
+    ('secdownload',  N_('Hidden Downloads')),
 #    ('server_info',  N_('Server Info')),
 #    ('dbslayer',     N_('MySQL bridge')),
 #    ('custom_error', N_('HTTP error')),
