@@ -60,7 +60,7 @@ HANDLERS = [
     ('server_info',  N_('Server Info')),
 #    ('dbslayer',     N_('MySQL bridge')),
     ('custom_error', N_('HTTP error')),
-#    ('admin',        N_('Remote Administration')),
+    ('admin',        N_('Remote Administration')),
 #    ('empty_gif',    N_('1x1 Transparent GIF'))
 ]
 
