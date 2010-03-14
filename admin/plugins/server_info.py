@@ -37,12 +37,6 @@ OPTIONS = [
 NOTE_INFORMATION = N_('Which information should be shown.')
 
 
-def commit():
-    for k in CTK.post:
-        CTK.cfg[k] = CTK.post[k]
-    return {'ret':'ok'}
-
-
 class Plugin_server_info (Handler.PluginHandler):
     def __init__ (self, key, **kwargs):
         kwargs['show_document_root'] = False
@@ -58,4 +52,4 @@ class Plugin_server_info (Handler.PluginHandler):
         self += CTK.RawHTML ("<h2>%s</h2>" %(_('Privacy settings')))
         self += CTK.Indenter (submit)
 
-CTK.publish ('^%s$'%(URL_APPLY), commit, method="POST")
+CTK.publish ('^%s$'%(URL_APPLY), CTK.cfg_apply_post, method="POST")
