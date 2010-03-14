@@ -52,7 +52,7 @@ HANDLERS = [
     ('scgi',         N_('SCGI')),
 #    ('uwsgi',        N_('uWSGI')),
 #    ('proxy',        N_('HTTP reverse proxy')),
-#    ('post_report',  N_('Upload reporting')),
+    ('post_report',  N_('Upload reporting')),
     ('streaming',    N_('Audio/Video Streaming')),
     ('cgi',          N_('CGI')),
     ('ssi',          N_('Server Side Includes')),

@@ -35,11 +35,6 @@ NOTE_RATE_FACTOR = N_('Factor by which the bandwidth limit will be increased. De
 NOTE_RATE_BOOST  = N_('Number of seconds to stream before setting the bandwidth limit. Default: 5.')
 
 
-def commit():
-    for k in CTK.post:
-        CTK.cfg[k] = CTK.post[k]
-    return {'ret':'ok'}
-
 class Plugin_streaming (Handler.PluginHandler):
     def __init__ (self, key, **kwargs):
         Handler.PluginHandler.__init__ (self, key, **kwargs)
@@ -75,4 +70,4 @@ class Plugin_streaming (Handler.PluginHandler):
         VALS = [("%s!rate_factor"%(key), validations.is_float),
                 ("%s!rate_boost"%(key),  validations.is_number_gt_0)]
 
-        CTK.publish ('^%s$'%(URL_APPLY), commit, validation=VALS, method="POST")
+        CTK.publish ('^%s$'%(URL_APPLY), CTK.cfg_apply_post, validation=VALS, method="POST")

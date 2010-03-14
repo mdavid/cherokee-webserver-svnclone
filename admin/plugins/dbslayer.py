@@ -37,13 +37,6 @@ NOTE_USER     = N_("User to access the database.")
 NOTE_PASSWORD = N_("Password for the user accessing the database.")
 NOTE_DB       = N_("Database to connect to.")
 
-LANG_OPTIONS = [
-    ('json',   'JSON'),
-    ('python', 'Python'),
-    ('php',    'PHP'),
-    ('ruby',   'Ruby')
-]
-
 
 class Plugin_dbslayer (Handler.PluginHandler):
     def __init__ (self, key, **kwargs):
@@ -53,7 +46,7 @@ class Plugin_dbslayer (Handler.PluginHandler):
 
         # DB-Slayer
         table = CTK.PropsTable()
-        table.Add (_('Language'),    CTK.ComboCfg('%s!lang'%(key), LANG_OPTIONS), _(NOTE_LANG))
+        table.Add (_('Language'),    CTK.ComboCfg('%s!lang'%(key), DWRITER_LANGS), _(NOTE_LANG))
         table.Add (_('DB User'),     CTK.TextCfg('%s!user'%(key),     False), _(NOTE_USER))
         table.Add (_('DB Password'), CTK.TextCfg('%s!password'%(key), False), _(NOTE_PASSWORD))
         table.Add (_('Data Base'),   CTK.TextCfg('%s!db'%(key),       True),  _(NOTE_DB))
@@ -72,6 +65,5 @@ class Plugin_dbslayer (Handler.PluginHandler):
         self += CTK.RawHTML ('<h2>%s</h2>' %(_('Data Base Balancing')))
         self += CTK.Indenter (table)
         self += modul
-
 
 CTK.publish ('^%s$'%(URL_APPLY), CTK.cfg_apply_post, method="POST")
