@@ -99,7 +99,7 @@ class Plugin_redir (Handler.PluginHandler):
         Handler.PluginHandler.AddCommon (self)
 
         # List
-        refresh = CTK.Refreshable ({'id': 'authlist'})
+        refresh = CTK.Refreshable ({'id': 'plugin_redir'})
         refresh.register (lambda: self.Content(refresh, '%s!rewrite'%(key)).Render())
         self += refresh
 
