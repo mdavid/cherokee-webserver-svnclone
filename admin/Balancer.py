@@ -49,6 +49,7 @@ def commit():
         CTK.cfg[k] = CTK.post[k]
     return {'ret':'ok'}
 
+
 class PluginBalancer (CTK.Plugin):
     def __init__ (self, key, **kwargs):
         CTK.Plugin.__init__ (self, key)
@@ -103,7 +104,7 @@ class PluginBalancer (CTK.Plugin):
             return
 
         # Configured sources List
-        refresh = CTK.Refreshable ({'id': 'authlist'})
+        refresh = CTK.Refreshable ({'id': 'balancer'})
         refresh.register (lambda: self.ContentSources(refresh, self.key).Render())
 
         self += CTK.RawHTML ("<h2>%s</h2>" %(_('Information Sources')))
