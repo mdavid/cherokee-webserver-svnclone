@@ -86,7 +86,7 @@ class NetworkWidget (CTK.Container):
         table = CTK.PropsAuto (URL_APPLY)
         table.Add (_('Timeout (<i>secs</i>)'), CTK.TextCfg('server!timeout'), _(NOTE_TIMEOUT))
         table.Add (_('Server Tokens'),         CTK.ComboCfg('server!server_tokens', PRODUCT_TOKENS), _(NOTE_TOKENS))
-        self += CTK.RawHTML ("<h2>%s</h2>" %(_('Network behavior')))
+        self += CTK.RawHTML ("<h2>%s</h2>" %(_('Network Behavior')))
         self += CTK.Indenter(table)
 
         table = CTK.PropsTable()
@@ -172,7 +172,7 @@ class PortsWidget (CTK.Container):
         button_s += button
 
         # Integration
-        self += CTK.RawHTML ("<h2>%s</h2>" % (_('Listening to ports')))
+        self += CTK.RawHTML ("<h2>%s</h2>" % (_('Listening to Ports')))
         self += CTK.Indenter(refresh)
         self += button_s
         self += dialog

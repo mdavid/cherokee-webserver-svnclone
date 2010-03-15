@@ -49,7 +49,7 @@ class Plugin_server_info (Handler.PluginHandler):
         submit = CTK.Submitter (URL_APPLY)
         submit += table
 
-        self += CTK.RawHTML ("<h2>%s</h2>" %(_('Privacy settings')))
+        self += CTK.RawHTML ("<h2>%s</h2>" %(_('Privacy Settings')))
         self += CTK.Indenter (submit)
 
 CTK.publish ('^%s$'%(URL_APPLY), CTK.cfg_apply_post, method="POST")

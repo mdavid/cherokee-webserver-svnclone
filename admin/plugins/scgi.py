@@ -31,12 +31,6 @@ from consts import *
 
 HELPS = CgiBase.HELPS + [('modules_handlers_scgi', "SCGI")]
 
-def commit():
-    for k in CTK.post:
-        del (CTK.cfg[k])
-    return {'ret':'ok'}
-
-
 class Plugin_scgi (CgiBase.PluginHandlerCGI):
     def __init__ (self, key, **kwargs):
         kwargs['show_script_alias']  = False
@@ -52,6 +46,8 @@ class Plugin_scgi (CgiBase.PluginHandlerCGI):
         table = CTK.PropsTable()
         table.Add (_("Balancer"), modul.selector_widget, _(Balancer.NOTE_BALANCER))
 
-        self += CTK.RawHTML ('<h2>%s</h2>' %(_('SCGI specific')))
+        self += CTK.RawHTML ('<h2>%s</h2>' %(_('SCGI Specific')))
         self += CTK.Indenter (table)
         self += modul
+
+CTK.publish ('^%s'%(URL_APPLY), CTK.cfg_apply_post, method="POST")

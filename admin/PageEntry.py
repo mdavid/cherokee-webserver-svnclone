@@ -153,7 +153,7 @@ class TimeWidget (CTK.Container):
         submit = CTK.Submitter (apply)
         submit += table
 
-        self += CTK.RawHTML ("<h2>%s</h2>" % (_('Connections timeout')))
+        self += CTK.RawHTML ("<h2>%s</h2>" % (_('Connections Timeout')))
         self += CTK.Indenter (submit)
 
         # Expiration

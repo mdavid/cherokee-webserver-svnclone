@@ -31,11 +31,6 @@ HELPS     = [('modules_validators_plain', _("Plain text"))]
 
 NOTE_PASSWD = N_("Full path to the plain text password file.")
 
-def apply():
-    for k in CTK.post:
-        del (CTK.cfg[k])
-    return {'ret':'ok'}
-
 class Plugin_plain (Auth.PluginAuth):
     def __init__ (self, key, **kwargs):
         Auth.PluginAuth.__init__ (self, key, **kwargs)
@@ -47,9 +42,9 @@ class Plugin_plain (Auth.PluginAuth):
         submit = CTK.Submitter (URL_APPLY)
         submit += table
 
-        self += CTK.RawHTML ("<h2>%s</h2>" % (_('Plain password file')))
+        self += CTK.RawHTML ("<h2>%s</h2>" % (_('Plain Password File')))
         self += CTK.Indenter (submit)
 
         # Publish
         VALS = [("%s!passwdfile"%(self.key), validations.is_local_file_exists)]
-        CTK.publish ('^%s'%(URL_APPLY), apply, validation=VALS, method="POST")
+        CTK.publish ('^%s'%(URL_APPLY), CTK.cfg_apply_post, validation=VALS, method="POST")

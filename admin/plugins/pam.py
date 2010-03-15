@@ -25,13 +25,7 @@
 import CTK
 import Auth
 
-URL_APPLY = '/plugin/pam/apply'
-HELPS     = [('modules_validators_pam', "PAM")]
-
-def apply():
-    for k in CTK.post:
-        del (CTK.cfg[k])
-    return {'ret':'ok'}
+HELPS = [('modules_validators_pam', "PAM")]
 
 class Plugin_pam (Auth.PluginAuth):
     def __init__ (self, key, **kwargs):

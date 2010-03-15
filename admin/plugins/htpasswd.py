@@ -31,12 +31,6 @@ HELPS     = [('modules_validators_htpasswd', "Htpasswd")]
 
 NOTE_PASSWD = N_("Full path to the Htpasswd formated password file.")
 
-
-def commit():
-    for k in CTK.post:
-        CTK.cfg[k] = CTK.post[k]
-    return {'ret':'ok'}
-
 class Plugin_htpasswd (Auth.PluginAuth):
     def __init__ (self, key, **kwargs):
         Auth.PluginAuth.__init__ (self, key, **kwargs)
@@ -48,9 +42,9 @@ class Plugin_htpasswd (Auth.PluginAuth):
         submit = CTK.Submitter (URL_APPLY)
         submit += table
 
-        self += CTK.RawHTML ("<h2>%s</h2>" % (_('Htpasswd password file')))
+        self += CTK.RawHTML ("<h2>%s</h2>" % (_('Htpasswd Password File')))
         self += CTK.Indenter (submit)
 
         # Publish
         VALS = [("%s!passwdfile"%(self.key), validations.is_local_file_exists)]
-        CTK.publish ('^%s'%(URL_APPLY), commit, validation=VALS, method="POST")
+        CTK.publish ('^%s'%(URL_APPLY), CTK.cfg_apply_post, validation=VALS, method="POST")
