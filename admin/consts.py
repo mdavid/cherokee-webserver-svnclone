@@ -50,7 +50,7 @@ HANDLERS = [
     ('redir',        N_('Redirection')),
     ('fcgi',         N_('FastCGI')),
     ('scgi',         N_('SCGI')),
-#    ('uwsgi',        N_('uWSGI')),
+    ('uwsgi',        N_('uWSGI')),
     ('proxy',        N_('HTTP Reverse Proxy')),
     ('post_report',  N_('Upload Reporting')),
     ('streaming',    N_('Audio/Video Streaming')),
