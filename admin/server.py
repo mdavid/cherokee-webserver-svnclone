@@ -107,6 +107,7 @@ if __name__ == "__main__":
     import PageSources
     import PageIcons
     import PageMime
+    import PageSource
     import PageAdvanced
 
     # Run
