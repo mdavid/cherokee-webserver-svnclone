@@ -26,8 +26,7 @@ import CTK
 import string
 
 JS_ROW_CLICK = """
-  var row = $(this);
-  var id  = $(this).attr('id');
+  var id = $(this).attr('id');
 
   /* Highlight */
   $(this).parents('table').find('.row_content').each(function(){
@@ -68,6 +67,7 @@ class SelectionPanel (CTK.Container):
 
         props = {'url':        url,
                  'id_content': self.id_content}
+
         row_content.bind ('click', JS_ROW_CLICK %(props))
 
         # Row ID
