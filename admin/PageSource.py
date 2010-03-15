@@ -28,7 +28,7 @@ import Page
 import Cherokee
 import SelectionPanel
 import validations
-
+from consts import *
 
 URL_BASE  = '/source'
 URL_APPLY = '/source/apply'
@@ -53,6 +53,20 @@ VALIDATIONS = [
     ("source_clone_trg",       validations.is_safe_id),
 ]
 
+ENTRY_HOST = """
+<div class="nick">%(nick)s</div>
+<div class="type">%(type)s</div>
+<div class="host">%(host)s</div>
+"""
+
+ENTRY_INTER = """
+<div class="nick">%(nick)s</div>
+<div class="type">%(type)s</div>
+<div class="host">%(host)s</div>
+<div class="inter">%(inter)s</div>
+"""
+
+
 def reorder (arg):
     print "reorder", CTK.post[arg]
     return {'ret': 'ok'}
@@ -62,34 +76,72 @@ class Render_Source():
     def __call__ (self):
         num = re.findall(r'^%s/([\d]+)$'%(URL_BASE), CTK.request.url)[0]
 
+        tipe = CTK.cfg.get_val('source!%s!type'%(num))
+        nick = CTK.cfg.get_val('source!%s!nick'%(num))
+
         cont = CTK.Container()
-        cont += CTK.RawHTML ('<h1>Source: %s</h1>'%(CTK.cfg.get_val('source!%s!nick'%(num))))
+        cont += CTK.RawHTML ('<h1>Source: %s</h1>'%(nick))
+
+        table = CTK.PropsTable()
+        table.Add (_('Type'),       CTK.ComboCfg ('source!%s!type'%(num), SOURCE_TYPES), _(NOTE_TYPE))
+        table.Add (_('Nick'),       CTK.TextCfg ('source!%s!nick'%(num), False), _(NOTE_NICK))
+        table.Add (_('Connection'), CTK.TextCfg ('source!%s!host'%(num), False), _(NOTE_HOST))
+        if tipe == 'interpreter':
+            table.Add (_('Interpreter'),         CTK.TextCfg ('source!%s!interpreter'%(num),   False), _(NOTE_INTERPRETER))
+            table.Add (_('Spawning timeout'),    CTK.TextCfg ('source!%s!timeout'%(num),       True),  _(NOTE_TIMEOUT))
+            table.Add (_('Execute as User'),     CTK.TextCfg ('source!%s!user'%(num),          True),  _(NOTE_USER))
+            table.Add (_('Execute as Group'),    CTK.TextCfg ('source!%s!group'%(num),         True),  _(NOTE_GROUP))
+            table.Add (_('Inherit Environment'), CTK.TextCfg ('source!%s!env_inherited'%(num), False), _(NOTE_ENV_INHETIR))
+
+        submit = CTK.Submitter (URL_APPLY)
+        submit += CTK.Hidden ('source', num)
+        submit += table
+        cont += submit
 
         render = cont.Render()
         return render.toStr()
 
 
 class Render():
+    class Content (CTK.Container):
+        def __init__ (self, refresh, box_id):
+            CTK.Container.__init__ (self)
+
+            panel = SelectionPanel.SelectionPanel (reorder, box_id)
+
+            # Build the panel list
+            for k in CTK.cfg.keys('source'):
+                props = {}
+                props['host']  = CTK.cfg.get_val('source!%s!host'%(k))
+                props['nick']  = CTK.cfg.get_val('source!%s!nick'%(k))
+                props['type']  = tipe = CTK.cfg.get_val('source!%s!type'%(k))
+                props['inter'] = CTK.cfg.get_val('source!%s!interpreter'%(k))
+
+                if tipe == 'host':
+                    panel.Add ('/source/%s'%(k), [CTK.RawHTML(ENTRY_HOST%(props))])
+                elif tipe == 'interpreter':
+                    panel.Add ('/source/%s'%(k), [CTK.RawHTML(ENTRY_INTER%(props))])
+
+            self += panel
+
+
     def __call__ (self):
         # Placeholders
-        box   = CTK.Box({'id': 'source_content'})
-        panel = SelectionPanel.SelectionPanel (reorder, 'source_content')
+        box = CTK.Box({'id': 'source_content'})
 
-        # Build the panel list
-        for k in CTK.cfg.keys('source'):
-            host = CTK.cfg.get_val('source!%s!host'%(k))
-            nick = CTK.cfg.get_val('source!%s!nick'%(k))
-            tipe = CTK.cfg.get_val('source!%s!type'%(k))
+        refresh = CTK.Refreshable ({'id': 'source_panel'})
+        refresh.register (lambda: self.Content(refresh, box.id).Render())
 
-            panel.Add ('/source/%s'%(k), [CTK.RawHTML('<b>%s</b>'%(nick)), CTK.RawHTML(tipe)])
+        box.bind ('submit_success', refresh.JS_to_refresh());
 
         page = Page.Base (_("Information Sources"), body_id='source', helps=HELPS)
         page += CTK.RawHTML("<h1>%s</h1>" %(_('Information Sources Settings')))
-        page += panel
+        page += refresh
         page += box
+        page += CTK.Submitter(URL_APPLY) # hack
 
         return page.Render()
 
 CTK.publish ('^%s$'%(URL_BASE), Render)
 CTK.publish ('^%s/[\d]+$'%(URL_BASE), Render_Source)
-CTK.publish ('^%s$'%(URL_APPLY), apply, validation=VALIDATIONS, method="POST")
+CTK.publish ('^%s$'%(URL_APPLY), CTK.cfg_apply_post, validation=VALIDATIONS, method="POST")
