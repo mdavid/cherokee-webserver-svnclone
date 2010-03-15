@@ -30,10 +30,6 @@ HELPS     = [('modules_handlers_file', _("Static Content"))]
 
 NOTE_IO_CACHE = N_('Enables an internal I/O cache that improves performance.')
 
-def commit():
-    for k in CTK.post:
-        CTK.cfg[k] = CTK.post[k]
-    return {'ret':'ok'}
 
 class Plugin_file (Handler.PluginHandler):
     def __init__ (self, key, **kwargs):
@@ -49,4 +45,4 @@ class Plugin_file (Handler.PluginHandler):
         self += CTK.RawHTML ('<h2>%s</h2>' % (_('File Sending')))
         self += CTK.Indenter (submit)
 
-CTK.publish ('^%s'%(URL_APPLY), commit, method="POST")
+CTK.publish ('^%s'%(URL_APPLY), CTK.cfg_apply_post, method="POST")

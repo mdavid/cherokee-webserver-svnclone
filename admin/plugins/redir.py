@@ -115,7 +115,7 @@ class Plugin_redir (Handler.PluginHandler):
         submit += CTK.SubmitterButton(_('Add'))
         submit.bind ('submit_success', refresh.JS_to_refresh())
 
-        self += CTK.RawHTML ("<h2>%s</h2>" % (_('Add new rule')))
+        self += CTK.RawHTML ("<h2>%s</h2>" % (_('Add New Rule')))
         self += CTK.Indenter (submit)
 
 

@@ -44,10 +44,6 @@ HASHES = [
     ('sha1', 'SHA1')
 ]
 
-def apply():
-    for k in CTK.post:
-        del (CTK.cfg[k])
-    return {'ret':'ok'}
 
 # Only allow to set a hash type when using 'basic'
 BASIC_HASH_HACK = """
@@ -85,10 +81,10 @@ class Plugin_mysql (Auth.PluginAuth):
         submit = CTK.Submitter (URL_APPLY)
         submit += table
 
-        self += CTK.RawHTML ("<h2>%s</h2>" % (_('MySQL connection')))
+        self += CTK.RawHTML ("<h2>%s</h2>" % (_('MySQL Connection')))
         self += CTK.Indenter (submit)
         self += CTK.RawHTML (js=BASIC_HASH_HACK)
 
         # Publish
         VALS = [("%s!passwdfile"%(self.key), validations.is_local_file_exists)]
-        CTK.publish ('^%s'%(URL_APPLY), apply, validation=VALS, method="POST")
+        CTK.publish ('^%s'%(URL_APPLY), CTK.cfg_apply_post, validation=VALS, method="POST")

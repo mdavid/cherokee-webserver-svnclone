@@ -86,7 +86,7 @@ class Plugin_authlist (Auth.PluginAuth):
         refresh = CTK.Refreshable ({'id': 'authlist'})
         refresh.register (lambda: self.Content(refresh, key).Render())
 
-        self += CTK.RawHTML ("<h2>%s</h2>" % (_('Fixed authentication list')))
+        self += CTK.RawHTML ("<h2>%s</h2>" % (_('Fixed Authentication List')))
         self += refresh
 
         # New

@@ -33,11 +33,6 @@ NOTE_PATHINFO = N_("Allow extra tailing paths")
 NOTE_DIRLIST  = N_("Allow to list directory contents")
 
 
-def commit():
-    for k in CTK.post:
-        CTK.cfg[k] = CTK.post[k]
-    return {'ret':'ok'}
-
 class Plugin_common (Handler.PluginHandler):
     def __init__ (self, key, **kwargs):
         Handler.PluginHandler.__init__ (self, key, **kwargs)
@@ -55,4 +50,4 @@ class Plugin_common (Handler.PluginHandler):
         self += instance_plugin('file',    key, show_document_root=False)
         self += instance_plugin('dirlist', key, show_document_root=False)
 
-CTK.publish ('^%s'%(URL_APPLY), commit, method="POST")
+CTK.publish ('^%s$'%(URL_APPLY), CTK.cfg_apply_post, method="POST")

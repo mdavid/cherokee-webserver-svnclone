@@ -111,7 +111,7 @@ class HostMatchWidget (CTK.Container):
         url_apply  = "%s/%s" %(URL_APPLY, vsrv_num)
         is_default = CTK.cfg.get_lowest_entry("vserver") == int(vsrv_num)
 
-        self += CTK.RawHTML ('<h2>%s</h2>' %(_('Host names')))
+        self += CTK.RawHTML ('<h2>%s</h2>' %(_('Host Names')))
 
         if is_default:
             notice  = CTK.Notice()
@@ -241,7 +241,7 @@ class LogginWidgetContent (CTK.Container):
         submit.bind ('submit_success', refreshable.JS_to_refresh())
         submit += table
 
-        self += CTK.RawHTML ('<h2>%s</h2>' % (_('Error logging')))
+        self += CTK.RawHTML ('<h2>%s</h2>' % (_('Error Logging')))
         self += CTK.Indenter (submit)
 
         # Access logger
@@ -275,7 +275,7 @@ class LogginWidgetContent (CTK.Container):
                 submit += CTK.TextCfg('%s!access!access_template'%(pre))
                 table.Add (_('Template: '), submit, _(NOTE_LOGGER_TEMPLATE))
 
-        self += CTK.RawHTML ('<h2>%s</h2>' % (_('Access logging')))
+        self += CTK.RawHTML ('<h2>%s</h2>' % (_('Access Logging')))
         self += CTK.Indenter (table)
 
         # Properties
@@ -324,7 +324,7 @@ class SecutiryWidgetContent (CTK.Container):
         submit = CTK.Submitter (url_apply)
         submit += table
 
-        self += CTK.RawHTML ('<h2>%s</h2>' % (_('Required SSL/TLS values')))
+        self += CTK.RawHTML ('<h2>%s</h2>' % (_('Required SSL/TLS Values')))
         self += CTK.Indenter (submit)
 
         # Advanced options
@@ -342,7 +342,7 @@ class SecutiryWidgetContent (CTK.Container):
         submit.bind ('submit_success', refreshable.JS_to_refresh())
         submit += table
 
-        self += CTK.RawHTML ('<h2>%s</h2>' % (_('Advanced options')))
+        self += CTK.RawHTML ('<h2>%s</h2>' % (_('Advanced Options')))
         self += CTK.Indenter (submit)
 
 

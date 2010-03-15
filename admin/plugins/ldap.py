@@ -38,11 +38,6 @@ NOTE_FILTER      = N_('Object filter. It can be empty.')
 NOTE_USE_TLS     = N_('Enable to use secure connections between the web and LDAP servers.')
 NOTE_CA_FILE     = N_('CA File for the TLS connections.')
 
-def apply():
-    for k in CTK.post:
-        del (CTK.cfg[k])
-    return {'ret':'ok'}
-
 class Plugin_ldap (Auth.PluginAuth):
     def __init__ (self, key, **kwargs):
         Auth.PluginAuth.__init__ (self, key, **kwargs)
@@ -67,4 +62,5 @@ class Plugin_ldap (Auth.PluginAuth):
         # Publish
         VALS = [("%s!ca_file"%(self.key), validations.is_local_file_exists),
                 ("%s!port"%(self.key),    validations.is_tcp_port)]
-        CTK.publish ('^%s'%(URL_APPLY), apply, validation=VALS, method="POST")
+
+        CTK.publish ('^%s'%(URL_APPLY), CTK.cfg_apply_post, validation=VALS, method="POST")

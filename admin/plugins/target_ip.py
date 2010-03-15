@@ -93,7 +93,7 @@ class Plugin_target_ip (CTK.Plugin):
         pre       = '%s!to' %(key)
         url_apply = '%s/%s' %(URL_APPLY, vsrv_num)
 
-        self += CTK.RawHTML ("<h2>%s</h2>" % (_('Accepted Server IP addresses and subnets')))
+        self += CTK.RawHTML ("<h2>%s</h2>" % (_('Accepted Server IP Addresses and Subnets')))
 
         # Content
         refresh = CTK.Refreshable ({'id': 'plugin_target_ip'})

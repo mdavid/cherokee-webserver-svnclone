@@ -34,12 +34,6 @@ NOTE_SECRET  = N_("Shared secret between the server and the script.")
 NOTE_TIMEOUT = N_("How long the download will last accessible - in seconds. Default: 60.")
 
 
-def commit():
-    for k in CTK.post:
-        CTK.cfg[k] = CTK.post[k]
-    return {'ret':'ok'}
-
-
 class Plugin_secdownload (Handler.PluginHandler):
     def __init__ (self, key, **kwargs):
         Handler.PluginHandler.__init__ (self, key, **kwargs)
@@ -53,7 +47,7 @@ class Plugin_secdownload (Handler.PluginHandler):
         submit += table
 
         # Streaming
-        self += CTK.RawHTML ('<h2>%s</h2>' %(_('Covering parameters')))
+        self += CTK.RawHTML ('<h2>%s</h2>' %(_('Covering Parameters')))
         self += CTK.Indenter (submit)
 
         # File
@@ -63,4 +57,4 @@ class Plugin_secdownload (Handler.PluginHandler):
         VALS = [("%s!secret"%(key),  validations.is_not_empty),
                 ("%s!timeout"%(key), validations.is_number_gt_0)]
 
-        CTK.publish ('^%s$'%(URL_APPLY), commit, validation=VALS, method="POST")
+        CTK.publish ('^%s$'%(URL_APPLY), CTK.cfg_apply_post, validation=VALS, method="POST")

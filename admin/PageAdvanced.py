@@ -171,7 +171,7 @@ class Render():
         notice += CTK.RawHTML(WARNING)
 
         page = Page.Base(_('Advanced'), body_id='advanced', helps=HELPS)
-        page += CTK.RawHTML("<h1>%s</h1>" %(_('Advanced configuration')))
+        page += CTK.RawHTML("<h1>%s</h1>" %(_('Advanced Configuration')))
         page += notice
         page += tabs
 

@@ -189,7 +189,7 @@ class FilesTable (CTK.Container):
         submit.bind ('submit_success', refreshable.JS_to_refresh())
         submit += table
 
-        self += CTK.RawHTML ("<h2>%s</h2>" %_('Add new file match'))
+        self += CTK.RawHTML ("<h2>%s</h2>" %_('Add New File Match'))
         self += CTK.Indenter (submit)
         self += icombo
 
@@ -244,7 +244,7 @@ class Render():
         tabs.Add (_('Special Icons'), SpecialWidget())
 
         page = Page.Base(_('Icons'), body_id='icons', helps=HELPS)
-        page += CTK.RawHTML("<h1>%s</h1>" %(_('Icon configuration')))
+        page += CTK.RawHTML("<h1>%s</h1>" %(_('Icon Configuration')))
         page += tabs
 
         return page.Render()
