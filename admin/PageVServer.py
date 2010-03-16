@@ -145,7 +145,7 @@ class BehaviorWidget (CTK.Container):
 
         dialog = CTK.Dialog ({'title': _('Add behavior rule'), 'width': 550})
         dialog.AddButton (_('Add'), dialog.JS_to_trigger('submit'))
-        dialog.AddButton (_('Close'), "close")
+        dialog.AddButton (_('Cancel'), "close")
         dialog += table
         dialog += modul
 

@@ -105,8 +105,19 @@ class Render_Source():
         return render.toStr()
 
 
+class CloneSource (CTK.Container):
+    def __init__ (self):
+        CTK.Container.__init__ (self)
+        self += CTK.RawHTML ('Information Source Cloning dialog.')
+
+class AddSource (CTK.Container):
+    def __init__ (self):
+        CTK.Container.__init__ (self)
+        self += CTK.RawHTML ('New Sources are added here.')
+
+
 class Render():
-    class Content (CTK.Container):
+    class PanelList (CTK.Container):
         def __init__ (self, refresh, box_id):
             CTK.Container.__init__ (self)
 
@@ -127,23 +138,56 @@ class Render():
 
             self += panel
 
+    class PanelButtons (CTK.Box):
+        def __init__ (self):
+            CTK.Box.__init__ (self, {'class': 'panel-buttons'})
+
+            submit = CTK.Submitter (URL_APPLY)
+            self += submit
+
+            # Add New
+            dialog = CTK.Dialog ({'title': _('Add New Information Source'), 'width': 550})
+            dialog.AddButton (_('Add'), dialog.JS_to_trigger('submit'))
+            dialog.AddButton (_('Cancel'), "close")
+            dialog += AddSource()
+            self += dialog
+
+            button = CTK.SubmitterButton(_('Clone'))
+            button.bind ('click', dialog.JS_to_show())
+            submit += button
+
+            # Clone
+            dialog = CTK.Dialog ({'title': _('Clone Information Source'), 'width': 550})
+            dialog.AddButton (_('Clone'), dialog.JS_to_trigger('submit'))
+            dialog.AddButton (_('Cancel'), "close")
+            dialog += CloneSource()
+            self += dialog
+
+            button = CTK.SubmitterButton(_('Clone'))
+            button.bind ('click', dialog.JS_to_show())
+            submit += button
+
     def __call__ (self):
         # Content
-        box = CTK.Box({'id': 'source_content'})
+        right = CTK.Box({'class': 'source_content'})
+        left  = CTK.Box({'class': 'panel'})
 
         # Sources List
         refresh = CTK.Refreshable ({'id': 'source_panel'})
-        refresh.register (lambda: self.Content(refresh, box.id).Render())
+        refresh.register (lambda: self.PanelList(refresh, right.id).Render())
+
+        left += refresh
+        left += self.PanelButtons()
 
         # Refresh the list whenever the content change
-        box.bind ('submit_success', refresh.JS_to_refresh());
+        right.bind ('submit_success', refresh.JS_to_refresh());
 
         # Build the page
         headers = Submit_HEADER + TextField_HEADER
         page = Page.Base (_("Information Sources"), body_id='source', helps=HELPS, headers=headers)
         page += CTK.RawHTML("<h1>%s</h1>" %(_('Information Sources Settings')))
-        page += refresh
-        page += box
+        page += left
+        page += right
 
         return page.Render()
 
