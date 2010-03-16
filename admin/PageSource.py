@@ -110,7 +110,7 @@ class Render():
         def __init__ (self, refresh, box_id):
             CTK.Container.__init__ (self)
 
-            panel = SelectionPanel.SelectionPanel (reorder, box_id)
+            panel = SelectionPanel.SelectionPanel (reorder, box_id, URL_BASE)
 
             # Build the panel list
             for k in CTK.cfg.keys('source'):
@@ -145,11 +145,8 @@ class Render():
         page += refresh
         page += box
 
-        #page += CTK.TextCfg('')
-        #page += CTK.Submitter('')
-
         return page.Render()
 
-CTK.publish ('^%s$'%(URL_BASE), Render)
+CTK.publish ('^%s$'      %(URL_BASE), Render)
 CTK.publish ('^%s/[\d]+$'%(URL_BASE), Render_Source)
-CTK.publish ('^%s$'%(URL_APPLY), CTK.cfg_apply_post, validation=VALIDATIONS, method="POST")
+CTK.publish ('^%s$'      %(URL_APPLY), CTK.cfg_apply_post, validation=VALIDATIONS, method="POST")
