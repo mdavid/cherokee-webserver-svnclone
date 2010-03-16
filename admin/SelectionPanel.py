@@ -47,13 +47,13 @@ class SelectionPanel (CTK.Box):
         assert type(url) == str
         assert type(content) == list
 
-        # Row Content
-        row_content = CTK.Box({'class': 'row_content', 'url': url})
-        for w in content:
-            row_content += w
-
         # Row ID
         row_id = ''.join([('_',x)[x in string.letters+string.digits] for x in url])
+
+        # Row Content
+        row_content = CTK.Box({'id': row_id, 'class': 'row_content', 'url': url})
+        for w in content:
+            row_content += w
 
         # Add to the table
         self.table += [None, row_content]
@@ -67,7 +67,7 @@ class SelectionPanel (CTK.Box):
         props = {'id':         self.id,
                  'table_id':   self.table.id,
                  'content_id': self.content_id,
-                 'cookie':     ''}
+                 'cookie':     self.cookie_name}
 
         render.js      += JS_INIT %(props)
         render.headers += HEADERS

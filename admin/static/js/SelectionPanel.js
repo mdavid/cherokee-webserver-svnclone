@@ -26,13 +26,11 @@
 	   var self        = $(element); // .submitter
 
 	   function deselect_row (row) {
-		  console.log ('row-', row);
 		  row.removeClass('panel-selected');
 	   }
 
 	   function select_row (row) {
 		  // Highlight
-		  console.log ('row+', row);
 		  row.addClass('panel-selected');
 
 		  // Cookie
@@ -67,15 +65,13 @@
 	   this.init = function (self) {
 		  var cookie_selected = $.cookie(cookie_name);
 
-		  console.log ("INIT");
-
 		  /* Initial Selection */
 		  if (cookie_selected == undefined) {
 			 var first_row = self.find('.row_content:first');
 			 select_row (first_row);
 
 		  } else {
-			 var did_select = auto_select_row (cookie_selected);
+			 var did_select = auto_select_row ($('#'+cookie_selected));
 
 			 if (! did_select) {
 				var first_row = self.find('.row_content:first');
