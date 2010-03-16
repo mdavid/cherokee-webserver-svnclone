@@ -28,7 +28,10 @@ import Page
 import Cherokee
 import SelectionPanel
 import validations
+
 from consts import *
+from CTK.Submitter import HEADER as Submit_HEADER
+from CTK.TextField import HEADER as TextField_HEADER
 
 URL_BASE  = '/source'
 URL_APPLY = '/source/apply'
@@ -124,21 +127,26 @@ class Render():
 
             self += panel
 
-
     def __call__ (self):
-        # Placeholders
+        # Content
         box = CTK.Box({'id': 'source_content'})
 
+        # Sources List
         refresh = CTK.Refreshable ({'id': 'source_panel'})
         refresh.register (lambda: self.Content(refresh, box.id).Render())
 
+        # Refresh the list whenever the content change
         box.bind ('submit_success', refresh.JS_to_refresh());
 
-        page = Page.Base (_("Information Sources"), body_id='source', helps=HELPS)
+        # Build the page
+        headers = Submit_HEADER + TextField_HEADER
+        page = Page.Base (_("Information Sources"), body_id='source', helps=HELPS, headers=headers)
         page += CTK.RawHTML("<h1>%s</h1>" %(_('Information Sources Settings')))
         page += refresh
         page += box
-        page += CTK.Submitter(URL_APPLY) # hack
+
+        #page += CTK.TextCfg('')
+        #page += CTK.Submitter('')
 
         return page.Render()
 
