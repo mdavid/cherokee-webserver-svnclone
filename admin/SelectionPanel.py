@@ -25,50 +25,32 @@
 import CTK
 import string
 
-JS_ROW_CLICK = """
-  var id = $(this).attr('id');
+HEADERS = ['<script type="text/javascript" src="/CTK/js/jquery.cookie.js"></script>',
+           '<script type="text/javascript" src="/static/js/SelectionPanel.js"></script>']
 
-  /* Highlight */
-  $(this).parents('table').find('.row_content').each(function(){
-     if (id == this.id) {
-        $(this).addClass('panel-selected');
-     } else {
-        $(this).removeClass('panel-selected');
-     }
-  });
-
-  /* Load content */
-  $.ajax ({type: 'GET', url: '%(url)s', async: true,
-           success: function(data) {
-              $('#%(id_content)s').html(data);
-           }
-  });
+JS_INIT = """
+  $('#%(id)s').SelectionPanel ('%(table_id)s', '%(content_id)s', '%(cookie)s');
 """
 
-class SelectionPanel (CTK.Container):
-    def __init__ (self, callback, id_content):
-        CTK.Container.__init__ (self)
+class SelectionPanel (CTK.Box):
+    def __init__ (self, callback, content_id, web_url):
+        CTK.Box.__init__ (self, {'class': 'selection-panel'})
 
-        self.table      = CTK.SortableList (callback)
-        self.id_content = id_content
+        self.table       = CTK.SortableList (callback)
+        self.content_id  = content_id
+        self.web_url     = web_url
+        self.cookie_name = "selection"
 
-        box = CTK.Box({'class': 'selection-panel'})
-        box += self.table
-        self += box
+        self += self.table
 
     def Add (self, url, content):
         assert type(url) == str
         assert type(content) == list
 
         # Row Content
-        row_content = CTK.Box({'class': 'row_content'})
+        row_content = CTK.Box({'class': 'row_content', 'url': url})
         for w in content:
             row_content += w
-
-        props = {'url':        url,
-                 'id_content': self.id_content}
-
-        row_content.bind ('click', JS_ROW_CLICK %(props))
 
         # Row ID
         row_id = ''.join([('_',x)[x in string.letters+string.digits] for x in url])
@@ -80,9 +62,14 @@ class SelectionPanel (CTK.Container):
         self.table[-1][2].props['class'] = "nodrag nodrop"
 
     def Render (self):
-        render = CTK.Container.Render (self)
+        render = CTK.Box.Render (self)
 
-        props = {'id': self.id}
-        #render.js += JS_CLICK_ROW %(props)
+        props = {'id':         self.id,
+                 'table_id':   self.table.id,
+                 'content_id': self.content_id,
+                 'cookie':     ''}
+
+        render.js      += JS_INIT %(props)
+        render.headers += HEADERS
 
         return render
