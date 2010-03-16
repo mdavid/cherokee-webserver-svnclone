@@ -33,12 +33,13 @@ JS_INIT = """
 """
 
 class SelectionPanel (CTK.Box):
-    def __init__ (self, callback, content_id, web_url):
+    def __init__ (self, callback, content_id, web_url, draggable=True):
         CTK.Box.__init__ (self, {'class': 'selection-panel'})
 
         self.table       = CTK.SortableList (callback)
         self.content_id  = content_id
         self.web_url     = web_url
+        self.draggable   = draggable
         self.cookie_name = "selection"
 
         self += self.table
@@ -58,8 +59,14 @@ class SelectionPanel (CTK.Box):
         # Add to the table
         self.table += [None, row_content]
         self.table[-1].props['id'] = row_id
-        self.table[-1][1].props['class'] = "dragHandle"
         self.table[-1][2].props['class'] = "nodrag nodrop"
+
+        # Draggable
+        if self.draggable:
+            self.table[-1][1].props['class'] = "dragHandle"
+        else:
+            self.table[-1][1].props['class'] = ""
+
 
     def Render (self):
         render = CTK.Box.Render (self)
