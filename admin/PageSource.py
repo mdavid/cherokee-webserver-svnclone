@@ -37,16 +37,18 @@ URL_BASE  = '/source'
 URL_APPLY = '/source/apply'
 HELPS     = [('config_info_sources', N_("Information Sources"))]
 
-NOTE_SOURCE      = N_('The source can be either a local interpreter or a remote host acting as an information source.')
-NOTE_NICK        = N_('Source nick. It will be referenced by this name in the rest of the server.')
-NOTE_TYPE        = N_('It allows to choose whether it runs the local host or a remote server.')
-NOTE_HOST        = N_('Where the information source can be accessed. The host:port pair, or the Unix socket path.')
-NOTE_INTERPRETER = N_('Command to spawn a new source in case it were not accessible.')
-NOTE_TIMEOUT     = N_('How long should the server wait when spawning an interpreter before giving up (in seconds). Default: 3.')
-NOTE_USAGE       = N_('Sources currently in use. Note that the last source of any rule cannot be deleted until the rule has been manually edited.')
-NOTE_USER        = N_('Execute the interpreter under a different user. Default: Same UID as the server.')
-NOTE_GROUP       = N_('Execute the interpreter under a different group. Default: Default GID of the new process UID.')
-NOTE_ENV_INHETIR = N_('Whether the new child process should inherit the environment variables from the server process. Default: yes.')
+NOTE_SOURCE        = N_('The source can be either a local interpreter or a remote host acting as an information source.')
+NOTE_NICK          = N_('Source nick. It will be referenced by this name in the rest of the server.')
+NOTE_TYPE          = N_('It allows to choose whether it runs the local host or a remote server.')
+NOTE_HOST          = N_('Where the information source can be accessed. The host:port pair, or the Unix socket path.')
+NOTE_INTERPRETER   = N_('Command to spawn a new source in case it were not accessible.')
+NOTE_TIMEOUT       = N_('How long should the server wait when spawning an interpreter before giving up (in seconds). Default: 3.')
+NOTE_USAGE         = N_('Sources currently in use. Note that the last source of any rule cannot be deleted until the rule has been manually edited.')
+NOTE_USER          = N_('Execute the interpreter under a different user. Default: Same UID as the server.')
+NOTE_GROUP         = N_('Execute the interpreter under a different group. Default: Default GID of the new process UID.')
+NOTE_ENV_INHETIR   = N_('Whether the new child process should inherit the environment variables from the server process. Default: yes.')
+NOTE_DELETE_DIALOG = N_('You are about to delete an Information Source. Are you sure you want to proceed?')
+
 
 VALIDATIONS = [
     ('source!.+?!host',        validations.is_information_source),
@@ -160,8 +162,17 @@ class Render():
                 props['type']  = tipe = CTK.cfg.get_val('source!%s!type'%(k))
                 props['inter'] = CTK.cfg.get_val('source!%s!interpreter'%(k))
 
+                dialog = CTK.Dialog ({'title': _('Do you really want to remove it?'), 'width': 480})
+                dialog.AddButton (_('Remove'), CTK.JS.Ajax (URL_APPLY, async=False,
+                                                            data    = {'source!%s'%(k):''},
+                                                            success = dialog.JS_to_close() + \
+                                                                      refresh.JS_to_refresh()))
+                dialog.AddButton (_('Cancel'), "close")
+                dialog += CTK.RawHTML (NOTE_DELETE_DIALOG)
+                self += dialog
+
                 remove = CTK.ImageStock('del', {'class': 'del'})
-                remove.bind ('click', "console.log('clicked del'); return false;")
+                remove.bind ('click', dialog.JS_to_show() + "return false;")
 
                 if tipe == 'host':
                     panel.Add ('/source/%s'%(k), [CTK.RawHTML(ENTRY_HOST%(props)), remove])
