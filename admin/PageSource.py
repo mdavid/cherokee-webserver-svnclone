@@ -83,7 +83,7 @@ class Render_Source():
         nick = CTK.cfg.get_val('source!%s!nick'%(num))
 
         cont = CTK.Container()
-        cont += CTK.RawHTML ('<h1>Source: %s</h1>'%(nick))
+        cont += CTK.RawHTML ('<h2>Source: %s</h2>'%(nick))
 
         table = CTK.PropsTable()
         table.Add (_('Type'),       CTK.ComboCfg ('source!%s!type'%(num), SOURCE_TYPES), _(NOTE_TYPE))
@@ -146,18 +146,18 @@ class Render():
             self += submit
 
             # Add New
-            dialog = CTK.Dialog ({'title': _('Add New Information Source'), 'width': 550})
+            dialog = CTK.Dialog ({'title': _('Add New Information Source'), 'width': 480})
             dialog.AddButton (_('Add'), dialog.JS_to_trigger('submit'))
             dialog.AddButton (_('Cancel'), "close")
             dialog += AddSource()
             self += dialog
 
-            button = CTK.SubmitterButton(_('Clone'))
+            button = CTK.SubmitterButton(_('New'))
             button.bind ('click', dialog.JS_to_show())
             submit += button
 
             # Clone
-            dialog = CTK.Dialog ({'title': _('Clone Information Source'), 'width': 550})
+            dialog = CTK.Dialog ({'title': _('Clone Information Source'), 'width': 480})
             dialog.AddButton (_('Clone'), dialog.JS_to_trigger('submit'))
             dialog.AddButton (_('Cancel'), "close")
             dialog += CloneSource()
