@@ -48,7 +48,7 @@ NOTE_USER          = N_('Execute the interpreter under a different user. Default
 NOTE_GROUP         = N_('Execute the interpreter under a different group. Default: Default GID of the new process UID.')
 NOTE_ENV_INHETIR   = N_('Whether the new child process should inherit the environment variables from the server process. Default: yes.')
 NOTE_DELETE_DIALOG = N_('You are about to delete an Information Source. Are you sure you want to proceed?')
-
+NOTE_NO_ENTRIES    = N_('The Information Source list is currently empty.')
 
 VALIDATIONS = [
     ('source!.+?!host',        validations.is_information_source),
@@ -101,6 +101,12 @@ def reorder (arg):
 
 class Render_Source():
     def __call__ (self):
+        # /source/empty
+        if CTK.request.url.endswith('/empty'):
+            notice = CTK.Notice ('information', CTK.RawHTML (NOTE_NO_ENTRIES))
+            return notice.Render().toStr()
+
+        # /source/\d+
         num = re.findall(r'^%s/([\d]+)$'%(URL_BASE), CTK.request.url)[0]
 
         tipe = CTK.cfg.get_val('source!%s!type'%(num))
@@ -134,6 +140,7 @@ class CloneSource (CTK.Container):
         CTK.Container.__init__ (self)
         self += CTK.RawHTML ('Information Source Cloning dialog.')
 
+
 class AddSource (CTK.Container):
     def __init__ (self):
         CTK.Container.__init__ (self)
@@ -149,12 +156,13 @@ class AddSource (CTK.Container):
 
 class Render():
     class PanelList (CTK.Container):
-        def __init__ (self, refresh, box_id):
+        def __init__ (self, refresh, right_box):
             CTK.Container.__init__ (self)
 
-            panel = SelectionPanel.SelectionPanel (reorder, box_id, URL_BASE)
-
             # Build the panel list
+            panel = SelectionPanel.SelectionPanel (reorder, right_box.id, URL_BASE, '%s/empty'%(URL_BASE))
+            self += panel
+
             for k in CTK.cfg.keys('source'):
                 props = {}
                 props['host']  = CTK.cfg.get_val('source!%s!host'%(k))
@@ -179,7 +187,6 @@ class Render():
                 elif tipe == 'interpreter':
                     panel.Add ('/source/%s'%(k), [CTK.RawHTML(ENTRY_INTER%(props)), remove])
 
-            self += panel
 
     class PanelButtons (CTK.Box):
         def __init__ (self):
@@ -218,7 +225,7 @@ class Render():
 
         # Sources List
         refresh = CTK.Refreshable ({'id': 'source_panel'})
-        refresh.register (lambda: self.PanelList(refresh, right.id).Render())
+        refresh.register (lambda: self.PanelList(refresh, right).Render())
 
         # Refresh on 'New' or 'Clone'
         buttons = self.PanelButtons()
@@ -239,6 +246,6 @@ class Render():
 
         return page.Render()
 
-CTK.publish ('^%s$'      %(URL_BASE), Render)
-CTK.publish ('^%s/[\d]+$'%(URL_BASE), Render_Source)
-CTK.publish ('^%s$'      %(URL_APPLY), commit, validation=VALIDATIONS, method="POST")
+CTK.publish ('^%s$'              %(URL_BASE), Render)
+CTK.publish ('^%s/([\d]+|empty)$'%(URL_BASE), Render_Source)
+CTK.publish ('^%s$'              %(URL_APPLY), commit, validation=VALIDATIONS, method="POST")

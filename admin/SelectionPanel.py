@@ -29,17 +29,18 @@ HEADERS = ['<script type="text/javascript" src="/CTK/js/jquery.cookie.js"></scri
            '<script type="text/javascript" src="/static/js/SelectionPanel.js"></script>']
 
 JS_INIT = """
-  $('#%(id)s').SelectionPanel ('%(table_id)s', '%(content_id)s', '%(cookie)s');
+  $('#%(id)s').SelectionPanel ('%(table_id)s', '%(content_id)s', '%(cookie)s', '%(web_empty)s');
 """
 
 
 class SelectionPanel (CTK.Box):
-    def __init__ (self, callback, content_id, web_url, draggable=True):
+    def __init__ (self, callback, content_id, web_url, web_empty, draggable=True):
         CTK.Box.__init__ (self, {'class': 'selection-panel'})
 
         self.table       = CTK.SortableList (callback)
         self.content_id  = content_id
         self.web_url     = web_url
+        self.web_empty   = web_empty
         self.draggable   = draggable
         self.cookie_name = "selection"
 
@@ -75,7 +76,8 @@ class SelectionPanel (CTK.Box):
         props = {'id':         self.id,
                  'table_id':   self.table.id,
                  'content_id': self.content_id,
-                 'cookie':     self.cookie_name}
+                 'cookie':     self.cookie_name,
+                 'web_empty':  self.web_empty}
 
         render.js      += JS_INIT %(props)
         render.headers += HEADERS

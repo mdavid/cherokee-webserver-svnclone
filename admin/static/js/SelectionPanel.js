@@ -21,7 +21,7 @@
  */
 
 ;(function($) {
-    var SelectionPanel = function (element, table_id, content_id, cookie_name) {
+    var SelectionPanel = function (element, table_id, content_id, cookie_name, url_empty) {
 	   var obj         = this;       //  Object {}
 	   var self        = $(element); // .submitter
 
@@ -30,16 +30,26 @@
 	   }
 
 	   function select_row (row) {
-		  // Highlight
-		  row.addClass('panel-selected');
+		  var url = '';
 
-		  // Cookie
-		  $.cookie (cookie_name, row.attr('id'));
+		  // Ensure there's a row to be selected
+		  if (row.length == 0) {
+			 url = url_empty;
+
+		  } else {
+			 url = row.attr('url');
+
+			 // Highlight
+			 row.addClass('panel-selected');
+
+			 // Cookie
+			 $.cookie (cookie_name, row.attr('id'));
+		  }
 
 		  // Update box
 		  $.ajax ({type:  'GET',
 				 async: true,
-				 url:   row.attr('url'),
+				 url:   url,
 				 success: function(data) {
 					$('#'+content_id).html(data);
 				 }
@@ -92,11 +102,11 @@
 	   }
     };
 
-    $.fn.SelectionPanel = function (table_id, content_id, cookie) {
+    $.fn.SelectionPanel = function (table_id, content_id, cookie, url_empty) {
 	   var self = this;
 	   return this.each(function() {
 		  if ($(this).data('selectionpanel')) return;
-		  var submitter = new SelectionPanel(this, table_id, content_id, cookie);
+		  var submitter = new SelectionPanel(this, table_id, content_id, cookie, url_empty);
 		  $(this).data('selectionpanel', submitter);
 		  submitter.init(self);
 	   });
