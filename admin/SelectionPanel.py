@@ -32,6 +32,7 @@ JS_INIT = """
   $('#%(id)s').SelectionPanel ('%(table_id)s', '%(content_id)s', '%(cookie)s');
 """
 
+
 class SelectionPanel (CTK.Box):
     def __init__ (self, callback, content_id, web_url, draggable=True):
         CTK.Box.__init__ (self, {'class': 'selection-panel'})
