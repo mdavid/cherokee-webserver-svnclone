@@ -62,6 +62,10 @@
 		  return did_select;
 	   }
 
+	   this.select_last = function() {
+		  auto_select_row (self.find('.row_content:last'));
+	   }
+
 	   this.init = function (self) {
 		  var cookie_selected = $.cookie(cookie_name);
 

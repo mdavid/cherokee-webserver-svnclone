@@ -69,6 +69,28 @@ ENTRY_INTER = """
 <div class="inter">%(inter)s</div>
 """
 
+JS_ACTIVATE_LAST = """
+$('.selection-panel:first').data('selectionpanel').select_last();
+"""
+
+
+def commit():
+    new_nick = CTK.post.pop('tmp!new_nick')
+    new_host = CTK.post.pop('tmp!new_host')
+
+    # New
+    if new_nick and new_host:
+        next = CTK.cfg.get_next_entry_prefix ('source')
+        CTK.cfg['%s!nick'%(next)] = new_nick
+        CTK.cfg['%s!host'%(next)] = new_host
+        CTK.cfg['%s!type'%(next)] = 'host'
+        return {'ret': 'ok'}
+
+    # Modification
+    for k in CTK.post:
+        CTK.cfg[k] = CTK.post[k]
+    return {'ret': 'ok'}
+
 
 def reorder (arg):
     print "reorder", CTK.post[arg]
@@ -113,7 +135,14 @@ class CloneSource (CTK.Container):
 class AddSource (CTK.Container):
     def __init__ (self):
         CTK.Container.__init__ (self)
-        self += CTK.RawHTML ('New Sources are added here.')
+
+        table = CTK.PropsTable()
+        table.Add (_('Nick'),       CTK.TextCfg ('tmp!new_nick', False, {'class': 'noauto'}), _(NOTE_NICK))
+        table.Add (_('Connection'), CTK.TextCfg ('tmp!new_host', False, {'class': 'noauto'}), _(NOTE_HOST))
+
+        submit = CTK.Submitter (URL_APPLY)
+        submit += table
+        self += submit
 
 
 class Render():
@@ -131,10 +160,13 @@ class Render():
                 props['type']  = tipe = CTK.cfg.get_val('source!%s!type'%(k))
                 props['inter'] = CTK.cfg.get_val('source!%s!interpreter'%(k))
 
+                remove = CTK.ImageStock('del', {'class': 'del'})
+                remove.bind ('click', "console.log('clicked del'); return false;")
+
                 if tipe == 'host':
-                    panel.Add ('/source/%s'%(k), [CTK.RawHTML(ENTRY_HOST%(props))])
+                    panel.Add ('/source/%s'%(k), [CTK.RawHTML(ENTRY_HOST%(props)), remove])
                 elif tipe == 'interpreter':
-                    panel.Add ('/source/%s'%(k), [CTK.RawHTML(ENTRY_INTER%(props))])
+                    panel.Add ('/source/%s'%(k), [CTK.RawHTML(ENTRY_INTER%(props)), remove])
 
             self += panel
 
@@ -142,30 +174,31 @@ class Render():
         def __init__ (self):
             CTK.Box.__init__ (self, {'class': 'panel-buttons'})
 
-            submit = CTK.Submitter (URL_APPLY)
-            self += submit
-
             # Add New
             dialog = CTK.Dialog ({'title': _('Add New Information Source'), 'width': 480})
             dialog.AddButton (_('Add'), dialog.JS_to_trigger('submit'))
             dialog.AddButton (_('Cancel'), "close")
             dialog += AddSource()
-            self += dialog
 
-            button = CTK.SubmitterButton(_('New'))
+            button = CTK.Button(_('New'))
             button.bind ('click', dialog.JS_to_show())
-            submit += button
+            dialog.bind ('submit_success', dialog.JS_to_close())
+            dialog.bind ('submit_success', self.JS_to_trigger('submit_success'));
+
+            self += button
+            self += dialog
 
             # Clone
             dialog = CTK.Dialog ({'title': _('Clone Information Source'), 'width': 480})
             dialog.AddButton (_('Clone'), dialog.JS_to_trigger('submit'))
             dialog.AddButton (_('Cancel'), "close")
             dialog += CloneSource()
-            self += dialog
 
-            button = CTK.SubmitterButton(_('Clone'))
+            button = CTK.Button(_('Clone'))
             button.bind ('click', dialog.JS_to_show())
-            submit += button
+
+            self += dialog
+            self += button
 
     def __call__ (self):
         # Content
@@ -176,8 +209,12 @@ class Render():
         refresh = CTK.Refreshable ({'id': 'source_panel'})
         refresh.register (lambda: self.PanelList(refresh, right.id).Render())
 
+        # Refresh on 'New' or 'Clone'
+        buttons = self.PanelButtons()
+        buttons.bind ('submit_success', refresh.JS_to_refresh (on_success=JS_ACTIVATE_LAST))
+
         left += refresh
-        left += self.PanelButtons()
+        left += buttons
 
         # Refresh the list whenever the content change
         right.bind ('submit_success', refresh.JS_to_refresh());
@@ -193,4 +230,4 @@ class Render():
 
 CTK.publish ('^%s$'      %(URL_BASE), Render)
 CTK.publish ('^%s/[\d]+$'%(URL_BASE), Render_Source)
-CTK.publish ('^%s$'      %(URL_APPLY), CTK.cfg_apply_post, validation=VALIDATIONS, method="POST")
+CTK.publish ('^%s$'      %(URL_APPLY), commit, validation=VALIDATIONS, method="POST")
