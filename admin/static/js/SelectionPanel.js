@@ -53,6 +53,7 @@
 				 success: function(data) {
 					$('#'+content_id).html(data);
                                         $('.source_content .submitter').height($(window).height() - 92);
+                                        $('.vserver_content .ui-tabs-panel').height($(window).height() - 136);
 				 }
 				});
 	   }
@@ -121,10 +122,14 @@
 })(jQuery);
 
 $(document).ready(function() {
+   $('#vservers_panel').height($(window).height() - 158);
+   $('.vserver_content .ui-tabs .ui-tabs-panel').height($(window).height() - 140);
    $('#source_panel').height($(window).height() - 158);
    $('.source_content .submitter').height($(window).height() - 92);
 });
 $(window).resize(function(){
+   $('#vservers_panel').height($(window).height() - 158);
+   $('.vserver_content .ui-tabs .ui-tabs-panel').height($(window).height() - 140);
    $('#source_panel').height($(window).height() - 158);
    $('.source_content .submitter').height($(window).height() - 92);
 });

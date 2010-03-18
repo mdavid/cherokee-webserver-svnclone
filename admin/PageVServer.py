@@ -376,7 +376,7 @@ class Render():
         tabs.Add (_('Security'),      SecurityWidget (vsrv_num))
 
         cont = CTK.Container()
-        cont += CTK.RawHTML ('<h1>%s: %s</h1>' %(_('Virtual Server'), vsrv_nam))
+        cont += CTK.RawHTML ('<h2>%s: %s</h2>' %(_('Virtual Server'), vsrv_nam))
         cont += tabs
 
         return cont.Render().toStr()
