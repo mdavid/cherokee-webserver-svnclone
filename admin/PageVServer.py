@@ -32,8 +32,8 @@ import re
 from consts import *
 from configured import *
 
-URL_BASE  = '/vserver'
-URL_APPLY = '/vserver/apply'
+URL_BASE  = '/vserver/content'
+URL_APPLY = '/vserver/content/apply'
 
 NOTE_NICKNAME         = N_('Nickname for the virtual server.')
 NOTE_CERT             = N_('This directive points to the PEM-encoded Certificate file for the server (Full path to the file)')
@@ -375,12 +375,11 @@ class Render():
         tabs.Add (_('Logging'),       LogginWidget (vsrv_num))
         tabs.Add (_('Security'),      SecurityWidget (vsrv_num))
 
-        # Instance Page
-        page = Page.Base ('%s: %s' %(_('Virtual Server'), vsrv_nam), helps=HELPS)
-        page += CTK.RawHTML ('<h1><a href="/vserver">%s</a>: %s</h1>' %(_('Virtual Server'), vsrv_nam))
-        page += tabs
+        cont = CTK.Container()
+        cont += CTK.RawHTML ('<h1>%s: %s</h1>' %(_('Virtual Server'), vsrv_nam))
+        cont += tabs
 
-        return page.Render()
+        return cont.Render().toStr()
 
 
 CTK.publish (r'^%s/[\d]+$'%(URL_BASE), Render)

@@ -29,6 +29,7 @@ HEADERS = ['<script type="text/javascript" src="/CTK/js/jquery.cookie.js"></scri
            '<script type="text/javascript" src="/static/js/SelectionPanel.js"></script>']
 
 JS_INIT = """
+  console.log ("JS_INIT!!!!!!");
   $('#%(id)s').SelectionPanel ('%(table_id)s', '%(content_id)s', '%(cookie)s', '%(web_empty)s');
 """
 

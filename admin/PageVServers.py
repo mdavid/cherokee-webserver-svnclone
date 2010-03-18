@@ -25,16 +25,36 @@
 import CTK
 import Page
 import Cherokee
+import SelectionPanel
 import validations
 
 from util import *
+from consts import *
+from CTK.util import find_copy_name
+from CTK.Tab       import HEADER as Tab_HEADER
+from CTK.Submitter import HEADER as Submit_HEADER
+from CTK.TextField import HEADER as TextField_HEADER
+from CTK.SortableList import HEADER as SortableList_HEADER
 
 URL_BASE  = r'/vserver'
 URL_APPLY = r'/vserver/apply'
 
 HELPS = [('config_virtual_servers', N_("Virtual Servers"))]
 
-def apply():
+JS_ACTIVATE_LAST = """
+$('.selection-panel:first').data('selectionpanel').select_last();
+"""
+
+JS_CLONE = """
+  var url = $('.selection-panel:first').data('selectionpanel').get_selected().attr('url');
+  $.ajax ({type: 'GET', async: false, url: url+'/clone', success: function(data) {
+      // A transaction took place
+      $('.panel-buttons').trigger ('submit_success');
+  }});
+"""
+
+
+def commit():
     # Modifications
     for k in CTK.post:
         CTK.cfg[k] = CTK.post[k]
@@ -42,48 +62,75 @@ def apply():
     return {'ret': 'ok'}
 
 
-class VServerListWidget (CTK.Box):
-    def __init__ (self):
-        CTK.Box.__init__ (self, {'id': 'vserver-list'})
-
-        # Sanity check
-        if not CTK.cfg.keys('vserver'):
-            CTK.cfg['vserver!1!nick']           = 'default'
-            CTK.cfg['vserver!1!document_root']  = '/tmp'
-            CTK.cfg['vserver!1!rule!1!match']   = 'default'
-            CTK.cfg['vserver!1!rule!1!handler'] = 'common'
-
-        # Build the Virtual Server list
-        vservers = CTK.cfg.keys('vserver')
-        vservers.sort (lambda x,y: cmp(int(x), int(y)))
-
-        submit = CTK.Submitter (URL_APPLY)
-        self += submit
-
-        for k in vservers:
-            nick    = CTK.cfg.get_val('vserver!%s!nick'%(k), _('Unknown'))
-            droot   = CTK.cfg.get_val('vserver!%s!document_root'%(k), '')
-            logging = bool (CTK.cfg.get_val('vserver!%s!logger'%(k)))
-
-
-            vsrv_box = CTK.Box ({'id': 'vserver-list-entry'})
-            vsrv_box += CTK.Box ({'class': 'name'},     CTK.Link ('/vserver/%s'%(k), CTK.RawHTML(nick)))
-            vsrv_box += CTK.Box ({'class': 'disabled'}, CTK.iPhoneCfg ('vserver!%s!disabled'%(k), False))
-            vsrv_box += CTK.Box ({'class': 'droot'},    CTK.RawHTML ('<b>Document Root</b>: %s'%(droot)))
-            vsrv_box += CTK.Box ({'class': 'logging'},  CTK.RawHTML ('<b>Access Logging</b>: %s'%(bool_to_active (logging))))
-
-            submit += vsrv_box
+def reorder (arg):
+    print "reorder", CTK.post[arg]
+    return {'ret': 'ok'}
 
 
 class Render():
+    class PanelList (CTK.Container):
+        def __init__ (self, refresh, right_box):
+            CTK.Container.__init__ (self)
+
+            # Sanity check
+            if not CTK.cfg.keys('vserver'):
+                CTK.cfg['vserver!1!nick']           = 'default'
+                CTK.cfg['vserver!1!document_root']  = '/tmp'
+                CTK.cfg['vserver!1!rule!1!match']   = 'default'
+                CTK.cfg['vserver!1!rule!1!handler'] = 'common'
+
+            # Helper
+            entry = lambda klass, key: CTK.Box ({'class': klass}, CTK.RawHTML (CTK.cfg.get_val(key, '')))
+
+            # Build the panel list
+            panel = SelectionPanel.SelectionPanel (reorder, right_box.id, URL_BASE, 'a')
+            self += panel
+
+            # Build the Virtual Server list
+            vservers = CTK.cfg.keys('vserver')
+            vservers.sort (lambda x,y: cmp(int(x), int(y)))
+
+            for k in vservers:
+                panel.Add ('/vserver/content/%s'%(k),
+                           [entry('nick',   'vserver!%s!nick'%(k)),
+                            entry('droot',  'vserver!%s!document_root'%(k)),
+                            CTK.RawHTML('lalsjdalkjdlakjdslkajs')])
+
+
+    class PanelButtons (CTK.Box):
+        def __init__ (self):
+            CTK.Box.__init__ (self, {'class': 'panel-buttons'})
+            self += CTK.RawHTML ("Buttons here")
+
     def __call__ (self):
         title = _('Virtual Servers')
 
-        page = Page.Base(title, body_id='vservers', helps=HELPS)
-        page += CTK.RawHTML ("<h1>%s</h1>" % (title))
-        page += VServerListWidget()
+        # Content
+        right = CTK.Box({'class': 'vserver_content'})
+        left  = CTK.Box({'class': 'panel'}, CTK.RawHTML('<h2>%s</h2>'%(title) ))
+
+        # Sources List
+        refresh = CTK.Refreshable ({'id': 'vservers_panel'})
+        refresh.register (lambda: self.PanelList(refresh, right).Render())
+
+        # Refresh on 'New' or 'Clone'
+        buttons = self.PanelButtons()
+        buttons.bind ('submit_success', refresh.JS_to_refresh (on_success=JS_ACTIVATE_LAST))
+
+        left += refresh
+        left += buttons
+
+        # Refresh the list whenever the content change
+        right.bind ('submit_success', refresh.JS_to_refresh());
+
+        # Build the page
+        headers = Tab_HEADER + Submit_HEADER + TextField_HEADER + SortableList_HEADER
+        page = Page.Base(title, body_id='vservers', helps=HELPS, headers=headers)
+        page += left
+        page += right
+
         return page.Render()
 
 
 CTK.publish (URL_BASE, Render)
-CTK.publish (URL_APPLY, apply, method="POST")
+CTK.publish (URL_APPLY, commit, method="POST")
