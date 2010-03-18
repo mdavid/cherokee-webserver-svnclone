@@ -52,6 +52,7 @@
 				 url:   url,
 				 success: function(data) {
 					$('#'+content_id).html(data);
+                                        $('.source_content .submitter').height($(window).height() - 92);
 				 }
 				});
 	   }
@@ -113,3 +114,12 @@
     };
 
 })(jQuery);
+
+$(document).ready(function() {
+   $('#source_panel').height($(window).height() - 158); 
+   $('.source_content .submitter').height($(window).height() - 92); 
+});
+$(window).resize(function(){
+   $('#source_panel').height($(window).height() - 158); 
+   $('.source_content .submitter').height($(window).height() - 92); 
+});

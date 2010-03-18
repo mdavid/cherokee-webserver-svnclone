@@ -221,7 +221,7 @@ class Render():
     def __call__ (self):
         # Content
         right = CTK.Box({'class': 'source_content'})
-        left  = CTK.Box({'class': 'panel'})
+        left  = CTK.Box({'class': 'panel'}, CTK.RawHTML('<h2>%s</h2>'%(_('Information Sources')) ))
 
         # Sources List
         refresh = CTK.Refreshable ({'id': 'source_panel'})
@@ -240,7 +240,7 @@ class Render():
         # Build the page
         headers = Submit_HEADER + TextField_HEADER
         page = Page.Base (_("Information Sources"), body_id='source', helps=HELPS, headers=headers)
-        page += CTK.RawHTML("<h1>%s</h1>" %(_('Information Sources Settings')))
+        #page += CTK.RawHTML("<h1>%s</h1>" %(_('Information Sources Settings')))
         page += left
         page += right
 

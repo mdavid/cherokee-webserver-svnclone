@@ -108,11 +108,6 @@ class Base (CTK.Page):
         # Add help link
         self += CTK.RawHTML (js="$('#help-a').bind ('click', function(){ toggleHelp(); });")
 
-        # Main area height
-        self += CTK.RawHTML (js="var initial_main_height = $('#main').height(); ")
-        self += CTK.RawHTML (js="$(window).resize(function() {  if ($(window).height() > initial_main_height) { $('#main').height($(window).height() - 64); } });")
-
-
 
 CTK.publish (URL_SAVE_GRACEFUL, Restart, mode='graceful')
 CTK.publish (URL_SAVE_HARD,     Restart, mode='hard')
