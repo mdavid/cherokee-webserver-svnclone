@@ -146,6 +146,9 @@ class Render():
         def __init__ (self, refresh, right_box):
             CTK.Container.__init__ (self)
 
+            # Helper
+            entry = lambda klass, key: CTK.Box ({'class': klass}, CTK.RawHTML (CTK.cfg.get_val(key, '')))
+
             # Build the panel list
             panel = SelectionPanel.SelectionPanel (reorder, right_box.id, URL_BASE, '%s/empty'%(URL_BASE))
             self += panel
@@ -168,8 +171,6 @@ class Render():
 
                 remove = CTK.ImageStock('del', {'class': 'del'})
                 remove.bind ('click', dialog.JS_to_show() + "return false;")
-
-                entry = lambda klass, key: CTK.Box ({'class': klass}, CTK.RawHTML (CTK.cfg.get_val(key, '')))
 
                 if tipe == 'host':
                     panel.Add ('/source/%s'%(k), [entry('nick',  'source!%s!nick'%(k)),
