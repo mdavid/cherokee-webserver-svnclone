@@ -175,7 +175,10 @@ class Render():
             panel = SelectionPanel.SelectionPanel (reorder, right_box.id, URL_BASE, '%s/empty'%(URL_BASE))
             self += panel
 
-            for k in CTK.cfg.keys('source'):
+            sources = CTK.cfg.keys('source')
+            sources.sort (lambda x,y: cmp (int(x), int(y)))
+
+            for k in sources:
                 props = {}
                 props['host']  = CTK.cfg.get_val('source!%s!host'%(k))
                 props['nick']  = CTK.cfg.get_val('source!%s!nick'%(k))
