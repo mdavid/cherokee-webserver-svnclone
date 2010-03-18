@@ -58,19 +58,6 @@ VALIDATIONS = [
     ("source_clone_trg",       validations.is_safe_id),
 ]
 
-ENTRY_HOST = """
-<div class="nick">%(nick)s</div>
-<div class="type">%(type)s</div>
-<div class="host">%(host)s</div>
-"""
-
-ENTRY_INTER = """
-<div class="nick">%(nick)s</div>
-<div class="type">%(type)s</div>
-<div class="host">%(host)s</div>
-<div class="inter">%(inter)s</div>
-"""
-
 JS_ACTIVATE_LAST = """
 $('.selection-panel:first').data('selectionpanel').select_last();
 """
@@ -182,10 +169,17 @@ class Render():
                 remove = CTK.ImageStock('del', {'class': 'del'})
                 remove.bind ('click', dialog.JS_to_show() + "return false;")
 
+                entry = lambda klass, key: CTK.Box ({'class': klass}, CTK.RawHTML (CTK.cfg.get_val(key, '')))
+
                 if tipe == 'host':
-                    panel.Add ('/source/%s'%(k), [CTK.RawHTML(ENTRY_HOST%(props)), remove])
+                    panel.Add ('/source/%s'%(k), [entry('nick',  'source!%s!nick'%(k)),
+                                                  entry('type',  'source!%s!type'%(k)),
+                                                  entry('host',  'source!%s!host'%(k))])
                 elif tipe == 'interpreter':
-                    panel.Add ('/source/%s'%(k), [CTK.RawHTML(ENTRY_INTER%(props)), remove])
+                    panel.Add ('/source/%s'%(k), [entry('nick',  'source!%s!nick'%(k)),
+                                                  entry('type',  'source!%s!type'%(k)),
+                                                  entry('host',  'source!%s!host'%(k)),
+                                                  entry('inter', 'source!%s!interpreter'%(k))])
 
 
     class PanelButtons (CTK.Box):
