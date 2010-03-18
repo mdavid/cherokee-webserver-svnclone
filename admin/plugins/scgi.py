@@ -49,5 +49,3 @@ class Plugin_scgi (CgiBase.PluginHandlerCGI):
         self += CTK.RawHTML ('<h2>%s</h2>' %(_('SCGI Specific')))
         self += CTK.Indenter (table)
         self += modul
-
-CTK.publish ('^%s'%(URL_APPLY), CTK.cfg_apply_post, method="POST")
