@@ -73,6 +73,11 @@
 		  return did_select;
 	   }
 
+	   this.get_selected = function() {
+		  var selected = self.find('.row_content.panel-selected:first');
+		  return $(selected);
+	   }
+
 	   this.select_last = function() {
 		  auto_select_row (self.find('.row_content:last'));
 	   }
@@ -116,10 +121,10 @@
 })(jQuery);
 
 $(document).ready(function() {
-   $('#source_panel').height($(window).height() - 158); 
-   $('.source_content .submitter').height($(window).height() - 92); 
+   $('#source_panel').height($(window).height() - 158);
+   $('.source_content .submitter').height($(window).height() - 92);
 });
 $(window).resize(function(){
-   $('#source_panel').height($(window).height() - 158); 
-   $('.source_content .submitter').height($(window).height() - 92); 
+   $('#source_panel').height($(window).height() - 158);
+   $('.source_content .submitter').height($(window).height() - 92);
 });

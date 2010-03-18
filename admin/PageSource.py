@@ -30,8 +30,10 @@ import SelectionPanel
 import validations
 
 from consts import *
+from CTK.util import find_copy_name
 from CTK.Submitter import HEADER as Submit_HEADER
 from CTK.TextField import HEADER as TextField_HEADER
+
 
 URL_BASE  = '/source'
 URL_APPLY = '/source/apply'
@@ -61,6 +63,26 @@ VALIDATIONS = [
 JS_ACTIVATE_LAST = """
 $('.selection-panel:first').data('selectionpanel').select_last();
 """
+
+JS_CLONE = """
+  var url = $('.selection-panel:first').data('selectionpanel').get_selected().attr('url');
+  $.ajax ({type: 'GET', async: false, url: url+'/clone', success: function(data) {
+      // A transaction took place
+      $('.panel-buttons').trigger ('submit_success');
+  }});
+"""
+
+def commit_clone():
+    num = re.findall(r'^%s/([\d]+)/clone$'%(URL_BASE), CTK.request.url)[0]
+    next = CTK.cfg.get_next_entry_prefix ('source')
+
+    orig  = CTK.cfg.get_val ('source!%s!nick'%(num))
+    names = [CTK.cfg.get_val('source!%s!nick'%(x)) for x in CTK.cfg.keys('source')]
+    new_nick = find_copy_name (orig, names)
+
+    CTK.cfg.clone ('source!%s'%(num), next)
+    CTK.cfg['%s!nick' %(next)] = new_nick
+    return {'ret': 'ok'}
 
 
 def commit():
@@ -175,12 +197,14 @@ class Render():
                 if tipe == 'host':
                     panel.Add ('/source/%s'%(k), [entry('nick',  'source!%s!nick'%(k)),
                                                   entry('type',  'source!%s!type'%(k)),
-                                                  entry('host',  'source!%s!host'%(k))])
+                                                  entry('host',  'source!%s!host'%(k)),
+                                                  remove])
                 elif tipe == 'interpreter':
                     panel.Add ('/source/%s'%(k), [entry('nick',  'source!%s!nick'%(k)),
                                                   entry('type',  'source!%s!type'%(k)),
                                                   entry('host',  'source!%s!host'%(k)),
-                                                  entry('inter', 'source!%s!interpreter'%(k))])
+                                                  entry('inter', 'source!%s!interpreter'%(k)),
+                                                  remove])
 
 
     class PanelButtons (CTK.Box):
@@ -203,7 +227,7 @@ class Render():
 
             # Clone
             dialog = CTK.Dialog ({'title': _('Clone Information Source'), 'width': 480})
-            dialog.AddButton (_('Clone'), dialog.JS_to_trigger('submit'))
+            dialog.AddButton (_('Clone'), JS_CLONE + dialog.JS_to_close())
             dialog.AddButton (_('Cancel'), "close")
             dialog += CloneSource()
 
@@ -244,3 +268,4 @@ class Render():
 CTK.publish ('^%s$'              %(URL_BASE), Render)
 CTK.publish ('^%s/([\d]+|empty)$'%(URL_BASE), Render_Source)
 CTK.publish ('^%s$'              %(URL_APPLY), commit, validation=VALIDATIONS, method="POST")
+CTK.publish ('^%s/[\d]+/clone$'  %(URL_BASE), commit_clone)
