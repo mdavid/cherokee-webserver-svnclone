@@ -179,11 +179,7 @@ class Render():
             sources.sort (lambda x,y: cmp (int(x), int(y)))
 
             for k in sources:
-                props = {}
-                props['host']  = CTK.cfg.get_val('source!%s!host'%(k))
-                props['nick']  = CTK.cfg.get_val('source!%s!nick'%(k))
-                props['type']  = tipe = CTK.cfg.get_val('source!%s!type'%(k))
-                props['inter'] = CTK.cfg.get_val('source!%s!interpreter'%(k))
+                tipe = CTK.cfg.get_val('source!%s!type'%(k))
 
                 dialog = CTK.Dialog ({'title': _('Do you really want to remove it?'), 'width': 480})
                 dialog.AddButton (_('Remove'), CTK.JS.Ajax (URL_APPLY, async=False,
@@ -262,7 +258,6 @@ class Render():
         # Build the page
         headers = Submit_HEADER + TextField_HEADER
         page = Page.Base (_("Information Sources"), body_id='source', helps=HELPS, headers=headers)
-        #page += CTK.RawHTML("<h1>%s</h1>" %(_('Information Sources Settings')))
         page += left
         page += right
 
