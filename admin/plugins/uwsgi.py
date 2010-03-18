@@ -29,11 +29,11 @@ import CgiBase
 import Balancer
 from consts import *
 
-HELPS = CgiBase.HELPS + [('modules_handlers_fcgi', "FastCGI")]
+HELPS = CgiBase.HELPS + [('modules_handlers_uwsgi', "UWSGI")]
 
-class Plugin_fcgi (CgiBase.PluginHandlerCGI):
+class Plugin_uwsgi (CgiBase.PluginHandlerCGI):
     def __init__ (self, key, **kwargs):
-        kwargs['show_script_alias']  = True
+        kwargs['show_script_alias']  = False
         kwargs['show_change_uid']    = False
         kwargs['show_document_root'] = True
 
@@ -46,6 +46,6 @@ class Plugin_fcgi (CgiBase.PluginHandlerCGI):
         table = CTK.PropsTable()
         table.Add (_("Balancer"), modul.selector_widget, _(Balancer.NOTE_BALANCER))
 
-        self += CTK.RawHTML ('<h2>%s</h2>' %(_('FastCGI Specific')))
+        self += CTK.RawHTML ('<h2>%s</h2>' %(_('UWSGI Specific')))
         self += CTK.Indenter (table)
         self += modul
