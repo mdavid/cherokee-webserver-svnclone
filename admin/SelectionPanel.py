@@ -54,7 +54,7 @@ class SelectionPanel (CTK.Box):
         row_id = ''.join([('_',x)[x in string.letters+string.digits] for x in url])
 
         # Row Content
-        row_content = CTK.Box({'id': row_id, 'class': 'row_content', 'url': url})
+        row_content = CTK.Box({'id': 'rc'+row_id, 'pid': row_id, 'class': 'row_content', 'url': url })
         for w in content:
             row_content += w
 
