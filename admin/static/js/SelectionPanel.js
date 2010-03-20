@@ -26,7 +26,7 @@
 	   var self        = $(element); // .submitter
 
 	   function deselect_row (row) {
-		  row.removeClass('panel-selected');
+                  $('#'+row.attr('pid')).removeClass('panel-selected');
 	   }
 
 	   function select_row (row) {
@@ -40,7 +40,7 @@
 			 url = row.attr('url');
 
 			 // Highlight
-			 row.addClass('panel-selected');
+			 $('#'+row.attr('pid')).addClass('panel-selected');
 
 			 // Cookie
 			 $.cookie (cookie_name, row.attr('id'));
