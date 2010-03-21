@@ -36,10 +36,14 @@ from CTK.Submitter import HEADER as Submit_HEADER
 from CTK.TextField import HEADER as TextField_HEADER
 from CTK.SortableList import HEADER as SortableList_HEADER
 
+
 URL_BASE  = r'/vserver'
 URL_APPLY = r'/vserver/apply'
 
 HELPS = [('config_virtual_servers', N_("Virtual Servers"))]
+
+NOTE_DELETE_DIALOG = N_('You are about to delete a Virtual Server. Are you sure you want to proceed?')
+
 
 JS_ACTIVATE_LAST = """
 $('.selection-panel:first').data('selectionpanel').select_last();
@@ -89,12 +93,32 @@ class Render():
             # Build the Virtual Server list
             vservers = CTK.cfg.keys('vserver')
             vservers.sort (lambda x,y: cmp(int(x), int(y)))
+            vservers.reverse()
 
             for k in vservers:
-                panel.Add ('/vserver/content/%s'%(k),
-                           [entry('nick',   'vserver!%s!nick'%(k)),
-                            entry('droot',  'vserver!%s!document_root'%(k)),
-                            CTK.RawHTML('lalsjdalkjdlakjdslkajs')])
+                content = [entry('nick',  'vserver!%s!nick'%(k)),
+                           entry('droot', 'vserver!%s!document_root'%(k))]
+
+                if k != vservers[-1]:
+                    # Remove
+                    dialog = CTK.Dialog ({'title': _('Do you really want to remove it?'), 'width': 480})
+                    dialog.AddButton (_('Remove'), CTK.JS.Ajax (URL_APPLY, async=False,
+                                                                data    = {'vserver!%s'%(k):''},
+                                                                success = dialog.JS_to_close() + \
+                                                                    refresh.JS_to_refresh()))
+                    dialog.AddButton (_('Cancel'), "close")
+                    dialog += CTK.RawHTML (NOTE_DELETE_DIALOG)
+                    self += dialog
+
+                    remove = CTK.ImageStock('del', {'class': 'del'})
+                    remove.bind ('click', dialog.JS_to_show() + "return false;")
+
+                    # Disable
+                    disabled = CTK.Box ({'class': 'disable'}, CTK.iPhoneCfg('vserver!%s!disabled'%(k), False))
+                    content += [disabled, remove]
+
+                # List entry
+                panel.Add ('/vserver/content/%s'%(k), content)
 
 
     class PanelButtons (CTK.Box):
