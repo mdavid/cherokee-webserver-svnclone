@@ -90,13 +90,23 @@ def commit():
         return {'ret': 'ok'}
 
     # Modifications
-    for k in CTK.post:
-        CTK.cfg[k] = CTK.post[k]
+    return CTK.cfg_apply_post()
 
-    return {'ret': 'ok'}
 
 def reorder (arg):
-    print "reorder", CTK.post[arg]
+    # Process new list
+    order = CTK.post.pop(arg)
+    tmp = order.split(',')
+    tmp.reverse()
+
+    # Build and alternative tree
+    num = 10
+    for v in tmp:
+        CTK.cfg.clone ('vserver!%s'%(v), 'tmp!vserver!%d'%(num))
+        num += 10
+
+    # Set the new list in place
+    CTK.cfg.rename ('tmp!vserver', 'vserver')
     return {'ret': 'ok'}
 
 
@@ -142,7 +152,7 @@ class Render():
                            entry('droot', 'vserver!%s!document_root'%(k))]
 
                 if k == vservers[-1]:
-                    panel.Add ('/vserver/content/%s'%(k), content, draggable=False)
+                    panel.Add (k, '/vserver/content/%s'%(k), content, draggable=False)
                 else:
                     nick = CTK.cfg.get_val ('vserver!%s!nick'%(k), _('Unknown'))
 
@@ -155,7 +165,6 @@ class Render():
                     dialog.AddButton (_('Cancel'), "close")
                     dialog += CTK.RawHTML (_(NOTE_DELETE_DIALOG) %(nick))
                     self += dialog
-
                     remove = CTK.ImageStock('del', {'class': 'del'})
                     remove.bind ('click', dialog.JS_to_show() + "return false;")
 
@@ -164,7 +173,7 @@ class Render():
                     content += [disabled, remove]
 
                     # List entry
-                    panel.Add ('/vserver/content/%s'%(k), content)
+                    panel.Add (k, '/vserver/content/%s'%(k), content)
 
 
     class PanelButtons (CTK.Box):
