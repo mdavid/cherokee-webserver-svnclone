@@ -97,7 +97,19 @@ class RenderBase():
                 rule = Rule ('vserver!%s!rule!%s!match'%(vsrv_num, r))
                 rule_name = rule.GetName()
 
-                content = [CTK.RawHTML(rule_name)]
+                # Comment
+                comment = []
+
+                handler = CTK.cfg.get_val ('vserver!%s!rule!%s!handler' %(vsrv_num, r))
+                if handler:
+                    comment.append (handler)
+
+                for e in CTK.cfg.keys ('vserver!%s!rule!%s!encoder'%(vsrv_num, r)):
+                    if CTK.cfg.get_val ('vserver!%s!rule!%s!encoder!%s'%(vsrv_num, r, e)) == "allow":
+                        comment.append (e)
+
+                content = [CTK.RawHTML(rule_name),
+                           CTK.Box ({'class': 'comment'}, CTK.RawHTML (', '.join(comment)))]
 
                 # List entry
                 row_id = '%s_%s' %(r, vsrv_num)
