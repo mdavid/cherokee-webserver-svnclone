@@ -21,7 +21,7 @@
  */
 
 ;(function($) {
-    var SelectionPanel = function (element, table_id, content_id, cookie_name, url_empty) {
+    var SelectionPanel = function (element, table_id, content_id, cookie_name, cookie_domain, url_empty) {
 	   var obj  = this;       //  Object {}
 	   var self = $(element); // .submitter
 
@@ -43,7 +43,7 @@
 			 $('#'+row.attr('pid')).addClass('panel-selected');
 
 			 // Cookie
-			 $.cookie (cookie_name, row.attr('id'));
+			 $.cookie (cookie_name, row.attr('id'), {path: cookie_domain});
 		  }
 
 		  // Update box
@@ -80,8 +80,7 @@
 
 	   this.set_selected_cookie = function (pid) {
 		  var row = self.find ('.row_content[pid='+ pid +']');
-		  console.log ("FIJA COOKIE A", row.attr('id'));
-		  $.cookie (cookie_name, row.attr('id'));
+		  $.cookie (cookie_name, row.attr('id'), {path: cookie_domain});
 	   }
 
 	   this.select_last = function() {
@@ -114,11 +113,11 @@
 	   }
     };
 
-    $.fn.SelectionPanel = function (table_id, content_id, cookie, url_empty) {
+    $.fn.SelectionPanel = function (table_id, content_id, cookie, cookie_domain, url_empty) {
 	   var self = this;
 	   return this.each(function() {
 		  if ($(this).data('selectionpanel')) return;
-		  var submitter = new SelectionPanel(this, table_id, content_id, cookie, url_empty);
+		  var submitter = new SelectionPanel(this, table_id, content_id, cookie, cookie_domain, url_empty);
 		  $(this).data('selectionpanel', submitter);
 		  submitter.init(self);
 	   });
