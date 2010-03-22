@@ -132,7 +132,7 @@ class VirtualServerNew (CTK.Container):
         self += submit
 
 
-class RenderBase():
+class Render():
     class PanelList (CTK.Container):
         def __init__ (self, refresh, right_box):
             CTK.Container.__init__ (self)
@@ -237,23 +237,14 @@ class RenderBase():
 
         # Build the page
         headers = Tab_HEADER + Submit_HEADER + TextField_HEADER + SortableList_HEADER + SelectionPanel.HEADER
-        self.page = Page.Base(title, body_id='vservers', helps=HELPS, headers=headers)
-        self.page += left
-        self.page += right
+        page = Page.Base(title, body_id='vservers', helps=HELPS, headers=headers)
+        page += left
+        page += right
+
+        return page.Render()
 
 
-class Render (RenderBase):
-    def __call__ (self):
-        RenderBase.__call__(self)
-        return self.page.Render()
-
-class RenderParticular (RenderBase):
-    def __call__ (self):
-        RenderBase.__call__(self)
-        self.page += CTK.RawHTML (js=JS_PARTICULAR %({'url_base': URL_BASE}))
-        return self.page.Render()
-
-class RenderParticular2():
+class RenderParticular():
     def __call__ (self):
         headers = SelectionPanel.HEADER
         page    = CTK.Page(headers=headers)
@@ -264,6 +255,7 @@ class RenderParticular2():
 
         return page.Render()
 
+
 CTK.publish (r'^%s$'    %(URL_BASE),  Render)
-CTK.publish (r'^%s/\d+$'%(URL_BASE),  RenderParticular2)
+CTK.publish (r'^%s/\d+$'%(URL_BASE),  RenderParticular)
 CTK.publish (r'^%s$'    %(URL_APPLY), Commit, method="POST", validation=VALIDATIONS)

@@ -69,9 +69,9 @@ class SelectionPanel (CTK.Box):
 
         # Draggable
         if self.draggable and draggable:
-            self.table[-1][1].props['class'] = "dragHandle"
+            self.table[-1][1].props['class'] = 'dragHandle'
         else:
-            self.table[-1][1].props['class'] = ""
+            self.table[-1].props['class'] = 'nodrag nodrop'
 
 
     def Render (self):
