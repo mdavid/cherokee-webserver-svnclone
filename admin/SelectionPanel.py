@@ -45,7 +45,7 @@ class SelectionPanel (CTK.Box):
 
         self += self.table
 
-    def Add (self, url, content):
+    def Add (self, url, content, draggable=True):
         assert type(url) == str
         assert type(content) == list
 
@@ -66,7 +66,7 @@ class SelectionPanel (CTK.Box):
         self.table[-1][2].props['class'] = "nodrag nodrop"
 
         # Draggable
-        if self.draggable:
+        if self.draggable and draggable:
             self.table[-1][1].props['class'] = "dragHandle"
         else:
             self.table[-1][1].props['class'] = ""
