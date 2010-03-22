@@ -130,7 +130,7 @@ class VirtualServerNew (CTK.Container):
         self += submit
 
 
-class Render():
+class RenderBase():
     class PanelList (CTK.Container):
         def __init__ (self, refresh, right_box):
             CTK.Container.__init__ (self)
@@ -182,7 +182,6 @@ class Render():
                     # List entry
                     panel.Add (k, '/vserver/content/%s'%(k), content)
 
-
     class PanelButtons (CTK.Box):
         def __init__ (self):
             CTK.Box.__init__ (self, {'class': 'panel-buttons'})
@@ -213,7 +212,6 @@ class Render():
             self += dialog
             self += button
 
-
     def __call__ (self):
         title = _('Virtual Servers')
 
@@ -237,18 +235,21 @@ class Render():
 
         # Build the page
         headers = Tab_HEADER + Submit_HEADER + TextField_HEADER + SortableList_HEADER
-        page = Page.Base(title, body_id='vservers', helps=HELPS, headers=headers)
-        page += left
-        page += right
-
-        return page.Render()
+        self.page = Page.Base(title, body_id='vservers', helps=HELPS, headers=headers)
+        self.page += left
+        self.page += right
 
 
-class RenderParticular (Render):
+class Render (RenderBase):
     def __call__ (self):
-        render = Render.__call__(self)
-        render += formater (HTML_JS_ON_READY_BLOCK, JS_PARTICULAR)
-        return render
+        RenderBase.__call__(self)
+        return self.page.Render()
+
+class RenderParticular (RenderBase):
+    def __call__ (self):
+        RenderBase.__call__(self)
+        self.page += CTK.RawHTML (js=JS_PARTICULAR)
+        return self.page.Render()
 
 
 CTK.publish (r'^%s$'    %(URL_BASE), Render)
