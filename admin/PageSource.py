@@ -98,14 +98,7 @@ def commit():
         return {'ret': 'ok'}
 
     # Modification
-    for k in CTK.post:
-        CTK.cfg[k] = CTK.post[k]
-    return {'ret': 'ok'}
-
-
-def reorder (arg):
-    print "reorder", CTK.post[arg]
-    return {'ret': 'ok'}
+    return CTK.cfg_apply_post()
 
 
 class Render_Source():
@@ -172,7 +165,7 @@ class Render():
             entry = lambda klass, key: CTK.Box ({'class': klass}, CTK.RawHTML (CTK.cfg.get_val(key, '')))
 
             # Build the panel list
-            panel = SelectionPanel.SelectionPanel (reorder, right_box.id, URL_BASE, '%s/empty'%(URL_BASE), draggable=False)
+            panel = SelectionPanel.SelectionPanel (None, right_box.id, URL_BASE, '%s/empty'%(URL_BASE), draggable=False)
             self += panel
 
             sources = CTK.cfg.keys('source')
@@ -194,16 +187,16 @@ class Render():
                 remove.bind ('click', dialog.JS_to_show() + "return false;")
 
                 if tipe == 'host':
-                    panel.Add ('/source/%s'%(k), [entry('nick',  'source!%s!nick'%(k)),
-                                                  entry('type',  'source!%s!type'%(k)),
-                                                  entry('host',  'source!%s!host'%(k)),
-                                                  remove])
+                    panel.Add (k, '/source/%s'%(k), [entry('nick',  'source!%s!nick'%(k)),
+                                                     entry('type',  'source!%s!type'%(k)),
+                                                     entry('host',  'source!%s!host'%(k)),
+                                                     remove])
                 elif tipe == 'interpreter':
-                    panel.Add ('/source/%s'%(k), [entry('nick',  'source!%s!nick'%(k)),
-                                                  entry('type',  'source!%s!type'%(k)),
-                                                  entry('host',  'source!%s!host'%(k)),
-                                                  entry('inter', 'source!%s!interpreter'%(k)),
-                                                  remove])
+                    panel.Add (k, '/source/%s'%(k), [entry('nick',  'source!%s!nick'%(k)),
+                                                     entry('type',  'source!%s!type'%(k)),
+                                                     entry('host',  'source!%s!host'%(k)),
+                                                     entry('inter', 'source!%s!interpreter'%(k)),
+                                                     remove])
 
 
     class PanelButtons (CTK.Box):

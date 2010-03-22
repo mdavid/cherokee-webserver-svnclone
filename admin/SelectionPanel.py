@@ -45,7 +45,7 @@ class SelectionPanel (CTK.Box):
 
         self += self.table
 
-    def Add (self, url, content, draggable=True):
+    def Add (self, id_content, url, content, draggable=True):
         assert type(url) == str
         assert type(content) == list
 
@@ -55,14 +55,14 @@ class SelectionPanel (CTK.Box):
         # Row Content
         row_content = CTK.Box({'class': 'row_content',
                                'id':    'rc'+row_id,
-                               'pid':   row_id,
+                               'pid':   id_content,
                                'url':   url})
         for w in content:
             row_content += w
 
         # Add to the table
         self.table += [None, row_content]
-        self.table[-1].props['id'] = row_id
+        self.table[-1].props['id'] = id_content
         self.table[-1][2].props['class'] = "nodrag nodrop"
 
         # Draggable
