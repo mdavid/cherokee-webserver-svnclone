@@ -35,6 +35,8 @@ from CTK.SortableList import HEADER as SortableList_HEADER
 
 from util import *
 from consts import *
+from CTK.util import *
+from CTK.consts import *
 from configured import *
 
 
@@ -64,6 +66,11 @@ JS_CLONE = """
       // A transaction took place
       $('.panel-buttons').trigger ('submit_success');
   }});
+"""
+
+JS_PARTICULAR = """
+  var vserver = window.location.pathname.match (/^\/vserver\/(\d+)/)[1];
+  $('.selection-panel:first').data('selectionpanel').select_id (vserver);
 """
 
 def commit():
@@ -237,5 +244,13 @@ class Render():
         return page.Render()
 
 
-CTK.publish (URL_BASE, Render)
-CTK.publish (URL_APPLY, commit, method="POST", validation=VALIDATIONS)
+class RenderParticular (Render):
+    def __call__ (self):
+        render = Render.__call__(self)
+        render += formater (HTML_JS_ON_READY_BLOCK, JS_PARTICULAR)
+        return render
+
+
+CTK.publish (r'^%s$'    %(URL_BASE), Render)
+CTK.publish (r'^%s/\d+$'%(URL_BASE), RenderParticular)
+CTK.publish (r'^%s$'    %(URL_APPLY), commit, method="POST", validation=VALIDATIONS)
