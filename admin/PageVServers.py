@@ -70,7 +70,8 @@ JS_CLONE = """
 
 JS_PARTICULAR = """
   var vserver = window.location.pathname.match (/^\/vserver\/(\d+)/)[1];
-  $('.selection-panel:first').data('selectionpanel').select_id (vserver);
+  $('.selection-panel:first').data('selectionpanel').set_selected_cookie (vserver);
+  window.location.replace ('%(url_base)s');
 """
 
 def commit():
@@ -248,7 +249,7 @@ class Render (RenderBase):
 class RenderParticular (RenderBase):
     def __call__ (self):
         RenderBase.__call__(self)
-        self.page += CTK.RawHTML (js=JS_PARTICULAR)
+        self.page += CTK.RawHTML (js=JS_PARTICULAR %({'url_base': URL_BASE}))
         return self.page.Render()
 
 
