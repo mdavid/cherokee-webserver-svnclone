@@ -194,7 +194,7 @@ class BasicsWidget (CTK.Container):
 
         # Network
         table = CTK.PropsAuto (url_apply)
-        table.Add (_('Keep-alive'),      CTK.CheckCfg('%s!keepalive'%(pre), True), _(NOTE_KEEPALIVE))
+        table.Add (_('Keep-alive'),      CTK.CheckCfgText('%s!keepalive'%(pre), True, _('Allow')), _(NOTE_KEEPALIVE))
         table.Add (_('Max Upload Size'), CTK.TextCfg('%s!post_max_len'%(pre), True), _(NOTE_MAX_UPLOAD_SIZE))
 
         self += CTK.RawHTML ('<h2>%s</h2>' %(_('Network')))
@@ -289,10 +289,10 @@ class LogginWidgetContent (CTK.Container):
         if CTK.cfg.get_val (pre):
             table = CTK.PropsTable()
             table.Add (_('Time standard'), CTK.ComboCfg ('%s!utc_time'%(pre), UTC_TIME), _(NOTE_UTC_TIME))
-            table.Add (_('Accept Forwarded IPs'), CTK.CheckCfg ('%s!x_real_ip_enabled'%(pre), False), _(NOTE_X_REAL_IP))
+            table.Add (_('Accept Forwarded IPs'), CTK.CheckCfgText ('%s!x_real_ip_enabled'%(pre), False, _('Accept')), _(NOTE_X_REAL_IP))
 
             if int (CTK.cfg.get_val('%s!x_real_ip_enabled'%(pre), "0")):
-                table.Add (_('Don\'t check origin'), CTK.CheckCfg ('%s!x_real_ip_access_all'%(pre), False), _(NOTE_X_REAL_IP_ALL))
+                table.Add (_('Don\'t check origin'), CTK.CheckCfgText ('%s!x_real_ip_access_all'%(pre), False, _('Do not check')), _(NOTE_X_REAL_IP_ALL))
 
                 if not int (CTK.cfg.get_val ('%s!x_real_ip_access_all'%(pre), "0")):
                     table.Add (_('Accept from Hosts'), CTK.TextCfg ('%s!x_real_ip_access'%(pre)), _(NOTE_X_REAL_IP_ACCESS))
