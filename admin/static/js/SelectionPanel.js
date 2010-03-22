@@ -22,11 +22,11 @@
 
 ;(function($) {
     var SelectionPanel = function (element, table_id, content_id, cookie_name, url_empty) {
-	   var obj         = this;       //  Object {}
-	   var self        = $(element); // .submitter
+	   var obj  = this;       //  Object {}
+	   var self = $(element); // .submitter
 
 	   function deselect_row (row) {
-                  $('#'+row.attr('pid')).removeClass('panel-selected');
+            $('#'+row.attr('pid')).removeClass('panel-selected');
 	   }
 
 	   function select_row (row) {
@@ -76,6 +76,11 @@
 	   this.get_selected = function() {
 		  var selected = self.find('.panel-selected:first');
 		  return $(selected);
+	   }
+
+	   this.select_id = function (id) {
+		  var row = self.find ('.row_content[pid='+ id +']');
+		  auto_select_row (row);
 	   }
 
 	   this.select_last = function() {
