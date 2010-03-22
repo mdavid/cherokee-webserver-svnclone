@@ -28,12 +28,14 @@ import Cherokee
 import SelectionPanel
 import validations
 
-from util import *
-from consts import *
 from CTK.Tab       import HEADER as Tab_HEADER
 from CTK.Submitter import HEADER as Submit_HEADER
 from CTK.TextField import HEADER as TextField_HEADER
 from CTK.SortableList import HEADER as SortableList_HEADER
+
+from util import *
+from consts import *
+from configured import *
 
 
 URL_BASE  = r'/vserver'
@@ -43,6 +45,13 @@ HELPS = [('config_virtual_servers', N_("Virtual Servers"))]
 
 NOTE_DELETE_DIALOG = N_('<p>You are about to delete the <b>%s</b> Virtual Server.</p><p>Are you sure you want to proceed?</p>')
 NOTE_CLONE_DIALOG  = N_('You are about to clone a Virtual Server. Would you like to proceed?')
+NOTE_NEW_NICK      = N_('Name of the Virtual Server you are about to create. A domain name is alright.')
+NOTE_NEW_DROOT     = N_('Document Root directory of the new Virtual Server.')
+
+VALIDATIONS = [
+    ('tmp!new_droot', validations.is_dev_null_or_local_dir_exists),
+    ('tmp!new_nick',  validations.is_new_vserver_nick)
+]
 
 JS_ACTIVATE_LAST = """
 $('.selection-panel:first').data('selectionpanel').select_last();
@@ -57,18 +66,51 @@ JS_CLONE = """
   }});
 """
 
-
 def commit():
+    # New Virtual Server
+    new_nick  = CTK.post.pop('tmp!new_nick')
+    new_droot = CTK.post.pop('tmp!new_droot')
+    if new_nick and new_droot:
+        next = CTK.cfg.get_next_entry_prefix ('vserver')
+        CTK.cfg['%s!nick'                   %(next)] = new_nick
+        CTK.cfg['%s!document_root'          %(next)] = new_droot
+        CTK.cfg['%s!rule!1!match'           %(next)] = 'default'
+        CTK.cfg['%s!rule!1!handler'         %(next)] = 'common'
+
+        CTK.cfg['%s!rule!2!match'           %(next)] = 'directory'
+        CTK.cfg['%s!rule!2!match!directory' %(next)] = '/icons'
+        CTK.cfg['%s!rule!2!handler'         %(next)] = 'file'
+        CTK.cfg['%s!rule!2!document_root'   %(next)] = CHEROKEE_ICONSDIR
+
+        CTK.cfg['%s!rule!3!match'           %(next)] = 'directory'
+        CTK.cfg['%s!rule!3!match!directory' %(next)] = '/cherokee_themes'
+        CTK.cfg['%s!rule!3!handler'         %(next)] = 'file'
+        CTK.cfg['%s!rule!3!document_root'   %(next)] = CHEROKEE_THEMEDIR
+
+        return {'ret': 'ok'}
+
     # Modifications
     for k in CTK.post:
         CTK.cfg[k] = CTK.post[k]
 
     return {'ret': 'ok'}
 
-
 def reorder (arg):
     print "reorder", CTK.post[arg]
     return {'ret': 'ok'}
+
+
+class VirtualServerNew (CTK.Container):
+    def __init__ (self):
+        CTK.Container.__init__ (self)
+
+        table = CTK.PropsTable()
+        table.Add (_('Nick'),          CTK.TextCfg ('tmp!new_nick',  False, {'class': 'noauto'}), _(NOTE_NEW_NICK))
+        table.Add (_('Document Root'), CTK.TextCfg ('tmp!new_droot', False, {'class': 'noauto'}), _(NOTE_NEW_DROOT))
+
+        submit = CTK.Submitter (URL_APPLY)
+        submit += table
+        self += submit
 
 
 class Render():
@@ -129,6 +171,20 @@ class Render():
         def __init__ (self):
             CTK.Box.__init__ (self, {'class': 'panel-buttons'})
 
+            # Add New
+            dialog = CTK.Dialog ({'title': _('Add New Virtual Server'), 'width': 480})
+            dialog.AddButton (_('Add'), dialog.JS_to_trigger('submit'))
+            dialog.AddButton (_('Cancel'), "close")
+            dialog += VirtualServerNew()
+
+            button = CTK.Button(_('New'))
+            button.bind ('click', dialog.JS_to_show())
+            dialog.bind ('submit_success', dialog.JS_to_close())
+            dialog.bind ('submit_success', self.JS_to_trigger('submit_success'));
+
+            self += button
+            self += dialog
+
             # Clone
             dialog = CTK.Dialog ({'title': _('Clone Virtual Server'), 'width': 480})
             dialog.AddButton (_('Clone'), JS_CLONE + dialog.JS_to_close())
@@ -173,4 +229,4 @@ class Render():
 
 
 CTK.publish (URL_BASE, Render)
-CTK.publish (URL_APPLY, commit, method="POST")
+CTK.publish (URL_APPLY, commit, method="POST", validation=VALIDATIONS)
