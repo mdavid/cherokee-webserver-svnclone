@@ -59,17 +59,22 @@ def Commit():
 def reorder (arg):
     # Process new list
     order = CTK.post.pop(arg)
+
     tmp = order.split(',')
+    vsrv = tmp[0].split('_')[1]
+
+    tmp = [x.split('_')[0] for x in tmp]
     tmp.reverse()
 
     # Build and alternative tree
-    num = 10
-    for v in tmp:
-        CTK.cfg.clone ('vserver!%s'%(v), 'tmp!vserver!%d'%(num))
-        num += 10
+    num = 100
+    for r in tmp:
+        CTK.cfg.clone ('vserver!%s!rule!%s'%(vsrv, r), 'tmp!vserver!%s!rule!%d'%(vsrv, num))
+        num += 100
 
     # Set the new list in place
-    CTK.cfg.rename ('tmp!vserver', 'vserver')
+    del (CTK.cfg['vserver!%s!rule'%(vsrv)])
+    CTK.cfg.rename ('tmp!vserver!%s!rule'%(vsrv), 'vserver!%s!rule'%(vsrv))
     return {'ret': 'ok'}
 
 
@@ -95,7 +100,8 @@ class RenderBase():
                 content = [CTK.RawHTML(rule_name)]
 
                 # List entry
-                panel.Add (r, '/vserver/%s/rule/content/%s'%(vsrv_num, r), content)
+                row_id = '%s_%s' %(r, vsrv_num)
+                panel.Add (row_id, '/vserver/%s/rule/content/%s'%(vsrv_num, r), content)
 
 
     class PanelButtons (CTK.Box):
