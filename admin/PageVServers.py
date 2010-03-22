@@ -70,11 +70,11 @@ JS_CLONE = """
 
 JS_PARTICULAR = """
   var vserver = window.location.pathname.match (/^\/vserver\/(\d+)/)[1];
-  $('.selection-panel:first').data('selectionpanel').set_selected_cookie (vserver);
+  $.cookie ('%(cookie_name)s', vserver, { path: '/vserver' });
   window.location.replace ('%(url_base)s');
 """
 
-def commit():
+def Commit():
     # New Virtual Server
     new_nick  = CTK.post.pop('tmp!new_nick')
     new_droot = CTK.post.pop('tmp!new_droot')
@@ -147,7 +147,7 @@ class RenderBase():
             entry = lambda klass, key: CTK.Box ({'class': klass}, CTK.RawHTML (CTK.cfg.get_val(key, '')))
 
             # Build the panel list
-            panel = SelectionPanel.SelectionPanel (reorder, right_box.id, URL_BASE, 'a')
+            panel = SelectionPanel.SelectionPanel (reorder, right_box.id, URL_BASE, '')
             self += panel
 
             # Build the Virtual Server list
@@ -235,7 +235,7 @@ class RenderBase():
         right.bind ('submit_success', refresh.JS_to_refresh());
 
         # Build the page
-        headers = Tab_HEADER + Submit_HEADER + TextField_HEADER + SortableList_HEADER
+        headers = Tab_HEADER + Submit_HEADER + TextField_HEADER + SortableList_HEADER + SelectionPanel.HEADER
         self.page = Page.Base(title, body_id='vservers', helps=HELPS, headers=headers)
         self.page += left
         self.page += right
@@ -252,7 +252,17 @@ class RenderParticular (RenderBase):
         self.page += CTK.RawHTML (js=JS_PARTICULAR %({'url_base': URL_BASE}))
         return self.page.Render()
 
+class RenderParticular2():
+    def __call__ (self):
+        headers = SelectionPanel.HEADER
+        page    = CTK.Page(headers=headers)
 
-CTK.publish (r'^%s$'    %(URL_BASE), Render)
-CTK.publish (r'^%s/\d+$'%(URL_BASE), RenderParticular)
-CTK.publish (r'^%s$'    %(URL_APPLY), commit, method="POST", validation=VALIDATIONS)
+        props = {'url_base':    URL_BASE,
+                 'cookie_name': SelectionPanel.COOKIE_NAME_DEFAULT}
+        page += CTK.RawHTML (js=JS_PARTICULAR %(props))
+
+        return page.Render()
+
+CTK.publish (r'^%s$'    %(URL_BASE),  Render)
+CTK.publish (r'^%s/\d+$'%(URL_BASE),  RenderParticular2)
+CTK.publish (r'^%s$'    %(URL_APPLY), Commit, method="POST", validation=VALIDATIONS)

@@ -25,11 +25,13 @@
 import CTK
 import string
 
-HEADERS = ['<script type="text/javascript" src="/CTK/js/jquery.cookie.js"></script>',
-           '<script type="text/javascript" src="/static/js/SelectionPanel.js"></script>']
+HEADER = ['<script type="text/javascript" src="/CTK/js/jquery.cookie.js"></script>',
+          '<script type="text/javascript" src="/static/js/SelectionPanel.js"></script>']
+
+COOKIE_NAME_DEFAULT = "selection"
 
 JS_INIT = """
-  $('#%(id)s').SelectionPanel ('%(table_id)s', '%(content_id)s', '%(cookie)s', '%(web_empty)s');
+  $('#%(id)s').SelectionPanel ('%(table_id)s', '%(content_id)s', '%(cookie)s', '%(cookie_domain)s', '%(web_empty)s');
 """
 
 class SelectionPanel (CTK.Box):
@@ -41,7 +43,7 @@ class SelectionPanel (CTK.Box):
         self.web_url     = web_url
         self.web_empty   = web_empty
         self.draggable   = draggable
-        self.cookie_name = "selection"
+        self.cookie_name = COOKIE_NAME_DEFAULT
 
         self += self.table
 
@@ -54,7 +56,7 @@ class SelectionPanel (CTK.Box):
 
         # Row Content
         row_content = CTK.Box({'class': 'row_content',
-                               'id':    'rc'+row_id,
+                               'id':    id_content, #'rc'+row_id,
                                'pid':   id_content,
                                'url':   url})
         for w in content:
@@ -75,13 +77,14 @@ class SelectionPanel (CTK.Box):
     def Render (self):
         render = CTK.Box.Render (self)
 
-        props = {'id':         self.id,
-                 'table_id':   self.table.id,
-                 'content_id': self.content_id,
-                 'cookie':     self.cookie_name,
-                 'web_empty':  self.web_empty}
+        props = {'id':            self.id,
+                 'table_id':      self.table.id,
+                 'content_id':    self.content_id,
+                 'cookie':        self.cookie_name,
+                 'cookie_domain': self.web_url,
+                 'web_empty':     self.web_empty}
 
         render.js      += JS_INIT %(props)
-        render.headers += HEADERS
+        render.headers += HEADER
 
         return render
