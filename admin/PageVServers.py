@@ -114,6 +114,7 @@ def reorder (arg):
         num += 10
 
     # Set the new list in place
+    del (CTK.cfg['vserver'])
     CTK.cfg.rename ('tmp!vserver', 'vserver')
     return {'ret': 'ok'}
 
