@@ -57,6 +57,15 @@ JS_CLONE = """
   }});
 """
 
+JS_REMOVE = """
+  var panel = $('.selection-panel:first').data('selectionpanel').get_selected();
+  var url   = panel.find('.row_content').attr('url');
+  $.ajax ({type: 'GET', async: false, url: url+'/remove', success: function(data) {
+      // A transaction took place
+      $('.panel-buttons').trigger ('submit_success');
+  }});
+"""
+
 
 def commit():
     # Modifications
@@ -142,6 +151,19 @@ class Render():
 
             self += dialog
             self += button
+
+            # Delete
+            dialog = CTK.Dialog ({'title': _('Remove Virtual Server'), 'width': 480})
+            dialog.AddButton (_('Remove'), JS_REMOVE + dialog.JS_to_close())
+            dialog.AddButton (_('Cancel'), "close")
+            dialog += CloneVServer()
+
+            button = CTK.Button(_('Remove'))
+            button.bind ('click', dialog.JS_to_show())
+
+            self += dialog
+            self += button
+
 
 
     def __call__ (self):

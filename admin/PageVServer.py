@@ -97,6 +97,11 @@ HELPS = [
 ]
 
 
+def commit_remove():
+    num = re.findall(r'^%s/([\d]+)/remove$'%(URL_BASE), CTK.request.url)[0]
+    del (CTK.cfg['vserver!%s'%(num)])
+    return {'ret': 'ok'}
+
 def commit_clone():
     num = re.findall(r'^%s/([\d]+)/clone$'%(URL_BASE), CTK.request.url)[0]
     next = CTK.cfg.get_next_entry_prefix ('vserver')
@@ -392,3 +397,4 @@ class Render():
 CTK.publish (r'^%s/[\d]+$'      %(URL_BASE), Render)
 CTK.publish (r'^%s/[\d]+$'      %(URL_APPLY), CTK.cfg_apply_post, validation=VALIDATIONS, method="POST")
 CTK.publish ('^%s/[\d]+/clone$' %(URL_BASE), commit_clone)
+CTK.publish ('^%s/[\d]+/remove$'%(URL_BASE), commit_remove)
