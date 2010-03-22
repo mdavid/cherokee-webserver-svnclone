@@ -328,10 +328,10 @@ def is_time (value):
 
     return value
 
-def is_new_host (value, nochroot):
+def is_new_vserver_nick (value):
     for h in CTK.cfg.keys('vserver'):
         if value == CTK.cfg.get_val('vserver!%s!nick'%(h)):
-            raise ValueError, _('Virtual host nick is already being used.')
+            raise ValueError, _('Virtual Server nick name is already being used.')
     return value
 
 
