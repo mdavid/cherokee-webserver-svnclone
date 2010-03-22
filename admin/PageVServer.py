@@ -31,6 +31,7 @@ import re
 
 from consts import *
 from configured import *
+from CTK.util import find_copy_name
 
 URL_BASE  = '/vserver/content'
 URL_APPLY = '/vserver/content/apply'
@@ -95,11 +96,17 @@ HELPS = [
     ('cookbook_ssl',           N_("SSL cookbook"))
 ]
 
-def apply():
-    # Modifications
-    for k in CTK.post:
-        CTK.cfg[k] = CTK.post[k]
 
+def commit_clone():
+    num = re.findall(r'^%s/([\d]+)/clone$'%(URL_BASE), CTK.request.url)[0]
+    next = CTK.cfg.get_next_entry_prefix ('vserver')
+
+    orig  = CTK.cfg.get_val ('vserver!%s!nick'%(num))
+    names = [CTK.cfg.get_val('vserver!%s!nick'%(x)) for x in CTK.cfg.keys('vserver')]
+    new_nick = find_copy_name (orig, names)
+
+    CTK.cfg.clone ('vserver!%s'%(num), next)
+    CTK.cfg['%s!nick' %(next)] = new_nick
     return {'ret': 'ok'}
 
 
@@ -382,5 +389,6 @@ class Render():
         return cont.Render().toStr()
 
 
-CTK.publish (r'^%s/[\d]+$'%(URL_BASE), Render)
-CTK.publish (r'^%s/[\d]+$'%(URL_APPLY), apply, validation=VALIDATIONS, method="POST")
+CTK.publish (r'^%s/[\d]+$'      %(URL_BASE), Render)
+CTK.publish (r'^%s/[\d]+$'      %(URL_APPLY), CTK.cfg_apply_post, validation=VALIDATIONS, method="POST")
+CTK.publish ('^%s/[\d]+/clone$' %(URL_BASE), commit_clone)

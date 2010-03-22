@@ -29,7 +29,6 @@ HEADERS = ['<script type="text/javascript" src="/CTK/js/jquery.cookie.js"></scri
            '<script type="text/javascript" src="/static/js/SelectionPanel.js"></script>']
 
 JS_INIT = """
-  console.log ("JS_INIT!!!!!!");
   $('#%(id)s').SelectionPanel ('%(table_id)s', '%(content_id)s', '%(cookie)s', '%(web_empty)s');
 """
 
@@ -54,7 +53,10 @@ class SelectionPanel (CTK.Box):
         row_id = ''.join([('_',x)[x in string.letters+string.digits] for x in url])
 
         # Row Content
-        row_content = CTK.Box({'id': 'rc'+row_id, 'pid': row_id, 'class': 'row_content', 'url': url })
+        row_content = CTK.Box({'class': 'row_content',
+                               'id':    'rc'+row_id,
+                               'pid':   row_id,
+                               'url':   url})
         for w in content:
             row_content += w
 

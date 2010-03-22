@@ -30,7 +30,6 @@ import validations
 
 from util import *
 from consts import *
-from CTK.util import find_copy_name
 from CTK.Tab       import HEADER as Tab_HEADER
 from CTK.Submitter import HEADER as Submit_HEADER
 from CTK.TextField import HEADER as TextField_HEADER
@@ -50,7 +49,8 @@ $('.selection-panel:first').data('selectionpanel').select_last();
 """
 
 JS_CLONE = """
-  var url = $('.selection-panel:first').data('selectionpanel').get_selected().attr('url');
+  var panel = $('.selection-panel:first').data('selectionpanel').get_selected();
+  var url   = panel.find('.row_content').attr('url');
   $.ajax ({type: 'GET', async: false, url: url+'/clone', success: function(data) {
       // A transaction took place
       $('.panel-buttons').trigger ('submit_success');
@@ -69,6 +69,12 @@ def commit():
 def reorder (arg):
     print "reorder", CTK.post[arg]
     return {'ret': 'ok'}
+
+
+class CloneVServer (CTK.Container):
+    def __init__ (self):
+        CTK.Container.__init__ (self)
+        self += CTK.RawHTML ('About to clone a Virtual Server.')
 
 
 class Render():
@@ -124,7 +130,19 @@ class Render():
     class PanelButtons (CTK.Box):
         def __init__ (self):
             CTK.Box.__init__ (self, {'class': 'panel-buttons'})
-            self += CTK.RawHTML ("Buttons here")
+
+            # Clone
+            dialog = CTK.Dialog ({'title': _('Clone Virtual Server'), 'width': 480})
+            dialog.AddButton (_('Clone'), JS_CLONE + dialog.JS_to_close())
+            dialog.AddButton (_('Cancel'), "close")
+            dialog += CloneVServer()
+
+            button = CTK.Button(_('Clone'))
+            button.bind ('click', dialog.JS_to_show())
+
+            self += dialog
+            self += button
+
 
     def __call__ (self):
         title = _('Virtual Servers')
@@ -133,7 +151,7 @@ class Render():
         right = CTK.Box({'class': 'vserver_content'})
         left  = CTK.Box({'class': 'panel'}, CTK.RawHTML('<h2>%s</h2>'%(title) ))
 
-        # Sources List
+        # Virtual Server List
         refresh = CTK.Refreshable ({'id': 'vservers_panel'})
         refresh.register (lambda: self.PanelList(refresh, right).Render())
 

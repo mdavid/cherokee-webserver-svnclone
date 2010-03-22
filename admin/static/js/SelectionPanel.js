@@ -74,7 +74,7 @@
 	   }
 
 	   this.get_selected = function() {
-		  var selected = self.find('.row_content.panel-selected:first');
+		  var selected = self.find('.panel-selected:first');
 		  return $(selected);
 	   }
 
