@@ -41,8 +41,8 @@ URL_APPLY = r'/vserver/apply'
 
 HELPS = [('config_virtual_servers', N_("Virtual Servers"))]
 
-NOTE_DELETE_DIALOG = N_('You are about to delete a Virtual Server. Are you sure you want to proceed?')
-
+NOTE_DELETE_DIALOG = N_('<p>You are about to delete the <b>%s</b> Virtual Server.</p><p>Are you sure you want to proceed?</p>')
+NOTE_CLONE_DIALOG  = N_('You are about to clone a Virtual Server. Would you like to proceed?')
 
 JS_ACTIVATE_LAST = """
 $('.selection-panel:first').data('selectionpanel').select_last();
@@ -52,15 +52,6 @@ JS_CLONE = """
   var panel = $('.selection-panel:first').data('selectionpanel').get_selected();
   var url   = panel.find('.row_content').attr('url');
   $.ajax ({type: 'GET', async: false, url: url+'/clone', success: function(data) {
-      // A transaction took place
-      $('.panel-buttons').trigger ('submit_success');
-  }});
-"""
-
-JS_REMOVE = """
-  var panel = $('.selection-panel:first').data('selectionpanel').get_selected();
-  var url   = panel.find('.row_content').attr('url');
-  $.ajax ({type: 'GET', async: false, url: url+'/remove', success: function(data) {
       // A transaction took place
       $('.panel-buttons').trigger ('submit_success');
   }});
@@ -78,12 +69,6 @@ def commit():
 def reorder (arg):
     print "reorder", CTK.post[arg]
     return {'ret': 'ok'}
-
-
-class CloneVServer (CTK.Container):
-    def __init__ (self):
-        CTK.Container.__init__ (self)
-        self += CTK.RawHTML ('About to clone a Virtual Server.')
 
 
 class Render():
@@ -114,7 +99,11 @@ class Render():
                 content = [entry('nick',  'vserver!%s!nick'%(k)),
                            entry('droot', 'vserver!%s!document_root'%(k))]
 
-                if k != vservers[-1]:
+                if k == vservers[-1]:
+                    panel.Add ('/vserver/content/%s'%(k), content, draggable=False)
+                else:
+                    nick = CTK.cfg.get_val ('vserver!%s!nick'%(k), _('Unknown'))
+
                     # Remove
                     dialog = CTK.Dialog ({'title': _('Do you really want to remove it?'), 'width': 480})
                     dialog.AddButton (_('Remove'), CTK.JS.Ajax (URL_APPLY, async=False,
@@ -122,7 +111,7 @@ class Render():
                                                                 success = dialog.JS_to_close() + \
                                                                     refresh.JS_to_refresh()))
                     dialog.AddButton (_('Cancel'), "close")
-                    dialog += CTK.RawHTML (NOTE_DELETE_DIALOG)
+                    dialog += CTK.RawHTML (_(NOTE_DELETE_DIALOG) %(nick))
                     self += dialog
 
                     remove = CTK.ImageStock('del', {'class': 'del'})
@@ -132,8 +121,8 @@ class Render():
                     disabled = CTK.Box ({'class': 'disable'}, CTK.iPhoneCfg('vserver!%s!disabled'%(k), False))
                     content += [disabled, remove]
 
-                # List entry
-                panel.Add ('/vserver/content/%s'%(k), content)
+                    # List entry
+                    panel.Add ('/vserver/content/%s'%(k), content)
 
 
     class PanelButtons (CTK.Box):
@@ -144,26 +133,13 @@ class Render():
             dialog = CTK.Dialog ({'title': _('Clone Virtual Server'), 'width': 480})
             dialog.AddButton (_('Clone'), JS_CLONE + dialog.JS_to_close())
             dialog.AddButton (_('Cancel'), "close")
-            dialog += CloneVServer()
+            dialog += CTK.RawHTML ('<p>%s</p>' %(_(NOTE_CLONE_DIALOG)))
 
             button = CTK.Button(_('Clone'))
             button.bind ('click', dialog.JS_to_show())
 
             self += dialog
             self += button
-
-            # Delete
-            dialog = CTK.Dialog ({'title': _('Remove Virtual Server'), 'width': 480})
-            dialog.AddButton (_('Remove'), JS_REMOVE + dialog.JS_to_close())
-            dialog.AddButton (_('Cancel'), "close")
-            dialog += CloneVServer()
-
-            button = CTK.Button(_('Remove'))
-            button.bind ('click', dialog.JS_to_show())
-
-            self += dialog
-            self += button
-
 
 
     def __call__ (self):
