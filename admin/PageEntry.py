@@ -33,8 +33,8 @@ from Rule import Rule
 from consts import *
 from configured import *
 
-URL_BASE  = r'^/vserver/([\d]+)/rule/([\d]+)/?$'
-URL_APPLY = r'^/vserver/([\d]+)/rule/([\d]+)/apply$'
+URL_BASE  = r'^/vserver/([\d]+)/rule/content/([\d]+)/?$'
+URL_APPLY = r'^/vserver/([\d]+)/rule/content/([\d]+)/apply$'
 
 NOTE_TIMEOUT         = N_('Apply a custom timeout to the connections matching this rule.')
 NOTE_HANDLER         = N_('How the connection will be handled.')
@@ -250,11 +250,17 @@ class Render():
         tabs.Add (_('Traffic Shaping'), TrafficWidget (vsrv_num, rule_num, url_apply))
 
         # Page
-        page = Page.Base ('%s: %s: %s' %(_('Virtual Server'), vsrv_nam, rule_num), helps=HELPS)
-        page += refresh
-        page += tabs
+        #page = Page.Base ('%s: %s: %s' %(_('Virtual Server'), vsrv_nam, rule_num), helps=HELPS)
+        #page += refresh
+        #page += tabs
+        #return page.Render()
 
-        return page.Render()
+        cont = CTK.Container()
+        cont += refresh
+        cont += tabs
+
+        return cont.Render().toStr()
+
 
 
 CTK.publish (URL_BASE, Render)
