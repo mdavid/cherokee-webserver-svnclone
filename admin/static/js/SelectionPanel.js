@@ -78,9 +78,10 @@
 		  return $(selected);
 	   }
 
-	   this.select_id = function (id) {
-		  var row = self.find ('.row_content[pid='+ id +']');
-		  auto_select_row (row);
+	   this.set_selected_cookie = function (pid) {
+		  var row = self.find ('.row_content[pid='+ pid +']');
+		  console.log ("FIJA COOKIE A", row.attr('id'));
+		  $.cookie (cookie_name, row.attr('id'));
 	   }
 
 	   this.select_last = function() {
