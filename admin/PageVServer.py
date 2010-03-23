@@ -30,6 +30,7 @@ import validations
 import re
 
 from consts import *
+from Rule import Rule
 from configured import *
 from CTK.util import find_copy_name
 
@@ -141,7 +142,41 @@ class BehaviorWidget (CTK.Container):
         url_apply = "%s/%s" %(URL_APPLY, vsrv_num)
 
         # List
-        self += CTK.RawHTML ('<p>TO DO: The behavior rule list goes here. Still WIP.</p>')
+        table = CTK.Table()
+        table.set_header(1)
+        table += [CTK.RawHTML(x) for x in (_('Match'), _('Handler'), _('Auth'), _('Final'))]
+
+        rules = CTK.cfg.keys('vserver!%s!rule'%(vsrv_num))
+        rules.sort (lambda x,y: cmp(int(x), int(y)))
+        rules.reverse()
+
+        for r in rules:
+            rule = Rule ('vserver!%s!rule!%s!match'%(vsrv_num, r))
+            rule_name = rule.GetName()
+            link = CTK.Link ('/vserver/%s/rule/%s'%(vsrv_num, r), CTK.RawHTML (rule_name))
+
+            handler = None
+            tmp     = CTK.cfg.get_val ('vserver!%s!rule!%s!handler'%(vsrv_num, r), '')
+            if tmp:
+                handler = CTK.RawHTML (filter (lambda x: x[0] == tmp, HANDLERS)[0][1])
+
+            auth = None
+            tmp  = CTK.cfg.get_val ('vserver!%s!rule!%s!auth'%(vsrv_num, r), '')
+            if tmp:
+                auth = CTK.RawHTML (filter (lambda x: x[0] == tmp, VALIDATORS)[0][1])
+
+            final    = CTK.CheckCfg  ('vserver!%s!rule!%s!final'%(vsrv_num, r), True)
+            disabled = CTK.iPhoneCfg ('vserver!%s!rule!%s!disabled'%(vsrv_num, r), False)
+
+            table += [link, handler, auth, final, disabled]
+
+        # Submit
+        submit = CTK.Submitter (url_apply)
+        submit += table
+
+        self += CTK.RawHTML ('<h2>%s</h2>' %(_('Behavior Rules')))
+        self += CTK.Indenter (submit)
+
 
 
 class BasicsWidget (CTK.Container):
