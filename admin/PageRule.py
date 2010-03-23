@@ -131,7 +131,7 @@ class Render():
                     comment.append ('no log')
 
                 # Content
-                content = [CTK.RawHTML(rule_name),
+                content = [CTK.Box ({'class': 'name'}, CTK.RawHTML(rule_name)),
                            CTK.Box ({'class': 'comment'}, CTK.RawHTML (', '.join(comment)))]
 
                 # List entry
@@ -161,8 +161,31 @@ class Render():
 
 
     class PanelButtons (CTK.Box):
-        def __init__ (self):
+        def __init__ (self, vsrv_num):
             CTK.Box.__init__ (self, {'class': 'panel-buttons'})
+
+            # Add New: Content
+            rules = [('',_('Choose..'))] + RULES
+
+            table = CTK.PropsTable()
+            modul = CTK.PluginSelector ('tmp', rules, vsrv_num=vsrv_num)
+            table.Add (_('Rule Type'), modul.selector_widget, '')
+
+            # Add New
+            dialog = CTK.Dialog ({'title': _('Add Behavior Rule'), 'width': 550})
+            dialog.AddButton (_('Add'), dialog.JS_to_trigger('submit'))
+            dialog.AddButton (_('Cancel'), "close")
+            dialog += table
+            dialog += modul
+
+            button = CTK.Button(_('New'))
+            button.bind ('click', dialog.JS_to_show())
+            dialog.bind ('submit_success', dialog.JS_to_close())
+            dialog.bind ('submit_success', self.JS_to_trigger('submit_success'));
+
+            self += button
+            self += dialog
+
 
     def __call__ (self):
         title = _('Behavior')
@@ -181,7 +204,7 @@ class Render():
         refresh.register (lambda: self.PanelList(refresh, right, vsrv_num).Render())
 
         # Refresh on 'New' or 'Clone'
-        buttons = self.PanelButtons()
+        buttons = self.PanelButtons (vsrv_num)
         buttons.bind ('submit_success', refresh.JS_to_refresh (on_success=JS_ACTIVATE_LAST))
 
         left += refresh
