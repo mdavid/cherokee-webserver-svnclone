@@ -41,8 +41,11 @@ from CTK.consts import *
 from configured import *
 
 URL_BASE       = r'^/vserver/(\d+)/rule$'
-URL_APPLY      = r'^/vserver/(\d+)/rule/apply$'
+URL_APPLY      = '/vserver/%s/rule/apply'
+URL_APPLY_R    = r'^/vserver/(\d+)/rule/apply$'
 URL_PARTICULAR = r'^/vserver/(\d+)/rule/\d+$'
+
+NOTE_DELETE_DIALOG = N_('<p>You are about to delete the <b>%s</b> behavior rule.</p><p>Are you sure you want to proceed?</p>')
 
 HELPS = []
 VALIDATIONS = []
@@ -82,7 +85,8 @@ class Render():
     class PanelList (CTK.Container):
         def __init__ (self, refresh, right_box, vsrv_num):
             CTK.Container.__init__ (self)
-            url_base = '/vserver/%s' %(vsrv_num)
+            url_base  = '/vserver/%s' %(vsrv_num)
+            url_apply = URL_APPLY %(vsrv_num)
 
             # Build the panel list
             panel = SelectionPanel.SelectionPanel (reorder, right_box.id, url_base, '')
@@ -126,12 +130,34 @@ class Render():
                 if CTK.cfg.get_val ('vserver!%s!rule!%s!no_log' %(vsrv_num, r)):
                     comment.append ('no log')
 
+                # Content
                 content = [CTK.RawHTML(rule_name),
                            CTK.Box ({'class': 'comment'}, CTK.RawHTML (', '.join(comment)))]
 
                 # List entry
                 row_id = '%s_%s' %(r, vsrv_num)
-                panel.Add (row_id, '/vserver/%s/rule/content/%s'%(vsrv_num, r), content)
+
+                if r == rules[-1]:
+                    panel.Add (row_id, '/vserver/%s/rule/content/%s'%(vsrv_num, r), content, draggable=False)
+                else:
+                    # Remove
+                    dialog = CTK.Dialog ({'title': _('Do you really want to remove it?'), 'width': 480})
+                    dialog.AddButton (_('Remove'), CTK.JS.Ajax (url_apply, async=False,
+                                                                data    = {'vserver!%s!rule!%s'%(vsrv_num, r):''},
+                                                                success = dialog.JS_to_close() + \
+                                                                    refresh.JS_to_refresh()))
+                    dialog.AddButton (_('Cancel'), "close")
+                    dialog += CTK.RawHTML (_(NOTE_DELETE_DIALOG) %(rule_name))
+                    self += dialog
+                    remove = CTK.ImageStock('del', {'class': 'del'})
+                    remove.bind ('click', dialog.JS_to_show() + "return false;")
+
+                    # Disable
+                    disabled = CTK.Box ({'class': 'disable'}, CTK.iPhoneCfg('vserver!%s!rule!%s!disabled'%(vsrv_num, r), False))
+                    content += [disabled, remove]
+
+                    # Add the list entry
+                    panel.Add (row_id, '/vserver/%s/rule/content/%s'%(vsrv_num, r), content)
 
 
     class PanelButtons (CTK.Box):
@@ -187,4 +213,4 @@ class RenderParticular:
 
 CTK.publish (URL_BASE,       Render)
 CTK.publish (URL_PARTICULAR, RenderParticular)
-CTK.publish (URL_APPLY,      Commit, method="POST", validation=VALIDATIONS)
+CTK.publish (URL_APPLY_R,    Commit, method="POST", validation=VALIDATIONS)
