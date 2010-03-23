@@ -256,11 +256,12 @@ class Render():
 
 class RenderParticular:
     def __call__ (self):
-        headers = SelectionPanel.HEADER
-        page    = CTK.Page(headers=headers)
+        headers = ['<script type="text/javascript" src="/CTK/js/jquery-1.3.2.js"></script>',
+                   '<script type="text/javascript" src="/CTK/js/jquery.cookie.js"></script>']
 
+        page  = CTK.PageEmpty (headers=headers)
         props = {'cookie_name': SelectionPanel.COOKIE_NAME_DEFAULT}
-        page += CTK.RawHTML (js=JS_PARTICULAR %(props))
+        page += CTK.RawHTML (HTML_JS_BLOCK %(JS_PARTICULAR %(props)))
 
         return page.Render()
 

@@ -208,7 +208,7 @@ class Header (CTK.Container):
 
         rule = Rule ('vserver!%s!rule!%s!match'%(vsrv_num, rule_num))
         rule_nam = rule.GetName()
-        self += CTK.RawHTML ('<h1><a href="/vserver/%s">%s</a>: %s &rarr; %s</h1>' %(vsrv_num, _('Virtual Server'), vsrv_nam, rule_nam))
+        self += CTK.RawHTML ('<h2><a href="/vserver/%s">%s</a> &rarr; %s</h2>' %(vsrv_num, vsrv_nam, rule_nam))
 
 
 class HandlerWidget (CTK.Container):
