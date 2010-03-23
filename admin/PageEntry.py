@@ -230,7 +230,7 @@ class Render():
         vsrv_num, rule_num = re.findall (URL_BASE, CTK.request.url)[0]
         vsrv_nam = CTK.cfg.get_val ("vserver!%s!nick" %(vsrv_num), _("Unknown"))
 
-        url_apply = '/vserver/%s/rule/%s/apply' %(vsrv_num, rule_num)
+        url_apply = '/vserver/%s/rule/content/%s/apply' %(vsrv_num, rule_num)
 
         # Ensure the rule exists
         if not CTK.cfg.keys('vserver!%s!rule!%s'%(vsrv_num, rule_num)):
