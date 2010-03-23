@@ -78,7 +78,7 @@ def reorder (arg):
     return {'ret': 'ok'}
 
 
-class RenderBase():
+class Render():
     class PanelList (CTK.Container):
         def __init__ (self, refresh, right_box, vsrv_num):
             CTK.Container.__init__ (self)
@@ -124,6 +124,10 @@ class RenderBase():
         title = _('Behavior')
         vsrv_num = re.findall (URL_BASE, CTK.request.url)[0]
 
+        # Ensure the VServer exists
+        if not CTK.cfg.keys('vserver!%s'%(vsrv_num)):
+            return CTK.HTTP_Redir ('/vserver')
+
         # Content
         right = CTK.Box({'class': 'rules_content'})
         left  = CTK.Box({'class': 'panel'}, CTK.RawHTML('<h2>%s</h2>'%(title)))
@@ -144,21 +148,23 @@ class RenderBase():
 
         # Build the page
         headers = Tab_HEADER + Submit_HEADER + TextField_HEADER + SortableList_HEADER
-        self.page = Page.Base(title, body_id='rules', helps=HELPS, headers=headers)
-        self.page += left
-        self.page += right
+        page = Page.Base(title, body_id='rules', helps=HELPS, headers=headers)
+        page += left
+        page += right
+
+        return page.Render()
 
 
-class Render (RenderBase):
+class RenderParticular:
     def __call__ (self):
-        RenderBase.__call__(self)
-        return self.page.Render()
+        headers = SelectionPanel.HEADER
+        page    = CTK.Page(headers=headers)
 
-class RenderParticular (RenderBase):
-    def __call__ (self):
-        RenderBase.__call__(self)
-        self.page += CTK.RawHTML (js=JS_PARTICULAR %({'url_base': URL_BASE}))
-        return self.page.Render()
+        props = {'url_base':    URL_BASE,
+                 'cookie_name': SelectionPanel.COOKIE_NAME_DEFAULT}
+        page += CTK.RawHTML (js=JS_PARTICULAR %(props))
+
+        return page.Render()
 
 
 CTK.publish (URL_BASE,       Render)
