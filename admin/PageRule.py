@@ -40,13 +40,14 @@ from CTK.util import *
 from CTK.consts import *
 from configured import *
 
-URL_BASE       = '/vserver/%s/rule'
-URL_APPLY      = '/vserver/%s/rule/apply'
-URL_BASE_R     = r'^/vserver/(\d+)/rule$'
-URL_APPLY_R    = r'^/vserver/(\d+)/rule/apply$'
-URL_PARTICULAR = r'^/vserver/(\d+)/rule/\d+$'
+URL_BASE         = '/vserver/%s/rule'
+URL_APPLY        = '/vserver/%s/rule/apply'
+URL_BASE_R       = r'^/vserver/(\d+)/rule$'
+URL_APPLY_R      = r'^/vserver/(\d+)/rule/apply$'
+URL_PARTICULAR_R = r'^/vserver/(\d+)/rule/\d+$'
 
 NOTE_DELETE_DIALOG = N_('<p>You are about to delete the <b>%s</b> behavior rule.</p><p>Are you sure you want to proceed?</p>')
+NOTE_CLONE_DIALOG  = N_('You are about to clone a Behavior Rule. Would you like to proceed?')
 
 HELPS = []
 VALIDATIONS = []
@@ -55,12 +56,23 @@ JS_ACTIVATE_LAST = """
 $('.selection-panel:first').data('selectionpanel').select_last();
 """
 
+JS_CLONE = """
+  var panel = $('.selection-panel:first').data('selectionpanel').get_selected();
+  var url   = panel.find('.row_content').attr('url');
+
+  $.ajax ({type: 'GET', async: false, url: url+'/clone', success: function(data) {
+      $('.panel-buttons').trigger ('submit_success');
+  }});
+"""
+
 JS_PARTICULAR = """
   var vserver = window.location.pathname.match (/^\/vserver\/(\d+)/)[1];
   var rule    = window.location.pathname.match (/^\/vserver\/\d+\/rule\/(\d+)/)[1];
+
   $.cookie ('%(cookie_name)s', rule+'_'+vserver, { path: '/vserver/'+ vserver + '/rule'});
   window.location.replace ('/vserver/'+ vserver + '/rule');
 """
+
 
 def Commit():
     # Modifications
@@ -194,6 +206,19 @@ class Render():
             self += button
             self += dialog
 
+            # Clone
+            dialog = CTK.Dialog ({'title': _('Clone Behavior Rule'), 'width': 480})
+            dialog.AddButton (_('Clone'), JS_CLONE + dialog.JS_to_close())
+            dialog.AddButton (_('Cancel'), "close")
+            dialog += CTK.RawHTML ('<p>%s</p>' %(_(NOTE_CLONE_DIALOG)))
+            dialog += CTK.Hidden ('tmp!cloning', '1')
+
+            button = CTK.Button(_('Clone'))
+            button.bind ('click', dialog.JS_to_show())
+
+            self += dialog
+            self += button
+
 
     def __call__ (self):
         title = _('Behavior')
@@ -241,6 +266,6 @@ class RenderParticular:
         return page.Render()
 
 
-CTK.publish (URL_BASE_R,     Render)
-CTK.publish (URL_PARTICULAR, RenderParticular)
-CTK.publish (URL_APPLY_R,    Commit, method="POST", validation=VALIDATIONS)
+CTK.publish (URL_BASE_R,       Render)
+CTK.publish (URL_PARTICULAR_R, RenderParticular)
+CTK.publish (URL_APPLY_R,      Commit, method="POST", validation=VALIDATIONS)

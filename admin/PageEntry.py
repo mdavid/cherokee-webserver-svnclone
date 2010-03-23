@@ -35,6 +35,7 @@ from configured import *
 
 URL_BASE  = r'^/vserver/([\d]+)/rule/content/([\d]+)/?$'
 URL_APPLY = r'^/vserver/([\d]+)/rule/content/([\d]+)/apply$'
+URL_CLONE = r'^/vserver/([\d]+)/rule/content/([\d]+)/clone$'
 
 NOTE_TIMEOUT         = N_('Apply a custom timeout to the connections matching this rule.')
 NOTE_HANDLER         = N_('How the connection will be handled.')
@@ -71,10 +72,11 @@ ENCODE_OPTIONS = [
 ]
 
 
+def Clone():
+    vsrv, rule = re.findall(URL_CLONE, CTK.request.url)[0]
+    next = CTK.cfg.get_next_entry_prefix ('vserver!%s!rule'%(vsrv))
 
-def apply():
-    for k in CTK.post:
-        CTK.cfg[k] = CTK.post[k]
+    CTK.cfg.clone ('vserver!%s!rule!%s'%(vsrv,rule), next)
     return {'ret': 'ok'}
 
 
@@ -264,4 +266,5 @@ class Render():
 
 
 CTK.publish (URL_BASE, Render)
-CTK.publish (URL_APPLY, apply, validation=VALIDATIONS, method="POST")
+CTK.publish (URL_CLONE, Clone, method="POST")
+CTK.publish (URL_APPLY, CTK.cfg_apply_post, validation=VALIDATIONS, method="POST")
