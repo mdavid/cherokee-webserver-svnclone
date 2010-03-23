@@ -251,12 +251,6 @@ class Render():
         tabs.Add (_('Security'),        SecurityWidget (vsrv_num, rule_num, url_apply))
         tabs.Add (_('Traffic Shaping'), TrafficWidget (vsrv_num, rule_num, url_apply))
 
-        # Page
-        #page = Page.Base ('%s: %s: %s' %(_('Virtual Server'), vsrv_nam, rule_num), helps=HELPS)
-        #page += refresh
-        #page += tabs
-        #return page.Render()
-
         cont = CTK.Container()
         cont += refresh
         cont += tabs
