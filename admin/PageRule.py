@@ -40,8 +40,9 @@ from CTK.util import *
 from CTK.consts import *
 from configured import *
 
-URL_BASE       = r'^/vserver/(\d+)/rule$'
+URL_BASE       = '/vserver/%s/rule'
 URL_APPLY      = '/vserver/%s/rule/apply'
+URL_BASE_R     = r'^/vserver/(\d+)/rule$'
 URL_APPLY_R    = r'^/vserver/(\d+)/rule/apply$'
 URL_PARTICULAR = r'^/vserver/(\d+)/rule/\d+$'
 
@@ -52,6 +53,13 @@ VALIDATIONS = []
 
 JS_ACTIVATE_LAST = """
 $('.selection-panel:first').data('selectionpanel').select_last();
+"""
+
+JS_PARTICULAR = """
+  var vserver = window.location.pathname.match (/^\/vserver\/(\d+)/)[1];
+  var rule    = window.location.pathname.match (/^\/vserver\/\d+\/rule\/(\d+)/)[1];
+  $.cookie ('%(cookie_name)s', rule+'_'+vserver, { path: '/vserver/'+ vserver + '/rule'});
+  window.location.replace ('/vserver/'+ vserver + '/rule');
 """
 
 def Commit():
@@ -85,7 +93,7 @@ class Render():
     class PanelList (CTK.Container):
         def __init__ (self, refresh, right_box, vsrv_num):
             CTK.Container.__init__ (self)
-            url_base  = '/vserver/%s' %(vsrv_num)
+            url_base  = '/vserver/%s/rule' %(vsrv_num)
             url_apply = URL_APPLY %(vsrv_num)
 
             # Build the panel list
@@ -189,7 +197,7 @@ class Render():
 
     def __call__ (self):
         title = _('Behavior')
-        vsrv_num = re.findall (URL_BASE, CTK.request.url)[0]
+        vsrv_num = re.findall (URL_BASE_R, CTK.request.url)[0]
 
         # Ensure the VServer exists
         if not CTK.cfg.keys('vserver!%s'%(vsrv_num)):
@@ -227,13 +235,12 @@ class RenderParticular:
         headers = SelectionPanel.HEADER
         page    = CTK.Page(headers=headers)
 
-        props = {'url_base':    URL_BASE,
-                 'cookie_name': SelectionPanel.COOKIE_NAME_DEFAULT}
+        props = {'cookie_name': SelectionPanel.COOKIE_NAME_DEFAULT}
         page += CTK.RawHTML (js=JS_PARTICULAR %(props))
 
         return page.Render()
 
 
-CTK.publish (URL_BASE,       Render)
+CTK.publish (URL_BASE_R,     Render)
 CTK.publish (URL_PARTICULAR, RenderParticular)
 CTK.publish (URL_APPLY_R,    Commit, method="POST", validation=VALIDATIONS)
