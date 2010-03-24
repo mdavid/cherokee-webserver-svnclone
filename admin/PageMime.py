@@ -25,6 +25,8 @@
 import CTK
 import Page
 import Cherokee
+import validations
+import util
 
 from consts import *
 from configured import *
@@ -37,6 +39,13 @@ HELPS = [('config_mime_types', N_("MIME types"))]
 NOTE_NEW_MIME       = N_('New MIME type to be added.')
 NOTE_NEW_EXTENSIONS = N_('Comma separated list of file extensions associated with the MIME type.')
 NOTE_NEW_MAXAGE     = N_('Maximum time that this sort of content can be cached (in seconds).')
+
+
+VALIDATIONS = [
+    ('new_mime',            validations.is_safe_mime),
+    ('new_exts',            validations.is_safe_exts),
+]
+
 
 def apply():
     # New entry
@@ -59,9 +68,46 @@ def apply():
     return {'ret': 'ok'}
 
 
+class AddMime (CTK.Container):
+    def __init__ (self):
+        CTK.Container.__init__ (self)
+
+        table = CTK.PropsTable()
+        table.Add (_('Mime Type'),  CTK.TextField({'name': 'new_mime', 'class': 'noauto'}), _(NOTE_NEW_MIME))
+        table.Add (_('Extensions'), CTK.TextField({'name': 'new_exts', 'class': 'noauto optional'}), _(NOTE_NEW_EXTENSIONS))
+        table.Add (_('Max Age'),    CTK.TextField({'name': 'new_mage', 'class': 'noauto optional'}), _(NOTE_NEW_MAXAGE))
+
+        submit = CTK.Submitter(URL_APPLY)
+        submit += table
+        self += submit
+
+
+class MIME_Button (CTK.Box):
+    def __init__ (self):
+        CTK.Box.__init__ (self, {'class': 'mime-button'})
+
+        # Add New
+        dialog = CTK.Dialog ({'title': _('Add new MIME'), 'width': 480})
+        dialog.AddButton (_('Add'), dialog.JS_to_trigger('submit'))
+        dialog.AddButton (_('Cancel'), "close")
+        dialog += AddMime()
+
+        button = CTK.Button(_('Add'))
+        button.bind ('click', dialog.JS_to_show())
+        dialog.bind ('submit_success', dialog.JS_to_close())
+        dialog.bind ('submit_success', self.JS_to_trigger('submit_success'));
+
+        self += button
+        self += dialog
+
+
 class MIME_Table (CTK.Container):
     def __init__ (self, refreshable, **kwargs):
         CTK.Container.__init__ (self, **kwargs)
+
+        # Add new MIME
+        button = MIME_Button()
+        button.bind ('submit_success', refreshable.JS_to_refresh ())
 
         # List
         table = CTK.Table ({'id': "mimetable"})
@@ -76,23 +122,12 @@ class MIME_Table (CTK.Container):
             e1 = CTK.TextCfgAuto ('%s!extensions'%(pre), URL_APPLY, False, {'size': 35})
             e2 = CTK.TextCfgAuto ('%s!max-age'%(pre),    URL_APPLY, True,  {'size': 6, 'maxlength': 6})
             rm = CTK.ImageStock('del')
+            rm.bind('click', CTK.JS.Ajax (URL_APPLY, data = {pre: ''},
+                                          complete = refreshable.JS_to_refresh()))
             table += [CTK.RawHTML(mime), e1, e2, rm]
 
+        self += CTK.Indenter (button)
         self += CTK.Indenter (table)
-
-        # Add new MIME
-        table = CTK.PropsTable()
-        table.Add (_('Mime Type'),  CTK.TextField({'name': 'new_mime', 'class': 'noauto'}), _(NOTE_NEW_MIME))
-        table.Add (_('Extensions'), CTK.TextField({'name': 'new_exts', 'class': 'noauto optional'}), _(NOTE_NEW_EXTENSIONS))
-        table.Add (_('Max Age'),    CTK.TextField({'name': 'new_mage', 'class': 'noauto optional'}), _(NOTE_NEW_MAXAGE))
-
-        submit = CTK.Submitter(URL_APPLY)
-        submit += table
-        submit += CTK.SubmitterButton(_("Add"))
-        submit.bind ('submit_success', refreshable.JS_to_refresh())
-
-        self += CTK.RawHTML ('<h2>%s</h2>\n' %(_('Add new MIME')))
-        self += CTK.Indenter(submit)
 
 
 class MIME_Table_Instancer (CTK.Container):
@@ -106,11 +141,11 @@ class MIME_Table_Instancer (CTK.Container):
 
 class Render():
     def __call__ (self):
-        page = Page.Base(_('Icons'), body_id='mime', helps=HELPS)
+        page = Page.Base(_('MIME types configuration'), body_id='mime', helps=HELPS)
         page += CTK.RawHTML("<h1>%s</h1>" %(_('MIME Types')))
         page += MIME_Table_Instancer()
         return page.Render()
 
 
 CTK.publish ('^%s'%(URL_BASE), Render)
-CTK.publish ('^%s'%(URL_APPLY), apply, method="POST")
+CTK.publish ('^%s'%(URL_APPLY), apply, validation=VALIDATIONS, method="POST")
