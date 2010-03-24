@@ -5,9 +5,9 @@ from util import split_list
 
 # Conditional Check
 # -----------------
-# By default the validations are not perform is there is no value to
-# check. That usually means that the configuation entry if being
-# removed. In case the entry should be always check, the function
+# By default the validations are not performed if there is no value to
+# check. That usually means that the configuation entry is being
+# removed. In case the entry should always be checked, the function
 # could define a property 'CHECK_ON_NO_VALUE' to enforce it.
 
 
@@ -335,3 +335,24 @@ def is_new_vserver_nick (value):
     return value
 
 
+# MIME Types
+
+def is_safe_mime (mime):
+    mimes = CTK.cfg.keys ('mime')
+    if mime in mimes:
+        raise ValueError, _('Already in use')
+    return mime
+
+
+def is_safe_exts (new):
+    new  = split_list (new)
+    keys = CTK.cfg.keys ('mime')
+    cfg  = [CTK.cfg.get_val('mime!%s!extensions' % key) for key in keys]
+    old  = [x for sublist in map(split_list, cfg) for x in sublist]
+
+    old.sort()
+    dupes = list (set(old) & set(new))
+    if dupes:
+        raise ValueError, '%s: %s' %(_('Already in use'), ', '.join(dupes))
+
+    return ','.join(new)
