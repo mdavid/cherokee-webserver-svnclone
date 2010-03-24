@@ -52,9 +52,9 @@ name and it will be <a target="_blank" href="%s">listed on the
 Cherokee Project web site</a>.
 """ %(PROUD_USERS_WEB))
 
-PROUD_DIALOG_OK     = N_("The information has been successfully sent.")
+PROUD_DIALOG_OK     = N_("The information has been successfully sent. Thank you!")
 PROUS_DIALOG_ERROR1 = N_("Unfortunatelly something went wrong, and the information could not be submitted. Please, try again.")
-PROUS_DIALOG_ERROR2 = N_("Do not hesitate to report the problem if this issue persists.")
+PROUS_DIALOG_ERROR2 = N_("Do not hesitate to report the problem if it persists.")
 
 
 def Launch():
@@ -143,38 +143,33 @@ def ProudUsers_Apply():
     try:
         xmlrpc = XMLServerDigest.XmlRpcServer (OWS_PROUD)
         xmlrpc.add_domains(domains)
-    except xmlrpclib.ProtocolError, e:
-        print e
-        return {'ret': 'error'}
+    except xmlrpclib.ProtocolError, err:
+        details  = "Error code:    %d\n" % err.errcode
+        details += "Error message: %s\n" % err.errmsg
+        details += "Headers: %s\n"       % err.headers
 
-    return {'ret': 'ok'}
+        return '<p>%s</p>'            %(PROUS_DIALOG_ERROR1)      + \
+               '<p><pre>%s</pre></p>' %(CTK.escape_html(details)) + \
+               '<p>%s</p>'            %(PROUS_DIALOG_ERROR2)
+
+    return "<p>%s</p>" %(_(PROUD_DIALOG_OK))
 
 
 class ProudUsers (CTK.Box):
     def __init__ (self):
         CTK.Box.__init__ (self, {'id': 'proud-users'})
 
-        # Dialog: OK
-        dialog_ok = CTK.Dialog({'title': _('Thank you!')})
-        dialog_ok.AddButton (_('Close'), "close")
-        dialog_ok += CTK.RawHTML ("<p>%s</p>" %(_(PROUD_DIALOG_OK)))
+        # Dialog
+        dialog = CTK.DialogProxyLazy ('/proud/apply', {'title': _('Proud Cherokee User List Submittion'), 'width': 500})
+        dialog.AddButton (_('Close'), "close")
 
-        # Dialog: Error
-        dialog_error = CTK.Dialog({'title': _('Something went wrong')})
-        dialog_error.AddButton (_('Close'), "close")
-        dialog_error += CTK.RawHTML ("<p>%s</p><p>%s</p>"%(PROUS_DIALOG_ERROR1,
-                                                           PROUS_DIALOG_ERROR2))
-
-        submit = CTK.Submitter('/proud/apply')
-        submit += CTK.SubmitterButton (_('Send domains'))
-        submit.bind ('submit_success', dialog_ok.JS_to_show())
-        submit.bind ('submit_fail', dialog_error.JS_to_show())
+        button = CTK.Button (_('Send domains'))
+        button.bind ('click', dialog.JS_to_show())
 
         self += CTK.RawHTML('<h3>%s</h3>' %(_('Proud Cherokee Users')))
         self += CTK.Box ({'id': 'notice'}, CTK.RawHTML (PROUD_USERS_NOTICE))
-        self += submit
-        self += dialog_ok
-        self += dialog_error
+        self += button
+        self += dialog
 
 
 class Render():
