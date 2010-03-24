@@ -35,7 +35,7 @@ import time
 from consts import *
 from configured import *
 
-OWS_PROUD = 'http://www.octality.com/api/proud/'
+OWS_PROUD = 'http://www.octality.com/api/proud/open/'
 
 
 BETA_TESTER_NOTICE = N_("""
@@ -53,8 +53,8 @@ Cherokee Project web site</a>.
 """ %(PROUD_USERS_WEB))
 
 PROUD_DIALOG_OK     = N_("The information has been successfully sent. Thank you!")
-PROUS_DIALOG_ERROR1 = N_("Unfortunatelly something went wrong, and the information could not be submitted. Please, try again.")
-PROUS_DIALOG_ERROR2 = N_("Do not hesitate to report the problem if it persists.")
+PROUS_DIALOG_ERROR1 = N_("Unfortunatelly something went wrong, and the information could not be submitted:")
+PROUS_DIALOG_ERROR2 = N_("Please, try again. Do not hesitate to report the problem if it persists.")
 
 
 def Launch():
@@ -142,7 +142,8 @@ def ProudUsers_Apply():
     # Send the list
     try:
         xmlrpc = XMLServerDigest.XmlRpcServer (OWS_PROUD)
-        xmlrpc.add_domains(domains)
+        xmlrpc.add_domains_to_review(domains)
+
     except xmlrpclib.ProtocolError, err:
         details  = "Error code:    %d\n" % err.errcode
         details += "Error message: %s\n" % err.errmsg
@@ -151,6 +152,11 @@ def ProudUsers_Apply():
         return '<p>%s</p>'            %(PROUS_DIALOG_ERROR1)      + \
                '<p><pre>%s</pre></p>' %(CTK.escape_html(details)) + \
                '<p>%s</p>'            %(PROUS_DIALOG_ERROR2)
+
+    except Exception, e:
+        return '<p>%s</p>'              %(PROUS_DIALOG_ERROR1)     + \
+               '<p><pre>%s\n</pre></p>' %(CTK.escape_html(str(e))) + \
+               '<p>%s</p>'              %(PROUS_DIALOG_ERROR2)
 
     return "<p>%s</p>" %(_(PROUD_DIALOG_OK))
 
