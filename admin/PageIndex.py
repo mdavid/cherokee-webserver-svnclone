@@ -26,6 +26,8 @@ import CTK
 import Page
 import Cherokee
 import gettext
+import xmlrpclib
+import XMLServerDigest
 
 import os
 import time
@@ -33,6 +35,7 @@ import time
 from consts import *
 from configured import *
 
+OWS_PROUD = 'http://www.octality.com/api/proud/'
 
 
 BETA_TESTER_NOTICE = N_("""
@@ -48,6 +51,10 @@ We would love to know that you are using Cherokee. Submit your domain
 name and it will be <a target="_blank" href="%s">listed on the
 Cherokee Project web site</a>.
 """ %(PROUD_USERS_WEB))
+
+PROUD_DIALOG_OK     = N_("The information has been successfully sent.")
+PROUS_DIALOG_ERROR1 = N_("Unfortunatelly something went wrong, and the information could not be submitted. Please, try again.")
+PROUS_DIALOG_ERROR2 = N_("Do not hesitate to report the problem if this issue persists.")
 
 
 def Launch():
@@ -120,7 +127,26 @@ class LanguageSelector (CTK.Box):
 
 
 def ProudUsers_Apply():
-    # TODO: OWS goes here
+    # Collect domains
+    domains = []
+
+    for v in CTK.cfg.keys('vserver'):
+        domains.append (CTK.cfg.get_val('vserver!%s!nick'%(v)))
+
+        for d in CTK.cfg.keys('vserver!%s!match!domain'%(v)):
+            domains.append (CTK.cfg.get_val('vserver!%s!match!domain!%s'%(v, d)))
+
+        for d in CTK.cfg.keys('vserver!%s!match!regex'%(v)):
+            domains.append (CTK.cfg.get_val('vserver!%s!match!regex!%s'%(v, d)))
+
+    # Send the list
+    try:
+        xmlrpc = XMLServerDigest.XmlRpcServer (OWS_PROUD)
+        xmlrpc.add_domains(domains)
+    except xmlrpclib.ProtocolError, e:
+        print e
+        return {'ret': 'error'}
+
     return {'ret': 'ok'}
 
 
@@ -128,18 +154,27 @@ class ProudUsers (CTK.Box):
     def __init__ (self):
         CTK.Box.__init__ (self, {'id': 'proud-users'})
 
-        dialog = CTK.Dialog({'title': _('Thank you!'), 'autoOpen': False, 'draggable': False})
-        dialog.AddButton (_('Close'), "close")
-        dialog += CTK.RawHTML ("<p>The information has been successfully sent.</p>")
+        # Dialog: OK
+        dialog_ok = CTK.Dialog({'title': _('Thank you!')})
+        dialog_ok.AddButton (_('Close'), "close")
+        dialog_ok += CTK.RawHTML ("<p>%s</p>" %(_(PROUD_DIALOG_OK)))
+
+        # Dialog: Error
+        dialog_error = CTK.Dialog({'title': _('Something went wrong')})
+        dialog_error.AddButton (_('Close'), "close")
+        dialog_error += CTK.RawHTML ("<p>%s</p><p>%s</p>"%(PROUS_DIALOG_ERROR1,
+                                                           PROUS_DIALOG_ERROR2))
 
         submit = CTK.Submitter('/proud/apply')
         submit += CTK.SubmitterButton (_('Send domains'))
-        submit.bind ('submit_success', dialog.JS_to_show())
+        submit.bind ('submit_success', dialog_ok.JS_to_show())
+        submit.bind ('submit_fail', dialog_error.JS_to_show())
 
         self += CTK.RawHTML('<h3>%s</h3>' %(_('Proud Cherokee Users')))
         self += CTK.Box ({'id': 'notice'}, CTK.RawHTML (PROUD_USERS_NOTICE))
         self += submit
-        self += dialog
+        self += dialog_ok
+        self += dialog_error
 
 
 class Render():
