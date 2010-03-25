@@ -54,7 +54,7 @@ NOTE_NO_ENTRIES    = N_('The Information Source list is currently empty.')
 
 VALIDATIONS = [
     ('source!.+?!host',        validations.is_information_source),
-    ('source!.+?!timeout',     validations.is_optional_positive_int),
+    ('source!.+?!timeout',     validations.is_positive_int),
     ('tmp!new_host',           validations.is_safe_information_source),
     ("source_clone_trg",       validations.is_safe_id),
 ]
