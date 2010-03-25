@@ -58,11 +58,11 @@ class ConfigCreator:
         if profile == 'regular':
             return self._create_config ("cherokee.conf.sample")
 
-        elif pfoile == 'static':
+        elif profile == 'static':
             return self._create_config ("performance.conf.sample")
 
         elif profile  == 'development':
-            if create_config ("cherokee.conf.sample"):
+            if self._create_config ("cherokee.conf.sample"):
                 self._tweak_config_for_dev()
             return True
 
