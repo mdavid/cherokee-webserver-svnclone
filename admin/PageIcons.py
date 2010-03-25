@@ -87,7 +87,7 @@ class IconComboSet (CTK.Widget):
         # Check the icon files
         file_options = ([],[('',_('Choose..'))])[add_choose]
 
-        for file in os.listdir (CHEROKEE_ICONSDIR):
+        for file in self.get_unused_files():
             ext = file.lower().split('.')[-1]
             if ext in ('jpg', 'png', 'gif', 'svg'):
                 file_options.append((file, prettyfier(file)))
@@ -96,6 +96,13 @@ class IconComboSet (CTK.Widget):
         selected = CTK.cfg.get_val (key, 'blank.png')
         self.image = CTK.Image({'src': '/icons_local/%s'%(selected)})
         self.combo = CTK.ComboCfg (key, file_options, props)
+
+    def get_unused_files (self):
+        icons   = CTK.cfg.keys('icons!suffix')
+        listdir = os.listdir (CHEROKEE_ICONSDIR)
+        unused  = list(set(listdir) - set(icons))
+        unused.sort()
+        return unused
 
     def Render(self):
         render = CTK.Widget.Render (self)
@@ -115,6 +122,7 @@ class ExtensionsTable (CTK.Container):
             table += [None, CTK.RawHTML(_('Icon File')), CTK.RawHTML(_('Extensions'))]
             table.set_header(1)
 
+            icons.sort()
             for k in icons:
                 pre    = 'icons!suffix!%s'%(k)
                 image  = CTK.Image ({'src': os.path.join('/icons_local', k)})

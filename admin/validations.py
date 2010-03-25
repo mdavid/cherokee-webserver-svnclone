@@ -365,9 +365,3 @@ def is_safe_information_source (value):
     if host in hosts:
         raise ValueError, _('Already in use')
     return host
-
-
-def is_optional_positive_int (value):
-    if value == OPTIONAL:
-        return
-    return is_positive_int (value)
