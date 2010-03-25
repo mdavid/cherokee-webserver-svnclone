@@ -30,7 +30,7 @@ import SelectionPanel
 import validations
 
 from consts import *
-from CTK.util import find_copy_name, cfg_source_find_free_port
+from CTK.util import find_copy_name
 from CTK.Submitter import HEADER as Submit_HEADER
 from CTK.TextField import HEADER as TextField_HEADER
 
