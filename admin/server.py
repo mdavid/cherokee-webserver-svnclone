@@ -110,6 +110,7 @@ if __name__ == "__main__":
     import PageMime
     import PageSource
     import PageAdvanced
+    import PageNewConfig
 
     # Run
     run (scgi_port)
