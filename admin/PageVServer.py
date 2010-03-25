@@ -325,7 +325,7 @@ class LogginWidget (CTK.Container):
         # Content
         refresh = CTK.Refreshable({'id': 'vserver_login'})
         refresh.register (lambda: LogginWidgetContent(vsrv_num, refresh).Render())
-        self += CTK.Indenter (refresh)
+        self += refresh
 
 
 class SecutiryWidgetContent (CTK.Container):
@@ -372,7 +372,7 @@ class SecurityWidget (CTK.Container):
         # Content
         refresh = CTK.Refreshable ({'id': 'vserver_security'})
         refresh.register (lambda: SecutiryWidgetContent(vsrv_num, refresh).Render())
-        self += CTK.Indenter (refresh)
+        self += refresh
 
 
 class Render():
