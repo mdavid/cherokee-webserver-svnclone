@@ -64,7 +64,8 @@ $('.selection-panel:first').data('selectionpanel').select_last();
 """
 
 JS_CLONE = """
-  var url = $('.selection-panel:first').data('selectionpanel').get_selected().attr('url');
+  var panel = $('.selection-panel:first').data('selectionpanel').get_selected();
+  var url   = panel.find('.row_content').attr('url');
   $.ajax ({type: 'GET', async: false, url: url+'/clone', success: function(data) {
       // A transaction took place
       $('.panel-buttons').trigger ('submit_success');
