@@ -73,21 +73,25 @@ def apply():
     return {'ret': 'ok'}
 
 
-class NetworkWidget (CTK.Container):
+class NetworkWidget (CTK.Box):
     def __init__ (self):
-        CTK.Container.__init__ (self)
+        CTK.Box.__init__ (self)
 
-        table = CTK.PropsAuto (URL_APPLY)
+        table = CTK.PropsTable()
         table.Add (_('IPv6'),             CTK.CheckCfgText('server!ipv6', True), _(NOTE_IPV6))
         table.Add (_('SSL/TLS back-end'), CTK.ComboCfg('server!tls', Cherokee.support.filter_available(CRYPTORS)), _(NOTE_TLS))
+        submit = CTK.Submitter (URL_APPLY)
+        submit += CTK.Indenter(table)
         self += CTK.RawHTML ("<h2>%s</h2>" %(_('Support')))
-        self += CTK.Indenter(table)
+        self += submit
 
-        table = CTK.PropsAuto (URL_APPLY)
+        table = CTK.PropsTable()
         table.Add (_('Timeout (<i>secs</i>)'), CTK.TextCfg('server!timeout'), _(NOTE_TIMEOUT))
         table.Add (_('Server Tokens'),         CTK.ComboCfg('server!server_tokens', PRODUCT_TOKENS), _(NOTE_TOKENS))
+        submit = CTK.Submitter (URL_APPLY)
+        submit += CTK.Indenter(table)
         self += CTK.RawHTML ("<h2>%s</h2>" %(_('Network Behavior')))
-        self += CTK.Indenter(table)
+        self += submit
 
         table = CTK.PropsTable()
         modul = CTK.PluginSelector('server!collector', Cherokee.support.filter_available(COLLECTORS))
@@ -110,7 +114,7 @@ class PortsTable (CTK.Submitter):
 
         table   = CTK.Table()
         binds   = CTK.cfg.keys('server!bind')
-        has_tls = CTK.cfg.get_val('server!tls')
+        has_tls = CTK.cfg.get_val('server!tls') != None
 
         # Skip if empty
         if not binds:
@@ -128,9 +132,13 @@ class PortsTable (CTK.Submitter):
 
             port   = CTK.TextCfg ('%s!port'%(pre),      False, {'size': 8})
             listen = CTK.TextCfg ('%s!interface'%(pre), True,  {'size': 45})
-            tls    = CTK.CheckCfg('%s!tls'%(pre),       False, {'disabled': not has_tls})
-            delete = None
 
+            if has_tls:
+                tls = CTK.CheckCfgText ('%s!tls'%(pre), False, _('TLS/SSL port'))
+            else:
+                tls = CTK.CheckCfgText ('%s!tls'%(pre), False, _('TLS/SSL support disabled'), {'disabled': not has_tls})
+
+            delete = None
             if len(binds) >= 2:
                 delete = CTK.ImageStock('del')
                 from CTK.Refreshable import REFRESHABLE_UPDATE_JS as update_js
@@ -148,8 +156,8 @@ class PortsWidget (CTK.Container):
         CTK.Container.__init__ (self)
 
         # List ports
-        refresh = CTK.Refreshable({'id': 'general_ports'})
-        refresh.register (lambda: PortsTable(refresh).Render())
+        self.refresh = CTK.Refreshable({'id': 'general_ports'})
+        self.refresh.register (lambda: PortsTable(self.refresh).Render())
 
         # Add new - dialog
         table = CTK.PropsTable()
@@ -163,7 +171,7 @@ class PortsWidget (CTK.Container):
         dialog.AddButton (_("Cancel"), "close")
         dialog += submit
 
-        submit.bind ('submit_success', refresh.JS_to_refresh())
+        submit.bind ('submit_success', self.refresh.JS_to_refresh())
         submit.bind ('submit_success', dialog.JS_to_close())
 
         # Add new
@@ -174,7 +182,7 @@ class PortsWidget (CTK.Container):
 
         # Integration
         self += CTK.RawHTML ("<h2>%s</h2>" % (_('Listening to Ports')))
-        self += CTK.Indenter(refresh)
+        self += CTK.Indenter(self.refresh)
         self += button_s
         self += dialog
 
@@ -193,9 +201,13 @@ class PermsWidget (CTK.Container):
 
 class Render():
     def __call__ (self):
+        ports   = PortsWidget()
+        network = NetworkWidget()
+        network.bind ('submit_success', ports.refresh.JS_to_refresh())
+
         tabs = CTK.Tab()
-        tabs.Add (_('Network'),         NetworkWidget())
-        tabs.Add (_('Ports to listen'), PortsWidget())
+        tabs.Add (_('Network'),         network)
+        tabs.Add (_('Ports to listen'), ports)
         tabs.Add (_('Permissions'),     PermsWidget())
 
         page = Page.Base (_("General"), body_id='general', helps=HELPS)
