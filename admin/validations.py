@@ -10,6 +10,7 @@ from util import split_list
 # removed. In case the entry should always be checked, the function
 # could define a property 'CHECK_ON_NO_VALUE' to enforce it.
 
+OPTIONAL = 'optional'
 
 def is_number (value):
     try:
@@ -335,16 +336,14 @@ def is_new_vserver_nick (value):
     return value
 
 
-# MIME Types
-
-def is_safe_mime (mime):
+def is_safe_mime_type (mime):
     mimes = CTK.cfg.keys ('mime')
     if mime in mimes:
         raise ValueError, _('Already in use')
     return mime
 
 
-def is_safe_exts (new):
+def is_safe_mime_exts (new):
     new  = split_list (new)
     keys = CTK.cfg.keys ('mime')
     cfg  = [CTK.cfg.get_val('mime!%s!extensions' % key) for key in keys]
@@ -356,3 +355,19 @@ def is_safe_exts (new):
         raise ValueError, '%s: %s' %(_('Already in use'), ', '.join(dupes))
 
     return ','.join(new)
+
+
+def is_safe_information_source (value):
+    host = is_information_source (value)
+    keys = CTK.cfg.keys ('source')
+    hosts  = [CTK.cfg.get_val('source!%s!host' % key) for key in keys]
+
+    if host in hosts:
+        raise ValueError, _('Already in use')
+    return host
+
+
+def is_optional_positive_int (value):
+    if value == OPTIONAL:
+        return
+    return is_positive_int (value)

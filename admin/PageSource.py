@@ -30,7 +30,7 @@ import SelectionPanel
 import validations
 
 from consts import *
-from CTK.util import find_copy_name
+from CTK.util import find_copy_name, cfg_source_find_free_port
 from CTK.Submitter import HEADER as Submit_HEADER
 from CTK.TextField import HEADER as TextField_HEADER
 
@@ -54,9 +54,8 @@ NOTE_NO_ENTRIES    = N_('The Information Source list is currently empty.')
 
 VALIDATIONS = [
     ('source!.+?!host',        validations.is_information_source),
-    ('source!.+?!timeout',     validations.is_positive_int),
-    ('tmp!new_source_host',    validations.is_information_source),
-    ('tmp!new_source_timeout', validations.is_positive_int),
+    ('source!.+?!timeout',     validations.is_optional_positive_int),
+    ('tmp!new_host',           validations.is_safe_information_source),
     ("source_clone_trg",       validations.is_safe_id),
 ]
 
@@ -71,6 +70,7 @@ JS_CLONE = """
       $('.panel-buttons').trigger ('submit_success');
   }});
 """
+
 
 def commit_clone():
     num = re.findall(r'^%s/([\d]+)/clone$'%(URL_BASE), CTK.request.url)[0]
