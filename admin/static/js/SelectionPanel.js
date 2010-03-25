@@ -47,12 +47,16 @@
 		  }
 
 		  // Update box
+                  $("#activity").show();
 		  $.ajax ({type:  'GET',
 				 async: true,
 				 url:   url,
 				 success: function(data) {
+					$('#'+content_id).hide();
 					$('#'+content_id).html(data);
    					resize_cherokee_panels();
+					$('#'+content_id).show();
+                                        $("#activity").fadeOut('fast');
 				 }
 				});
 	   }
@@ -132,6 +136,8 @@ function resize_cherokee_panels() {
    }
    $('#vservers_panel').height($(window).height() - 158 - tdsize);
    $('.vserver_content .ui-tabs .ui-tabs-panel').height($(window).height() - 140 - tdsize);
+   $('#rules_panel').height($(window).height() - 158 - tdsize);
+   $('.rules_content .ui-tabs .ui-tabs-panel').height($(window).height() - 140 - tdsize);
    $('#source_panel').height($(window).height() - 158 - tdsize);
    $('.source_content .submitter').height($(window).height() - 92 - tdsize);
 }
