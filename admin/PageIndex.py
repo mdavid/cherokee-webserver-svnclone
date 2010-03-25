@@ -28,7 +28,6 @@ import Cherokee
 import gettext
 import xmlrpclib
 import XMLServerDigest
-import PageNewConfig
 
 import os
 import time
@@ -182,10 +181,6 @@ class ProudUsers (CTK.Box):
 class Render():
     def __call__ (self):
         Cherokee.pid.refresh()
-        try:
-            server_info = ServerInfo()
-        except OSError:
-            return CTK.HTTP_Redir(PageNewConfig.URL_BASE)
 
         self.page = Page.Base(_('Welcome to Cherokee Admin'), body_id='index')
         self.page += CTK.RawHTML ("<h1>%s</h1>"% _('Welcome to Cherokee Admin'))
@@ -195,7 +190,7 @@ class Render():
             notice += CTK.RawHTML(_(BETA_TESTER_NOTICE))
             self.page += notice
 
-        self.page += server_info
+        self.page += ServerInfo()
         self.page += CTK.RawHTML('<a href="/launch">Launch</a> | <a href="/stop">Stop</a>')
         self.page += LanguageSelector()
         self.page += ProudUsers()

@@ -65,11 +65,10 @@ def init (scgi_port, cfg_file):
     CTK.cfg.file = cfg_file
     CTK.cfg.load()
 
-
-def run (scgi_port):
-    # Run the server
+    # Init CTK in advance
+    # Params could be passed to CTK.run() later
     if scgi_port.isdigit():
-        CTK.run (port=8000)
+        CTK.init (port=8000)
     else:
         # Remove the unix socket if it already exists
         try:
@@ -79,7 +78,7 @@ def run (scgi_port):
                 os.unlink (scgi_port)
         except OSError:
             pass
-        CTK.run (unix_socket=scgi_port)
+        CTK.init (unix_socket=scgi_port)
 
 
 if __name__ == "__main__":
@@ -93,6 +92,18 @@ if __name__ == "__main__":
 
     # Init
     init (scgi_port, cfg_file)
+
+    # Check config file
+    if not os.path.exists (cfg_file):
+        import PageNewConfig
+        CTK.publish (r'', PageNewConfig.Render)
+
+        while not os.path.exists (cfg_file):
+            CTK.step()
+
+        CTK.unpublish (r'')
+        CTK.cfg.file = cfg_file
+        CTK.cfg.load()
 
     # Set up the error page
     import PageException
@@ -113,4 +124,4 @@ if __name__ == "__main__":
     import PageNewConfig
 
     # Run
-    run (scgi_port)
+    CTK.run()
