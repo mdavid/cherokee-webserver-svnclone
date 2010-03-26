@@ -157,10 +157,10 @@ class Render():
             vservers.reverse()
 
             for k in vservers:
-                content = [entry('nick',  'vserver!%s!nick'%(k)),
-                           entry('droot', 'vserver!%s!document_root'%(k))]
 
                 if k == vservers[-1]:
+                    content = [entry('nick',  'vserver!%s!nick'%(k)),
+                               entry('droot', 'vserver!%s!document_root'%(k))]
                     panel.Add (k, '/vserver/content/%s'%(k), content, draggable=False)
                 else:
                     nick = CTK.cfg.get_val ('vserver!%s!nick'%(k), _('Unknown'))
@@ -174,12 +174,21 @@ class Render():
                     dialog.AddButton (_('Cancel'), "close")
                     dialog += CTK.RawHTML (_(NOTE_DELETE_DIALOG) %(nick))
                     self += dialog
-                    remove = CTK.ImageStock('del', {'class': 'del'})
+                    remove = CTK.ImageStock('del', {'class': 'del', 'title': _('Delete')})
                     remove.bind ('click', dialog.JS_to_show() + "return false;")
 
                     # Disable
-                    disabled = CTK.Box ({'class': 'disable'}, CTK.iPhoneCfg('vserver!%s!disabled'%(k), False))
-                    content += [disabled, remove]
+                    if CTK.cfg.get_val('vserver!%s!disabled'%(k), False):
+                        disabled = CTK.ImageStock('off', {'class': 'toggle-activation', 'title': 'Activate'})
+                    else:
+                        disabled = CTK.ImageStock('on', {'class': 'toggle-activation', 'title': 'Deactivate'})
+                    disabled.bind ('click', "alert('TODO: Activate/Deactivate'); return false;")
+
+                    group = CTK.Box ({'class': 'sel-actions'}, [disabled, remove])
+                    content = [group]
+
+                    content += [entry('nick',  'vserver!%s!nick'%(k)),
+                                entry('droot', 'vserver!%s!document_root'%(k))]
 
                     # List entry
                     panel.Add (k, '/vserver/content/%s'%(k), content)
