@@ -50,12 +50,23 @@
 
 		  // Update box
             activity.show();
-		  $.ajax ({type:  'GET',
-				 async: true,
-				 url:   url,
+		  $.ajax ({type:     'GET',
+				 dataType: 'json',
+				 async:    true,
+				 url:      url,
 				 success: function(data) {
+					// New content: HTML + JS
+					txt = data.html;
+					txt += '<script type="text/javascript"> $(document).ready(function(){'
+					txt += data.js
+					txt += '}); </script>'
+
+					// Update the Help
+					Help_add_entries (data.helps);
+
+					// Transition
 					content.hide();
-					content.html(data);
+					content.html (txt);
    					resize_cherokee_panels();
 					content.show();
                          activity.fadeOut('fast');

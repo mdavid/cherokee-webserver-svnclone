@@ -107,7 +107,7 @@ class Render_Source():
         # /source/empty
         if CTK.request.url.endswith('/empty'):
             notice = CTK.Notice ('information', CTK.RawHTML (NOTE_NO_ENTRIES))
-            return notice.Render().toStr()
+            return notice.Render().toJSON()
 
         # /source/\d+
         num = re.findall(r'^%s/([\d]+)$'%(URL_BASE), CTK.request.url)[0]
@@ -135,7 +135,7 @@ class Render_Source():
         cont += submit
 
         render = cont.Render()
-        return render.toStr()
+        return render.toJSON()
 
 
 class CloneSource (CTK.Container):

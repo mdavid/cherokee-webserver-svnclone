@@ -255,7 +255,7 @@ class Render():
         cont += refresh
         cont += tabs
 
-        return cont.Render().toStr()
+        return cont.Render().toJSON()
 
 
 
