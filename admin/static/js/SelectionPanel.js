@@ -30,7 +30,9 @@
 	   }
 
 	   function select_row (row) {
-		  var url = '';
+		  var url      = '';
+		  var activity = $("#activity");
+		  var content  = $('#'+content_id);
 
 		  // Ensure there's a row to be selected
 		  if (row.length == 0) {
@@ -47,16 +49,16 @@
 		  }
 
 		  // Update box
-                  $("#activity").show();
+            activity.show();
 		  $.ajax ({type:  'GET',
 				 async: true,
 				 url:   url,
 				 success: function(data) {
-					$('#'+content_id).hide();
-					$('#'+content_id).html(data);
+					content.hide();
+					content.html(data);
    					resize_cherokee_panels();
-					$('#'+content_id).show();
-                                        $("#activity").fadeOut('fast');
+					content.show();
+                         activity.fadeOut('fast');
 				 }
 				});
 	   }

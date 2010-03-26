@@ -56,7 +56,7 @@ class SelectionPanel (CTK.Box):
 
         # Row Content
         row_content = CTK.Box({'class': 'row_content',
-                               'id':    id_content, #'rc'+row_id,
+                               'id':    id_content,
                                'pid':   id_content,
                                'url':   url})
         for w in content:
