@@ -223,6 +223,8 @@ class Render():
             self += dialog
             self += button
 
+    CHILD_HEADERS = None
+
     def __call__ (self):
         title = _('Virtual Servers')
 
@@ -244,9 +246,24 @@ class Render():
         # Refresh the list whenever the content change
         right.bind ('submit_success', refresh.JS_to_refresh());
 
+        # Figure out content panel headers. This step is very tricky.
+        # We have no idea what HTML headers the content HTML will
+        # have. In fact, the panel content is receiving only the HTML
+        # content only (body).
+        #
+        # The static CHILD_HEADERS class property will hold a copy of
+        # the headers generated the a direct render of the PageVServer
+        # class. It should cover most of the cases, unless a dynamic
+        # loaded module requires an additional header entry.
+        #
+        if not self.CHILD_HEADERS:
+            import PageVServer
+            vsrv_num = CTK.cfg.keys('vserver')[0]
+            render   = PageVServer.RenderContent(vsrv_num).Render()
+            self.CHILD_HEADERS = render.headers
+
         # Build the page
-        headers = Tab_HEADER + Submit_HEADER + TextField_HEADER + SortableList_HEADER + SelectionPanel.HEADER
-        page = Page.Base(title, body_id='vservers', helps=HELPS, headers=headers)
+        page = Page.Base(title, body_id='vservers', helps=HELPS, headers=self.CHILD_HEADERS)
         page += left
         page += right
 
@@ -268,3 +285,4 @@ class RenderParticular():
 CTK.publish (r'^%s$'    %(URL_BASE),  Render)
 CTK.publish (r'^%s/\d+$'%(URL_BASE),  RenderParticular)
 CTK.publish (r'^%s$'    %(URL_APPLY), Commit, method="POST", validation=VALIDATIONS)
+

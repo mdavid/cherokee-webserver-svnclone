@@ -375,6 +375,22 @@ class SecurityWidget (CTK.Container):
         self += refresh
 
 
+class RenderContent (CTK.Container):
+    def __init__ (self, vsrv_num, vsrv_nam=''):
+        CTK.Container.__init__ (self)
+
+        tabs = CTK.Tab()
+        tabs.Add (_('Basics'),        BasicsWidget (vsrv_num))
+        tabs.Add (_('Host Match'),    HostMatchWidget (vsrv_num))
+        tabs.Add (_('Behavior'),      BehaviorWidget (vsrv_num))
+        tabs.Add (_('Error Handler'), ErrorHandlerWidget (vsrv_num))
+        tabs.Add (_('Logging'),       LogginWidget (vsrv_num))
+        tabs.Add (_('Security'),      SecurityWidget (vsrv_num))
+
+        self += CTK.RawHTML ('<h2>%s: %s</h2>' %(_('Virtual Server'), vsrv_nam))
+        self += tabs
+
+
 class Render():
     def __call__ (self):
         # Parse request
@@ -385,19 +401,8 @@ class Render():
         if not CTK.cfg.keys ("vserver!%s"%(vsrv_num)):
             return CTK.HTTP_Redir("/vserver")
 
-        # Tabs
-        tabs = CTK.Tab()
-        tabs.Add (_('Basics'),        BasicsWidget (vsrv_num))
-        tabs.Add (_('Host Match'),    HostMatchWidget (vsrv_num))
-        tabs.Add (_('Behavior'),      BehaviorWidget (vsrv_num))
-        tabs.Add (_('Error Handler'), ErrorHandlerWidget (vsrv_num))
-        tabs.Add (_('Logging'),       LogginWidget (vsrv_num))
-        tabs.Add (_('Security'),      SecurityWidget (vsrv_num))
-
-        cont = CTK.Container()
-        cont += CTK.RawHTML ('<h2>%s: %s</h2>' %(_('Virtual Server'), vsrv_nam))
-        cont += tabs
-
+        # Content
+        cont = RenderContent (vsrv_num, vsrv_nam)
         return cont.Render().toStr()
 
 
