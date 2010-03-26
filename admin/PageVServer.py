@@ -403,7 +403,7 @@ class Render():
 
         # Content
         cont = RenderContent (vsrv_num, vsrv_nam)
-        return cont.Render().toStr()
+        return cont.Render().toJSON()
 
 
 CTK.publish (r'^%s/[\d]+$'      %(URL_BASE), Render)
