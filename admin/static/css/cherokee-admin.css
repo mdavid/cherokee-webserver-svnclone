@@ -46,3 +46,23 @@
 .check-list-flags-entry input {
 	margin-left: 10px;
 }
+
+/* Icon Chooser
+ */
+img.icon_chooser {
+	padding: 5px;
+	margin: 5px;
+	border: 1px solid #ccc;
+}
+
+img.icon_chooser_used {
+	background-color: #dedede;
+	opacity: 0.3;
+	border: 1px solid #666;
+}
+
+img.icon_chooser_selected,
+img.icon_chooser_unused:hover {
+	border: 1px solid #666;
+	background-color: #efefef;
+}

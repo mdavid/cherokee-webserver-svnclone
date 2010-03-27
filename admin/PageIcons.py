@@ -25,7 +25,6 @@
 import CTK
 import Page
 import Cherokee
-
 import os
 
 from consts import *
@@ -35,6 +34,8 @@ URL_BASE  = '/icons'
 URL_APPLY = '/icons/apply'
 
 HELPS = [('config_icons', N_('Icons'))]
+
+ICON_ROW_SIZE = 9
 
 def apply():
     # New extension
@@ -78,6 +79,7 @@ def prettyfier (filen):
 
     # Capitalize
     return filen.capitalize()
+
 
 class IconComboSet (CTK.Widget):
     def __init__ (self, key, add_choose=False, _props={}):
@@ -137,24 +139,13 @@ class ExtensionsTable (CTK.Container):
             self += CTK.RawHTML ("<h2>%s</h2>" %_('Extension List'))
             self += CTK.Indenter (table)
 
-        # Nex entry
-        exts   = CTK.TextField({'name': "new_exts", 'class': "noauto"})
-        icombo = IconComboSet ("new_exts_icon", True, {'class': "required"})
-        button = CTK.SubmitterButton (_('Add'))
 
-        table = CTK.Table()
-        table.set_header(1)
-        table += [None, CTK.RawHTML(_('Icon')), CTK.RawHTML(_('Extensions'))]
-        table += [icombo.image, icombo.combo, exts, button]
+        # New entry
+        button = AddDialogButton ('new_exts','Extensions')
+        button.bind ('submit_success', refreshable.JS_to_refresh())
 
-        submit = CTK.Submitter(URL_APPLY)
-        submit.bind ('submit_success', refreshable.JS_to_refresh())
-        submit.bind ('submit_success', exts.JS_to_focus())
-        submit += table
-
-        self += CTK.RawHTML ("<h2>%s</h2>" %_('Add new extension'))
-        self += CTK.Indenter (submit)
-        self += icombo
+        self += CTK.RawHTML ("<h2>%s</h2>" %_('Add New Extensions'))
+        self += CTK.Indenter (button)
 
 
 class FilesTable (CTK.Container):
@@ -183,23 +174,12 @@ class FilesTable (CTK.Container):
             self += CTK.RawHTML ("<h2>%s</h2>" %_('File Matches'))
             self += CTK.Indenter (table)
 
-        # Nex file
-        nfile  = CTK.TextField({'name': "new_file", 'class': "noauto"})
-        icombo = IconComboSet ("new_file_icon", True, {'class': "required"})
-        button = CTK.SubmitterButton (_('Add'))
-
-        table = CTK.Table()
-        table.set_header(1)
-        table += [None, CTK.RawHTML(_('Icon')), CTK.RawHTML(_('File'))]
-        table += [icombo.image, icombo.combo, nfile, button]
-
-        submit = CTK.Submitter(URL_APPLY)
-        submit.bind ('submit_success', refreshable.JS_to_refresh())
-        submit += table
+        # New file
+        button = AddDialogButton ('new_file','File')
+        button.bind ('submit_success', refreshable.JS_to_refresh())
 
         self += CTK.RawHTML ("<h2>%s</h2>" %_('Add New File Match'))
-        self += CTK.Indenter (submit)
-        self += icombo
+        self += CTK.Indenter (button)
 
 
 class SpecialWidget (CTK.Container):
@@ -256,6 +236,108 @@ class Render():
         page += tabs
 
         return page.Render()
+
+ICON_CHOOSER_JS = """
+$("input[type=hidden]").val("%s");
+$(".icon_chooser").removeClass("icon_chooser_selected");
+$("#%s").addClass("icon_chooser_selected");
+"""
+class IconChooser (CTK.Container):
+    def __init__ (self, field_name, prefix):
+        CTK.Container.__init__ (self)
+        files, unused = self.get_files (prefix)
+        total = len(files)
+
+        hidden = CTK.Hidden(field_name, '')
+        table  = CTK.Table()
+        row = []
+        for x in range(total):
+            filename = files[x]
+            desc     = prettyfier (filename)
+            props = {'alt'  : desc,
+                     'title': desc,
+                     'src'  : '/icons_local/%s'%(filename),
+                     'class': 'icon_chooser icon_chooser_used'}
+            if filename in unused:
+                     props['class'] = 'icon_chooser icon_chooser_unused'
+
+            image = CTK.Image(props)
+            if filename in unused:
+                js = ICON_CHOOSER_JS % (filename, image.id)
+                image.bind('click', js)
+            row.append (image)
+            if (x+1) % ICON_ROW_SIZE == 0 or (x+1) == total:
+                table += row
+                row = []
+
+        self += hidden
+        self += table
+
+
+    def get_files (self, prefix = None):
+        listdir = os.listdir (CHEROKEE_ICONSDIR)
+        files   = []
+        for filename in listdir:
+            ext = filename.lower().split('.')[-1]
+            if ext in ('jpg', 'png', 'gif', 'svg'):
+                files.append(filename)
+
+        if not prefix:
+            return (files, files)
+
+        icons   = CTK.cfg.keys(prefix)
+        unused  = list(set(files) - set(icons))
+        unused.sort()
+        return (files, unused)
+
+
+class AddIcon (CTK.Container):
+    def __init__ (self, key):
+        CTK.Container.__init__ (self)
+        descs = {'new_file':         _('File'),
+                 'new_exts':         _('Extensions'),
+                 'default':          _('Default'),
+                 'directory':        _('Directory'),
+                 'parent_directory': _('Go to Parent')}
+        assert key in descs.keys()
+        label = descs[key]
+
+        table = CTK.Table()
+        row = [CTK.Box ({'class': 'icon_label'}, CTK.RawHTML (label))]
+
+        if key in ['new_file','new_exts']:
+            field = CTK.TextField({'name': key, 'class': 'noauto'})
+            row.append(CTK.Box ({'class': 'icon_field'}, field))
+            hidden_name = '%s_icon' % key
+            prefix = ['icons!suffix', 'icons!file'][key == 'new_file']
+        else:
+            hidden_name = '%s' % key
+            prefix = None
+
+        table  += row
+        submit  = CTK.Submitter(URL_APPLY)
+        submit += table
+        submit += IconChooser(hidden_name, prefix)
+        self += submit
+
+
+class AddDialogButton (CTK.Box):
+    def __init__ (self, key, name):
+        CTK.Box.__init__ (self, {'class': '%s-button'%name})
+
+        # Add New
+        dialog = CTK.Dialog ({'title': _('Add new %s'%name), 'width': 480})
+        dialog.AddButton (_('Add'), dialog.JS_to_trigger('submit'))
+        dialog.AddButton (_('Cancel'), "close")
+        dialog += AddIcon(key)
+
+        button = CTK.Button(_('Add'))
+        button.bind ('click', dialog.JS_to_show())
+        dialog.bind ('submit_success', dialog.JS_to_close())
+        dialog.bind ('submit_success', self.JS_to_trigger('submit_success'));
+
+        self += button
+        self += dialog
 
 
 CTK.publish ('^%s'%(URL_BASE), Render)
