@@ -127,11 +127,12 @@ class ExtensionsTable (CTK.Container):
             icons.sort()
             for k in icons:
                 pre    = 'icons!suffix!%s'%(k)
-                image  = CTK.Image ({'src': os.path.join('/icons_local', k)})
+                desc   = prettyfier(k)
+                image  = CTK.Image ({'alt'  : desc, 'title': desc, 'src': os.path.join('/icons_local', k)})
                 delete = CTK.ImageStock('del')
                 submit = CTK.Submitter (URL_APPLY)
                 submit += CTK.TextCfg (pre, props={'size': '46'})
-                table += [image, CTK.RawHTML(prettyfier(k)), submit, delete]
+                table += [image, submit, delete]
 
                 delete.bind('click', CTK.JS.Ajax (URL_APPLY, data = {pre: ''},
                                                   complete = refreshable.JS_to_refresh()))
@@ -162,11 +163,12 @@ class FilesTable (CTK.Container):
 
             for k in icons:
                 pre     = 'icons!file!%s'%(k)
-                image   = CTK.Image ({'src': os.path.join ('/icons_local', k)})
+                desc    = prettyfier(k)
+                image   = CTK.Image ({'alt'  : desc, 'title': desc, 'src': os.path.join('/icons_local', k)})
                 submit  = CTK.Submitter (URL_APPLY)
                 submit += CTK.TextCfg (pre, props={'size': '46'})
                 delete  = CTK.ImageStock('del')
-                table  += [image, CTK.RawHTML(prettyfier(k)), submit, delete]
+                table  += [image, submit, delete]
 
                 delete.bind('click', CTK.JS.Ajax (URL_APPLY, data = {pre: ''},
                                                   complete = refreshable.JS_to_refresh()))
