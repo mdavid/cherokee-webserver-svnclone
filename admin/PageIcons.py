@@ -26,6 +26,8 @@ import CTK
 import Page
 import Cherokee
 import os
+import validations
+import util
 
 from consts import *
 from configured import *
@@ -36,6 +38,35 @@ URL_APPLY = '/icons/apply'
 HELPS = [('config_icons', N_('Icons'))]
 
 ICON_ROW_SIZE = 9
+
+VALIDATIONS = [
+    ('new_exts', validations.is_safe_icons_suffix),
+    ('new_file', validations.is_safe_icons_file),
+]
+
+def modify():
+    updates = {}
+    for k in CTK.post:
+        validator = None
+        if   k.startswith('icons!suffix'):
+            validator = validations.is_safe_icons_suffix
+        elif k.startswith ('icons!file'):
+            validator = validations.is_safe_icons_file
+
+        if validator:
+            new = CTK.post[k]
+            try:
+                val = validator (new, CTK.cfg.get_val(k))
+                if util.lists_differ (val, new):
+                    updates[k] = val
+            except ValueError, e:
+                return { "ret": "error", "errors": { k: str(e) }}
+
+        CTK.cfg[k] = CTK.post[k]
+
+    if updates:
+        return {'ret': 'unsatisfactory', 'updates': updates}
+
 
 def apply():
     # New extension
@@ -59,8 +90,9 @@ def apply():
         return {'ret': 'ok'}
 
     # Modifications
-    for k in CTK.post:
-        CTK.cfg[k] = CTK.post[k]
+    modify()
+    if updates:
+        return updates
     return {'ret': 'ok'}
 
 
@@ -89,7 +121,7 @@ class IconComboSet (CTK.Widget):
         # Check the icon files
         file_options = ([],[('',_('Choose..'))])[add_choose]
 
-        for file in self.get_unused_files():
+        for file in os.listdir (CHEROKEE_ICONSDIR):
             ext = file.lower().split('.')[-1]
             if ext in ('jpg', 'png', 'gif', 'svg'):
                 file_options.append((file, prettyfier(file)))
@@ -98,13 +130,6 @@ class IconComboSet (CTK.Widget):
         selected = CTK.cfg.get_val (key, 'blank.png')
         self.image = CTK.Image({'src': '/icons_local/%s'%(selected)})
         self.combo = CTK.ComboCfg (key, file_options, props)
-
-    def get_unused_files (self):
-        icons   = CTK.cfg.keys('icons!suffix')
-        listdir = os.listdir (CHEROKEE_ICONSDIR)
-        unused  = list(set(listdir) - set(icons))
-        unused.sort()
-        return unused
 
     def Render(self):
         render = CTK.Widget.Render (self)
@@ -328,7 +353,7 @@ class AddDialogButton (CTK.Box):
         CTK.Box.__init__ (self, {'class': '%s-button'%name})
 
         # Add New
-        dialog = CTK.Dialog ({'title': _('Add new %s'%name), 'width': 480})
+        dialog = CTK.Dialog ({'title': _('Add new %s'%name), 'width': 375})
         dialog.AddButton (_('Add'), dialog.JS_to_trigger('submit'))
         dialog.AddButton (_('Cancel'), "close")
         dialog += AddIcon(key)
@@ -343,4 +368,4 @@ class AddDialogButton (CTK.Box):
 
 
 CTK.publish ('^%s'%(URL_BASE), Render)
-CTK.publish ('^%s'%(URL_APPLY), apply, method="POST")
+CTK.publish ('^%s'%(URL_APPLY), apply, validation=VALIDATIONS, method="POST")

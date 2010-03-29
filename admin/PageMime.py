@@ -46,7 +46,6 @@ VALIDATIONS = [
     ('new_exts',            validations.is_safe_mime_exts),
 ]
 
-
 def apply():
     # New entry
     mime = CTK.post.pop('new_mime')
