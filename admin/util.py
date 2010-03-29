@@ -202,3 +202,14 @@ def split_list (value):
                 continue
             ids.append(id)
     return ids
+
+
+def lists_differ (a, b):
+    """Compare lists disregarding order"""
+    if len(a) != len(b):
+        return True
+    if bool (set(a)-set(b)):
+        return True
+    if bool (set(b)-set(a)):
+        return True
+    return False

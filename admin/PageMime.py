@@ -62,9 +62,20 @@ def apply():
         return {'ret': 'ok'}
 
     # Modifications
+    updates = {}
     for k in CTK.post:
+        if k.endswith('!extensions'):
+            new = CTK.post[k]
+            try:
+                val = validations.is_safe_mime_exts (new, CTK.cfg.get_val(k))
+                if util.lists_differ (val, new):
+                    updates[k] = val
+            except ValueError, e:
+                return { "ret": "error", "errors": { k: str(e) }}
         CTK.cfg[k] = CTK.post[k]
 
+    if updates:
+        return {'ret': 'unsatisfactory', 'updates': updates}
     return {'ret': 'ok'}
 
 
@@ -119,15 +130,18 @@ class MIME_Table (CTK.Container):
 
         for mime in mimes:
             pre = "mime!%s"%(mime)
-            e1 = CTK.TextCfgAuto ('%s!extensions'%(pre), URL_APPLY, False, {'size': 35})
-            e2 = CTK.TextCfgAuto ('%s!max-age'%(pre),    URL_APPLY, True,  {'size': 6, 'maxlength': 6})
+            e1 = CTK.TextCfg ('%s!extensions'%(pre), False, {'size': 35})
+            e2 = CTK.TextCfg ('%s!max-age'%(pre),    True,  {'size': 6, 'maxlength': 6})
             rm = CTK.ImageStock('del')
             rm.bind('click', CTK.JS.Ajax (URL_APPLY, data = {pre: ''},
                                           complete = refreshable.JS_to_refresh()))
             table += [CTK.RawHTML(mime), e1, e2, rm]
 
+        submit  = CTK.Submitter (URL_APPLY)
+        submit += table
+
         self += CTK.Indenter (button)
-        self += CTK.Indenter (table)
+        self += CTK.Indenter (submit)
 
 
 class MIME_Table_Instancer (CTK.Container):
@@ -138,6 +152,7 @@ class MIME_Table_Instancer (CTK.Container):
         refresh = CTK.Refreshable ({'id': 'mime_table'})
         refresh.register (lambda: MIME_Table(refresh).Render())
         self += refresh
+
 
 class Render():
     def __call__ (self):
