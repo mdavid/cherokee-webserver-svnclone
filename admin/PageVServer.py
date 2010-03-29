@@ -134,6 +134,30 @@ class HostMatchWidget (CTK.Container):
         self += modul
 
 
+class RuleLink (CTK.Link):
+    def __init__ (self, vsrv_num, rule_num, content):
+        CTK.Link.__init__ (self, '/vserver/%s/rule/%s'%(vsrv_num, rule_num), content)
+        self.vsrv_num = vsrv_num
+        self.rule_num = rule_num
+
+    def Render (self):
+        from SelectionPanel import COOKIE_NAME_DEFAULT
+
+        props = {'id':          self.id,
+                 'vsrv_num':    self.vsrv_num,
+                 'rule_num':    self.rule_num,
+                 'cookie_name': COOKIE_NAME_DEFAULT}
+
+        render = CTK.Link.Render (self)
+        render.js += """$('#%(id)s').click(function(){
+            $.cookie ('%(cookie_name)s', '%(rule_num)s_%(vsrv_num)s', { path: '/vserver/%(vsrv_num)s/rule'});
+            window.location.replace ('/vserver/%(vsrv_num)s/rule');
+            return false;
+        });"""%(props)
+
+        return render
+
+
 class BehaviorWidget (CTK.Container):
     def __init__ (self, vsrv_num):
         CTK.Container.__init__ (self)
@@ -153,7 +177,7 @@ class BehaviorWidget (CTK.Container):
         for r in rules:
             rule = Rule ('vserver!%s!rule!%s!match'%(vsrv_num, r))
             rule_name = rule.GetName()
-            link = CTK.Link ('/vserver/%s/rule/%s'%(vsrv_num, r), CTK.RawHTML (rule_name))
+            link = RuleLink (vsrv_num, r, CTK.RawHTML (rule_name))
 
             handler = None
             tmp     = CTK.cfg.get_val ('vserver!%s!rule!%s!handler'%(vsrv_num, r), '')
