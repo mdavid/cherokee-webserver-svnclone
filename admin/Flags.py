@@ -318,6 +318,7 @@ class CheckListFlags (CTK.Box):
         props = _props.copy()
         codes = ISO_3166.keys()
         codes.sort()
+        props['class'] = 'flag_checkbox'
 
         # Initial values
         selected = filter (lambda x: x, [x.strip() for x in CTK.cfg.get_val (key,'').split(',')])
