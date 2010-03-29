@@ -25,6 +25,8 @@
 import CTK
 import Page
 import Cherokee
+import Icons
+import Mime
 import validations
 
 from consts import *
@@ -47,7 +49,10 @@ NOTE_NO_SOURCES  = N_('No ports to listen have been defined. By default the serv
 
 
 HELPS = [('config_general',    N_("General Configuration")),
-         ('config_quickstart', N_("Configuration Quickstart"))]
+         ('config_quickstart', N_("Configuration Quickstart")),
+         ('config_mime_types', N_("MIME types")),
+         ('config_icons',      N_('Icons'))]
+
 
 VALIDATIONS = [
     ("server!ipv6",              validations.is_boolean),
@@ -212,6 +217,8 @@ class Render():
         tabs.Add (_('Network'),         network)
         tabs.Add (_('Ports to listen'), ports)
         tabs.Add (_('Permissions'),     PermsWidget())
+        tabs.Add (_('Icons'),           Icons.Icons_Widget())
+        tabs.Add (_('Mime types'),       Mime.MIME_Widget())
 
         page = Page.Base (_("General"), body_id='general', helps=HELPS)
         page += CTK.RawHTML("<h1>%s</h1>" %(_('General Settings')))

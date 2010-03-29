@@ -33,7 +33,6 @@ import util
 from consts import *
 from configured import *
 
-URL_BASE  = '/icons'
 URL_APPLY = '/icons/apply'
 
 ICON_ROW_SIZE = 9
@@ -343,7 +342,6 @@ class AddDialogButton (CTK.Box):
 class Icons_Widget (CTK.Container):
     def __init__ (self, **kwargs):
         CTK.Container.__init__ (self, **kwargs)
-        self += CTK.RawHTML("<h1>%s</h1>" %(_('Icon Configuration')))
         self += SpecialWidget_Instancer()
         self += FilesWidget_Instancer()
         self += ExtensionsWidget_Instancer()

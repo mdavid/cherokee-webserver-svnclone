@@ -32,7 +32,6 @@ import util
 from consts import *
 from configured import *
 
-URL_BASE  = '/mime'
 URL_APPLY = '/mime/apply'
 
 NOTE_NEW_MIME       = N_('New MIME type to be added.')
@@ -155,7 +154,6 @@ class MIME_Table_Instancer (CTK.Container):
 class MIME_Widget (CTK.Container):
     def __init__ (self, **kwargs):
         CTK.Container.__init__ (self, **kwargs)
-        self += CTK.RawHTML("<h1>%s</h1>" %(_('MIME Types')))
         self += MIME_Table_Instancer()
 
 
