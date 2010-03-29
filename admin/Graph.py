@@ -28,40 +28,44 @@ import CTK
 GRAPH_VSERVER   = '/graphs/%(prefix)s_%(type)s_%(vserver)s_%(interval)s.png'
 GRAPH_SERVER    = '/graphs/%(prefix)s_%(type)s_%(interval)s.png'
 
-GRAPH_TYPES     = [(N_('Server Traffic'),         'traffic'),
-                   (N_('Connections / Requests'), 'accepts'),
-                   (N_('Connection Timeouts'),    'timeouts'),]
+GRAPH_TYPES     = [('traffic',  N_('Server Traffic')),
+                   ('accepts',  N_('Connections / Requests')),
+                   ('timeouts', N_('Connection Timeouts')),]
 
-GRAPH_INTERVALS = [(N_('1 hour'),  '1h'),
-                   (N_('6 hours'), '6h'),
-                   (N_('1 day'),   '1d'),
-                   (N_('1 week'),  '1w'),
-                   (N_('1 month'), '1m')]
+GRAPH_INTERVALS = [('1h', N_('1 hour'),  '1h'),
+                   ('6h', N_('6 hours'), '6h'),
+                   ('1d', N_('1 day'),   '1d'),
+                   ('1w', N_('1 week'),  '1w'),
+                   ('1m', N_('1 month'), '1m')]
 
 
 class Graph (CTK.Box):
     def __init__ (self,  **kwargs):
         CTK.Box.__init__ (self)
         self.graph = {}
+        self.graph['type']    = GRAPH_TYPES[0][0]
+        self.graph['type_txt']= GRAPH_TYPES[0][1]
 
     def build_graph (self):
         tabs = CTK.Tab ()
         for x in GRAPH_INTERVALS:
-            self.graph['interval'] = x[1]
+            self.graph['interval'] = x[0]
             props = {'src': self.template % self.graph,
-                     'alt': '%s: %s' %(self.graph['type'][0], x[0])}
+                     'alt': '%s: %s' %(self.graph['type_txt'], x[1])}
             image = CTK.Image(props)
             tabs.Add (_(x[0]), image)
         self += tabs
 
 
 class GraphVServer (Graph):
-    def __init__ (self, vserver, **kwargs):
+    def __init__ (self, refreshable, vserver, **kwargs):
         Graph.__init__ (self, **kwargs)
         self.template         = GRAPH_VSERVER
         self.graph['prefix']  = 'vserver'
-        self.graph['type']    = GRAPH_TYPES[0]
         self.graph['vserver'] = vserver
+        self.__call__()
+
+    def __call__ (self):
         self.build_graph ()
 
 
@@ -70,9 +74,12 @@ class GraphServer (Graph):
         Graph.__init__ (self, **kwargs)
         self.template        = GRAPH_SERVER
         self.graph['prefix'] = 'server'
-        self.graph['type']    = GRAPH_TYPES[0]
-        combo = CTK.Combobox ({'name': 'type', 'selected': '1h'}, GRAPH_TYPES)
-        combo.bind('change', 'alert($(this).val(););')
+        self.__call__()
+
+    def __call__ (self):
+        props = {'name': 'type', 'selected': self.graph['type']}
+        combo = CTK.Combobox (props, GRAPH_TYPES)
+        combo.bind('change', 'alert($(this).val());')
         self += combo
 
         self.build_graph ()
@@ -89,25 +96,6 @@ class GraphServer_Instancer (CTK.Container):
 
 
 """
-
-graphs/server_accepts_1d.png
-graphs/server_accepts_1h.png
-graphs/server_accepts_1m.png
-graphs/server_accepts_1w.png
-graphs/server_accepts_6h.png
-
-graphs/server_timeouts_1d.png
-graphs/server_timeouts_1h.png
-graphs/server_timeouts_1m.png
-graphs/server_timeouts_1w.png
-graphs/server_timeouts_6h.png
-
-graphs/server_traffic_1d.png
-graphs/server_traffic_1h.png
-graphs/server_traffic_1m.png
-graphs/server_traffic_1w.png
-graphs/server_traffic_6h.png
-
 graphs/server_traffic_1h.png
 graphs/server_accepts_1h.png
 graphs/server_timeouts_1h.png
