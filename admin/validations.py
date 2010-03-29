@@ -343,10 +343,20 @@ def is_safe_mime_type (mime):
     return mime
 
 
-def is_safe_mime_exts (new, safe = None):
+def is_safe_information_source (value):
+    host = is_information_source (value)
+    keys = CTK.cfg.keys ('source')
+    hosts  = [CTK.cfg.get_val('source!%s!host' % key) for key in keys]
+
+    if host in hosts:
+        raise ValueError, _('Already in use')
+    return host
+
+
+def is_safe_cfgval (key, cfg_str, new, safe):
     new  = list(set(split_list (new))) # remove list duplicates
-    keys = CTK.cfg.keys ('mime')
-    cfg  = [CTK.cfg.get_val('mime!%s!extensions' % key) for key in keys]
+    keys = CTK.cfg.keys (key)
+    cfg  = [CTK.cfg.get_val(cfg_str % key) for key in keys]
     old  = [x for sublist in map(split_list, cfg) for x in sublist]
 
     old.sort()
@@ -361,11 +371,13 @@ def is_safe_mime_exts (new, safe = None):
     return ','.join(new)
 
 
-def is_safe_information_source (value):
-    host = is_information_source (value)
-    keys = CTK.cfg.keys ('source')
-    hosts  = [CTK.cfg.get_val('source!%s!host' % key) for key in keys]
+def is_safe_mime_exts (new, safe = None):
+    return is_safe_cfgval ('mime', 'mime!%s!extensions', new, safe)
 
-    if host in hosts:
-        raise ValueError, _('Already in use')
-    return host
+
+def is_safe_icons_suffix (new, safe = None):
+    return is_safe_cfgval ('icons!suffix', 'icons!suffix!%s', new, safe)
+
+
+def is_safe_icons_file (new, safe = None):
+    return is_safe_cfgval ('icons!file', 'icons!file!%s', new, safe)
