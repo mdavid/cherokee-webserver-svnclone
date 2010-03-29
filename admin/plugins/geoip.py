@@ -65,17 +65,28 @@ def apply():
     return {'ret': 'ok'}
 
 
+CHECKBOX_JS = """
+$('.flag_checkbox').attr('checked', %s);
+"""
 class Plugin_geoip (RulePlugin):
     def __init__ (self, key, **kwargs):
         RulePlugin.__init__ (self, key)
         self.vsrv_num = kwargs.pop('vsrv_num', '')
         props = ({},{'class':'noauto'})[key.startswith('tmp')]
 
-        # GUI
         submit = CTK.Submitter (URL_APPLY)
+        select_all  = CTK.Button (_('Select all'))
+        select_none = CTK.Button (_('Select none'))
+        select_all.bind  ('click', CHECKBOX_JS % 'true'  + submit.JS_to_submit())
+        select_none.bind ('click', CHECKBOX_JS % 'false' + submit.JS_to_submit())
+
+        # GUI
+        submit += select_all
+        submit += select_none
         submit += CheckListFlags ('%s!countries'%(self.key), props)
         submit += CTK.Hidden ('key', self.key)
         submit += CTK.Hidden ('vsrv_num', self.vsrv_num)
+
         self += submit
 
     def GetName (self):
