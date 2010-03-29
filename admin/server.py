@@ -28,6 +28,7 @@ import os
 import sys
 import signal
 import gettext
+import config_version
 
 # Import CTK
 sys.path.append (os.path.abspath (os.path.realpath(__file__) + '/../CTK'))
@@ -64,6 +65,8 @@ def init (scgi_port, cfg_file):
     # Read configuration file
     CTK.cfg.file = cfg_file
     CTK.cfg.load()
+    # Update config tree if required
+    config_version.config_version_update_cfg (CTK.cfg)
 
     # Init CTK in advance
     # Params could be passed to CTK.run() later
