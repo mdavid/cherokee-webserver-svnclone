@@ -232,8 +232,11 @@ class Render():
         title = _('Virtual Servers')
 
         # Content
+        left  = CTK.Box({'class': 'panel'})
+        left += CTK.RawHTML('<h2>%s</h2>'%(title))
+        left += CTK.TextField({'class':'filter', 'optional_string': _('Virtual Server Filtering'), 'optional': True})
+
         right = CTK.Box({'class': 'vserver_content'})
-        left  = CTK.Box({'class': 'panel'}, CTK.RawHTML('<h2>%s</h2>'%(title) ))
 
         # Virtual Server List
         refresh = CTK.Refreshable ({'id': 'vservers_panel'})

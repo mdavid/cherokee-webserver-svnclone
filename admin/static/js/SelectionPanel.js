@@ -90,6 +90,16 @@
 		  return did_select;
 	   }
 
+	   function filter_entries (text) {
+		  self.find('.row_content').each (function() {
+			 if ($(this).text().search(text) == -1) {
+				$(this).hide();
+			 } else {
+				$(this).show();
+			 }
+		  });
+	   }
+
 	   this.get_selected = function() {
 		  var selected = self.find('.panel-selected:first');
 		  return $(selected);
@@ -126,6 +136,12 @@
 			 auto_select_row ($(this));
 		  });
 
+		  /* Filtering */
+		  var filter_input = self.parents('.panel').find('input:text.filter');
+		  filter_input.bind ("keyup", function(event) {
+			 filter_entries ($(this).val());
+		  });
+
 		  return obj;
 	   }
     };
@@ -141,6 +157,8 @@
     };
 
 })(jQuery);
+
+
 
 function resize_cherokee_panels() {
    var tdsize = 0;

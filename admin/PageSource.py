@@ -232,8 +232,11 @@ class Render():
 
     def __call__ (self):
         # Content
+        left  = CTK.Box({'class': 'panel'})
+        left += CTK.RawHTML('<h2>%s</h2>'%(_('Information Sources')))
+        left += CTK.TextField({'class':'filter', 'optional_string': _('Sources Filtering'), 'optional': True})
+
         right = CTK.Box({'class': 'source_content'})
-        left  = CTK.Box({'class': 'panel'}, CTK.RawHTML('<h2>%s</h2>'%(_('Information Sources')) ))
 
         # Sources List
         refresh = CTK.Refreshable ({'id': 'source_panel'})

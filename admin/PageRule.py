@@ -228,8 +228,11 @@ class Render():
             return CTK.HTTP_Redir ('/vserver')
 
         # Content
+        left  = CTK.Box({'class': 'panel'})
+        left += CTK.RawHTML('<h2>%s</h2>'%(title))
+        left += CTK.TextField({'class':'filter', 'optional_string': _('Rule Filtering'), 'optional': True})
+
         right = CTK.Box({'class': 'rules_content'})
-        left  = CTK.Box({'class': 'panel'}, CTK.RawHTML('<h2>%s</h2>'%(title)))
 
         # Virtual Server List
         refresh = CTK.Refreshable ({'id': 'rules_panel'})
