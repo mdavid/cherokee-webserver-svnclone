@@ -43,6 +43,8 @@ NOTE_POST_TRACKS = N_('How to track uploads/posts so its progress can be reporte
 NOTE_USER        = N_('Changes the effective user. User names and IDs are accepted.')
 NOTE_GROUP       = N_('Changes the effective group. Group names and IDs are accepted.')
 NOTE_CHROOT      = N_('Jail the server inside the directory. Don\'t use it as the only security measure.')
+NOTE_NO_SOURCES  = N_('No ports to listen have been defined. By default the server will listen to TCP port 80 on all the network interfaces.')
+
 
 HELPS = [('config_general',    N_("General Configuration")),
          ('config_quickstart', N_("Configuration Quickstart"))]
@@ -118,6 +120,7 @@ class PortsTable (CTK.Submitter):
 
         # Skip if empty
         if not binds:
+            self += CTK.Indenter (CTK.Notice('information', CTK.RawHTML (_(NOTE_NO_SOURCES))))
             return
 
         # Header
