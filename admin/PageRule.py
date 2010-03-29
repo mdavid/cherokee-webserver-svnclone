@@ -243,6 +243,7 @@ class Render():
         left += buttons
 
         # Refresh the list whenever the content change
+        right.bind ('changed',        refresh.JS_to_refresh());
         right.bind ('submit_success', refresh.JS_to_refresh());
 
         # Build the page
