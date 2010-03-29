@@ -61,8 +61,12 @@ img.icon_chooser_used {
 	border: 1px solid #666;
 }
 
-img.icon_chooser_selected,
 img.icon_chooser_unused:hover {
 	border: 1px solid #666;
 	background-color: #efefef;
+}
+
+img.icon_chooser_selected {
+	border: 1px solid #666;
+	background-color: #81bef7;
 }
