@@ -343,14 +343,18 @@ def is_safe_mime_type (mime):
     return mime
 
 
-def is_safe_mime_exts (new):
-    new  = split_list (new)
+def is_safe_mime_exts (new, safe = None):
+    new  = list(set(split_list (new))) # remove list duplicates
     keys = CTK.cfg.keys ('mime')
     cfg  = [CTK.cfg.get_val('mime!%s!extensions' % key) for key in keys]
     old  = [x for sublist in map(split_list, cfg) for x in sublist]
 
     old.sort()
     dupes = list (set(old) & set(new))
+    if safe: # Do not worry about safe values
+        safe  = split_list (safe)
+        dupes = list (set(dupes) - set(safe))
+
     if dupes:
         raise ValueError, '%s: %s' %(_('Already in use'), ', '.join(dupes))
 
