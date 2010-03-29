@@ -157,7 +157,6 @@ class Render():
             vservers.reverse()
 
             for k in vservers:
-
                 if k == vservers[-1]:
                     content = [entry('nick',  'vserver!%s!nick'%(k)),
                                entry('droot', 'vserver!%s!document_root'%(k))]
@@ -167,7 +166,7 @@ class Render():
 
                     # Remove
                     dialog = CTK.Dialog ({'title': _('Do you really want to remove it?'), 'width': 480})
-                    dialog.AddButton (_('Remove'), CTK.JS.Ajax (URL_APPLY, async=False,
+                    dialog.AddButton (_('Remove'), CTK.JS.Ajax (URL_APPLY, async=True,
                                                                 data    = {'vserver!%s'%(k):''},
                                                                 success = dialog.JS_to_close() + \
                                                                     refresh.JS_to_refresh()))
@@ -178,12 +177,16 @@ class Render():
                     remove.bind ('click', dialog.JS_to_show() + "return false;")
 
                     # Disable
-                    if CTK.cfg.get_val('vserver!%s!disabled'%(k), False):
-                        disabled = CTK.ImageStock('off', {'class': 'toggle-activation', 'title': 'Activate'})
-                    else:
-                        disabled = CTK.ImageStock('on', {'class': 'toggle-activation', 'title': 'Deactivate'})
-                    disabled.bind ('click', "alert('TODO: Activate/Deactivate'); return false;")
+                    is_disabled = bool (int (CTK.cfg.get_val('vserver!%s!disabled'%(k), "0")))
 
+                    disabled = CTK.ToggleButtonOnOff (not is_disabled)
+                    disabled.bind ('changed',
+                                   CTK.JS.Ajax (URL_APPLY, async=True,
+                                                data = '{"vserver!%s!disabled": event.value}'%(k)))
+                    disabled.bind ('changed',
+                                   "$(this).parents('.row_content').toggleClass('toggle-activation');")
+
+                    # Actions
                     group = CTK.Box ({'class': 'sel-actions'}, [disabled, remove])
                     content = [group]
 
