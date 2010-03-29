@@ -69,11 +69,16 @@ def RuleButtons_apply():
         CTK.cfg[key] = 'or'
 
     elif op == 'DEL':
-        rule = CTK.cfg[key]
-        if rule == 'not':
-            move ("%s!right"%(key), key)
-        elif rule in ('and', 'or'):
-            move ("%s!left"%(key), key)
+        parent_key  = '!'.join (key.split('!')[:-1])
+        parent_rule = CTK.cfg.get_val(parent_key)
+
+        if parent_rule == 'not':
+            move ("%s!right"%(parent_key), parent_key)
+        elif parent_rule in ('and', 'or'):
+            if key.endswith ('right'):
+                move ("%s!left"%(parent_key), parent_key)
+            else:
+                move ("%s!right"%(parent_key), parent_key)
         else:
             del(CTK.cfg[key])
 
