@@ -226,6 +226,7 @@ config_server (cherokee_server_t *srv)
 	cherokee_buffer_add_str  (&buf,
 				  RULE_PRE "1!match = default\n"
 				  RULE_PRE "1!handler = scgi\n"
+				  RULE_PRE "1!encoder!gzip = 1\n"
 				  RULE_PRE "1!handler!balancer = round_robin\n"
 				  RULE_PRE "1!handler!balancer!source!1 = 1\n");
 
@@ -326,6 +327,13 @@ config_server (cherokee_server_t *srv)
 				 RULE_PRE "10!match!final = 0\n"
 				 RULE_PRE "10!document_root = %s\n", CHEROKEE_DOCDIR);
 
+	/* GZip
+	 */
+	cherokee_buffer_add_va  (&buf,
+				 RULE_PRE "15!match = extensions\n"
+				 RULE_PRE "15!match!extensions = css,js,html\n"
+				 RULE_PRE "15!match!final = 0\n"
+				 RULE_PRE "15!encoder!gzip = 1\n");
 
 	/* RRDtool graphs
 	 */
