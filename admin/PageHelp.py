@@ -37,6 +37,8 @@ TOC_TITLE  = N_('Table of Contents')
 BODY_REGEX = """<div class="sectionbody">(.+?)</div>\s*<div id="footer">"""
 LINK_REGEX = """<a href="(.+?)">(.+?)</a>""" #link, title
 
+HEADERS    = ["""<link href="media/css/cherokee_doc.css" rel="stylesheet" type="text/css" media="all" />"""]
+
 class Parser():
     """Simple documentation parser"""
     def __init__ (self, filename):
@@ -147,10 +149,26 @@ class Render():
         right = HelpBox (filename)
 
         # Build the page
-        page = Page.Base (_("Documentation"), body_id='help')
+        page = Page (headers = HEADERS)
         page += left
         page += right
 
         return page.Render()
+
+class Page (CTK.Page):
+    def __init__ (self, **kwargs):
+        # Look for the theme file
+        srcdir = os.path.dirname (os.path.realpath (__file__))
+        theme_file = os.path.join (srcdir, 'help.html')
+
+        # Set up the template
+        template = CTK.Template (filename = theme_file)
+
+        template['title']      = _("Documentation")
+        template['body_props'] = ' id="body-help"'
+
+        # Parent's constructor
+        CTK.Page.__init__ (self, template, **kwargs)
+
 
 CTK.publish ('^%s/.+\.html'   %(URL_BASE), Render)
