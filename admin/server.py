@@ -120,11 +120,10 @@ if __name__ == "__main__":
     import PageRule
     import PageEntry
     import PageSources
-    import PageIcons
-    import PageMime
     import PageSource
     import PageAdvanced
     import PageNewConfig
+    #import PageHelp
 
     # Run
     CTK.run()
