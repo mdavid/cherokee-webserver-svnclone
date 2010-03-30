@@ -46,9 +46,9 @@ def modify():
     updates = {}
     for k in CTK.post:
         validator = None
-        if   k.startswith('icons!suffix'):
+        if   k.startswith('icons!suffix') and CTK.post['k']:
             validator = validations.is_safe_icons_suffix
-        elif k.startswith ('icons!file'):
+        elif k.startswith ('icons!file') and CTK.post['k']:
             validator = validations.is_safe_icons_file
 
         if validator:
@@ -111,10 +111,8 @@ class ExtensionsTable (CTK.Container):
         CTK.Container.__init__ (self, **kwargs)
 
         # New entry
-        button = AddDialogButton ('new_exts','Extensions')
+        button = AdditionDialogButton ('new_exts','Extensions')
         button.bind ('submit_success', refreshable.JS_to_refresh())
-
-        self += CTK.RawHTML ("<h2>%s</h2>" %_('Add New Extensions'))
         self += CTK.Indenter (button)
 
         # List
@@ -147,10 +145,8 @@ class FilesTable (CTK.Container):
         CTK.Container.__init__ (self, **kwargs)
 
         # New file
-        button = AddDialogButton ('new_file','File')
+        button = AdditionDialogButton ('new_file','File')
         button.bind ('submit_success', refreshable.JS_to_refresh())
-
-        self += CTK.RawHTML ("<h2>%s</h2>" %_('Add New File Match'))
         self += CTK.Indenter (button)
 
         # List
@@ -192,7 +188,7 @@ class SpecialTable (CTK.Container):
                      'title': desc,
                      'src'  : '/icons_local/%s'%(icon)}
             image = CTK.Image (props)
-            button = AddDialogButton (k, k, selected = icon, submit_label = _('Modify'))
+            button = AdditionDialogButton (k, k, selected = icon, submit_label = _('Modify'))
             button.bind ('submit_success', refreshable.JS_to_refresh())
             table += [image, CTK.RawHTML(desc), button]
 
@@ -306,10 +302,10 @@ class AddIcon (CTK.Container):
         if key in ['new_file','new_exts']:
             field = CTK.TextField({'name': key, 'class': 'noauto'})
             row.append(CTK.Box ({'class': 'icon_field'}, field))
-            hidden_name = '%s_icon' % key
+            hidden_name = '%s_icon' %(key)
             prefix = ['icons!suffix', 'icons!file'][key == 'new_file']
         else:
-            hidden_name = 'icons!%s' % key
+            hidden_name = 'icons!%s' %(key)
             prefix = None
 
         table  += row
@@ -319,13 +315,13 @@ class AddIcon (CTK.Container):
         self += submit
 
 
-class AddDialogButton (CTK.Box):
+class AdditionDialogButton (CTK.Box):
     def __init__ (self, key, name, **kwargs):
-        CTK.Box.__init__ (self, {'class': '%s-button'%name})
+        CTK.Box.__init__ (self, {'class': '%s-button' %(name)})
 
         # Add New
         submit_label = kwargs.get('submit_label', _('Add'))
-        dialog = CTK.Dialog ({'title': _('Add new %s'%name), 'width': 375})
+        dialog = CTK.Dialog ({'title': _('Add new %s'%(name)), 'width': 375})
         dialog.AddButton (submit_label, dialog.JS_to_trigger('submit'))
         dialog.AddButton (_('Cancel'), "close")
         dialog += AddIcon(key, **kwargs)
