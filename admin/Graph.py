@@ -74,57 +74,53 @@ class Graph (CTK.Box):
         return render
 
 
-class GraphVServer (Graph):
-    def __init__ (self, refreshable, vserver, **kwargs):
-        Graph.__init__ (self, refreshable, **kwargs)
-        self.template         = GRAPH_VSERVER
-        self.graph['prefix']  = 'vserver'
-        self.graph['vserver'] = vserver
-        self.build_graph ()
-
-
-class GraphServer (Graph):
-    def __init__ (self, refreshable, **kwargs):
-        Graph.__init__ (self, refreshable, **kwargs)
-        self.template        = GRAPH_SERVER
-        self.graph['prefix'] = 'server'
-        graph_type = CTK.cfg.get_val('tmp!graph_type')
-        if graph_type:
-            self.graph['type'] = graph_type
-        self.build()
-
-    def build (self):
-        props   = {'name': 'graph_type', 'selected': self.graph['type']}
-        combo   = CTK.Combobox (props, GRAPH_TYPES)
-        submit  = CTK.Submitter (URL_APPLY)
-        submit += combo
-        submit.bind('submit_success', self.refresh.JS_to_refresh())
-
-        for x in GRAPH_TYPES:
-            if x[0] == self.graph['type']:
-                self.graph['type_txt'] = x[1]
-
-        self   += submit
-        self.build_graph ()
-
-
 class GraphVServer_Instancer (CTK.Container):
+    class GraphVServer (Graph):
+        def __init__ (self, refreshable, vserver, **kwargs):
+            Graph.__init__ (self, refreshable, **kwargs)
+            self.template         = GRAPH_VSERVER
+            self.graph['prefix']  = 'vserver'
+            self.graph['vserver'] = vserver
+            self.build_graph ()
+
     def __init__ (self):
         CTK.Container.__init__ (self, vserver)
 
         # Refresher
         refresh = CTK.Refreshable ({'id': 'grapharea'})
-        refresh.register (lambda: GraphVServer(refresh, vserver).Render())
+        refresh.register (lambda: self.GraphVServer(refresh, vserver).Render())
         self += refresh
 
 
 class GraphServer_Instancer (CTK.Container):
+    class GraphServer (Graph):
+        def __init__ (self, refreshable, **kwargs):
+            Graph.__init__ (self, refreshable, **kwargs)
+            self.template        = GRAPH_SERVER
+            self.graph['prefix'] = 'server'
+            self.graph['type']   = CTK.cfg.get_val('tmp!graph_type', self.graph['type'])
+            self.build()
+
+        def build (self):
+            props   = {'name': 'graph_type', 'selected': self.graph['type']}
+            combo   = CTK.Combobox (props, GRAPH_TYPES)
+            submit  = CTK.Submitter (URL_APPLY)
+            submit += combo
+            submit.bind('submit_success', self.refresh.JS_to_refresh())
+
+            for x in GRAPH_TYPES:
+                if x[0] == self.graph['type']:
+                    self.graph['type_txt'] = x[1]
+
+            self   += submit
+            self.build_graph ()
+
     def __init__ (self):
         CTK.Container.__init__ (self)
 
         # Refresher
         refresh = CTK.Refreshable ({'id': 'grapharea'})
-        refresh.register (lambda: GraphServer(refresh).Render())
+        refresh.register (lambda: self.GraphServer(refresh).Render())
         self += refresh
 
 CTK.publish ('^%s'%(URL_APPLY), apply, method="POST")
