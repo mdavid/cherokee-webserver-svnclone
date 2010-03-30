@@ -70,3 +70,17 @@ img.icon_chooser_selected {
 	border: 1px solid #666;
 	background-color: #81bef7;
 }
+
+/* Top dialog
+ */
+#savebar {
+    background: #fff6b6;
+    color: #3b3929;
+    height: 32px;
+    border: none;
+    border-bottom: 1px solid #edd400;
+    display: none;
+}
+
+#savebar .topmsg { float: left; padding: 8px 0 0 16px; font-weight: bold; }
+#savebar .buttonarea { float: right; padding-top: 4px; }
