@@ -47,6 +47,7 @@ PageGeneral.py \
 PageVServer.py \
 PageAdvanced.py \
 PageNewConfig.py \
+PageHelp.py \
 plugins/rrd.py \
 plugins/post_track.py \
 plugins/evhost.py \
