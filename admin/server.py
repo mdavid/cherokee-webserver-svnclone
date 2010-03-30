@@ -123,7 +123,7 @@ if __name__ == "__main__":
     import PageSource
     import PageAdvanced
     import PageNewConfig
-    #import PageHelp
+    import PageHelp
 
     # Run
     CTK.run()
