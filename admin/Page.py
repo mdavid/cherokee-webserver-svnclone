@@ -105,13 +105,6 @@ class Base (CTK.Page):
         self += dialog
         self += CTK.RawHTML (js="$('#nav-save-a').bind ('click', function(){ %s });" %(dialog.JS_to_show()))
 
-        # Add help link
-        self += CTK.RawHTML (js="$('#help-a').bind ('click', function(){ toggleHelp(); });")
-
-        # Add hover image to del icon
-        self += CTK.RawHTML (js="$('.del').hover( function(){ $(this).attr('src', '/CTK/images/del-hover.png'); }, function(){$(this).attr('src', '/CTK/images/del.png'); } );")
-
-
 
 CTK.publish (URL_SAVE_GRACEFUL, Restart, mode='graceful')
 CTK.publish (URL_SAVE_HARD,     Restart, mode='hard')

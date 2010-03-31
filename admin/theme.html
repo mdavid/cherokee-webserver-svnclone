@@ -17,6 +17,7 @@
     <li id="nav-vservers"><a href="/vserver">vServers</a></li>
     <li id="nav-source"><a href="/source">Sources</a></li>
     <li id="nav-advanced"><a href="/advanced">Advanced</a></li>
+    <li id="nav-save-a"><a href="#">Save</a></li>
     </ul>
    </div>
  </div>
@@ -42,5 +43,15 @@
 
  <!-- Place Javascript at the end -->
  %(js)s
+
+ <script type="text/javascript">
+   $('#help-a').click (function(){ toggleHelp(); });
+
+   $('.del').live('mouseover', function(){
+         $(this).attr('src', '/CTK/images/del-hover.png');
+   }).live('mouseout', function(){
+         $(this).attr('src', '/CTK/images/del.png');
+   });
+ </script>
  </body>
 </html>
