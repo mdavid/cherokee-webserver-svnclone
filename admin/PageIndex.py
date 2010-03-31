@@ -57,6 +57,7 @@ PROUD_DIALOG_OK     = N_("The information has been successfully sent. Thank you!
 PROUS_DIALOG_ERROR1 = N_("Unfortunatelly something went wrong, and the information could not be submitted:")
 PROUS_DIALOG_ERROR2 = N_("Please, try again. Do not hesitate to report the problem if it persists.")
 
+HELPS = [('config_status',     N_("Status"))]
 
 def Launch():
     if not Cherokee.server.is_alive():
@@ -183,7 +184,7 @@ class Render():
     def __call__ (self):
         Cherokee.pid.refresh()
 
-        self.page = Page.Base(_('Welcome to Cherokee Admin'), body_id='index')
+        self.page = Page.Base(_('Welcome to Cherokee Admin'), body_id='index', helps=HELPS)
         self.page += CTK.RawHTML ("<h1>%s</h1>"% _('Welcome to Cherokee Admin'))
 
         if 'b' in VERSION:
