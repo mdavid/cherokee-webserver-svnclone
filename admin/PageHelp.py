@@ -31,7 +31,7 @@ import configured
 from CTK.consts import *
 
 # Quitar html de la regla de cherokee
-URL_BASE   = '/doc'
+URL_BASE   = '/help'
 TOC_TITLE  = N_('Table of Contents')
 
 BODY_REGEX = """<div class="sectionbody">(.+?)</div>\s*<div id="footer">"""
@@ -114,22 +114,26 @@ class Parser():
 
 
 class IndexBox (CTK.Box):
-    def __init__ (self, **kwargs):
+    def __init__ (self, link, **kwargs):
         CTK.Box.__init__ (self, {'class': 'help_toc'}, **kwargs)
-        parser = Parser ('index.html')
+        parser        = Parser ('index.html')
+        self.link     = link
         self.sections = parser.get_sections ()
-        self += self.process_entry (self.sections)
+        self         += self.process_entry (self.sections)
 
     def process_entry (self, entry):
-        block  = CTK.Container ()
-        block += CTK.RawHTML(LINK_HREF%(entry['link'],entry['text']))
+        props = {}
+        if entry['link'] == self.link:
+            props['class'] = 'help_selected'
+        block  = CTK.Table (props)
+        block += [CTK.RawHTML(LINK_HREF%(entry['link'],entry['text']))]
 
         spawn = entry.get('children')
         if spawn:
-            children = CTK.Table()
+            children = CTK.Container()
             for child in spawn:
-                children += [self.process_entry (child)]
-            block += CTK.Indenter (children)
+                children += self.process_entry (child)
+            block += [CTK.Indenter (children)]
 
         return block
 
@@ -145,7 +149,7 @@ class Render():
     def __call__ (self):
         # Content
         filename = CTK.request.url.split('/')[-1]
-        left  = IndexBox()
+        left  = IndexBox(filename)
         right = HelpBox (filename)
 
         # Build the page

@@ -298,8 +298,12 @@ config_server (cherokee_server_t *srv)
 	/* Embedded help
 	 */
 	cherokee_buffer_add_va  (&buf,
-				 RULE_PRE "7!match = directory\n"
-				 RULE_PRE "7!match!directory = /help\n"
+				 RULE_PRE "7!match = and\n"
+				 RULE_PRE "7!match!left = directory\n"
+				 RULE_PRE "7!match!left!directory = /help\n"
+				 RULE_PRE "7!match!right = not\n"
+				 RULE_PRE "7!match!right!right = extensions\n"
+				 RULE_PRE "7!match!right!right!extensions = html\n"
 				 RULE_PRE "7!handler = file\n");
 
 	cherokee_buffer_add_va  (&buf,
