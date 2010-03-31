@@ -37,9 +37,6 @@ TOC_TITLE  = N_('Table of Contents')
 BODY_REGEX = r'<div class="sectionbody">(.+?)</div>\s*<div id="footer">'
 LINK_REGEX = r'<a href="(.+?)">(.+?)</a>' #link, title
 
-HEADERS    = ['<link href="media/css/cherokee_doc.css" rel="stylesheet" type="text/css" />']
-
-
 class Parser():
     """Simple documentation parser"""
     def __init__ (self, filename):
@@ -176,7 +173,7 @@ class Render():
         right = HelpBox (filename)
 
         # Build the page
-        page = Page (headers = HEADERS)
+        page = Page ()
         page += left
         page += right
 
