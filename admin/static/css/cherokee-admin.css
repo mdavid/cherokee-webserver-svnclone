@@ -84,3 +84,10 @@ img.icon_chooser_selected {
 
 #savebar .topmsg { float: left; padding: 8px 0 0 16px; font-weight: bold; }
 #savebar .buttonarea { float: right; padding-top: 4px; }
+
+
+/* PageHelp
+ */
+.help_toc {}
+.help_selected {}
+.help_content {}
