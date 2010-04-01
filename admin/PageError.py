@@ -114,5 +114,33 @@ class ConfigNotWritable (CTK.Page):
         self += CTK.RawHTML ('<p>%s</p>' %(NOT_WRITABLE_2))
 
 def NotWritable (file):
-    page = ConfigNotWritable(file)
-    return page.Render()
+    return ConfigNotWritable (file).Render()
+
+
+
+ICONS_MISSING_TITLE = N_('Could not find the icons directory: <code>%s</code>')
+ICONS_MISSING       = N_('You may need to reinstall the Web Server in order to sort out this issue.')
+
+class ConfigIconsMissing (CTK.Page):
+    def __init__ (self, path, **kwargs):
+        srcdir = os.path.dirname (os.path.realpath (__file__))
+        theme_file = os.path.join (srcdir, 'exception.html')
+
+        # Set up the template
+        template = CTK.Template (filename = theme_file)
+        template['body_props'] = ' id="body-error-icons-missing"'
+        template['title']      = _('Icons Directory is Missing')
+
+        # Parent's constructor
+        CTK.Page.__init__ (self, template, **kwargs)
+
+        # Body
+        notice = CTK.Notice ('error')
+        notice += CTK.RawHTML (_(ICONS_MISSING_TITLE)%(path))
+
+        self += CTK.RawHTML ('<h1>%s</h1>'%(_('Icons Directory is Missing')))
+        self += notice
+        self += CTK.RawHTML ('<p>%s</p>' %(ICONS_MISSING))
+
+def IconsMissing (path):
+    return ConfigIconsMissing(path).Render()
