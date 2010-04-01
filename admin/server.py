@@ -96,7 +96,7 @@ if __name__ == "__main__":
     # Init
     init (scgi_port, cfg_file)
 
-    # Check config file
+    # Check config file and set up
     if not os.path.exists (cfg_file):
         import PageNewConfig
         CTK.publish (r'', PageNewConfig.Render)
@@ -116,8 +116,15 @@ if __name__ == "__main__":
             CTK.step()
 
         CTK.unpublish (r'')
-        CTK.cfg.file = cfg_file
-        CTK.cfg.load()
+
+    if not os.path.isdir (CHEROKEE_ICONSDIR):
+        import PageError
+        CTK.publish (r'', PageError.IconsMissing, path=CHEROKEE_ICONSDIR)
+
+        while not os.path.isdir (CHEROKEE_ICONSDIR):
+            CTK.step()
+
+        CTK.unpublish (r'')
 
     # Set up the error page
     import PageException
