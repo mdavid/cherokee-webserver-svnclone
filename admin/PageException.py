@@ -43,7 +43,7 @@ NOTE_EXCEPT_FAIL    = N_('<p>For reason, the issue could not be reported to the 
 URL_APPLY  = '/exception/apply'
 
 
-def apply():
+def submit():
     # Build the parameters
     headers = {"Content-type": "application/x-www-form-urlencoded"}
     info    = urlencode ({'version':   configured.VERSION,
@@ -112,4 +112,4 @@ class Page (CTK.Page):
         submit += CTK.SubmitterButton (_("Report developers"))
 
 
-CTK.publish (URL_APPLY, apply, method="POST")
+CTK.publish (URL_APPLY, submit, method="POST")
