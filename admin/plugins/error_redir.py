@@ -1,4 +1,6 @@
-# Cheroke Admin: RRD plug-in
+# -*- coding: utf-8 -*-
+#
+# Cheroke-admin
 #
 # Authors:
 #      Alvaro Lopez Ortega <alvaro@alobbs.com>
@@ -82,10 +84,7 @@ class Content (CTK.Container):
         table.Add (_('Redirection'), CTK.TextCfg ('new_redir', False, {'class':'noauto'}), _('TODO'))
         table.Add (_('Type'),        CTK.ComboCfg('new_type', REDIRECTION_TYPE, {'class':'noauto'}), _('TODO'))
 
-        dialog = CTK.Dialog({'title':     _('Add new'),
-                             'autoOpen':  False,
-                             'draggable': False,
-                             'width':     480})
+        dialog = CTK.Dialog({'title': _('Add New Custom Error'), 'width': 540})
 
         submit = CTK.Submitter(url_apply)
         submit += table
@@ -97,7 +96,7 @@ class Content (CTK.Container):
         dialog += submit
         self += dialog
 
-        add_new = CTK.LinkIcon (content=CTK.RawHTML(_("Add new..")), icon='newwin')
+        add_new = CTK.Button(_('Add New…'))
         add_new.bind ('click', dialog.JS_to_show())
         self += add_new
 

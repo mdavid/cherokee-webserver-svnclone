@@ -104,7 +104,7 @@ class Plugin_authlist (Auth.PluginAuth):
         submit += table
         submit.bind ('submit_success', refresh.JS_to_refresh() + new_user.JS_to_clean() + new_pass.JS_to_clean())
 
-        self += CTK.RawHTML ("<h3>%s</h3>" % (_('Add new pair')))
+        self += CTK.RawHTML ("<h3>%s</h3>" % (_('Add New Pair')))
         self += CTK.Indenter (submit)
 
         # Publish

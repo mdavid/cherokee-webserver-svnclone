@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+#
 # Cheroke Admin
 #
 # Authors:
@@ -66,7 +68,7 @@ class AddressesTable (CTK.Container):
                                                   complete = refreshable.JS_to_refresh()))
                 table += [e1, rm]
 
-        # Add new
+        # Add New
         table = CTK.PropsTable()
         next  = CTK.cfg.get_next_entry_prefix (key)
         table.Add (_('New IP/Subnet'), CTK.TextCfg(next, False, {'class':'noauto'}), _(NOTE_ADDRESS))
@@ -81,7 +83,7 @@ class AddressesTable (CTK.Container):
         dialog += submit
         self += dialog
 
-        add_new = CTK.LinkIcon (content=CTK.RawHTML(_("Add new..")), icon='newwin')
+        add_new = CTK.Button(_('Add New…'))
         add_new.bind ('click', dialog.JS_to_show())
         self += add_new
 
