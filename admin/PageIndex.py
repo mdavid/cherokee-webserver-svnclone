@@ -29,6 +29,7 @@ import gettext
 import xmlrpclib
 import XMLServerDigest
 import Graph
+import PageError
 
 import os
 import time
@@ -61,7 +62,11 @@ HELPS = [('config_status',     N_("Status"))]
 
 def Launch():
     if not Cherokee.server.is_alive():
-        Cherokee.server.launch()
+        error = Cherokee.server.launch()
+        if error:
+            page_error = PageError.PageErrorLaunch (error)
+            return page_error.Render()
+
     return CTK.HTTP_Redir('/')
 
 def Stop():
