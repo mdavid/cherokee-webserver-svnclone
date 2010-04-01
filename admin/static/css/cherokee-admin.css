@@ -88,6 +88,15 @@ img.icon_chooser_selected {
 
 /* PageHelp
  */
-.help_toc {}
+.help_toc {
+	float: left;
+	width: 220px;
+}
+
+.help_content {
+	overflow: scroll;
+}
+
 .help_selected {}
-.help_content {}
+
+

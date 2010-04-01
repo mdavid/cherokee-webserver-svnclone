@@ -34,7 +34,7 @@ from CTK.consts import *
 URL_BASE   = '/help'
 TOC_TITLE  = N_('Table of Contents')
 
-BODY_REGEX = r'<div class="sectionbody">(.+?)</div>\s*<div id="footer">'
+BODY_REGEX = r'.*<div class="sectionbody">(.+?)</div>\s*<div id="footer">'
 LINK_REGEX = r'<a href="(.+?)">(.+?)</a>' #link, title
 
 class Parser():
@@ -46,8 +46,16 @@ class Parser():
         filepath  = os.path.join (configured.DOCDIR, filename)
         self.html = open(filepath).read()
 
-        body = self._parse (BODY_REGEX, self.html)[0]
-        self.body = body.replace ('%', '%%')
+        # Extract the body
+        self.body_raw = self._parse (BODY_REGEX, self.html)[0]
+        self.body   = self.body_raw.replace ('%', '%%')
+
+    def get_header (self):
+        # Find the header preceding the body
+        p = self.html.find (self.body_raw)
+        h1 = self.html.rfind ('<h2', 0, p)
+        h2 = self.html.rfind ('</h2>', 0, p) + 5
+        return self.html[h1:h2]
 
     def _parse (self, regex, txt):
         return re.findall (regex, txt, re.DOTALL)
@@ -143,14 +151,17 @@ class IndexBox (CTK.Box):
 
 
 class HelpBox (CTK.Box):
-    def __init__ (self, filename, **kwargs):
-        CTK.Box.__init__ (self, {'class': 'help_content'}, **kwargs)
-        parser  = Parser (filename)
+    def __init__ (self, filename):
+        CTK.Box.__init__ (self, {'class': 'help_content'})
+        parser = Parser (filename)
+        header = parser.get_header()
+
+        self += CTK.RawHTML (header)
         self += CTK.RawHTML (parser.body)
 
 
 class Page (CTK.Page):
-    def __init__ (self, **kwargs):
+    def __init__ (self):
         # Look for the theme file
         srcdir = os.path.dirname (os.path.realpath (__file__))
         theme_file = os.path.join (srcdir, 'help.html')
@@ -161,8 +172,11 @@ class Page (CTK.Page):
         template['title']      = _("Documentation")
         template['body_props'] = ' id="body-help"'
 
+        # headers
+        headers = ['<link rel="stylesheet" type="text/css" href="/static/css/cherokee-admin.css" />']
+
         # Parent's constructor
-        CTK.Page.__init__ (self, template, **kwargs)
+        CTK.Page.__init__ (self, template, headers)
 
 
 class Render():
