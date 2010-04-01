@@ -230,42 +230,62 @@ class FilesWidget_Instancer (CTK.Container):
 
 
 ICON_CHOOSER_JS = """
-$("input[type=hidden]").val("%s");
-$(".icon_chooser").removeClass("icon_chooser_selected");
-$("#%s").addClass("icon_chooser_selected");
+$('#%(iconchooserbox_id)s').each(function() {
+  var chooser = $(this);
+  var hidden  = chooser.find('input:hidden');
+
+  chooser.find('img.icon_chooser_entry').each(function() {
+    $(this).bind('click', function(event) {
+         var image = $(this);
+         hidden.val(image.attr('file'));
+         chooser.find('.icon_chooser_entry').removeClass("icon_chooser_selected");
+         image.addClass("icon_chooser_selected");
+    });
+  });
+});
 """
-class IconChooser (CTK.Container):
+
+class IconChooser (CTK.Box):
     def __init__ (self, field_name, prefix, **kwargs):
-        CTK.Container.__init__ (self)
+        CTK.Box.__init__ (self, {'class': 'icon-chooser-box'})
+        selected = kwargs.get('selected')
+
+        # Get the file list
         files, unused = self.get_files (prefix)
         total = len(files)
-        selected = kwargs.get('selected')
-        hidden = CTK.Hidden(field_name, '')
-        table  = CTK.Table()
-        row = []
+
+        # Build the table
+        row   = []
+        table = CTK.Table()
         for x in range(total):
             filename = files[x]
             desc     = prettyfier (filename)
+
             props = {'alt'  : desc,
                      'title': desc,
+                     'file' : filename,
                      'src'  : '/icons_local/%s'%(filename),
-                     'class': 'icon_chooser icon_chooser_used'}
+                     'class': 'icon_chooser_entry icon_chooser_used'}
+
             if filename in unused:
-                props['class'] = 'icon_chooser icon_chooser_unused'
+                props['class'] = 'icon_chooser_entry icon_chooser_unused'
             if filename == selected:
-                props['class'] = 'icon_chooser icon_chooser_selected'
+                props['class'] = 'icon_chooser_entry icon_chooser_selected'
 
             image = CTK.Image(props)
-            if filename in unused:
-                js = ICON_CHOOSER_JS % (filename, image.id)
-                image.bind('click', js)
             row.append (image)
             if (x+1) % ICON_ROW_SIZE == 0 or (x+1) == total:
                 table += row
                 row = []
 
+        hidden = CTK.Hidden(field_name, '')
         self += hidden
         self += table
+
+    def Render (self):
+        render = CTK.Box.Render (self)
+        render.js += ICON_CHOOSER_JS %({'iconchooserbox_id': self.id})
+        return render
 
 
     def get_files (self, prefix = None):
