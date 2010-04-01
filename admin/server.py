@@ -108,6 +108,17 @@ if __name__ == "__main__":
         CTK.cfg.file = cfg_file
         CTK.cfg.load()
 
+    if not os.access (cfg_file, os.W_OK):
+        import PageError
+        CTK.publish (r'', PageError.NotWritable, file=cfg_file)
+
+        while not os.access (cfg_file, os.W_OK):
+            CTK.step()
+
+        CTK.unpublish (r'')
+        CTK.cfg.file = cfg_file
+        CTK.cfg.load()
+
     # Set up the error page
     import PageException
     CTK.error.page = PageException.Page

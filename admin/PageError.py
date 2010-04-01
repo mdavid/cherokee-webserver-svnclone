@@ -28,7 +28,6 @@ from urllib import quote
 
 ERROR_LAUNCH_URL_ADMIN = N_('The server suggests to check <a href="%s">this page</a>. Most probably the problem can he solved in there.')
 
-
 class PageErrorLaunch (CTK.Page):
     def __init__ (self, error_str, **kwargs):
         srcdir = os.path.dirname (os.path.realpath (__file__))
@@ -36,7 +35,7 @@ class PageErrorLaunch (CTK.Page):
 
         # Set up the template
         template = CTK.Template (filename = theme_file)
-        template['body_props'] = ' id="body-launch-error"'
+        template['body_props'] = ' id="body-error-launch"'
 
         # Parent's constructor
         CTK.Page.__init__ (self, template, **kwargs)
@@ -84,3 +83,36 @@ class PageErrorLaunch (CTK.Page):
         self += CTK.RawHTML ('<h1>%s</h1>' %(_('Server Launch Error')))
         self += CTK.Box ({'class': 'description'}, CTK.RawHTML(_('Something unexpected just happened.')))
         self += CTK.Box ({'class': 'backtrace'},   CTK.RawHTML(self._error_raw))
+
+
+
+NOT_WRITABLE_TITLE = N_('The configuration file <code>%s</code> cannot be modified.')
+NOT_WRITABLE_1     = N_('You have to change its permissions in order to allow cherokee-admin to work with it. You can try to fix it by changing the file permissions:')
+NOT_WRITABLE_2     = N_('or by launching cherokee-admin as root.')
+
+class ConfigNotWritable (CTK.Page):
+    def __init__ (self, file, **kwargs):
+        srcdir = os.path.dirname (os.path.realpath (__file__))
+        theme_file = os.path.join (srcdir, 'exception.html')
+
+        # Set up the template
+        template = CTK.Template (filename = theme_file)
+        template['body_props'] = ' id="body-error-not-writable"'
+        template['title']      = _('Configuration file is not writable')
+
+        # Parent's constructor
+        CTK.Page.__init__ (self, template, **kwargs)
+
+        # Body
+        notice = CTK.Notice ('error')
+        notice += CTK.RawHTML (NOT_WRITABLE_TITLE %(file))
+
+        self += CTK.RawHTML ('<h1>%s</h1>' %(_('Configuration file is not writable')))
+        self += notice
+        self += CTK.RawHTML ('<p>%s</p>' %(NOT_WRITABLE_1))
+        self += CTK.RawHTML ('<pre>chmod u+w %s</pre>' %(file))
+        self += CTK.RawHTML ('<p>%s</p>' %(NOT_WRITABLE_2))
+
+def NotWritable (file):
+    page = ConfigNotWritable(file)
+    return page.Render()
