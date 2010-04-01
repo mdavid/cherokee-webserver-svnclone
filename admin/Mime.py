@@ -90,17 +90,17 @@ class AddMime (CTK.Container):
         self += submit
 
 
-class MIME_Button (CTK.Box):
+class AddNew_Button (CTK.Box):
     def __init__ (self):
         CTK.Box.__init__ (self, {'class': 'mime-button'})
 
         # Add New
-        dialog = CTK.Dialog ({'title': _('Add new MIME'), 'width': 480})
+        dialog = CTK.Dialog ({'title': _('Add New MIME-Type'), 'width': 480})
         dialog.AddButton (_('Add'), dialog.JS_to_trigger('submit'))
         dialog.AddButton (_('Cancel'), "close")
         dialog += AddMime()
 
-        button = CTK.Button(_('Add'))
+        button = CTK.Button(_('Add New…'))
         button.bind ('click', dialog.JS_to_show())
         dialog.bind ('submit_success', dialog.JS_to_close())
         dialog.bind ('submit_success', self.JS_to_trigger('submit_success'));
@@ -113,14 +113,10 @@ class MIME_Table (CTK.Container):
     def __init__ (self, refreshable, **kwargs):
         CTK.Container.__init__ (self, **kwargs)
 
-        # Add new MIME
-        button = MIME_Button()
-        button.bind ('submit_success', refreshable.JS_to_refresh ())
-
         # List
         table = CTK.Table ({'id': "mimetable"})
         table.set_header(1)
-        table += [CTK.RawHTML(x) for x in (_('Mime type'), _('Extensions'), _('MaxAge<br/>(<i>secs</i>)'))]
+        table += [CTK.RawHTML(x) for x in (_('MIME type'), _('Extensions'), _('MaxAge<br/>(<i>secs</i>)'))]
 
         mimes = CTK.cfg.keys('mime')
         mimes.sort()
@@ -129,7 +125,7 @@ class MIME_Table (CTK.Container):
             pre = "mime!%s"%(mime)
             e1 = CTK.TextCfg ('%s!extensions'%(pre), False, {'size': 35})
             e2 = CTK.TextCfg ('%s!max-age'%(pre),    True,  {'size': 6, 'maxlength': 6})
-            rm = CTK.ImageStock('del')
+            rm = CTK.ImageStock('del', {'class': 'del', 'title': _('Delete')})
             rm.bind('click', CTK.JS.Ajax (URL_APPLY, data = {pre: ''},
                                           complete = refreshable.JS_to_refresh()))
             table += [CTK.RawHTML(mime), e1, e2, rm]
@@ -137,8 +133,13 @@ class MIME_Table (CTK.Container):
         submit  = CTK.Submitter (URL_APPLY)
         submit += table
 
-        self += CTK.Indenter (button)
+        # Add New
+        button = AddNew_Button()
+        button.bind ('submit_success', refreshable.JS_to_refresh ())
+
+        self += CTK.RawHTML ('<h2>%s</h2>' %('MIME Types'))
         self += CTK.Indenter (submit)
+        self += button
 
 
 class MIME_Table_Instancer (CTK.Container):

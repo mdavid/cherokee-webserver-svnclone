@@ -206,7 +206,7 @@ class Render():
             dialog.AddButton (_('Cancel'), "close")
             dialog += VirtualServerNew()
 
-            button = CTK.Button(_('New'))
+            button = CTK.Button(_('New…'))
             button.bind ('click', dialog.JS_to_show())
             dialog.bind ('submit_success', dialog.JS_to_close())
             dialog.bind ('submit_success', self.JS_to_trigger('submit_success'));

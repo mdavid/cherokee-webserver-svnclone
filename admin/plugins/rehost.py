@@ -1,4 +1,6 @@
-# Cheroke Admin: Regular Expressions host plug-in
+# -*- coding: utf-8 -*-
+#
+# Cheroke-admin
 #
 # Authors:
 #      Alvaro Lopez Ortega <alvaro@alobbs.com>
@@ -60,13 +62,13 @@ class Content (CTK.Container):
                                                   complete = refreshable.JS_to_refresh()))
                 table += [e1, rm]
 
-        # Add new
+        # Add New
         table = CTK.PropsTable()
         next  = CTK.cfg.get_next_entry_prefix (key)
         table.Add (_('New Regular Expression'), CTK.TextCfg(next, False, {'class':'noauto'}), _(NOTE_REHOST))
 
         submit = CTK.Submitter(url_apply)
-        dialog = CTK.Dialog2Buttons ({'title': _('Add new entry')}, _('Add'), submit.JS_to_submit())
+        dialog = CTK.Dialog2Buttons ({'title': _('Add New Entry')}, _('Add'), submit.JS_to_submit())
 
         submit += table
         submit.bind ('submit_success', refreshable.JS_to_refresh())
@@ -75,7 +77,7 @@ class Content (CTK.Container):
         dialog += submit
         self += dialog
 
-        add_new = CTK.LinkIcon (content=CTK.RawHTML(_("Add new..")), icon='newwin')
+        add_new = CTK.Button(_('Add New…'))
         add_new.bind ('click', dialog.JS_to_show())
         self += add_new
 

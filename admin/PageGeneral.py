@@ -183,7 +183,7 @@ class PortsWidget (CTK.Container):
         submit.bind ('submit_success', dialog.JS_to_close())
 
         # Add new
-        button = CTK.SubmitterButton (_('Add new port..'))
+        button = CTK.SubmitterButton (_('Add new port…'))
         button.bind ('click', dialog.JS_to_show())
         button_s = CTK.Submitter (URL_APPLY)
         button_s += button
