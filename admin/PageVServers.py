@@ -188,8 +188,8 @@ class Render():
 
                     # Actions
                     group = CTK.Box ({'class': 'sel-actions'}, [disabled, remove])
-                    content = [group]
 
+                    content = [group]
                     content += [entry('nick',  'vserver!%s!nick'%(k)),
                                 entry('droot', 'vserver!%s!document_root'%(k))]
 
@@ -234,7 +234,7 @@ class Render():
         # Content
         left  = CTK.Box({'class': 'panel'})
         left += CTK.RawHTML('<h2>%s</h2>'%(title))
-        left += CTK.TextField({'class':'filter', 'optional_string': _('Virtual Server Filtering'), 'optional': True})
+        left += CTK.Box({'class': 'filterbox'}, CTK.TextField({'class':'filter', 'optional_string': _('Virtual Server Filtering'), 'optional': True}))
 
         right = CTK.Box({'class': 'vserver_content'})
 

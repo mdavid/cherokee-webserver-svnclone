@@ -93,9 +93,9 @@
 	   function filter_entries (text) {
 		  self.find('.row_content').each (function() {
 			 if ($(this).text().search(text) == -1) {
-				$(this).hide();
+                                $('#'+$(this).attr('pid')).hide();
 			 } else {
-				$(this).show();
+                                $('#'+$(this).attr('pid')).show();
 			 }
 		  });
 	   }
@@ -163,14 +163,28 @@
 function resize_cherokee_panels() {
    var tdsize = 0;
    if ($('#topdialog').is(":visible")) {
-      tdsize = $('#topdialog').height();
+       tdsize = $('#topdialog').height();
    }
-   $('#vservers_panel').height($(window).height() - 158 - tdsize);
-   $('.vserver_content .ui-tabs .ui-tabs-panel').height($(window).height() - 140 - tdsize);
-   $('#rules_panel').height($(window).height() - 158 - tdsize);
-   $('.rules_content .ui-tabs .ui-tabs-panel').height($(window).height() - 140 - tdsize);
-   $('#source_panel').height($(window).height() - 158 - tdsize);
-   $('.source_content .submitter').height($(window).height() - 92 - tdsize);
+
+   if ($("#vservers_panel").length > 0) {
+       if ($('.selection-panel table').height() > $('#vservers_panel').height()) {
+           $(".selection-panel table").addClass('hasScroll');
+       } else {
+           $(".selection-panel table").removeClass('hasScroll');
+       }
+       $('#vservers_panel').height($(window).height() - 190 - tdsize);
+       $('.vserver_content .ui-tabs .ui-tabs-panel').height($(window).height() - 140 - tdsize);
+   }
+
+   if ($("#rules_panel").length > 0) {
+       $('#rules_panel').height($(window).height() - 190 - tdsize);
+       $('.rules_content .ui-tabs .ui-tabs-panel').height($(window).height() - 140 - tdsize);
+   }
+
+   if ($("#source_panel").length > 0) {
+       $('#source_panel').height($(window).height() - 190 - tdsize);
+       $('.source_content .submitter').height($(window).height() - 92 - tdsize);
+   }
 }
 
 $(document).ready(function() {
