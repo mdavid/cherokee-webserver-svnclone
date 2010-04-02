@@ -150,14 +150,12 @@ class Render():
                 if CTK.cfg.get_val ('vserver!%s!rule!%s!no_log' %(vsrv_num, r)):
                     comment.append ('no log')
 
-                # Content
-                content = [CTK.Box ({'class': 'name'}, CTK.RawHTML(rule_name)),
-                           CTK.Box ({'class': 'comment'}, CTK.RawHTML (', '.join(comment)))]
-
                 # List entry
                 row_id = '%s_%s' %(r, vsrv_num)
 
                 if r == rules[-1]:
+                    content = [CTK.Box ({'class': 'name'}, CTK.RawHTML(rule_name)),
+                               CTK.Box ({'class': 'comment'}, CTK.RawHTML (', '.join(comment)))]
                     panel.Add (row_id, '/vserver/%s/rule/content/%s'%(vsrv_num, r), content, draggable=False)
                 else:
                     # Remove
@@ -173,11 +171,28 @@ class Render():
                     remove.bind ('click', dialog.JS_to_show() + "return false;")
 
                     # Disable
-                    disabled = CTK.Box ({'class': 'disable'}, CTK.iPhoneCfg('vserver!%s!rule!%s!disabled'%(vsrv_num, r), False))
-                    content += [disabled, remove]
+                    is_disabled = bool (int (CTK.cfg.get_val('vserver!%s!rule!%s!disabled'%(vsrv_num,r), "0")))
+
+                    disclass = 'rule-inactive' if is_disabled else ''
+
+                    disabled = CTK.ToggleButtonOnOff (not is_disabled)
+                    disabled.bind ('changed',
+                                   CTK.JS.Ajax (url_apply, async=True,
+                                                data = '{"vserver!%s!rule!%s!disabled": event.value}'%(vsrv_num,r)))
+
+                    disabled.bind ('changed', 
+                                   "$(this).parents('.row_content').toggleClass('rule-inactive');")
+
+                    # Actions
+                    group = CTK.Box ({'class': 'sel-actions'}, [disabled, remove])
+
+                    content = [group]
+                    content += [CTK.Box ({'class': 'name'}, CTK.RawHTML(rule_name)),
+                               CTK.Box ({'class': 'comment'}, CTK.RawHTML (', '.join(comment)))]
+
 
                     # Add the list entry
-                    panel.Add (row_id, '/vserver/%s/rule/content/%s'%(vsrv_num, r), content)
+                    panel.Add (row_id, '/vserver/%s/rule/content/%s'%(vsrv_num, r), content, True, disclass)
 
 
     class PanelButtons (CTK.Box):
@@ -230,7 +245,7 @@ class Render():
         # Content
         left  = CTK.Box({'class': 'panel'})
         left += CTK.RawHTML('<h2>%s</h2>'%(title))
-        left += CTK.TextField({'class':'filter', 'optional_string': _('Rule Filtering'), 'optional': True})
+        left += CTK.Box({'class': 'filterbox'}, CTK.TextField({'class':'filter', 'optional_string': _('Rule Filtering'), 'optional': True}))
 
         right = CTK.Box({'class': 'rules_content'})
 

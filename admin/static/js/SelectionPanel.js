@@ -179,11 +179,21 @@ function resize_cherokee_panels() {
    }
 
    if ($("#rules_panel").length > 0) {
+       if ($('.selection-panel table').height() > $('#rules_panel').height()) {
+           $(".selection-panel table").addClass('hasScroll');
+       } else {
+           $(".selection-panel table").removeClass('hasScroll');
+       }
        $('#rules_panel').height($(window).height() - 190 - tdsize);
        $('.rules_content .ui-tabs .ui-tabs-panel').height($(window).height() - 140 - tdsize);
    }
 
    if ($("#source_panel").length > 0) {
+       if ($('.selection-panel table').height() > $('#source_panel').height()) {
+           $(".selection-panel table").addClass('hasScroll');
+       } else {
+           $(".selection-panel table").removeClass('hasScroll');
+       }
        $('#source_panel').height($(window).height() - 190 - tdsize);
        $('.source_content .submitter').height($(window).height() - 92 - tdsize);
    }
