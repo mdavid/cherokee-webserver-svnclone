@@ -260,7 +260,7 @@ class Render():
 
 class RenderParticular:
     def __call__ (self):
-        headers = ['<script type="text/javascript" src="/CTK/js/jquery-1.3.2.js"></script>',
+        headers = ['<script type="text/javascript" src="/CTK/js/jquery-1.3.2.min.js"></script>',
                    '<script type="text/javascript" src="/CTK/js/jquery.cookie.js"></script>']
 
         page  = CTK.PageEmpty (headers=headers)
