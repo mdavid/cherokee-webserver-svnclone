@@ -91,11 +91,13 @@
 	   }
 
 	   function filter_entries (text) {
+		  var lower_text = text.toLowerCase();
+
 		  self.find('.row_content').each (function() {
-			 if ($(this).text().search(text) == -1) {
-                                $('#'+$(this).attr('pid')).hide();
+			 if ($(this).text().toLowerCase().search (lower_text) == -1) {
+                    self.find('#'+$(this).attr('pid')).hide();
 			 } else {
-                                $('#'+$(this).attr('pid')).show();
+                    self.find('#'+$(this).attr('pid')).show();
 			 }
 		  });
 	   }
