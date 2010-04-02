@@ -201,7 +201,9 @@ class Render():
         self.page += CTK.RawHTML('<a href="/launch">Launch</a> | <a href="/stop">Stop</a>')
         self.page += LanguageSelector()
         self.page += ProudUsers()
-        self.page += Graph.GraphServer_Instancer()
+
+        if CTK.cfg.get_val('server!collector'):
+            self.page += Graph.GraphServer_Instancer()
 
         return self.page.Render()
 
