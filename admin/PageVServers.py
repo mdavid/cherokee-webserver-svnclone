@@ -179,12 +179,17 @@ class Render():
                     # Disable
                     is_disabled = bool (int (CTK.cfg.get_val('vserver!%s!disabled'%(k), "0")))
 
+                    if (is_disabled):
+                        disclass = 'vserver-inactive'
+                    else:
+                        disclass = ''
+
                     disabled = CTK.ToggleButtonOnOff (not is_disabled)
                     disabled.bind ('changed',
                                    CTK.JS.Ajax (URL_APPLY, async=True,
                                                 data = '{"vserver!%s!disabled": event.value}'%(k)))
                     disabled.bind ('changed',
-                                   "$(this).parents('.row_content').toggleClass('toggle-activation');")
+                                   "$(this).parents('.row_content').toggleClass('vserver-inactive');")
 
                     # Actions
                     group = CTK.Box ({'class': 'sel-actions'}, [disabled, remove])
@@ -194,7 +199,7 @@ class Render():
                                 entry('droot', 'vserver!%s!document_root'%(k))]
 
                     # List entry
-                    panel.Add (k, '/vserver/content/%s'%(k), content)
+                    panel.Add (k, '/vserver/content/%s'%(k), content, True, disclass)
 
     class PanelButtons (CTK.Box):
         def __init__ (self):
