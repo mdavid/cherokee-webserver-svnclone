@@ -1,4 +1,6 @@
-# Cheroke Admin: Advanced virtual hosting plug-in
+# -*- coding: utf-8 -*-
+#
+# Cheroke-admin
 #
 # Authors:
 #      Alvaro Lopez Ortega <alvaro@alobbs.com>
@@ -41,4 +43,4 @@ class Plugin_evhost (CTK.Plugin):
         self += table
 
         # URL mapping
-        CTK.publish ('^%s'%(URL_APPLY), self.apply, method="POST")
+        CTK.publish ('^%s'%(URL_APPLY), CTK.cfg_apply_post, method="POST")
