@@ -203,10 +203,11 @@ config_server (cherokee_server_t *srv)
 					 "source!1!type = interpreter\n"
 					 "source!1!timeout = 25\n"
 					 "source!1!host = %s\n"
-					 "source!1!interpreter = %s/server.py %s %s\n"
+					 "source!1!interpreter = %s/server.py %s %s %s\n"
 					 "source!1!env_inherited = 1\n",
 					 DEFAULT_UNIX_SOCKET, document_root,
-					 DEFAULT_UNIX_SOCKET, config_file);
+					 DEFAULT_UNIX_SOCKET, config_file,
+					 (debug) ? "-x" : "");
 
 	} else {
 		cherokee_buffer_add_va  (&buf,
@@ -214,9 +215,11 @@ config_server (cherokee_server_t *srv)
 					 "source!1!type = interpreter\n"
 					 "source!1!timeout = 25\n"
 					 "source!1!host = localhost:%d\n"
-					 "source!1!interpreter = %s/server.py %d %s\n"
+					 "source!1!interpreter = %s/server.py %d %s %s\n"
 					 "source!1!env_inherited = 1\n",
-					 scgi_port, document_root, scgi_port, config_file);
+					 scgi_port, document_root,
+					 scgi_port, config_file,
+					 (debug) ? "-x" : "");
 	}
 
 	if (debug) {

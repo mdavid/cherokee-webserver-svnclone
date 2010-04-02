@@ -84,6 +84,23 @@ def init (scgi_port, cfg_file):
         CTK.init (unix_socket=scgi_port)
 
 
+def debug_set_up():
+    def debug_callback (sig, frame):
+        import code, traceback
+
+        d = {'_frame':frame}       # Allow access to frame object.
+        d.update(frame.f_globals)  # Unless shadowed by global
+        d.update(frame.f_locals)
+
+        i = code.InteractiveConsole(d)
+        message  = "Signal recieved : entering python shell.\nTraceback:\n"
+        message += ''.join(traceback.format_stack(frame))
+        i.interact(message)
+
+    print "DEBUG ENABLED: Send SIGUSR1 to invoke the console.."
+    signal.signal(signal.SIGUSR1, debug_callback)  # Register handler
+
+
 if __name__ == "__main__":
     # Read the arguments
     try:
@@ -92,6 +109,10 @@ if __name__ == "__main__":
     except:
         print _("Incorrect parameters: PORT CONFIG_FILE")
         raise SystemExit
+
+    # Debugging mode
+    if '-x' in sys.argv:
+        debug_set_up()
 
     # Init
     init (scgi_port, cfg_file)
