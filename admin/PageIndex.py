@@ -202,7 +202,7 @@ class Render():
         self.page += LanguageSelector()
         self.page += ProudUsers()
 
-        if CTK.cfg.get_val('server!collector'):
+        if CTK.cfg.get_val('server!collector') == 'rrd':
             self.page += Graph.GraphServer_Instancer()
 
         return self.page.Render()
