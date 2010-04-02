@@ -187,17 +187,19 @@ class Render():
                 remove = CTK.ImageStock('del', {'class': 'del'})
                 remove.bind ('click', dialog.JS_to_show() + "return false;")
 
+                group = CTK.Box ({'class': 'sel-actions'}, [remove])
+
                 if tipe == 'host':
-                    panel.Add (k, '/source/%s'%(k), [entry('nick',  'source!%s!nick'%(k)),
+                    panel.Add (k, '/source/%s'%(k), [group, 
+                                                     entry('nick',  'source!%s!nick'%(k)),
                                                      entry('type',  'source!%s!type'%(k)),
-                                                     entry('host',  'source!%s!host'%(k)),
-                                                     remove])
+                                                     entry('host',  'source!%s!host'%(k))])
                 elif tipe == 'interpreter':
-                    panel.Add (k, '/source/%s'%(k), [entry('nick',  'source!%s!nick'%(k)),
+                    panel.Add (k, '/source/%s'%(k), [group,
+                                                     entry('nick',  'source!%s!nick'%(k)),
                                                      entry('type',  'source!%s!type'%(k)),
                                                      entry('host',  'source!%s!host'%(k)),
-                                                     entry('inter', 'source!%s!interpreter'%(k)),
-                                                     remove])
+                                                     entry('inter', 'source!%s!interpreter'%(k))])
 
 
     class PanelButtons (CTK.Box):
@@ -234,7 +236,7 @@ class Render():
         # Content
         left  = CTK.Box({'class': 'panel'})
         left += CTK.RawHTML('<h2>%s</h2>'%(_('Information Sources')))
-        left += CTK.TextField({'class':'filter', 'optional_string': _('Sources Filtering'), 'optional': True})
+        left += CTK.Box({'class': 'filterbox'}, CTK.TextField({'class':'filter', 'optional_string': _('Sources Filtering'), 'optional': True}))
 
         right = CTK.Box({'class': 'source_content'})
 
