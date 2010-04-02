@@ -47,7 +47,7 @@ class SelectionPanel (CTK.Box):
 
         self += self.table
 
-    def Add (self, id_content, url, content, draggable=True):
+    def Add (self, id_content, url, content, draggable=True, extraClass=''):
         assert type(url) == str
         assert type(content) == list
 
@@ -55,7 +55,7 @@ class SelectionPanel (CTK.Box):
         row_id = ''.join([('_',x)[x in string.letters+string.digits] for x in url])
 
         # Row Content
-        row_content = CTK.Box({'class': 'row_content',
+        row_content = CTK.Box({'class': 'row_content ' + extraClass,
                                'id':    id_content,
                                'pid':   id_content,
                                'url':   url})
