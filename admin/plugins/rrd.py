@@ -1,4 +1,6 @@
-# Cheroke Admin: RRD plug-in
+# -*- coding: utf-8 -*-
+#
+# Cheroke-admin
 #
 # Authors:
 #      Alvaro Lopez Ortega <alvaro@alobbs.com>
@@ -43,4 +45,4 @@ class Plugin_rrd (CTK.Plugin):
         VALS = [('%s!database_dir'%(key), validations.is_local_dir_exists),
                 ('%s!rrdtool_path'%(key), validations.is_exec_file)]
 
-        CTK.publish ('^%s'%(URL_APPLY), self.apply, validation=VALS, method="POST")
+        CTK.publish ('^%s'%(URL_APPLY), CTK.cfg_apply_post, validation=VALS, method="POST")

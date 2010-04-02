@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Cheroke Admin
+# Cheroke-admin
 #
 # Authors:
 #      Alvaro Lopez Ortega <alvaro@alobbs.com>
@@ -104,5 +104,5 @@ class Plugin_target_ip (CTK.Plugin):
 
         # Validation, and Public URLs
         VALS = [('%s!.+'%(pre), validations.is_ip_or_netmask)]
-        CTK.publish ('^%s/[\d]+$'%(URL_APPLY), self.apply, validation=VALS, method="POST")
+        CTK.publish ('^%s/[\d]+$'%(URL_APPLY), CTK.cfg_apply_post, validation=VALS, method="POST")
         CTK.publish ('^%s/[\d]+/del$'%(URL_APPLY), apply_del, method="POST")

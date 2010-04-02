@@ -65,7 +65,7 @@ VALIDATIONS = [
 ]
 
 
-def apply():
+def commit():
     # Add a new port
     port = CTK.post.pop('new_port')
     if port:
@@ -74,10 +74,7 @@ def apply():
         CTK.cfg['%s!port'%(pre)] = port
 
     # Modifications
-    for k in CTK.post:
-        CTK.cfg[k] = CTK.post[k]
-
-    return {'ret': 'ok'}
+    return CTK.cfg_apply_post()
 
 
 class NetworkWidget (CTK.Box):
@@ -227,4 +224,4 @@ class Render():
         return page.Render()
 
 CTK.publish ('^%s'%(URL_BASE), Render)
-CTK.publish ('^%s'%(URL_APPLY), apply, validation=VALIDATIONS, method="POST")
+CTK.publish ('^%s'%(URL_APPLY), commit, validation=VALIDATIONS, method="POST")
