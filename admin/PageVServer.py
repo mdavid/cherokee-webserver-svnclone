@@ -70,6 +70,11 @@ NOTE_UTC_TIME         = N_('Time standard to use in the log file entries.')
 
 DEFAULT_HOST_NOTE     = N_("<p>The 'default' virtual server matches all the domain names.</p>")
 
+JS_TR_ODD = """
+$('#rules-table tr:odd').addClass('trodd');
+"""
+
+
 
 def validation_ca_list (text):
     "Empty or local_file_exists"
@@ -166,9 +171,9 @@ class BehaviorWidget (CTK.Container):
         url_apply = "%s/%s" %(URL_APPLY, vsrv_num)
 
         # List
-        table = CTK.Table()
+        table = CTK.Table({'id': 'rules-table'})
         table.set_header(1)
-        table += [CTK.RawHTML(x) for x in (_('Match'), _('Handler'), _('Auth'), _('Final'))]
+        table += [CTK.RawHTML(x) for x in (_('Match'), _('Handler'), _('Auth'), _('Final'), '')]
 
         rules = CTK.cfg.keys('vserver!%s!rule'%(vsrv_num))
         rules.sort (lambda x,y: cmp(int(x), int(y)))
@@ -199,6 +204,7 @@ class BehaviorWidget (CTK.Container):
         submit += table
 
         self += CTK.RawHTML ('<h2>%s</h2>' %(_('Behavior Rules')))
+        self += CTK.RawHTML (js=JS_TR_ODD)
         self += CTK.Indenter (submit)
 
 
