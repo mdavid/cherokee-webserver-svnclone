@@ -225,7 +225,7 @@ class Render():
             dialog.AddButton (_('Cancel'), "close")
             dialog += CTK.RawHTML ('<p>%s</p>' %(_(NOTE_CLONE_DIALOG)))
 
-            button = CTK.Button(_('Clone'))
+            button = CTK.Button(_('Clone…'))
             button.bind ('click', dialog.JS_to_show())
 
             self += dialog

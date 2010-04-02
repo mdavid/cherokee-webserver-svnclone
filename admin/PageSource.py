@@ -205,12 +205,12 @@ class Render():
             CTK.Box.__init__ (self, {'class': 'panel-buttons'})
 
             # Add New
-            dialog = CTK.Dialog ({'title': _('Add New Information Source'), 'width': 480})
+            dialog = CTK.Dialog ({'title': _('Add New Information Source'), 'width': 380})
             dialog.AddButton (_('Add'), dialog.JS_to_trigger('submit'))
             dialog.AddButton (_('Cancel'), "close")
             dialog += AddSource()
 
-            button = CTK.Button(_('New'))
+            button = CTK.Button(_('New…'))
             button.bind ('click', dialog.JS_to_show())
             dialog.bind ('submit_success', dialog.JS_to_close())
             dialog.bind ('submit_success', self.JS_to_trigger('submit_success'));
@@ -224,7 +224,7 @@ class Render():
             dialog.AddButton (_('Cancel'), "close")
             dialog += CloneSource()
 
-            button = CTK.Button(_('Clone'))
+            button = CTK.Button(_('Clone…'))
             button.bind ('click', dialog.JS_to_show())
 
             self += dialog
