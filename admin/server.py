@@ -26,6 +26,7 @@
 
 import os
 import sys
+import stat
 import signal
 import gettext
 import config_version
@@ -97,8 +98,21 @@ def debug_set_up():
         message += ''.join(traceback.format_stack(frame))
         i.interact(message)
 
-    print "DEBUG ENABLED: Send SIGUSR1 to invoke the console.."
-    signal.signal(signal.SIGUSR1, debug_callback)  # Register handler
+    def trace_callback (sig, stack):
+        import traceback, threading
+
+        id2name = dict([(th.ident, th.name) for th in threading.enumerate()])
+        for threadId, stack in sys._current_frames().items():
+            print '\n# Thread: %s(%d)' %(id2name[threadId], threadId)
+            for filename, lineno, name, line in traceback.extract_stack(stack):
+                print 'File: "%s", line %d, in %s' %(filename, lineno, name)
+                if line:
+                    print '  %s' % (line.strip())
+
+    print "DEBUG: SIGUSR1 invokes the console.."
+    print "       SIGUSR2 prints a backtrace.."
+    signal.signal (signal.SIGUSR1, debug_callback)
+    signal.signal (signal.SIGUSR2, trace_callback)
 
 
 if __name__ == "__main__":
