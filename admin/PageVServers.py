@@ -208,7 +208,7 @@ class Render():
             dialog.AddButton (_('Cancel'), "close")
             dialog += VirtualServerNew()
 
-            button = CTK.Button(_('New…'))
+            button = CTK.Button(_('New…'), {'id': 'vserver-new-button', 'class': 'panel-button', 'title': _('Add New Virtual Server')})
             button.bind ('click', dialog.JS_to_show())
             dialog.bind ('submit_success', dialog.JS_to_close())
             dialog.bind ('submit_success', self.JS_to_trigger('submit_success'));
@@ -222,7 +222,7 @@ class Render():
             dialog.AddButton (_('Cancel'), "close")
             dialog += CTK.RawHTML ('<p>%s</p>' %(_(NOTE_CLONE_DIALOG)))
 
-            button = CTK.Button(_('Clone…'))
+            button = CTK.Button(_('Clone…'), {'id': 'vserver-clone-button', 'class': 'panel-button', 'title': _('Clone Selected Virtual Server')})
             button.bind ('click', dialog.JS_to_show())
 
             self += dialog
@@ -236,9 +236,6 @@ class Render():
         # Content
         left  = CTK.Box({'class': 'panel'})
         left += CTK.RawHTML('<h2>%s</h2>'%(title))
-        left += CTK.Box({'class': 'filterbox'}, CTK.TextField({'class':'filter', 'optional_string': _('Virtual Server Filtering'), 'optional': True}))
-
-        right = CTK.Box({'class': 'vserver_content'})
 
         # Virtual Server List
         refresh = CTK.Refreshable ({'id': 'vservers_panel'})
@@ -247,9 +244,15 @@ class Render():
         # Refresh on 'New' or 'Clone'
         buttons = self.PanelButtons()
         buttons.bind ('submit_success', refresh.JS_to_refresh (on_success=JS_ACTIVATE_LAST))
+        left += buttons
+
+        left += CTK.Box({'class': 'filterbox'}, CTK.TextField({'class':'filter', 'optional_string': _('Virtual Server Filtering'), 'optional': True}))
+
+        right = CTK.Box({'class': 'vserver_content'})
+
+
 
         left += refresh
-        left += buttons
 
         # Refresh the list whenever the content change
         right.bind ('submit_success', refresh.JS_to_refresh());

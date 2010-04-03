@@ -213,7 +213,7 @@ class Render():
             dialog += table
             dialog += modul
 
-            button = CTK.Button(_('New…'))
+            button = CTK.Button(_('New…'), {'id': 'rule-new-button', 'class': 'panel-button', 'title': _('Add Behavior Rule')})
             button.bind ('click', dialog.JS_to_show())
             dialog.bind ('submit_success', dialog.JS_to_close())
             dialog.bind ('submit_success', self.JS_to_trigger('submit_success'));
@@ -227,7 +227,7 @@ class Render():
             dialog.AddButton (_('Cancel'), "close")
             dialog += CTK.RawHTML ('<p>%s</p>' %(_(NOTE_CLONE_DIALOG)))
 
-            button = CTK.Button(_('Clone…'))
+            button = CTK.Button(_('Clone…'), {'id': 'rule-clone-button', 'class': 'panel-button', 'title': _('Clone Selected Behavior Rule')})
             button.bind ('click', dialog.JS_to_show())
 
             self += dialog
@@ -245,10 +245,6 @@ class Render():
         # Content
         left  = CTK.Box({'class': 'panel'})
         left += CTK.RawHTML('<h2>%s</h2>'%(title))
-        left += CTK.Box({'class': 'filterbox'}, CTK.TextField({'class':'filter', 'optional_string': _('Rule Filtering'), 'optional': True}))
-
-        right = CTK.Box({'class': 'rules_content'})
-
         # Virtual Server List
         refresh = CTK.Refreshable ({'id': 'rules_panel'})
         refresh.register (lambda: self.PanelList(refresh, right, vsrv_num).Render())
@@ -256,9 +252,13 @@ class Render():
         # Refresh on 'New' or 'Clone'
         buttons = self.PanelButtons (vsrv_num)
         buttons.bind ('submit_success', refresh.JS_to_refresh (on_success=JS_ACTIVATE_LAST))
+        left += buttons
+
+        left += CTK.Box({'class': 'filterbox'}, CTK.TextField({'class':'filter', 'optional_string': _('Rule Filtering'), 'optional': True}))
+
+        right = CTK.Box({'class': 'rules_content'})
 
         left += refresh
-        left += buttons
 
         # Refresh the list whenever the content change
         right.bind ('changed',        refresh.JS_to_refresh());
