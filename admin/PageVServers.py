@@ -27,6 +27,7 @@ import Page
 import Cherokee
 import SelectionPanel
 import validations
+import Wizard
 
 from CTK.Tab       import HEADER as Tab_HEADER
 from CTK.Submitter import HEADER as Submit_HEADER
@@ -40,8 +41,9 @@ from CTK.consts import *
 from configured import *
 
 
-URL_BASE  = r'/vserver'
-URL_APPLY = r'/vserver/apply'
+URL_BASE       = r'/vserver'
+URL_APPLY      = r'/vserver/apply'
+URL_NEW_MANUAL = r'/vserver/new/manual'
 
 HELPS = [('config_virtual_servers', N_("Virtual Servers"))]
 
@@ -119,7 +121,7 @@ def reorder (arg):
     return {'ret': 'ok'}
 
 
-class VirtualServerNew (CTK.Container):
+class VirtualServerNew_OLD (CTK.Container):
     def __init__ (self):
         CTK.Container.__init__ (self)
 
@@ -130,6 +132,38 @@ class VirtualServerNew (CTK.Container):
         submit = CTK.Submitter (URL_APPLY)
         submit += table
         self += submit
+
+def NewManual():
+    table = CTK.PropsTable()
+    table.Add (_('Nick'),          CTK.TextCfg ('tmp!new_nick',  False, {'class': 'noauto'}), _(NOTE_NEW_NICK))
+    table.Add (_('Document Root'), CTK.TextCfg ('tmp!new_droot', False, {'class': 'noauto'}), _(NOTE_NEW_DROOT))
+
+    submit = CTK.Submitter (URL_APPLY)
+    submit += table
+    return submit.Render().toJSON()
+
+
+class VirtualServerNew (CTK.Container):
+    def __init__ (self):
+        CTK.Container.__init__ (self)
+
+        # Build the panel list
+        right_box = CTK.Box({'class': 'vserver_new_content'})
+        panel = SelectionPanel.SelectionPanel (None, right_box.id, URL_BASE, '')
+
+        self += panel
+        self += right_box
+
+        # Special 1st: Manual
+        content = [CTK.Box({'class': 'title'},       CTK.RawHTML(_('Manual'))),
+                   CTK.Box({'class': 'description'}, CTK.RawHTML(_('Manual configuration')))]
+        panel.Add ('manual', URL_NEW_MANUAL, content, draggable=False)
+
+        # Wizard Categories
+        for cat in Wizard.Categories():
+            content = [CTK.Box({'class': 'title'},       CTK.RawHTML(_(cat['title']))),
+                       CTK.Box({'class': 'description'}, CTK.RawHTML(_(cat['descr'])))]
+            panel.Add (cat['title'], cat['url_pre'], content, draggable=False)
 
 
 class Render():
@@ -178,7 +212,6 @@ class Render():
 
                     # Disable
                     is_disabled = bool (int (CTK.cfg.get_val('vserver!%s!disabled'%(k), "0")))
-
                     disclass = 'vserver-inactive' if is_disabled else ''
 
                     disabled = CTK.ToggleButtonOnOff (not is_disabled)
@@ -203,18 +236,30 @@ class Render():
             CTK.Box.__init__ (self, {'class': 'panel-buttons'})
 
             # Add New
-            dialog = CTK.Dialog ({'title': _('Add New Virtual Server'), 'width': 480})
+            dialog = CTK.Dialog ({'title': _('Add New Virtual Server'), 'width': 700})
             dialog.AddButton (_('Add'), dialog.JS_to_trigger('submit'))
             dialog.AddButton (_('Cancel'), "close")
             dialog += VirtualServerNew()
 
+            druid  = CTK.Druid (CTK.RefreshableURL())
+            wizard = CTK.Dialog ({'title': _('Virtual Server Configuration Assistant'), 'width': 550})
+            wizard += druid
+            druid.bind ('druid_exiting',
+                        wizard.JS_to_close() +
+                        self.JS_to_trigger('submit_success'))
+
             button = CTK.Button(_('New…'), {'id': 'vserver-new-button', 'class': 'panel-button', 'title': _('Add New Virtual Server')})
             button.bind ('click', dialog.JS_to_show())
             dialog.bind ('submit_success', dialog.JS_to_close())
-            dialog.bind ('submit_success', self.JS_to_trigger('submit_success'));
+            dialog.bind ('submit_success', self.JS_to_trigger('submit_success'))
+            dialog.bind ('open_wizard',
+                         dialog.JS_to_close() +
+                         druid.JS_to_goto("'/wizard/vserver/' + event.wizard") +
+                         wizard.JS_to_show())
 
             self += button
             self += dialog
+            self += wizard
 
             # Clone
             dialog = CTK.Dialog ({'title': _('Clone Virtual Server'), 'width': 480})
@@ -247,11 +292,7 @@ class Render():
         left += buttons
 
         left += CTK.Box({'class': 'filterbox'}, CTK.TextField({'class':'filter', 'optional_string': _('Virtual Server Filtering'), 'optional': True}))
-
         right = CTK.Box({'class': 'vserver_content'})
-
-
-
         left += refresh
 
         # Refresh the list whenever the content change
@@ -293,7 +334,8 @@ class RenderParticular():
         return page.Render()
 
 
-CTK.publish (r'^%s$'    %(URL_BASE),  Render)
-CTK.publish (r'^%s/\d+$'%(URL_BASE),  RenderParticular)
-CTK.publish (r'^%s$'    %(URL_APPLY), Commit, method="POST", validation=VALIDATIONS)
+CTK.publish (r'^%s$'    %(URL_BASE),       Render)
+CTK.publish (r'^%s/\d+$'%(URL_BASE),       RenderParticular)
+CTK.publish (r'^%s$'    %(URL_NEW_MANUAL), NewManual, method="POST", validation=VALIDATIONS)
+CTK.publish (r'^%s$'    %(URL_APPLY),      Commit, method="POST", validation=VALIDATIONS)
 

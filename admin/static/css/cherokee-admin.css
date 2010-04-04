@@ -100,3 +100,12 @@ img.icon_chooser_selected {
 .help_selected {}
 
 
+/* Wizard
+ */
+.wizard-list li {
+  cursor: pointer;
+}
+
+.wizard-list-selected {
+  background: #fff6b6;
+}
