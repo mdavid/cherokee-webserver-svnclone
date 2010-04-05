@@ -167,7 +167,7 @@ class Render():
                     dialog.AddButton (_('Cancel'), "close")
                     dialog += CTK.RawHTML (_(NOTE_DELETE_DIALOG) %(rule_name))
                     self += dialog
-                    remove = CTK.ImageStock('del', {'class': 'del'})
+                    remove = CTK.ImageStock('del')
                     remove.bind ('click', dialog.JS_to_show() + "return false;")
 
                     # Disable
@@ -180,7 +180,7 @@ class Render():
                                    CTK.JS.Ajax (url_apply, async=True,
                                                 data = '{"vserver!%s!rule!%s!disabled": event.value}'%(vsrv_num,r)))
 
-                    disabled.bind ('changed', 
+                    disabled.bind ('changed',
                                    "$(this).parents('.row_content').toggleClass('rule-inactive');")
 
                     # Actions

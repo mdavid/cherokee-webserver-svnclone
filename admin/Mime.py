@@ -125,7 +125,7 @@ class MIME_Table (CTK.Container):
             pre = "mime!%s"%(mime)
             e1 = CTK.TextCfg ('%s!extensions'%(pre), False, {'size': 35})
             e2 = CTK.TextCfg ('%s!max-age'%(pre),    True,  {'size': 6, 'maxlength': 6})
-            rm = CTK.ImageStock('del', {'class': 'del', 'title': _('Delete')})
+            rm = CTK.ImageStock('del')
             rm.bind('click', CTK.JS.Ajax (URL_APPLY, data = {pre: ''},
                                           complete = refreshable.JS_to_refresh()))
             table += [CTK.RawHTML(mime), e1, e2, rm]

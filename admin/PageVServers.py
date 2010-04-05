@@ -207,7 +207,7 @@ class Render():
                     dialog.AddButton (_('Cancel'), "close")
                     dialog += CTK.RawHTML (_(NOTE_DELETE_DIALOG) %(nick))
                     self += dialog
-                    remove = CTK.ImageStock('del', {'class': 'del', 'title': _('Delete')})
+                    remove = CTK.ImageStock('del')
                     remove.bind ('click', dialog.JS_to_show() + "return false;")
 
                     # Disable
