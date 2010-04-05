@@ -57,8 +57,8 @@ VALIDATIONS = [
     ('tmp!new_nick',  validations.is_new_vserver_nick)
 ]
 
-JS_ACTIVATE_LAST = """
-$('.selection-panel:first').data('selectionpanel').select_last();
+JS_ACTIVATE_FIRST = """
+$('.selection-panel:first').data('selectionpanel').select_first();
 """
 
 JS_CLONE = """
@@ -288,7 +288,7 @@ class Render():
 
         # Refresh on 'New' or 'Clone'
         buttons = self.PanelButtons()
-        buttons.bind ('submit_success', refresh.JS_to_refresh (on_success=JS_ACTIVATE_LAST))
+        buttons.bind ('submit_success', refresh.JS_to_refresh (on_success=JS_ACTIVATE_FIRST))
         left += buttons
 
         left += CTK.Box({'class': 'filterbox'}, CTK.TextField({'class':'filter', 'optional_string': _('Virtual Server Filtering'), 'optional': True}))
