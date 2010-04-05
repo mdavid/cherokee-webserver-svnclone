@@ -167,6 +167,7 @@ class Welcome:
     def __call__ (self):
         cont = CTK.Container()
         cont += CTK.RawHTML ('<h2>%s</h2>' %(NOTE_WELCOME_H1))
+        cont += Wizard.Icon ('drupal', {'class': 'wizard-descr'})
         cont += CTK.RawHTML ('<p>%s</p>' %(NOTE_WELCOME_P1))
         cont += CTK.RawHTML ('<p>%s</p>' %(NOTE_WELCOME_P2))
         cont += CTK.DruidButtonsPanel_Next_Auto()

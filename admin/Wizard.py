@@ -80,6 +80,19 @@ class Categories:
     def __iter__ (self):
         return iter(self.list)
 
+class Icon (CTK.Image):
+    def __init__ (self, name, _props={}):
+        props = _props.copy()
+        props['src'] = '/static/images/wizards/%s.png'%(name)
+        props['alt'] = "%s logo" %(name.capitalize())
+
+        if 'class' in props:
+            props['class'] += ' wizard-icon'
+        else:
+            props['class'] = 'wizard-icon'
+
+        CTK.Image.__init__ (self, props)
+
 
 # Handle 'click' events inside the Wizard Categories list.
 #
@@ -122,7 +135,7 @@ class CategoryList_Widget (CTK.Box):
 
         if category == 'cms':
             for w in WIZARDS_CMS:
-                wlist.Add ([CTK.Box({'class': 'logo'},  CTK.Image({'src': '/static/images/wizards/%s.png'%(w['wizard'])})),
+                wlist.Add ([CTK.Box({'class': 'logo'},  Icon(w['wizard'])),
                             CTK.Box({'class': 'title'}, CTK.RawHTML(w['title'])),
                             CTK.Box({'class': 'descr'}, CTK.RawHTML(w['descr']))],
                            {'wizard': w['wizard']})
@@ -167,21 +180,20 @@ class CloneLogsCfg (CTK.ComboCfg):
             nick = CTK.cfg.get_val('vserver!%s!nick'%(v))
             if not log:
                 continue
-            options.append ((pre, '%s (%s)'%(nick, log)))
+            options.append (('vserver!%s'%(v), '%s (%s)'%(nick, log)))
 
         # Init
         CTK.ComboCfg.__init__ (self, cfg, options, {'class': 'noauto'})
 
-def CloneLogsCfg_Apply (key, vserver):
-    # Logger
-    logging_as = CTK.cfg.get_val(key)
-    if logging_as:
-        CTK.cfg.clone (logging_as, '%s!logger'%(vserver))
+def CloneLogsCfg_Apply (key_tmp, vserver):
+    # Check the source
+    logging_as = CTK.cfg.get_val (key_tmp)
+    if not logging_as:
+        return
 
-    # Error writer
-    error_as = '%s!error_writer' %('!'.join (logging_as.split('!')[:-1]))
-    if error_as:
-        CTK.cfg.clone (error_as, '%s!error_writer'%(vserver))
+    # Clone
+    CTK.cfg.clone ('%s!logger'%(logging_as),       '%s!logger'%(vserver))
+    CTK.cfg.clone ('%s!error_writer'%(logging_as), '%s!error_writer'%(vserver))
 
 
 #
