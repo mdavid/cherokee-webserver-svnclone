@@ -116,6 +116,10 @@
 		  auto_select_row (self.find('.row_content:last'));
 	   }
 
+	   this.select_first = function() {
+		  auto_select_row (self.find('.row_content:first'));
+	   }
+
 	   this.init = function (self) {
 		  var cookie_selected = $.cookie(cookie_name);
 
