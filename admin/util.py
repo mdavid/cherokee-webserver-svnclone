@@ -139,6 +139,22 @@ def cfg_source_get_localhost_addr ():
         return addrs[0]
     return None
 
+def cfg_get_surrounding_repls (macro, value, n_minus=9, n_plus=9):
+    replacements = {}
+
+    tmp = value.split('!')
+    pre = '!'.join(tmp[:-1])
+    num = int(tmp[-1])
+
+    for n in range(n_minus):
+        replacements['%s_minus%d'%(macro,n+1)] = '%s!%d' %(pre, num-(n+1))
+
+    for n in range(n_plus):
+        replacements['%s_plus%d'%(macro,n+1)] = '%s!%d' %(pre, num+(n+1))
+
+    return replacements
+
+
 #
 # Paths
 #

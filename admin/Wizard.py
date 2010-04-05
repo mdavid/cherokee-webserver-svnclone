@@ -170,7 +170,19 @@ class CloneLogsCfg (CTK.ComboCfg):
             options.append ((pre, '%s (%s)'%(nick, log)))
 
         # Init
-        CTK.ComboCfg.__init__ (self, cfg, options)
+        CTK.ComboCfg.__init__ (self, cfg, options, {'class': 'noauto'})
+
+def CloneLogsCfg_Apply (key, vserver):
+    # Logger
+    logging_as = CTK.cfg.get_val(key)
+    if logging_as:
+        CTK.cfg.clone (logging_as, '%s!logger'%(vserver))
+
+    # Error writer
+    error_as = '%s!error_writer' %('!'.join (logging_as.split('!')[:-1]))
+    if error_as:
+        CTK.cfg.clone (error_as, '%s!error_writer'%(vserver))
+
 
 #
 # Init (TEMPORAL)
