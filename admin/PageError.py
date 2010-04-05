@@ -97,20 +97,17 @@ class ConfigNotWritable (CTK.Page):
 
         # Set up the template
         template = CTK.Template (filename = theme_file)
-        template['body_props'] = ' id="body-error-not-writable"'
+        template['body_props'] = ' id="body-error"'
         template['title']      = _('Configuration file is not writable')
 
         # Parent's constructor
         CTK.Page.__init__ (self, template, **kwargs)
 
         # Body
-        notice = CTK.Notice ('error')
-        notice += CTK.RawHTML (NOT_WRITABLE_TITLE %(file))
-
         self += CTK.RawHTML ('<h1>%s</h1>' %(_('Configuration file is not writable')))
-        self += notice
+        self += CTK.RawHTML ('<p><strong>%s</strong></p>' %(NOT_WRITABLE_TITLE %(file)))
         self += CTK.RawHTML ('<p>%s</p>' %(NOT_WRITABLE_1))
-        self += CTK.RawHTML ('<pre>chmod u+w %s</pre>' %(file))
+        self += CTK.RawHTML ('<div class="shell">chmod u+w %s</div>' %(file))
         self += CTK.RawHTML ('<p>%s</p>' %(NOT_WRITABLE_2))
 
 def NotWritable (file):
@@ -128,18 +125,15 @@ class ConfigIconsMissing (CTK.Page):
 
         # Set up the template
         template = CTK.Template (filename = theme_file)
-        template['body_props'] = ' id="body-error-icons-missing"'
+        template['body_props'] = ' id="body-error"'
         template['title']      = _('Icons Directory is Missing')
 
         # Parent's constructor
         CTK.Page.__init__ (self, template, **kwargs)
 
         # Body
-        notice = CTK.Notice ('error')
-        notice += CTK.RawHTML (_(ICONS_MISSING_TITLE)%(path))
-
         self += CTK.RawHTML ('<h1>%s</h1>'%(_('Icons Directory is Missing')))
-        self += notice
+        self += CTK.RawHTML ('<p><strong>%s</strong>'%(_(ICONS_MISSING_TITLE)%(path)))
         self += CTK.RawHTML ('<p>%s</p>' %(ICONS_MISSING))
 
 def IconsMissing (path):

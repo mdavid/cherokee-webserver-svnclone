@@ -7,13 +7,16 @@
    %(head)s
  </head>
  <body%(body_props)s>
-  <div id="container">
+  <div id="topbar-container">
     <div id="topbar">
       <img src="/static/images/cherokee-logo-bar.png" alt="Cherokee"/>
     </div>
+  </div>
+  <div id="container">
     <div id="main">
       %(html)s
-      <div align="right"><a href="http://www.cherokee-project.com/">Cherokee</a></div>
+      <div class="ui-helper-clearfix"></div>
+      <div class="cherokee-link"><a href="http://www.cherokee-project.com/">Cherokee</a></div>
     </div>
   </div>
  %(js)s
