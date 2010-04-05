@@ -184,13 +184,13 @@ class Render():
                 dialog += CTK.RawHTML (NOTE_DELETE_DIALOG)
                 self += dialog
 
-                remove = CTK.ImageStock('del', {'class': 'del'})
+                remove = CTK.ImageStock('del')
                 remove.bind ('click', dialog.JS_to_show() + "return false;")
 
                 group = CTK.Box ({'class': 'sel-actions'}, [remove])
 
                 if tipe == 'host':
-                    panel.Add (k, '/source/%s'%(k), [group, 
+                    panel.Add (k, '/source/%s'%(k), [group,
                                                      entry('nick',  'source!%s!nick'%(k)),
                                                      entry('type',  'source!%s!type'%(k)),
                                                      entry('host',  'source!%s!host'%(k))])
