@@ -182,7 +182,7 @@ class Render():
             entry = lambda klass, key: CTK.Box ({'class': klass}, CTK.RawHTML (CTK.cfg.get_val(key, '')))
 
             # Build the panel list
-            panel = SelectionPanel.SelectionPanel (reorder, right_box.id, URL_BASE, '')
+            panel = SelectionPanel.SelectionPanel (reorder, right_box.id, URL_BASE, '', container='vservers_panel')
             self += panel
 
             # Build the Virtual Server list

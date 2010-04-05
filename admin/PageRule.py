@@ -109,7 +109,7 @@ class Render():
             url_apply = URL_APPLY %(vsrv_num)
 
             # Build the panel list
-            panel = SelectionPanel.SelectionPanel (reorder, right_box.id, url_base, '')
+            panel = SelectionPanel.SelectionPanel (reorder, right_box.id, url_base, '', container='rules_panel')
             self += panel
 
             # Build the Rule list
