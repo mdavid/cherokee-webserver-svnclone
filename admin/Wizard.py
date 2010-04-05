@@ -122,7 +122,7 @@ class CategoryList_Widget (CTK.Box):
 
         if category == 'cms':
             for w in WIZARDS_CMS:
-                wlist.Add ([CTK.Box({'class': 'logo'},  CTK.Image({'url': '%s.png'%(w['wizard'])})),
+                wlist.Add ([CTK.Box({'class': 'logo'},  CTK.Image({'src': '/static/images/wizards/%s.png'%(w['wizard'])})),
                             CTK.Box({'class': 'title'}, CTK.RawHTML(w['title'])),
                             CTK.Box({'class': 'descr'}, CTK.RawHTML(w['descr']))],
                            {'wizard': w['wizard']})
