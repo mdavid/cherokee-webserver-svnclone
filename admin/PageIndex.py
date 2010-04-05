@@ -33,6 +33,9 @@ import PageError
 
 import os
 import time
+import urllib
+import urllib2
+import re
 
 from consts import *
 from configured import *
@@ -60,6 +63,67 @@ PROUS_DIALOG_ERROR2 = N_("Please, try again. Do not hesitate to report the probl
 
 HELPS = [('config_status',     N_("Status"))]
 
+# Enterprise
+#
+
+#Links
+LINK_OCTALITY   = 'http://www.octality.com/'
+LINK_SUPPORT    = '%sengineering.html' % LINK_OCTALITY
+
+# Notices
+SUPPORT_NOTICE = N_("""
+Commercial support for Cherokee is provided by <a target="_blank" href="%s">Octality</a>. They provide top notch <a target="_blank" href="%s">Consulting, Custom Engineering, and Enterprise Support Services.</a>
+""" %(LINK_OCTALITY, LINK_SUPPORT))
+
+# Community
+#
+LINK_BUGTRACKER = 'http://bugs.cherokee-project.com/'
+LINK_TWITTER    = 'http://twitter.com/webserver'
+LINK_FACEBOOK   = 'http://www.facebook.com/cherokee.project'
+LINK_DOWNLOAD   = 'http://www.cherokee-project.com/download/'
+LINK_LIST       = 'http://lists.octality.com/listinfo/cherokee'
+LINK_IRC        = 'irc://irc.freenode.net/cherokee'
+
+# Subscription
+SUBSCRIBE_URL   = 'http://lists.octality.com/subscribe/cherokee-dev'
+SUBSCRIBE_CHECK = 'Your subscription request has been received'
+SUBSCRIBE_APPLY = '/subscribe/apply'
+NOTE_EMAIL  = N_("You will be sent an email requesting confirmation")
+NOTE_NAME   = N_("Optionally provide your name")
+NOTE_PASS   = N_("Optionally provide a privacy password. If you don't, one will be generated for you")
+NOTE_CONF   = N_("Password confirmation")
+NOTE_DIGEST = N_("Receive list batched as a daily digest")
+PASSWORD_ERROR = N_('Passwords do not match')
+
+# "Latest release" regex
+LATEST_REGEX = r'LATEST_is_(.+?)<'
+
+# Notices
+LIST_NOTICE = N_("""
+The Cherokee-Project Community Mailing List is the place to go for help and sharing experiences about Cherokee. Subscribe now!
+""")
+
+IRC_NOTICE = N_("""
+Join us at the <a target="_blank" href="%s">#cherokee</a> IRC Channel on freenode.net.
+"""%LINK_IRC)
+
+BUG_TRACKER_NOTICE = N_("""
+Your feedback is important! Log Bug Reports and Requests for Enhancements in our <a target="_blank" href="%s">bug tracker</a> to help us improve Cherokee.
+""" % LINK_BUGTRACKER)
+
+SOCIAL_MEDIA_NOTICE = N_("""
+Find out what's going on with Cherokee on your favorite Social Media!
+""")
+
+TWITTER_NOTICE = N_("""
+<a target="_blank" href="%s">Cherokee at Twitter</a>: Microblogging about Cherokee
+""" % LINK_TWITTER)
+
+FACEBOOK_NOTICE = N_("""
+<a target="_blank" href="%s">Cherokee at Facebook</a>: Cherokee's day to day news
+""" % LINK_FACEBOOK)
+
+
 def Launch():
     if not Cherokee.server.is_alive():
         error = Cherokee.server.launch()
@@ -68,6 +132,7 @@ def Launch():
             return page_error.Render()
 
     return CTK.HTTP_Redir('/')
+
 
 def Stop():
     Cherokee.pid.refresh()
@@ -173,7 +238,7 @@ class ProudUsers (CTK.Box):
         CTK.Box.__init__ (self, {'id': 'proud-users'})
 
         # Dialog
-        dialog = CTK.DialogProxyLazy ('/proud/apply', {'title': _('Proud Cherokee User List Submittion'), 'width': 500})
+        dialog = CTK.DialogProxyLazy ('/proud/apply', {'title': _('Proud Cherokee User List Submission'), 'width': 500})
         dialog.AddButton (_('Close'), "close")
 
         button = CTK.Button (_('Send domains'))
@@ -183,6 +248,134 @@ class ProudUsers (CTK.Box):
         self += CTK.Box ({'id': 'notice'}, CTK.RawHTML (PROUD_USERS_NOTICE))
         self += button
         self += dialog
+
+
+class LatestRelease (CTK.Box):
+    def __init__ (self):
+        CTK.Box.__init__ (self, {'id': 'latest-release'})
+
+        self += CTK.RawHTML('<h3>%s</h3>' % _('Latest Release'))
+        latest = self._find_latest_cherokee_release()
+
+        if not latest:
+            self += CTK.RawHTML(_('Latest version could not be determined at the moment.'))
+        elif VERSION.startswith(latest['version']):
+            self += CTK.RawHTML(_('Cherokee is up to date.'))
+        else:
+            txt = '%s v%s. %s v%s.' % (
+                _('You are running Cherokee'),
+                VERSION,
+                _('Latest release is '),
+                latest['version'])
+            self += CTK.RawHTML(txt)
+
+    def _find_latest_cherokee_release (self):
+        """Find out latest Cherokee release"""
+        try:
+            txt    = urllib.urlopen(LINK_DOWNLOAD).read()
+            latest = re.findall (LATEST_REGEX, txt, re.DOTALL)[0]
+            return { 'version': latest }
+        except (IOError, IndexError):
+            pass
+
+
+def Subscribe_Apply ():
+    values = {}
+    for k in CTK.post:
+        values[k] = CTK.post[k]
+
+    data = urllib.urlencode(values)
+    req  = urllib2.Request(SUBSCRIBE_URL, data)
+    response = urllib2.urlopen(req)
+    results_page = response.read()
+    if SUBSCRIBE_CHECK in results_page:
+        return {'ret':'ok'}
+
+    return {'ret':'error'}
+
+
+class MailingListSubscription (CTK.Container):
+    def __init__ (self):
+        CTK.Container.__init__ (self)
+
+        table = CTK.PropsTable()
+        table.Add (_('Your email address'), CTK.TextField({'name': 'email', 'class': 'noauto'}), _(NOTE_EMAIL))
+        table.Add (_('Your name'),          CTK.TextField({'name': 'fullname', 'class': 'noauto', 'optional':True}), _(NOTE_NAME))
+
+        submit = CTK.Submitter(SUBSCRIBE_APPLY)
+        submit += table
+        self += submit
+
+
+class ContactChannels (CTK.Box):
+    def __init__ (self):
+        CTK.Box.__init__ (self, {'id': 'contact-channels'})
+
+        self += CTK.RawHTML('<h3>%s</h3>' % _('Contact Channels'))
+
+
+        self += CTK.RawHTML('<h4>%s</h4>' % _('IRC'))
+        self += CTK.RawHTML(_(IRC_NOTICE))
+
+        self += CTK.RawHTML('<h4>%s</h4>' % _('Mailing List'))
+        self += CTK.RawHTML(_(LIST_NOTICE))
+
+        # Add New
+        dialog = CTK.Dialog ({'title': _('Mailing list subscription'), 'width': 560})
+        dialog.AddButton (_('Subscribe'), dialog.JS_to_trigger('submit'))
+        dialog.AddButton (_('Cancel'), "close")
+        dialog += MailingListSubscription()
+
+        button = CTK.Button(_('Subscribe'))
+        button.bind ('click', dialog.JS_to_show())
+        dialog.bind ('submit_success', dialog.JS_to_close())
+
+        self += button
+        self += dialog
+
+
+class BugTracker (CTK.Box):
+    def __init__ (self):
+        CTK.Box.__init__ (self, {'id': 'bug-tracker'})
+
+        self += CTK.RawHTML('<h3>%s</h3>' % _('Bug Tracker'))
+        self += CTK.RawHTML(_(BUG_TRACKER_NOTICE))
+
+
+class SocialMedia (CTK.Box):
+    def __init__ (self):
+        CTK.Box.__init__ (self, {'id': 'social-media'})
+
+        self += CTK.RawHTML('<h3>%s</h3>' % _('Social Media'))
+        self += CTK.RawHTML(_(SOCIAL_MEDIA_NOTICE))
+
+        # @ION: These icons have been dropped as they were. Change, remove or do with them whatever you see fit.
+        self += CTK.Image ({'alt': 'Twitter button',  'title': 'Twitter',  'src': '/static/images/other/twitter_button.png', 'height':"32", 'width':"32"})
+        self += CTK.RawHTML(_(TWITTER_NOTICE))
+
+        self += CTK.Image ({'alt': 'Facebook button', 'title': 'Facebook', 'src': '/static/images/other/facebook_button.png', 'height':"32", 'width':"32"})
+        self += CTK.RawHTML(_(FACEBOOK_NOTICE))
+
+
+class CommunityBox (CTK.Box):
+    def __init__ (self):
+        CTK.Box.__init__ (self, {'id': 'community-box'})
+
+        self += CTK.RawHTML('<h2>%s</h2>' % _('Community Support'))
+
+        self += ProudUsers()
+        self += LatestRelease()
+        self += ContactChannels()
+        self += BugTracker()
+        self += SocialMedia()
+
+
+class EnterpriseBox (CTK.Box):
+    def __init__ (self):
+        CTK.Box.__init__ (self, {'id': 'enterprise-box'})
+
+        self += CTK.RawHTML('<h2>%s</h2>' % _('Commercial Support'))
+        self += CTK.RawHTML(_(SUPPORT_NOTICE))
 
 
 class Render():
@@ -200,10 +393,9 @@ class Render():
         self.page += ServerInfo()
         self.page += CTK.RawHTML('<a href="/launch">Launch</a> | <a href="/stop">Stop</a>')
         self.page += LanguageSelector()
-        self.page += ProudUsers()
 
-        if CTK.cfg.get_val('server!collector') == 'rrd':
-            self.page += Graph.GraphServer_Instancer()
+        self.page += EnterpriseBox()
+        self.page += CommunityBox()
 
         return self.page.Render()
 
@@ -213,3 +405,4 @@ CTK.publish (r'^/launch$',      Launch)
 CTK.publish (r'^/stop$',        Stop)
 CTK.publish (r'^/lang/apply$',  Lang_Apply, method="POST")
 CTK.publish (r'^/proud/apply$', ProudUsers_Apply, method="POST")
+CTK.publish (r'^%s$'%(SUBSCRIBE_APPLY), Subscribe_Apply, method="POST")
