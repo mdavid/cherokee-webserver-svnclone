@@ -4,6 +4,7 @@
 #
 # Authors:
 #      Alvaro Lopez Ortega <alvaro@alobbs.com>
+#      Taher Shihadeh <taher@unixwars.com>
 #
 # Copyright (C) 2001-2010 Alvaro Lopez Ortega
 #
@@ -87,7 +88,7 @@ LINK_IRC        = 'irc://irc.freenode.net/cherokee'
 # Subscription
 SUBSCRIBE_URL   = 'http://lists.octality.com/subscribe/cherokee-dev'
 SUBSCRIBE_CHECK = 'Your subscription request has been received'
-SUBSCRIBE_APPLY = '/subscribe/apply'
+SUBSCRIBE_APPLY = '/index/subscribe/apply'
 NOTE_EMAIL  = N_("You will be sent an email requesting confirmation")
 NOTE_NAME   = N_("Optionally provide your name")
 NOTE_PASS   = N_("Optionally provide a privacy password. If you don't, one will be generated for you")
@@ -95,8 +96,9 @@ NOTE_CONF   = N_("Password confirmation")
 NOTE_DIGEST = N_("Receive list batched as a daily digest")
 PASSWORD_ERROR = N_('Passwords do not match')
 
-# "Latest release" regex
+# "Latest release"
 LATEST_REGEX = r'LATEST_is_(.+?)<'
+LATEST_URL = '/index/release'
 
 # Notices
 LIST_NOTICE = N_("""
@@ -250,7 +252,14 @@ class ProudUsers (CTK.Box):
         self += dialog
 
 
-class LatestRelease (CTK.Box):
+class LatestRelease (CTK.Container):
+    def __init__ (self):
+        CTK.Container.__init__ (self)
+
+        self += CTK.Proxy (None, LATEST_URL)
+
+
+class LatestReleaseBox (CTK.Box):
     def __init__ (self):
         CTK.Box.__init__ (self, {'id': 'latest-release'})
 
@@ -268,6 +277,10 @@ class LatestRelease (CTK.Box):
                 _('Latest release is '),
                 latest['version'])
             self += CTK.RawHTML(txt)
+
+    def __call__ (self):
+        render = self.Render()
+        return render.toStr()
 
     def _find_latest_cherokee_release (self):
         """Find out latest Cherokee release"""
@@ -313,14 +326,13 @@ class ContactChannels (CTK.Box):
 
         self += CTK.RawHTML('<h3>%s</h3>' % _('Contact Channels'))
 
-
         self += CTK.RawHTML('<h4>%s</h4>' % _('IRC'))
         self += CTK.RawHTML(_(IRC_NOTICE))
 
         self += CTK.RawHTML('<h4>%s</h4>' % _('Mailing List'))
         self += CTK.RawHTML(_(LIST_NOTICE))
 
-        # Add New
+        # Subscribe Button
         dialog = CTK.Dialog ({'title': _('Mailing list subscription'), 'width': 560})
         dialog.AddButton (_('Subscribe'), dialog.JS_to_trigger('submit'))
         dialog.AddButton (_('Cancel'), "close")
@@ -406,3 +418,4 @@ CTK.publish (r'^/stop$',        Stop)
 CTK.publish (r'^/lang/apply$',  Lang_Apply, method="POST")
 CTK.publish (r'^/proud/apply$', ProudUsers_Apply, method="POST")
 CTK.publish (r'^%s$'%(SUBSCRIBE_APPLY), Subscribe_Apply, method="POST")
+CTK.publish (r'^%s$'%(LATEST_URL),      LatestReleaseBox, method="POST")
