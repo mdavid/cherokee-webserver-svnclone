@@ -41,43 +41,13 @@ import re
 from consts import *
 from configured import *
 
-OWS_PROUD = 'http://www.octality.com/api/proud/open/'
-
-
-BETA_TESTER_NOTICE = N_("""
-<h3>Beta testing</h3> <p>Individuals like yourself who download and
-test the latest developer snapshots of Cherokee Web Server help us to
-create the highest quality product. For that, we thank you.</p>
-""")
-
-PROUD_USERS_WEB = "http://www.cherokee-project.com/cherokee-domain-list.html"
-
-PROUD_USERS_NOTICE = N_("""
-We would love to know that you are using Cherokee. Submit your domain
-name and it will be <a target="_blank" href="%s">listed on the
-Cherokee Project web site</a>.
-""" %(PROUD_USERS_WEB))
-
-PROUD_DIALOG_OK     = N_("The information has been successfully sent. Thank you!")
-PROUS_DIALOG_ERROR1 = N_("Unfortunatelly something went wrong, and the information could not be submitted:")
-PROUS_DIALOG_ERROR2 = N_("Please, try again. Do not hesitate to report the problem if it persists.")
-
-HELPS = [('config_status',     N_("Status"))]
-
-# Enterprise
-#
-
-#Links
+# URLs
 LINK_OCTALITY   = 'http://www.octality.com/'
 LINK_SUPPORT    = '%sengineering.html' % LINK_OCTALITY
+PROUD_USERS_WEB = "http://www.cherokee-project.com/cherokee-domain-list.html"
+OWS_PROUD       = 'http://www.octality.com/api/proud/open/'
 
-# Notices
-SUPPORT_NOTICE = N_("""
-Commercial support for Cherokee is provided by <a target="_blank" href="%s">Octality</a>. They provide top notch <a target="_blank" href="%s">Consulting, Custom Engineering, and Enterprise Support Services.</a>
-""" %(LINK_OCTALITY, LINK_SUPPORT))
-
-# Community
-#
+# Links
 LINK_BUGTRACKER = 'http://bugs.cherokee-project.com/'
 LINK_TWITTER    = 'http://twitter.com/webserver'
 LINK_FACEBOOK   = 'http://www.facebook.com/cherokee.project'
@@ -89,41 +59,46 @@ LINK_IRC        = 'irc://irc.freenode.net/cherokee'
 SUBSCRIBE_URL   = 'http://lists.octality.com/subscribe/cherokee-dev'
 SUBSCRIBE_CHECK = 'Your subscription request has been received'
 SUBSCRIBE_APPLY = '/index/subscribe/apply'
-NOTE_EMAIL  = N_("You will be sent an email requesting confirmation")
-NOTE_NAME   = N_("Optionally provide your name")
-NOTE_PASS   = N_("Optionally provide a privacy password. If you don't, one will be generated for you")
-NOTE_CONF   = N_("Password confirmation")
-NOTE_DIGEST = N_("Receive list batched as a daily digest")
-PASSWORD_ERROR = N_('Passwords do not match')
 
-# "Latest release"
-LATEST_REGEX = r'LATEST_is_(.+?)<'
-LATEST_URL = '/index/release'
+NOTE_EMAIL      = N_("You will be sent an email requesting confirmation")
+NOTE_NAME       = N_("Optionally provide your name")
+NOTE_PASS       = N_("Optionally provide a privacy password. If you don't, one will be generated for you")
+NOTE_CONF       = N_("Password confirmation")
+NOTE_DIGEST     = N_("Receive list batched as a daily digest")
+PASSWORD_ERROR  = N_('Passwords do not match')
 
 # Notices
-LIST_NOTICE = N_("""
-The Cherokee-Project Community Mailing List is the place to go for help and sharing experiences about Cherokee. Subscribe now!
+SUPPORT_NOTICE      = N_('Commercial support for Cherokee is provided by <a target="_blank" href="%s">Octality</a>. They provide top notch <a target="_blank" href="%s">Consulting, Custom Engineering, and Enterprise Support Services.</a>' %(LINK_OCTALITY, LINK_SUPPORT))
+LIST_NOTICE         = N_('The Cherokee-Project Community Mailing List is the place to go for help and sharing experiences about Cherokee. Subscribe now!')
+IRC_NOTICE          = N_('Join us at the <a target="_blank" href="%s">#cherokee</a> IRC Channel on freenode.net.'%(LINK_IRC))
+BUG_TRACKER_NOTICE  = N_('Your feedback is important! Log Bug Reports and Requests for Enhancements in our <a target="_blank" href="%s">bug tracker</a> to help us improve Cherokee.' %(LINK_BUGTRACKER))
+SOCIAL_MEDIA_NOTICE = N_("Find out what's going on with Cherokee on your favorite Social Media!")
+TWITTER_NOTICE      = N_('<a target="_blank" href="%s">Cherokee at Twitter</a>: Microblogging about Cherokee' %(LINK_TWITTER))
+FACEBOOK_NOTICE     = N_('<a target="_blank" href="%s">Cherokee at Facebook</a>: Cherokee\'s day to day news' %(LINK_FACEBOOK))
+
+BETA_TESTER_NOTICE = N_("""\
+<h3>Beta testing</h3> <p>Individuals like yourself who download and
+test the latest developer snapshots of Cherokee Web Server help us to
+create the highest quality product. For that, we thank you.</p>
 """)
 
-IRC_NOTICE = N_("""
-Join us at the <a target="_blank" href="%s">#cherokee</a> IRC Channel on freenode.net.
-"""%LINK_IRC)
+PROUD_USERS_NOTICE = N_("""\
+We would love to know that you are using Cherokee. Submit your domain
+name and it will be <a target="_blank" href="%s">listed on the
+Cherokee Project web site</a>.
+""" %(PROUD_USERS_WEB))
 
-BUG_TRACKER_NOTICE = N_("""
-Your feedback is important! Log Bug Reports and Requests for Enhancements in our <a target="_blank" href="%s">bug tracker</a> to help us improve Cherokee.
-""" % LINK_BUGTRACKER)
+# Dialogs
+PROUD_DIALOG_OK     = N_("The information has been successfully sent. Thank you!")
+PROUS_DIALOG_ERROR1 = N_("Unfortunatelly something went wrong, and the information could not be submitted:")
+PROUS_DIALOG_ERROR2 = N_("Please, try again. Do not hesitate to report the problem if it persists.")
 
-SOCIAL_MEDIA_NOTICE = N_("""
-Find out what's going on with Cherokee on your favorite Social Media!
-""")
+# "Latest release" regex
+LATEST_REGEX = r'LATEST_is_(.+?)<'
+LATEST_URL   = '/index/release'
 
-TWITTER_NOTICE = N_("""
-<a target="_blank" href="%s">Cherokee at Twitter</a>: Microblogging about Cherokee
-""" % LINK_TWITTER)
-
-FACEBOOK_NOTICE = N_("""
-<a target="_blank" href="%s">Cherokee at Facebook</a>: Cherokee's day to day news
-""" % LINK_FACEBOOK)
+# Help entries
+HELPS = [('config_status', N_("Status"))]
 
 
 def Launch():
