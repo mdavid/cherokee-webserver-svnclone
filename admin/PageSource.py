@@ -35,9 +35,9 @@ from CTK.Submitter import HEADER as Submit_HEADER
 from CTK.TextField import HEADER as TextField_HEADER
 
 
-URL_BASE  = '/source'
-URL_APPLY = '/source/apply'
-HELPS     = [('config_info_sources', N_("Information Sources"))]
+URL_BASE    = '/source'
+URL_CONTENT = '/source/content'
+URL_APPLY   = '/source/apply'
 
 NOTE_SOURCE        = N_('The source can be either a local interpreter or a remote host acting as an information source.')
 NOTE_NICK          = N_('Source nick. It will be referenced by this name in the rest of the server.')
@@ -61,6 +61,9 @@ VALIDATIONS = [
     ("source_clone_trg",       validations.is_safe_id),
 ]
 
+HELPS = [('config_info_sources', N_("Information Sources"))]
+
+
 JS_ACTIVATE_LAST = """
 $('.selection-panel:first').data('selectionpanel').select_last();
 """
@@ -74,9 +77,15 @@ JS_CLONE = """
   }});
 """
 
+JS_PARTICULAR = """
+  var source = window.location.pathname.match (/^\/source\/(\d+)/)[1];
+  $.cookie ('%(cookie_name)s', source, { path: '/source' });
+  window.location.replace ('%(url_base)s');
+"""
+
 
 def commit_clone():
-    num = re.findall(r'^%s/content/([\d]+)/clone$'%(URL_BASE), CTK.request.url)[0]
+    num = re.findall(r'^%s/([\d]+)/clone$'%(URL_CONTENT), CTK.request.url)[0]
     next = CTK.cfg.get_next_entry_prefix ('source')
 
     orig  = CTK.cfg.get_val ('source!%s!nick'%(num))
@@ -112,7 +121,7 @@ class Render_Source():
             return notice.Render().toJSON()
 
         # /source/content/\d+
-        num = re.findall(r'^%s/content/([\d]+)$'%(URL_BASE), CTK.request.url)[0]
+        num = re.findall(r'^%s/([\d]+)$'%(URL_CONTENT), CTK.request.url)[0]
 
         tipe = CTK.cfg.get_val('source!%s!type'%(num))
         nick = CTK.cfg.get_val('source!%s!nick'%(num))
@@ -158,6 +167,16 @@ class AddSource (CTK.Container):
         submit += table
         self += submit
 
+class Render_Particular():
+    def __call__ (self):
+        headers = SelectionPanel.HEADER
+        page    = CTK.Page(headers=headers)
+
+        props = {'url_base':    URL_BASE,
+                 'cookie_name': SelectionPanel.COOKIE_NAME_DEFAULT}
+
+        page += CTK.RawHTML (js=JS_PARTICULAR %(props))
+        return page.Render()
 
 class Render():
     class PanelList (CTK.Container):
@@ -168,7 +187,7 @@ class Render():
             entry = lambda klass, key: CTK.Box ({'class': klass}, CTK.RawHTML (CTK.cfg.get_val(key, '')))
 
             # Build the panel list
-            panel = SelectionPanel.SelectionPanel (None, right_box.id, URL_BASE, '%s/empty'%(URL_BASE), draggable=False, container='source_panel')
+            panel = SelectionPanel.SelectionPanel (None, right_box.id, URL_CONTENT, '%s/empty'%(URL_CONTENT), draggable=False, container='source_panel')
             self += panel
 
             sources = CTK.cfg.keys('source')
@@ -186,12 +205,12 @@ class Render():
                 group = CTK.Box ({'class': 'sel-actions'}, [remove])
 
                 if tipe == 'host':
-                    panel.Add (k, '/source/content/%s'%(k), [group,
+                    panel.Add (k, '%s/%s'%(URL_CONTENT, k), [group,
                                                              entry('nick',  'source!%s!nick'%(k)),
                                                              entry('type',  'source!%s!type'%(k)),
                                                              entry('host',  'source!%s!host'%(k))])
                 elif tipe == 'interpreter':
-                    panel.Add (k, '/source/content/%s'%(k), [group,
+                    panel.Add (k, '%s/%s'%(URL_CONTENT, k), [group,
                                                              entry('nick',  'source!%s!nick'%(k)),
                                                              entry('type',  'source!%s!type'%(k)),
                                                              entry('host',  'source!%s!host'%(k)),
@@ -297,9 +316,7 @@ class Render():
         left += buttons
 
         left += CTK.Box({'class': 'filterbox'}, CTK.TextField({'class':'filter', 'optional_string': _('Sources Filtering'), 'optional': True}))
-
         right = CTK.Box({'class': 'source_content'})
-
         left += refresh
 
         # Refresh the list whenever the content change
@@ -314,7 +331,8 @@ class Render():
         return page.Render()
 
 CTK.publish ('^%s$'              %(URL_BASE), Render)
+CTK.publish ('^%s/\d+$'          %(URL_BASE), Render_Particular)
 CTK.publish ('^%s/content/[\d]+$'%(URL_BASE), Render_Source)
 CTK.publish ('^%s/content/empty$'%(URL_BASE), Render_Source)
-CTK.publish ('^%s$'              %(URL_APPLY), commit, validation=VALIDATIONS, method="POST")
 CTK.publish ('^%s/[\d]+/clone$'  %(URL_BASE), commit_clone)
+CTK.publish ('^%s$'              %(URL_APPLY), commit, validation=VALIDATIONS, method="POST")
