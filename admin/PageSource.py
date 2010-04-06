@@ -29,6 +29,7 @@ import Page
 import Cherokee
 import SelectionPanel
 import validations
+import Rule
 
 from consts import *
 from CTK.util import find_copy_name
@@ -114,7 +115,59 @@ def commit():
     return CTK.cfg_apply_post()
 
 
+def _get_used_sources ():
+    """List of every rule using any info source"""
+    used_sources = {}
+    target ='!balancer!source!'
+    for entry in CTK.cfg.serialize().split():
+        if target in entry:
+            source = CTK.cfg.get_val(entry)
+            if not used_sources.has_key(source):
+                used_sources[source] = []
+            used_sources[source].append(entry)
+    return used_sources
+
+
+def _get_rule_sources ():
+    # List of sources used by each rule
+    rule_sources = {}
+    used_sources = _get_used_sources()
+    for src in used_sources:
+        for r in used_sources[src]:
+            rule = r.split('!handler!balancer!')[0]
+            if not rule_sources.has_key(rule):
+                rule_sources[rule] = []
+            rule_sources[rule].append(src)
+    return rule_sources
+
+
+def _get_protected_sources ():
+    # List of sources to protect against deletion"""
+    rule_sources = _get_rule_sources()
+    protected_sources = []
+    for s in rule_sources:
+        if len(rule_sources[s])==1:
+            protected_sources.append(rule_sources[s][0])
+    return protected_sources
+
+
 class Render_Source():
+    class Source_Usage (CTK.Container):
+        def __init__ (self, rules):
+            CTK.Container.__init__ (self)
+
+            table = CTK.Table()
+            table.set_header(1)
+            table += [CTK.RawHTML(x) for x in (_('Virtual Server'), _('Rule'))]
+
+            for rule in rules:
+                vsrv_num  = rule.split('!')[1]
+                vsrv_name = CTK.cfg.get_val ("vserver!%s!nick" %(vsrv_num), _("Unknown"))
+                r = Rule.Rule('%s!match' %(rule))
+                rule_name = r.GetName()
+                table += [CTK.RawHTML(x) for x in (vsrv_name, rule_name)]
+
+
     def __call__ (self):
         # /source/empty
         if CTK.request.url.endswith('/empty'):
@@ -145,6 +198,11 @@ class Render_Source():
         submit += CTK.Hidden ('source', num)
         submit += table
         cont += submit
+
+        sources = _get_rule_sources ()
+        rules   = [key for key,val in sources.items() if str(num) in val]
+        if rules:
+            cont += self.Source_Usage (rules)
 
         render = cont.Render()
         return render.toJSON()
@@ -193,7 +251,9 @@ class Render():
 
             sources = CTK.cfg.keys('source')
             sources.sort (lambda x,y: cmp (int(x), int(y)))
-            self._find_source_usage()
+
+            self.protected_sources = _get_protected_sources ()
+            self.rule_sources      = _get_rule_sources ()
 
             for k in sources:
                 tipe = CTK.cfg.get_val('source!%s!type'%(k))
@@ -222,8 +282,14 @@ class Render():
                 rules = []
                 for rule, sources in self.rule_sources.items():
                     if str(k) in sources:
-                        rules.append(rule.replace('!','/'))
-                links   = [CTK.consts.LINK_HREF%(rule, ' %s %s'%(_('offender'), rules.index(rule) + 1)) for rule in rules]
+                        rules.append(rule)
+
+                links = []
+                for rule in rules:
+                    r = Rule.Rule('%s!match' %(rule))
+                    rule_name = r.GetName()
+                    rule_link = rule.replace('!','/')
+                    links.append(CTK.consts.LINK_HREF%(rule_link, rule_name))
 
                 dialog  = CTK.Dialog ({'title': _('Deletion is forbidden'), 'width': 480})
                 dialog += CTK.RawHTML (NOTE_FORBID_1)
@@ -241,35 +307,6 @@ class Render():
 
             return dialog
 
-        def _get_used_sources (self):
-            """List of every rule using any info source"""
-            used_sources = {}
-            target ='!balancer!source!'
-            for entry in CTK.cfg.serialize().split():
-                if target in entry:
-                    source = CTK.cfg.get_val(entry)
-                    if not used_sources.has_key(source):
-                        used_sources[source] = []
-                    used_sources[source].append(entry)
-            return used_sources
-
-        def _find_source_usage (self):
-            # List of sources used by each rule
-            rule_sources = {}
-            used_sources = self._get_used_sources()
-            for src in used_sources:
-                for r in used_sources[src]:
-                    rule = r.split('!handler!balancer!')[0]
-                    if not rule_sources.has_key(rule):
-                        rule_sources[rule] = []
-                    rule_sources[rule].append(src)
-            self.rule_sources = rule_sources
-
-            # List of sources to protect against deletion"""
-            self.protected_sources = []
-            for s in rule_sources:
-                if len(rule_sources[s])==1:
-                    self.protected_sources.append(rule_sources[s][0])
 
 
     class PanelButtons (CTK.Box):
