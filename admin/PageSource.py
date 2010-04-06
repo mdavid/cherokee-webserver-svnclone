@@ -74,7 +74,7 @@ JS_CLONE = """
 
 
 def commit_clone():
-    num = re.findall(r'^%s/([\d]+)/clone$'%(URL_BASE), CTK.request.url)[0]
+    num = re.findall(r'^%s/content/([\d]+)/clone$'%(URL_BASE), CTK.request.url)[0]
     next = CTK.cfg.get_next_entry_prefix ('source')
 
     orig  = CTK.cfg.get_val ('source!%s!nick'%(num))
@@ -109,8 +109,8 @@ class Render_Source():
             notice = CTK.Notice ('information', CTK.RawHTML (NOTE_NO_ENTRIES))
             return notice.Render().toJSON()
 
-        # /source/\d+
-        num = re.findall(r'^%s/([\d]+)$'%(URL_BASE), CTK.request.url)[0]
+        # /source/content/\d+
+        num = re.findall(r'^%s/content/([\d]+)$'%(URL_BASE), CTK.request.url)[0]
 
         tipe = CTK.cfg.get_val('source!%s!type'%(num))
         nick = CTK.cfg.get_val('source!%s!nick'%(num))
@@ -190,16 +190,16 @@ class Render():
                 group = CTK.Box ({'class': 'sel-actions'}, [remove])
 
                 if tipe == 'host':
-                    panel.Add (k, '/source/%s'%(k), [group,
-                                                     entry('nick',  'source!%s!nick'%(k)),
-                                                     entry('type',  'source!%s!type'%(k)),
-                                                     entry('host',  'source!%s!host'%(k))])
+                    panel.Add (k, '/source/content/%s'%(k), [group,
+                                                             entry('nick',  'source!%s!nick'%(k)),
+                                                             entry('type',  'source!%s!type'%(k)),
+                                                             entry('host',  'source!%s!host'%(k))])
                 elif tipe == 'interpreter':
-                    panel.Add (k, '/source/%s'%(k), [group,
-                                                     entry('nick',  'source!%s!nick'%(k)),
-                                                     entry('type',  'source!%s!type'%(k)),
-                                                     entry('host',  'source!%s!host'%(k)),
-                                                     entry('inter', 'source!%s!interpreter'%(k))])
+                    panel.Add (k, '/source/content/%s'%(k), [group,
+                                                             entry('nick',  'source!%s!nick'%(k)),
+                                                             entry('type',  'source!%s!type'%(k)),
+                                                             entry('host',  'source!%s!host'%(k)),
+                                                             entry('inter', 'source!%s!interpreter'%(k))])
 
 
     class PanelButtons (CTK.Box):
@@ -264,6 +264,7 @@ class Render():
         return page.Render()
 
 CTK.publish ('^%s$'              %(URL_BASE), Render)
-CTK.publish ('^%s/([\d]+|empty)$'%(URL_BASE), Render_Source)
+CTK.publish ('^%s/content/[\d]+$'%(URL_BASE), Render_Source)
+CTK.publish ('^%s/content/empty$'%(URL_BASE), Render_Source)
 CTK.publish ('^%s$'              %(URL_APPLY), commit, validation=VALIDATIONS, method="POST")
 CTK.publish ('^%s/[\d]+/clone$'  %(URL_BASE), commit_clone)
