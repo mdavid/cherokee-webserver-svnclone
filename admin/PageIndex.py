@@ -62,10 +62,6 @@ SUBSCRIBE_APPLY = '/index/subscribe/apply'
 
 NOTE_EMAIL      = N_("You will be sent an email requesting confirmation")
 NOTE_NAME       = N_("Optionally provide your name")
-NOTE_PASS       = N_("Optionally provide a privacy password. If you don't, one will be generated for you")
-NOTE_CONF       = N_("Password confirmation")
-NOTE_DIGEST     = N_("Receive list batched as a daily digest")
-PASSWORD_ERROR  = N_('Passwords do not match')
 
 # Notices
 SUPPORT_NOTICE      = N_('Commercial support for Cherokee is provided by <a target="_blank" href="%s">Octality</a>. They provide top notch <a target="_blank" href="%s">Consulting, Custom Engineering, and Enterprise Support Services.</a>' %(LINK_OCTALITY, LINK_SUPPORT))
