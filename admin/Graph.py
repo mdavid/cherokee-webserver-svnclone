@@ -83,8 +83,8 @@ class GraphVServer_Instancer (CTK.Container):
             self.graph['vserver'] = vserver
             self.build_graph ()
 
-    def __init__ (self):
-        CTK.Container.__init__ (self, vserver)
+    def __init__ (self, vserver):
+        CTK.Container.__init__ (self)
 
         # Refresher
         refresh = CTK.Refreshable ({'id': 'grapharea'})
