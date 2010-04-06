@@ -29,7 +29,6 @@ import Cherokee
 import gettext
 import xmlrpclib
 import XMLServerDigest
-import Graph
 import PageError
 
 import os
