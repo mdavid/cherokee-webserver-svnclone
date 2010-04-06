@@ -102,7 +102,6 @@ class ConnectionsWidget (CTK.Container):
         CTK.Container.__init__ (self)
 
         table = CTK.PropsAuto(URL_APPLY)
-        self += table
         table.Add (_('Keep Alive'),         CTK.CheckCfgText('server!keepalive', True, _("Allowed")), _(NOTE_KEEPALIVE))
         table.Add (_('Max keepalive reqs'), CTK.TextCfg('server!keepalive_max_requests'), _(NOTE_KEEPALIVE_RS))
         table.Add (_('Chunked Encoding'),   CTK.CheckCfgText('server!chunked_encoding', True, _("Allowed")), _(NOTE_CHUNKED))
@@ -110,12 +109,14 @@ class ConnectionsWidget (CTK.Container):
         table.Add (_('Sendfile min size'),  CTK.TextCfg('server!sendfile_min', True), _(NOTE_SENDFILE_MIN))
         table.Add (_('Sendfile max size'),  CTK.TextCfg('server!sendfile_max', True), _(NOTE_SENDFILE_MAX))
 
+        self += CTK.RawHTML ("<h2>%s</h2>" %(_('Connections')))
+        self += CTK.Indenter(table)
+
 class ResourcesWidget (CTK.Container):
     def __init__ (self):
         CTK.Container.__init__ (self)
 
         table = CTK.PropsAuto(URL_APPLY)
-        self += table
         table.Add (_('Thread Number'),          CTK.TextCfg('server!thread_number', True), _(NOTE_THREAD_NUM))
         table.Add (_('Thread Policy'),          CTK.ComboCfg('server!thread_policy', THREAD_POLICY), _(NOTE_THREAD))
         table.Add (_('File descriptors'),       CTK.TextCfg('server!fdlimit',              True), _(NOTE_FD_NUM))
@@ -124,12 +125,14 @@ class ResourcesWidget (CTK.Container):
         table.Add (_('Log flush time'),         CTK.TextCfg('server!log_flush_lapse',      True), _(NOTE_FLUSH_TIME))
         table.Add (_('Nonces clean up time'),   CTK.TextCfg('server!nonces_cleanup_lapse', True), _(NOTE_NONCES_TIME))
 
+        self += CTK.RawHTML ("<h2>%s</h2>" %(_('Resources')))
+        self += CTK.Indenter(table)
+
 class IOCacheWidget (CTK.Container):
     def __init__ (self):
         CTK.Container.__init__ (self)
 
         table = CTK.PropsAuto(URL_APPLY)
-        self += table
         table.Add (_('Status'),        CTK.CheckCfgText('server!iocache', True), _(NOTE_IO_ENABLED))
         table.Add (_('Max pages'),     CTK.TextCfg('server!iocache!max_size',      True), _(NOTE_IO_SIZE))
         table.Add (_('File Min Size'), CTK.TextCfg('server!iocache!min_file_size', True), _(NOTE_IO_MIN_SIZE))
@@ -137,26 +140,32 @@ class IOCacheWidget (CTK.Container):
         table.Add (_('Lasting: stat'), CTK.TextCfg('server!iocache!lasting_stat',  True), _(NOTE_IO_LAST_STAT))
         table.Add (_('Lasting: mmap'), CTK.TextCfg('server!iocache!lasting_mmap',  True), _(NOTE_IO_LAST_MMAP))
 
+        self += CTK.RawHTML ("<h2>%s</h2>" %(_('I/O cache')))
+        self += CTK.Indenter(table)
+
 class SpecialFilesWidget (CTK.Container):
     def __init__ (self):
         CTK.Container.__init__ (self)
 
         table = CTK.PropsAuto(URL_APPLY)
-        self += table
         table.Add (_('Panic action'), CTK.TextCfg('server!panic_action', True), _(NOTE_PANIC_ACTION))
         table.Add (_('PID file'),     CTK.TextCfg('server!pid_file',     True), _(NOTE_PID_FILE))
+
+        self += CTK.RawHTML ("<h2>%s</h2>" %(_('Special Files')))
+        self += CTK.Indenter(table)
 
 class TLSWidget (CTK.Container):
     def __init__ (self):
         CTK.Container.__init__ (self)
 
         table = CTK.PropsAuto(URL_APPLY)
-        self += table
         table.Add (_('DH parameters: 512 bits'),  CTK.TextCfg('server!tls!dh_param512',  True), _(NOTE_DH512))
         table.Add (_('DH parameters: 1024 bits'), CTK.TextCfg('server!tls!dh_param1024', True), _(NOTE_DH1024))
         table.Add (_('DH parameters: 2048 bits'), CTK.TextCfg('server!tls!dh_param2048', True), _(NOTE_DH2048))
         table.Add (_('DH parameters: 4096 bits'), CTK.TextCfg('server!tls!dh_param4096', True), _(NOTE_DH4096))
 
+        self += CTK.RawHTML ("<h2>%s</h2>" %(_('TLS')))
+        self += CTK.Indenter(table)
 
 class Render():
     def __call__ (self):
