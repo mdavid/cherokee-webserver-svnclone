@@ -4,6 +4,7 @@
 #
 # Authors:
 #      Alvaro Lopez Ortega <alvaro@alobbs.com>
+#      Taher Shihadeh <taher@unixwars.com>
 #
 # Copyright (C) 2010 Alvaro Lopez Ortega
 #
