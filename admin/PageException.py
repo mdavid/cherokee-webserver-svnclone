@@ -38,7 +38,7 @@ URL_REPORT_URL  = '/CTK_ok.html'
 NOTE_EXCEPT_SORRY   = N_('We apologize for any inconveniences that this may have caused.')
 NOTE_EXCEPT_COMMENT = N_('Please, send your comments to the server developers. What were you doing when the issue showed up?')
 NOTE_EXCEPT_THANKS  = N_('Thank you for reporting the problem. The Cherokee Web Server developers will try to fix it up as soon as possible.')
-NOTE_EXCEPT_FAIL    = N_('<p>For reason, the issue could not be reported to the Cherokee project.</p><p>Please, do not hesitate to <a target="_blank" href="%s">report the issue</a> our bug tracking system if the problem persists.</p>') %(URL_BTS)
+NOTE_EXCEPT_FAIL    = N_('<p>For some reason, the issue could not be reported to the Cherokee project.</p><p>Please, do not hesitate to <a target="_blank" href="%s">report the issue</a> on our bug tracking system if the problem persists.</p>') %(URL_BTS)
 
 URL_APPLY  = '/exception/apply'
 
