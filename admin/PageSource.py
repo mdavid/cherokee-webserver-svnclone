@@ -48,9 +48,11 @@ NOTE_TIMEOUT       = N_('How long should the server wait when spawning an interp
 NOTE_USAGE         = N_('Sources currently in use. Note that the last source of any rule cannot be deleted until the rule has been manually edited.')
 NOTE_USER          = N_('Execute the interpreter under a different user. Default: Same UID as the server.')
 NOTE_GROUP         = N_('Execute the interpreter under a different group. Default: Default GID of the new process UID.')
-NOTE_ENV_INHETIR   = N_('Whether the new child process should inherit the environment variables from the server process. Default: yes.')
+NOTE_ENV_INHERIT   = N_('Whether the new child process should inherit the environment variables from the server process. Default: yes.')
 NOTE_DELETE_DIALOG = N_('You are about to delete an Information Source. Are you sure you want to proceed?')
 NOTE_NO_ENTRIES    = N_('The Information Source list is currently empty.')
+NOTE_FORBID_1      = N_('This is the last Information Source in use by a rule. Deleting it would break the configuration.')
+NOTE_FORBID_2      = N_('First edit the offending rule(s)')
 
 VALIDATIONS = [
     ('source!.+?!host',        validations.is_information_source),
@@ -127,7 +129,7 @@ class Render_Source():
             table.Add (_('Spawning timeout'),    CTK.TextCfg ('source!%s!timeout'%(num),       True),  _(NOTE_TIMEOUT))
             table.Add (_('Execute as User'),     CTK.TextCfg ('source!%s!user'%(num),          True),  _(NOTE_USER))
             table.Add (_('Execute as Group'),    CTK.TextCfg ('source!%s!group'%(num),         True),  _(NOTE_GROUP))
-            table.Add (_('Inherit Environment'), CTK.TextCfg ('source!%s!env_inherited'%(num), False), _(NOTE_ENV_INHETIR))
+            table.Add (_('Inherit Environment'), CTK.TextCfg ('source!%s!env_inherited'%(num), False), _(NOTE_ENV_INHERIT))
 
         submit = CTK.Submitter (URL_APPLY)
         submit += CTK.Hidden ('source', num)
@@ -171,17 +173,11 @@ class Render():
 
             sources = CTK.cfg.keys('source')
             sources.sort (lambda x,y: cmp (int(x), int(y)))
+            self._find_source_usage()
 
             for k in sources:
                 tipe = CTK.cfg.get_val('source!%s!type'%(k))
-
-                dialog = CTK.Dialog ({'title': _('Do you really want to remove it?'), 'width': 480})
-                dialog.AddButton (_('Remove'), CTK.JS.Ajax (URL_APPLY, async=False,
-                                                            data    = {'source!%s'%(k):''},
-                                                            success = dialog.JS_to_close() + \
-                                                                      refresh.JS_to_refresh()))
-                dialog.AddButton (_('Cancel'), "close")
-                dialog += CTK.RawHTML (NOTE_DELETE_DIALOG)
+                dialog = self._get_dialog (k, refresh)
                 self += dialog
 
                 remove = CTK.ImageStock('del')
@@ -200,6 +196,60 @@ class Render():
                                                              entry('type',  'source!%s!type'%(k)),
                                                              entry('host',  'source!%s!host'%(k)),
                                                              entry('inter', 'source!%s!interpreter'%(k))])
+
+        def _get_dialog (self, k, refresh):
+            if k in self.protected_sources:
+                rules = []
+                for rule, sources in self.rule_sources.items():
+                    if str(k) in sources:
+                        rules.append(rule.replace('!','/'))
+                links   = [CTK.consts.LINK_HREF%(rule, ' %s %s'%(_('offender'), rules.index(rule) + 1)) for rule in rules]
+
+                dialog  = CTK.Dialog ({'title': _('Deletion is forbidden'), 'width': 480})
+                dialog += CTK.RawHTML (NOTE_FORBID_1)
+                dialog += CTK.RawHTML (_('<p>%s: %s</p>')%(NOTE_FORBID_2, ', '.join(links)))
+                dialog.AddButton (_('Close'), "close")
+
+            else:
+                dialog = CTK.Dialog ({'title': _('Do you really want to remove it?'), 'width': 480})
+                dialog.AddButton (_('Remove'), CTK.JS.Ajax (URL_APPLY, async=False,
+                                                            data    = {'source!%s'%(k):''},
+                                                            success = dialog.JS_to_close() + \
+                                                                      refresh.JS_to_refresh()))
+                dialog.AddButton (_('Cancel'), "close")
+                dialog += CTK.RawHTML (NOTE_DELETE_DIALOG)
+
+            return dialog
+
+        def _get_used_sources (self):
+            """List of every rule using any info source"""
+            used_sources = {}
+            target ='!balancer!source!'
+            for entry in CTK.cfg.serialize().split():
+                if target in entry:
+                    source = CTK.cfg.get_val(entry)
+                    if not used_sources.has_key(source):
+                        used_sources[source] = []
+                    used_sources[source].append(entry)
+            return used_sources
+
+        def _find_source_usage (self):
+            # List of sources used by each rule
+            rule_sources = {}
+            used_sources = self._get_used_sources()
+            for src in used_sources:
+                for r in used_sources[src]:
+                    rule = r.split('!handler!balancer!')[0]
+                    if not rule_sources.has_key(rule):
+                        rule_sources[rule] = []
+                    rule_sources[rule].append(src)
+            self.rule_sources = rule_sources
+
+            # List of sources to protect against deletion"""
+            self.protected_sources = []
+            for s in rule_sources:
+                if len(rule_sources[s])==1:
+                    self.protected_sources.append(rule_sources[s][0])
 
 
     class PanelButtons (CTK.Box):
