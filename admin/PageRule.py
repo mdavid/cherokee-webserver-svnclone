@@ -179,16 +179,26 @@ class Render():
                     disabled.bind ('changed',
                                    CTK.JS.Ajax (url_apply, async=True,
                                                 data = '{"vserver!%s!rule!%s!disabled": event.value}'%(vsrv_num,r)))
-
                     disabled.bind ('changed',
                                    "$(this).parents('.row_content').toggleClass('rule-inactive');")
+
+                    # Final
+                    is_final = bool (int (CTK.cfg.get_val('vserver!%s!rule!%s!final'%(vsrv_num,r), "1")))
+
+                    final = CTK.ToggleButtonImages (CTK.Box({'class': 'final-on'},  CTK.RawHTML(_('Final'))),
+                                                    CTK.Box({'class': 'final-off'}, CTK.RawHTML(_('Non Final'))),
+                                                    is_final)
+                    final.bind ('changed',
+                                CTK.JS.Ajax (url_apply, async=True,
+                                             data = '{"vserver!%s!rule!%s!final": parseInt(event.value)?"0":"1"}'%(vsrv_num,r)))
 
                     # Actions
                     group = CTK.Box ({'class': 'sel-actions'}, [disabled, remove])
 
                     content = [group]
-                    content += [CTK.Box ({'class': 'name'}, CTK.RawHTML(rule_name)),
-                               CTK.Box ({'class': 'comment'}, CTK.RawHTML (', '.join(comment)))]
+                    content += [CTK.Box ({'class': 'name'},    CTK.RawHTML (rule_name)),
+                                CTK.Box ({'class': 'comment'}, CTK.RawHTML (', '.join(comment))),
+                                CTK.Box ({'class': 'final'},   final)]
 
 
                     # Add the list entry
