@@ -66,7 +66,7 @@ class Render_Content (CTK.Container):
 
         if CTK.request.url.endswith('/general'):
             vsrv_nam = None
-            title = _('Server monitoring')
+            title = _('Server Wide Monitoring')
         else:
             vsrv_num = CTK.request.url.split('/')[-1]
             vsrv_nam = CTK.cfg.get_val ("vserver!%s!nick" %(vsrv_num), _("Unknown"))
@@ -93,13 +93,6 @@ class Render():
         def __init__ (self, right_box):
             CTK.Container.__init__ (self)
 
-            # Sanity check
-            if not CTK.cfg.keys('vserver'):
-                CTK.cfg['vserver!1!nick']           = 'default'
-                CTK.cfg['vserver!1!document_root']  = '/tmp'
-                CTK.cfg['vserver!1!rule!1!match']   = 'default'
-                CTK.cfg['vserver!1!rule!1!handler'] = 'common'
-
             # Helpers
             entry   = lambda klass, key: CTK.Box ({'class': klass}, CTK.RawHTML (CTK.cfg.get_val(key, '')))
             special = lambda klass, txt: CTK.Box ({'class': klass}, CTK.RawHTML (txt))
@@ -120,9 +113,7 @@ class Render():
 
             # Regular list entries
             for k in vservers:
-                content = [entry('nick',  'vserver!%s!nick'%(k)),
-                           entry('droot', 'vserver!%s!document_root'%(k))]
-
+                content = [entry('nick', 'vserver!%s!nick'%(k))]
                 panel.Add (k, '%s/content/%s'%(URL_BASE, k), content, draggable=False)
 
 
