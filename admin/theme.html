@@ -11,6 +11,7 @@
  <!-- XXX: @ion: Don't know if this is the place to load the top bar... -->
    <div id="topbar">
     <img src="/static/images/cherokee-logo-bar.png" alt="Cherokee"/>
+    <div id="save-box"><a href="#" id="save-button" class="button butbig"><span id="save-msg">Save</span></a></div>
     <ul id="nav">
     <li id="nav-index"><a href="/">Home</a></li>
     <li id="nav-status"><a href="/status">Status</a></li>
@@ -18,19 +19,10 @@
     <li id="nav-vservers"><a href="/vserver">vServers</a></li>
     <li id="nav-source"><a href="/source">Sources</a></li>
     <li id="nav-advanced"><a href="/advanced">Advanced</a></li>
-    <li id="nav-save-a"><a href="#">Save</a></li>
     </ul>
    </div>
  </div>
  <div id="container">
-   <div id="savebar">
-       <div class="topmsg">Configuration has been changed and can to be saved now</div>
-       <div class="buttonarea">
-           <a href="#" class="button save"><span>Save</span></a>
-           <a href="#" class="button apply"><span>Save & Apply</span></a>
-       </div>
-   </div>
-
    <div id="help">
      <a class="helpbutton" href="#" id="help-a"><span>Help</span></a>
      %(helps)s
