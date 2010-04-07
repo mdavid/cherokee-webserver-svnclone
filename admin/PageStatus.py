@@ -66,25 +66,23 @@ class Render_Content (CTK.Container):
 
         if CTK.request.url.endswith('/general'):
             vsrv_nam = None
-            cont += CTK.RawHTML ('<h1>%s</h1>' %(_('Server monitoring')))
+            title = _('Server monitoring')
         else:
             vsrv_num = CTK.request.url.split('/')[-1]
             vsrv_nam = CTK.cfg.get_val ("vserver!%s!nick" %(vsrv_num), _("Unknown"))
-            cont += CTK.RawHTML ('<h1>%s: %s</h1>' %(_('Virtual Server Monitoring'), vsrv_nam))
+            title    ='%s: %s' %(_('Virtual Server Monitoring'), vsrv_nam)
+
+        cont += CTK.RawHTML ('<h2>%s</h2>' %(title))
 
         if CTK.cfg.get_val('server!collector') == 'rrd':
-            cont += CTK.RawHTML('<h2>%s</h2>' %(_('Graphs')))
             if vsrv_nam:
-                cont += CTK.Indenter(Graph.GraphVServer_Instancer(vsrv_nam))
+                cont += Graph.GraphVServer_Instancer(vsrv_nam)
             else:
-                cont += CTK.Indenter(Graph.GraphServer_Instancer())
+                cont += Graph.GraphServer_Instancer()
         else:
             notice  = CTK.Notice()
             notice += CTK.RawHTML(_(RRD_NOTICE))
             cont   += CTK.Indenter(notice)
-
-        #cont += CTK.RawHTML('<h2>%s</h2>' %(_('Live logs')))
-        #cont += CTK.Indenter(LiveLogs_Instancer (vsrv_num))
 
         render = cont.Render()
         return render.toJSON()
