@@ -35,7 +35,7 @@ JS_INIT = """
 """
 
 class SelectionPanel (CTK.Box):
-    def __init__ (self, callback, content_id, web_url, web_empty, draggable=True, container=None):
+    def __init__ (self, callback, content_id, web_url, web_empty, draggable=True, container=None, cookie_name=COOKIE_NAME_DEFAULT):
         CTK.Box.__init__ (self, {'class': 'selection-panel'})
 
         self.table       = CTK.SortableList (callback, container)
@@ -43,7 +43,7 @@ class SelectionPanel (CTK.Box):
         self.web_url     = web_url
         self.web_empty   = web_empty
         self.draggable   = draggable
-        self.cookie_name = COOKIE_NAME_DEFAULT
+        self.cookie_name = cookie_name
 
         self += self.table
 
