@@ -63,13 +63,15 @@ NOTE_EMAIL      = N_("You will be sent an email requesting confirmation")
 NOTE_NAME       = N_("Optionally provide your name")
 
 # Notices
-SUPPORT_NOTICE      = N_('Commercial support for Cherokee is provided by <a target="_blank" href="%s">Octality</a>. They provide top notch <a target="_blank" href="%s">Consulting, Custom Engineering, and Enterprise Support Services.</a>' %(LINK_OCTALITY, LINK_SUPPORT))
-LIST_NOTICE         = N_('The Cherokee-Project Community Mailing List is the place to go for help and sharing experiences about Cherokee. Subscribe now!')
+RUNNING_NOTICE       = N_('Server is running.')
+STOPPED_NOTICE       = N_('Server is not running.')
+SUPPORT_NOTICE      = N_('Commercial support for Cherokee is provided by <a target="_blank" href="%s">Octality</a>. They provide top notch Consulting, Custom Engineering, and Enterprise Support Services.' %(LINK_OCTALITY))
+LIST_NOTICE         = N_('The Cherokee-Project Community Mailing List is the place to go for help and sharing experiences about Cherokee. <a id="subscribe-a">Subscribe now!</a>')
 IRC_NOTICE          = N_('Join us at the <a target="_blank" href="%s">#cherokee</a> IRC Channel on freenode.net.'%(LINK_IRC))
 BUG_TRACKER_NOTICE  = N_('Your feedback is important! Log Bug Reports and Requests for Enhancements in our <a target="_blank" href="%s">bug tracker</a> to help us improve Cherokee.' %(LINK_BUGTRACKER))
 SOCIAL_MEDIA_NOTICE = N_("Find out what's going on with Cherokee on your favorite Social Media!")
-TWITTER_NOTICE      = N_('<a target="_blank" href="%s">Cherokee at Twitter</a>: Microblogging about Cherokee' %(LINK_TWITTER))
-FACEBOOK_NOTICE     = N_('<a target="_blank" href="%s">Cherokee at Facebook</a>: Cherokee\'s day to day news' %(LINK_FACEBOOK))
+TWITTER_NOTICE      = N_('Follow <a target="_blank" href="%s">Cherokee on Twitter</a>.' %(LINK_TWITTER))
+FACEBOOK_NOTICE     = N_('Join <a target="_blank" href="%s">Cherokee on Facebook</a>.' %(LINK_FACEBOOK))
 
 BETA_TESTER_NOTICE = N_("""\
 <h3>Beta testing</h3> <p>Individuals like yourself who download and
@@ -79,9 +81,8 @@ create the highest quality product. For that, we thank you.</p>
 
 PROUD_USERS_NOTICE = N_("""\
 We would love to know that you are using Cherokee. Submit your domain
-name and it will be <a target="_blank" href="%s">listed on the
-Cherokee Project web site</a>.
-""" %(PROUD_USERS_WEB))
+name and it will be listed on the Cherokee Project web site.
+""")
 
 # Dialogs
 PROUD_DIALOG_OK     = N_("The information has been successfully sent. Thank you!")
@@ -94,6 +95,14 @@ LATEST_URL   = '/index/release'
 
 # Help entries
 HELPS = [('config_status', N_("Status"))]
+
+# JS
+JS_SUBSCRIBE = """
+$('#subscribe-a').click (function(){ %s });
+"""
+JS_PROUD = """
+$('#proud-a').click (function(){ %s });
+"""
 
 
 def Launch():
@@ -112,22 +121,38 @@ def Stop():
     return CTK.HTTP_Redir('/')
 
 
-class ServerInfo (CTK.Table):
+class ServerStatus (CTK.Box):
     def __init__ (self):
-        CTK.Table.__init__ (self)
-        self.id = "server_info_table"
-        self.set_header (column=True, num=1)
+        CTK.Box.__init__ (self, {'class': 'server-status', 'id': ['server-stopped', 'server-running'][Cherokee.server.is_alive()]})
+        self += CTK.Box ({'id': 'status-message'}, CTK.RawHTML([STOPPED_NOTICE, RUNNING_NOTICE][Cherokee.server.is_alive()]))
 
-        self.add (_('Status'),       ['Stopped', 'Running'][Cherokee.server.is_alive()])
-        self.add (_('PID'),          Cherokee.pid.pid or _("Not running"))
-        self.add (_('Version'),      VERSION)
-        self.add (_("Default WWW"),  self._get_droot())
-        self.add (_("Prefix"),       PREFIX)
-        self.add (_("Config File"),  CTK.cfg.file or _("Not found"))
-        self.add (_("Modified"),     self._get_cfg_ctime())
+        if Cherokee.server.is_alive():
+            button = CTK.Button(_('Stop Server'), {'id': 'launch-button', 'class': 'butlight butstop'})
+            button.bind ('click', "window.location = '/stop';")
 
-    def add (self, title, string):
-        self += [CTK.RawHTML(title), CTK.RawHTML(str(string))]
+        else:
+            button = CTK.Button(_('Start Server'), {'id': 'launch-button', 'class': 'butlight butstart'})
+            button.bind ('click', "window.location = '/launch';")
+
+        self+= button
+
+        
+
+class ServerInfo (CTK.Box):
+    def __init__ (self):
+        CTK.Box.__init__ (self, {'id': 'server-info'})
+        self += CTK.RawHTML("<h3>%s</h3>"%(_("Information")))
+        table = CTK.Table()
+        entry = lambda title, string: [CTK.RawHTML (title), CTK.RawHTML(str(string))]
+        table.id = "server-info-table"
+        table.set_header (column=True, num=1)
+        table += entry(_('PID'),          Cherokee.pid.pid or _("Not running"))
+        table += entry(_('Version'),      VERSION)
+        table += entry(_("Default WWW"),  self._get_droot())
+        table += entry(_("Prefix"),       PREFIX)
+        table += entry(_("Config File"),  CTK.cfg.file or _("Not found"))
+        table += entry(_("Modified"),     self._get_cfg_ctime())
+        self += table
 
     def _get_droot (self):
         tmp = [int(x) for x in CTK.cfg.keys('vserver')]
@@ -160,13 +185,15 @@ def Lang_Apply():
 
 class LanguageSelector (CTK.Box):
     def __init__ (self):
-        CTK.Box.__init__ (self, {'id': 'lenguage-selector'})
+        CTK.Box.__init__ (self, {'id': 'language-selector'})
         languages = [('', _('Choose'))] + AVAILABLE_LANGUAGES
 
         submit = CTK.Submitter('/lang/apply')
+        submit.id = 'language-list'
+        # TODO: Maybe it's better to show selected lang and ommit 'Language' label.
         submit += CTK.Combobox ({'name': 'lang'}, languages)
 
-        self += CTK.RawHTML('<h3>%s</h3>' %(_('Lenguaje')))
+        self += CTK.RawHTML('%s: ' %(_('Language')))
         self += submit
 
 
@@ -213,12 +240,10 @@ class ProudUsers (CTK.Box):
         dialog = CTK.DialogProxyLazy ('/proud/apply', {'title': _('Proud Cherokee User List Submission'), 'width': 500})
         dialog.AddButton (_('Close'), "close")
 
-        button = CTK.Button (_('Send domains'))
-        button.bind ('click', dialog.JS_to_show())
-
         self += CTK.RawHTML('<h3>%s</h3>' %(_('Proud Cherokee Users')))
-        self += CTK.Box ({'id': 'notice'}, CTK.RawHTML (PROUD_USERS_NOTICE))
-        self += button
+        self += CTK.Box ({'id': 'proud-notice'}, CTK.RawHTML (PROUD_USERS_NOTICE))
+        self += CTK.Box ({'id': 'proud-link'}, CTK.RawHTML ('<a target="_blank" href="%s">%s</a> | <a id="proud-a">%s</a>' %(PROUD_USERS_WEB, _('View list'), _('Send your domains'))))
+        self += CTK.RawHTML (js=JS_PROUD %(dialog.JS_to_show()))
         self += dialog
 
 
@@ -293,63 +318,63 @@ class MailingListSubscription (CTK.Container):
 class ContactChannels (CTK.Box):
     def __init__ (self):
         CTK.Box.__init__ (self, {'id': 'contact-channels'})
+        self += CTK.RawHTML('<h3>%s</h3>' % _('Support'))
 
-        self += CTK.RawHTML('<h3>%s</h3>' % _('Contact Channels'))
+        box = CTK.Box({'id': 'contact-irc', 'class': 'contact-box'})
+        box += CTK.RawHTML('<h4>%s</h4>' % _('IRC'))
+        box += CTK.RawHTML(_(IRC_NOTICE))
+        self += box
 
-        self += CTK.RawHTML('<h4>%s</h4>' % _('IRC'))
-        self += CTK.RawHTML(_(IRC_NOTICE))
+        box = CTK.Box({'id': 'contact-list', 'class': 'contact-box'})
+        box += CTK.RawHTML('<h4>%s</h4>' % _('Mailing List'))
+        box += CTK.RawHTML(_(LIST_NOTICE))
+        self += box
 
-        self += CTK.RawHTML('<h4>%s</h4>' % _('Mailing List'))
-        self += CTK.RawHTML(_(LIST_NOTICE))
-
-        # Subscribe Button
+        # Subscribe Dialog
         dialog = CTK.Dialog ({'title': _('Mailing list subscription'), 'width': 560})
         dialog.AddButton (_('Subscribe'), dialog.JS_to_trigger('submit'))
         dialog.AddButton (_('Cancel'), "close")
         dialog += MailingListSubscription()
-
-        button = CTK.Button(_('Subscribe'))
-        button.bind ('click', dialog.JS_to_show())
         dialog.bind ('submit_success', dialog.JS_to_close())
 
-        self += button
+        self += CTK.RawHTML (js=JS_SUBSCRIBE %(dialog.JS_to_show()))
+
+        box = CTK.Box({'id': 'contact-bug', 'class': 'contact-box'})
+        box += CTK.RawHTML('<h4>%s</h4>' % _('Bug Tracker'))
+        box += CTK.RawHTML(_(BUG_TRACKER_NOTICE))
+        self += box
+
         self += dialog
-
-
-class BugTracker (CTK.Box):
-    def __init__ (self):
-        CTK.Box.__init__ (self, {'id': 'bug-tracker'})
-
-        self += CTK.RawHTML('<h3>%s</h3>' % _('Bug Tracker'))
-        self += CTK.RawHTML(_(BUG_TRACKER_NOTICE))
 
 
 class SocialMedia (CTK.Box):
     def __init__ (self):
         CTK.Box.__init__ (self, {'id': 'social-media'})
 
-        self += CTK.RawHTML('<h3>%s</h3>' % _('Social Media'))
-        self += CTK.RawHTML(_(SOCIAL_MEDIA_NOTICE))
+        twitter = CTK.Box ({'id': 'twitter-box', 'class': 'social-box'})
+        twitter += CTK.RawHTML(_(TWITTER_NOTICE))
+        self += twitter
 
-        # @ION: These icons have been dropped as they were. Change, remove or do with them whatever you see fit.
-        self += CTK.Image ({'alt': 'Twitter button',  'title': 'Twitter',  'src': '/static/images/other/twitter_button.png', 'height':"32", 'width':"32"})
-        self += CTK.RawHTML(_(TWITTER_NOTICE))
+        fb = CTK.Box ({'id': 'fb-box', 'class': 'social-box'})
+        fb += CTK.RawHTML(_(FACEBOOK_NOTICE))
+        self += fb
 
-        self += CTK.Image ({'alt': 'Facebook button', 'title': 'Facebook', 'src': '/static/images/other/facebook_button.png', 'height':"32", 'width':"32"})
-        self += CTK.RawHTML(_(FACEBOOK_NOTICE))
 
 
 class CommunityBox (CTK.Box):
     def __init__ (self):
         CTK.Box.__init__ (self, {'id': 'community-box'})
 
-        self += CTK.RawHTML('<h2>%s</h2>' % _('Community Support'))
+        self += CTK.RawHTML('<h2>%s</h2>' % _('Community'))
 
-        self += ProudUsers()
-        self += LatestRelease()
-        self += ContactChannels()
-        self += BugTracker()
-        self += SocialMedia()
+        left = CTK.Box ({'id': 'community-left'})
+        left += ProudUsers()
+        left += SocialMedia()
+        #self += LatestRelease()
+        self += left
+        right = CTK.Box ({'id': 'community-right'})
+        right += ContactChannels()
+        self += right
 
 
 class EnterpriseBox (CTK.Box):
@@ -357,7 +382,8 @@ class EnterpriseBox (CTK.Box):
         CTK.Box.__init__ (self, {'id': 'enterprise-box'})
 
         self += CTK.RawHTML('<h2>%s</h2>' % _('Commercial Support'))
-        self += CTK.RawHTML(_(SUPPORT_NOTICE))
+        self += CTK.Box ({'id': 'enterprise-notice'}, CTK.RawHTML (SUPPORT_NOTICE))
+        self += CTK.Box ({'id': 'enterprise-link'}, CTK.RawHTML ('<a target="_blank" href="%s">%s</a>' %(LINK_SUPPORT, _('Purchase Support'))))
 
 
 class Render():
@@ -365,19 +391,26 @@ class Render():
         Cherokee.pid.refresh()
 
         self.page = Page.Base(_('Welcome to Cherokee Admin'), body_id='index', helps=HELPS)
-        self.page += CTK.RawHTML ("<h1>%s</h1>"% _('Welcome to Cherokee Admin'))
+        top = CTK.Box({'id': 'top-box'})
+        top += CTK.RawHTML ("<h1>%s</h1>"% _('Welcome to Cherokee Admin'))
+        top += LanguageSelector()
+        self.page += top;
 
         if 'b' in VERSION:
             notice  = CTK.Notice()
             notice += CTK.RawHTML(_(BETA_TESTER_NOTICE))
             self.page += notice
 
+        self.page += ServerStatus()
         self.page += ServerInfo()
-        self.page += CTK.RawHTML('<a href="/launch">Launch</a> | <a href="/stop">Stop</a>')
-        self.page += LanguageSelector()
-
-        self.page += EnterpriseBox()
-        self.page += CommunityBox()
+        #self.page += CTK.RawHTML('<a href="/launch">Launch</a> | <a href="/stop">Stop</a>')
+        self.page += CTK.RawHTML('<div class="ui-helper-clearfix"></div>')
+        
+        bottom = CTK.Box({'id': 'bottom-box'})
+        bottom += EnterpriseBox()
+        bottom += CommunityBox()
+        self.page += bottom
+        self.page += CTK.RawHTML('<div class="ui-helper-clearfix"></div>')
 
         return self.page.Render()
 
