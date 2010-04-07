@@ -63,11 +63,11 @@ NOTE_EMAIL      = N_("You will be sent an email requesting confirmation")
 NOTE_NAME       = N_("Optionally provide your name")
 
 # Notices
-RUNNING_NOTICE       = N_('Server is running.')
-STOPPED_NOTICE       = N_('Server is not running.')
+RUNNING_NOTICE      = N_('Server is Running.')
+STOPPED_NOTICE      = N_('Server is not Running.')
 SUPPORT_NOTICE      = N_('Commercial support for Cherokee is provided by <a target="_blank" href="%s">Octality</a>. They provide top notch Consulting, Custom Engineering, and Enterprise Support Services.' %(LINK_OCTALITY))
-LIST_NOTICE         = N_('The Cherokee-Project Community Mailing List is the place to go for help and sharing experiences about Cherokee. <a id="subscribe-a">Subscribe now!</a>')
-IRC_NOTICE          = N_('Join us at the <a target="_blank" href="%s">#cherokee</a> IRC Channel on freenode.net.'%(LINK_IRC))
+LIST_NOTICE         = N_('The Community Mailing List is the place to go for help on Cherokee. <a id="subscribe-a">Subscribe now!</a>')
+IRC_NOTICE          = N_('Join us at the <a target="_blank" href="%s">#cherokee</a> IRC Channel.'%(LINK_IRC))
 BUG_TRACKER_NOTICE  = N_('Your feedback is important! Log Bug Reports and Requests for Enhancements in our <a target="_blank" href="%s">bug tracker</a> to help us improve Cherokee.' %(LINK_BUGTRACKER))
 SOCIAL_MEDIA_NOTICE = N_("Find out what's going on with Cherokee on your favorite Social Media!")
 TWITTER_NOTICE      = N_('Follow <a target="_blank" href="%s">Cherokee on Twitter</a>.' %(LINK_TWITTER))
@@ -136,7 +136,7 @@ class ServerStatus (CTK.Box):
 
         self+= button
 
-        
+
 
 class ServerInfo (CTK.Box):
     def __init__ (self):
@@ -318,7 +318,7 @@ class MailingListSubscription (CTK.Container):
 class ContactChannels (CTK.Box):
     def __init__ (self):
         CTK.Box.__init__ (self, {'id': 'contact-channels'})
-        self += CTK.RawHTML('<h3>%s</h3>' % _('Support'))
+        #self += CTK.RawHTML('<h3>%s</h3>' % _('Support'))
 
         box = CTK.Box({'id': 'contact-irc', 'class': 'contact-box'})
         box += CTK.RawHTML('<h4>%s</h4>' % _('IRC'))
@@ -405,7 +405,7 @@ class Render():
         self.page += ServerInfo()
         #self.page += CTK.RawHTML('<a href="/launch">Launch</a> | <a href="/stop">Stop</a>')
         self.page += CTK.RawHTML('<div class="ui-helper-clearfix"></div>')
-        
+
         bottom = CTK.Box({'id': 'bottom-box'})
         bottom += EnterpriseBox()
         bottom += CommunityBox()
