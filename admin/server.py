@@ -177,6 +177,7 @@ if __name__ == "__main__":
     import PageAdvanced
     import PageNewConfig
     import PageHelp
+    import PageStatus
 
     # Run
     CTK.run()

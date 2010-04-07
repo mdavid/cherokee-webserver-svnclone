@@ -157,6 +157,7 @@ class Render_Source():
             CTK.Container.__init__ (self)
 
             table = CTK.Table()
+            self += table
             table.set_header(1)
             table += [CTK.RawHTML(x) for x in (_('Virtual Server'), _('Rule'))]
 
@@ -201,6 +202,7 @@ class Render_Source():
 
         sources = _get_rule_sources ()
         rules   = [key for key,val in sources.items() if str(num) in val]
+
         if rules:
             cont += self.Source_Usage (rules)
 
