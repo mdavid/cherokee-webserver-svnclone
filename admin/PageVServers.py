@@ -71,7 +71,7 @@ JS_CLONE = """
 """
 
 JS_PARTICULAR = """
-  var vserver = window.location.pathname.match (/^\/vserver\/(\d+)/)[1];
+  var vserver = window.location.pathname.match (/^\/vserver\/(\d+)\/?$/)[1];
   $.cookie ('%(cookie_name)s', vserver, { path: '/vserver' });
   window.location.replace ('%(url_base)s');
 """
@@ -149,7 +149,7 @@ class VirtualServerNew (CTK.Container):
 
         # Build the panel list
         right_box = CTK.Box({'class': 'vserver_new_content'})
-        panel = SelectionPanel.SelectionPanel (None, right_box.id, URL_BASE, '')
+        panel = SelectionPanel.SelectionPanel (None, right_box.id, URL_BASE, '', cookie_name='new_vsrv_selected')
 
         self += panel
         self += right_box

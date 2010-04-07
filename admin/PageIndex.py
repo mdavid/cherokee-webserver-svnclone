@@ -318,7 +318,6 @@ class MailingListSubscription (CTK.Container):
 class ContactChannels (CTK.Box):
     def __init__ (self):
         CTK.Box.__init__ (self, {'id': 'contact-channels'})
-        #self += CTK.RawHTML('<h3>%s</h3>' % _('Support'))
 
         box = CTK.Box({'id': 'contact-irc', 'class': 'contact-box'})
         box += CTK.RawHTML('<h4>%s</h4>' % _('IRC'))

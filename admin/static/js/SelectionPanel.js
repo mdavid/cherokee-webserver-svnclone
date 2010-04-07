@@ -41,11 +41,13 @@
 		  } else {
 			 url = row.attr('url');
 
-			 // Highlight
-			 $('#'+row.attr('pid')).addClass('panel-selected');
+			 $('#'+row.attr('pid')).each (function() {
+				// Highlight
+				$(this).addClass('panel-selected');
 
-			 // Cookie
-			 $.cookie (cookie_name, row.attr('id'), {path: cookie_domain});
+				// Cookie
+				$.cookie (cookie_name, $(this).attr('id'), {path: cookie_domain});
+			 });
 		  }
 
 		  // Update box
