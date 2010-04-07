@@ -173,7 +173,7 @@ class BehaviorWidget (CTK.Container):
         # List
         table = CTK.Table({'id': 'rules-table'})
         table.set_header(1)
-        table += [CTK.RawHTML(x) for x in (_('Match'), _('Handler'), _('Auth'), _('Final'), '')]
+        table += [CTK.RawHTML(x) for x in (_('Match'), _('Handler'), _('Auth'))]
 
         rules = CTK.cfg.keys('vserver!%s!rule'%(vsrv_num))
         rules.sort (lambda x,y: cmp(int(x), int(y)))
@@ -194,10 +194,7 @@ class BehaviorWidget (CTK.Container):
             if tmp:
                 auth = CTK.RawHTML (filter (lambda x: x[0] == tmp, VALIDATORS)[0][1])
 
-            final    = CTK.CheckCfg  ('vserver!%s!rule!%s!final'%(vsrv_num, r), True)
-            disabled = CTK.iPhoneCfg ('vserver!%s!rule!%s!disabled'%(vsrv_num, r), False)
-
-            table += [link, handler, auth, final, disabled]
+            table += [link, handler, auth]
 
         # Submit
         submit = CTK.Submitter (url_apply)
