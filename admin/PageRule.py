@@ -197,8 +197,8 @@ class Render():
 
                     content = [group]
                     content += [CTK.Box ({'class': 'name'},    CTK.RawHTML (rule_name)),
-                                CTK.Box ({'class': 'comment'}, CTK.RawHTML (', '.join(comment))),
-                                CTK.Box ({'class': 'final'},   final)]
+                                CTK.Box ({'class': 'final'},   final),
+                                CTK.Box ({'class': 'comment'}, CTK.RawHTML (', '.join(comment)))]
 
 
                     # Add the list entry
