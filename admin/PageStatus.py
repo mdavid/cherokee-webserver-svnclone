@@ -35,6 +35,9 @@ from CTK.Submitter import HEADER as Submit_HEADER
 from configured import *
 
 URL_BASE  = '/status'
+URL_RRD   = '/general#Network-1'
+
+RRD_NOTICE= N_('You need to enable the <a href="%s">Information Collector</a> setting in order to render usage graphics.'%URL_RRD)
 
 # Help entries
 HELPS = [('config_status', N_("Status"))]
@@ -71,11 +74,14 @@ class Render_Content (CTK.Container):
 
         if CTK.cfg.get_val('server!collector') == 'rrd':
             cont += CTK.RawHTML('<h2>%s</h2>' %(_('Graphs')))
-
             if vsrv_nam:
                 cont += CTK.Indenter(Graph.GraphVServer_Instancer(vsrv_nam))
             else:
                 cont += CTK.Indenter(Graph.GraphServer_Instancer())
+        else:
+            notice  = CTK.Notice()
+            notice += CTK.RawHTML(_(RRD_NOTICE))
+            cont   += CTK.Indenter(notice)
 
         #cont += CTK.RawHTML('<h2>%s</h2>' %(_('Live logs')))
         #cont += CTK.Indenter(LiveLogs_Instancer (vsrv_num))
