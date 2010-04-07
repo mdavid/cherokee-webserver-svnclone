@@ -153,10 +153,12 @@ img.icon_chooser_selected {
 #twitter-box { background: #fff url(/static/images/other/twitter.png) no-repeat top 26px; }
 #fb-box { background: #fff url(/static/images/other/facebook.png) no-repeat top 26px; }
 
-/* #contact-channels { font-size: 11px; } */
 .contact-box { padding-left: 28px; padding-top: 3px; margin-bottom: 16px; }
 #contact-irc { background: #fff url(/static/images/other/contact-irc.png) no-repeat; }
 #contact-list { background: #fff url(/static/images/other/contact-list.png) no-repeat; }
 #subscribe-a { cursor: pointer; text-decoration: underline; }
 #contact-bug { background: #fff url(/static/images/other/contact-bug.png) no-repeat; }
 
+/* Page Status
+ */
+.graph_type { float: right; position: relative; right: 25px; top: 60px; }
