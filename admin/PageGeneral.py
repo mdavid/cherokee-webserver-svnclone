@@ -151,6 +151,7 @@ class PortsTable (CTK.Submitter):
                                                   data     = {pre: ''},
                                                   complete = update_js %({'id': refreshable.id,
                                                                           'url': refreshable.url,
+                                                                          'selector': "$('#%s')"%(refreshable.id),
                                                                           'on_success':''})))
             table[(n,1)] = [port, listen, tls, delete]
             n += 1
