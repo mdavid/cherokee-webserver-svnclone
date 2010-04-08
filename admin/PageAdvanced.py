@@ -90,6 +90,21 @@ NOTE_DH4096       = N_('Path to a Diffie Hellman (DH) parameters PEM file: 4096 
 
 HELPS = [('config_advanced', N_('Advanced'))]
 
+JS_SCROLL = """
+function resize_cherokee_containers() {
+   $('#body-advanced .ui-tabs-panel').height($(window).height() - 154);
+}
+
+$(document).ready(function() {
+   resize_cherokee_containers();
+   $(window).resize(function(){
+       resize_cherokee_containers();
+   });
+});
+
+"""
+
+
 def apply():
     # Modifications
     for k in CTK.post:
@@ -183,6 +198,7 @@ class Render():
         page += CTK.RawHTML("<h1>%s</h1>" %(_('Advanced Configuration')))
         page += notice
         page += tabs
+        page += CTK.RawHTML (js=JS_SCROLL)
 
         return page.Render()
 
