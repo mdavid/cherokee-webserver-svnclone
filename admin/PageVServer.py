@@ -106,7 +106,7 @@ BEHAVIOR_TAGS = [
     (N_('Rule Match'),           N_('Match')),
     (N_('Assigned Handler'),     N_('Handler')),
     (N_('Authentication'),       N_('Auth')),
-    (N_('Custom Document root'), N_('Root')),
+    (N_('Custom Document Root'), N_('Root')),
     (N_('Only HTTPS'),           N_('Secure')),
     (N_('Encoders'),             N_('Enc')),
     (N_('Expiration'),           N_('Exp')),
@@ -204,11 +204,18 @@ class BehaviorWidget (CTK.Container):
         rule_name = rule.GetName()
         link = RuleLink (vsrv_num, r, CTK.RawHTML (rule_name))
 
-        handler, auth, root, secure, enc, exp, timeout, shaping, log, final, active = [None for x in range(11)]
+        active, handler, auth, root, secure, enc, exp, timeout, shaping, log, final = [None for x in range(11)]
+
+        tmp = not bool (int (CTK.cfg.get_val('vserver!%s!rule!%s!disabled'%(vsrv_num,r), "0")))
+        if tmp:
+            tmp    = _('Rule is active')
+            active = CTK.ImageStock('tick', {'alt': tmp, 'title': tmp})
 
         tmp = CTK.cfg.get_val ('vserver!%s!rule!%s!handler'%(vsrv_num, r), '')
         if tmp:
             handler = CTK.RawHTML (filter (lambda x: x[0] == tmp, HANDLERS)[0][1])
+            if not active:
+                handler = CTK.Box({'class':'rule-inactive'}, handler)
 
         tmp = CTK.cfg.get_val ('vserver!%s!rule!%s!auth'%(vsrv_num, r), '')
         if tmp:
@@ -225,8 +232,15 @@ class BehaviorWidget (CTK.Container):
 
         tmp =  CTK.cfg.keys ('vserver!%s!rule!%s!encoder'%(vsrv_num, r))
         if tmp:
-            tmp = _('Encoding enabled')
-            enc = CTK.ImageStock('tick', {'alt': tmp, 'title':tmp})
+            diz = [_('Encoding enabled')]
+            for e in tmp:
+                val = CTK.cfg.get_val ('vserver!%s!rule!%s!encoder!%s'%(vsrv_num, r, e))
+                if val == 'allow':
+                    diz.append (e)
+                elif val == 'forbid':
+                    diz.append ("%s %s"%(_('no'), e))
+            txt = ', '.join(diz)
+            enc = CTK.ImageStock('tick', {'alt': txt, 'title':txt})
 
         tmp = CTK.cfg.get_val ('vserver!%s!rule!%s!expiration' %(vsrv_num, r))
         if tmp:
@@ -252,11 +266,6 @@ class BehaviorWidget (CTK.Container):
         if tmp:
             tmp   = _('Prevents further rule evaluation')
             final = CTK.ImageStock('tick', {'alt': tmp, 'title': tmp})
-
-        tmp = not bool (int (CTK.cfg.get_val('vserver!%s!rule!%s!disabled'%(vsrv_num,r), "0")))
-        if tmp:
-            tmp    = _('Rule is active')
-            active = CTK.ImageStock('tick', {'alt': tmp, 'title': tmp})
 
         return [link, handler, auth, root, secure, enc, exp, timeout, shaping, log, final, active]
 
