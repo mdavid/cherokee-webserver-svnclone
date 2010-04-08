@@ -253,18 +253,30 @@ class Render():
             CTK.Box.__init__ (self, {'class': 'panel-buttons'})
 
             # Add New
-            dialog = CTK.Dialog ({'title': _('Add Behavior Rule'), 'width': 550})
+            dialog = CTK.Dialog ({'title': _('Add Behavior Rule'), 'width': 700})
             dialog.AddButton (_('Add'), dialog.JS_to_trigger('submit'))
             dialog.AddButton (_('Cancel'), "close")
             dialog += RuleNew (vsrv_num)
+
+            druid  = CTK.Druid (CTK.RefreshableURL())
+            wizard = CTK.Dialog ({'title': _('Configuration Assistant'), 'width': 550})
+            wizard += druid
+            druid.bind ('druid_exiting',
+                        wizard.JS_to_close() +
+                        self.JS_to_trigger('submit_success'))
 
             button = CTK.Button(_('New…'), {'id': 'rule-new-button', 'class': 'panel-button', 'title': _('Add Behavior Rule')})
             button.bind ('click', dialog.JS_to_show())
             dialog.bind ('submit_success', dialog.JS_to_close())
             dialog.bind ('submit_success', self.JS_to_trigger('submit_success'));
+            dialog.bind ('open_wizard',
+                         dialog.JS_to_close() +
+                         druid.JS_to_goto("'/wizard/vserver/%s' + event.wizard" %(vsrv_num)) +
+                         wizard.JS_to_show())
 
             self += button
             self += dialog
+            self += wizard
 
             # Clone
             dialog = CTK.Dialog ({'title': _('Clone Behavior Rule'), 'width': 480})
