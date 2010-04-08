@@ -121,18 +121,6 @@ def reorder (arg):
     return {'ret': 'ok'}
 
 
-class VirtualServerNew_OLD (CTK.Container):
-    def __init__ (self):
-        CTK.Container.__init__ (self)
-
-        table = CTK.PropsTable()
-        table.Add (_('Nick'),          CTK.TextCfg ('tmp!new_nick',  False, {'class': 'noauto'}), _(NOTE_NEW_NICK))
-        table.Add (_('Document Root'), CTK.TextCfg ('tmp!new_droot', False, {'class': 'noauto'}), _(NOTE_NEW_DROOT))
-
-        submit = CTK.Submitter (URL_APPLY)
-        submit += table
-        self += submit
-
 def NewManual():
     table = CTK.PropsTable()
     table.Add (_('Nick'),          CTK.TextCfg ('tmp!new_nick',  False, {'class': 'noauto'}), _(NOTE_NEW_NICK))
