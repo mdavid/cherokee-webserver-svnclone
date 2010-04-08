@@ -41,7 +41,15 @@ def is_tcp_port (value):
     except:
         raise ValueError, _('Port must be a number')
     if tmp < 0 or tmp > 0xFFFF:
-        raise ValueError, _('Out of the range (1 to 65535)')
+        raise ValueError, _('Out of range (1 to 65535)')
+    return value
+
+def is_new_tcp_port (value):
+    value    = is_tcp_port (value)
+    bindings = CTK.cfg.keys ('server!bind')
+    ports    = [CTK.cfg.get_val('server!bind!%s!port'%(x)) for x in bindings]
+    if value in ports:
+        raise ValueError, _('Port already in use')
     return value
 
 def is_extension (value):

@@ -61,7 +61,7 @@ VALIDATIONS = [
     ("server!bind!.*!interface", validations.is_ip),
     ("server!bind!.*!tls",       validations.is_boolean),
     ("server!chroot",            validations.is_local_dir_exists),
-    ("new_port",                 validations.is_tcp_port)
+    ("new_port",                 validations.is_new_tcp_port)
 ]
 
 
