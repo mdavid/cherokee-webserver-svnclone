@@ -271,7 +271,7 @@ class Render():
             dialog.bind ('submit_success', self.JS_to_trigger('submit_success'));
             dialog.bind ('open_wizard',
                          dialog.JS_to_close() +
-                         druid.JS_to_goto("'/wizard/vserver/%s' + event.wizard" %(vsrv_num)) +
+                         druid.JS_to_goto("'/wizard/vserver/%s/' + event.wizard" %(vsrv_num)) +
                          wizard.JS_to_show())
 
             self += button

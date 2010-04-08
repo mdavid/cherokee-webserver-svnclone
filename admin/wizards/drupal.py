@@ -23,6 +23,7 @@
 #
 
 import os
+import re
 import CTK
 import Wizard
 import validations
@@ -35,11 +36,16 @@ NOTE_LOCAL_H1   = N_("Application Source Code")
 NOTE_LOCAL_DIR  = N_("Local directory where the Drupal source code is located. Example: /usr/share/drupal.")
 NOTE_HOST_H1    = N_("New Virtual Server Details")
 NOTE_HOST       = N_("Host name of the virtual host that is about to be created.")
+NOTE_WEBDIR     = N_("Web directory where you want Drupal to be accessible. (Example: /blog)")
+NOTE_WEBDIR_H1  = N_("Public Web Direcoty")
 
 ERROR_NO_SRC    = N_("Does not look like a Drupal source directory.")
 
 PREFIX    = 'tmp!wizard!drupal'
-URL_APPLY = '/wizard/vserver/drupal/apply'
+
+URL_APPLY      = r'/wizard/vserver/drupal/apply'
+URL_APPLY_VSRV = r'/wizard/vserver/drupal/apply'
+URL_APPLY_RULE = r'/wizard/vserver/(\d+)/drupal/apply'
 
 SRC_PATHS = [
     "/usr/share/drupal7",         # Debian, Fedora
@@ -91,12 +97,57 @@ CONFIG_VSERVER = """
 %(pre_rule_minus2)s!handler!rewrite!2!substring = /index.php?q=$1
 """
 
+CONFIG_DIR = """
+%(pre_rule_plus4)s!match = request
+%(pre_rule_plus4)s!match!request = ^%(web_dir)s/([0-9]+)$
+%(pre_rule_plus4)s!handler = redir
+%(pre_rule_plus4)s!handler!rewrite!1!regex = ^%(web_dir)s/([0-9]+)$
+%(pre_rule_plus4)s!handler!rewrite!1!show = 0
+%(pre_rule_plus4)s!handler!rewrite!1!substring = %(web_dir)s/index.php?q=/node/$1
 
-def commit():
-    if CTK.post.pop('final'):
-        # Apply POST
-        CTK.cfg_apply_post()
+%(pre_rule_plus3)s!match = request
+%(pre_rule_plus3)s!match!request = ^%(web_dir)s/$
+%(pre_rule_plus3)s!handler = redir
+%(pre_rule_plus3)s!handler!rewrite!1!show = 0
+%(pre_rule_plus3)s!handler!rewrite!1!substring = %(web_dir)s/index.php
 
+%(pre_rule_plus2)s!match = directory
+%(pre_rule_plus2)s!match!directory = %(web_dir)s
+%(pre_rule_plus2)s!match!final = 0
+%(pre_rule_plus2)s!document_root = %(local_dir)s
+
+%(pre_rule_plus1)s!match = and
+%(pre_rule_plus1)s!match!left = directory
+%(pre_rule_plus1)s!match!left!directory = %(web_dir)s
+%(pre_rule_plus1)s!match!right = request
+%(pre_rule_plus1)s!match!right!request = \.(engine|inc|info|install|module|profile|test|po|sh|.*sql|theme|tpl(\.php)?|xtmpl|svn-base)$|^(code-style\.pl|Entries.*|Repository|Root|Tag|Template|all-wcprops|entries|format)$
+%(pre_rule_plus1)s!handler = custom_error
+%(pre_rule_plus1)s!handler!error = 403
+
+# IMPORTANT: The PHP rule comes here
+
+%(pre_rule_minus1)s!match = and
+%(pre_rule_minus1)s!match!left = directory
+%(pre_rule_minus1)s!match!left!directory = %(web_dir)s
+%(pre_rule_minus1)s!match!right = exists
+%(pre_rule_minus1)s!match!right!iocache = 1
+%(pre_rule_minus1)s!match!right!match_any = 1
+%(pre_rule_minus1)s!handler = file
+
+%(pre_rule_minus2)s!match = directory
+%(pre_rule_minus2)s!match!directory = %(web_dir)s
+%(pre_rule_minus2)s!handler = redir
+%(pre_rule_minus2)s!handler!rewrite!1!show = 0
+%(pre_rule_minus2)s!handler!rewrite!1!regex = ^/(.*)\?(.*)$
+%(pre_rule_minus2)s!handler!rewrite!1!substring = %(web_dir)s/index.php?q=$1&$2
+%(pre_rule_minus2)s!handler!rewrite!2!show = 0
+%(pre_rule_minus2)s!handler!rewrite!2!regex = ^/(.*)$
+%(pre_rule_minus2)s!handler!rewrite!2!substring = %(web_dir)s/index.php?q=$1
+"""
+
+
+class Commit:
+    def Commit_VServer (self):
         # Create the new Virtual Server
         next = CTK.cfg.get_next_entry_prefix('vserver')
         CTK.cfg['%s!nick'%(next)] = CTK.cfg.get_val('%s!host'%(PREFIX))
@@ -126,7 +177,62 @@ def commit():
         del (CTK.cfg[PREFIX])
         return {'ret': 'ok'}
 
-    return CTK.cfg_apply_post()
+
+    def Commit_Rule (self):
+        vsrv_num = CTK.cfg.get_val ('%s!vsrv_num'%(PREFIX))
+        next = 'vserver!%s' %(vsrv_num)
+
+        # PHP
+        php = CTK.load_module ('php', 'wizards')
+        error = php.wizard_php_add (next)
+        php_info = php.get_info (next)
+
+        # Drupal
+        props = cfg_get_surrounding_repls ('pre_rule', php_info['rule'])
+        props['pre_vsrv']  = next
+        props['web_dir']   = CTK.cfg.get_val('%s!web_dir'   %(PREFIX))
+        props['local_dir'] = CTK.cfg.get_val('%s!local_dir' %(PREFIX))
+
+        config = CONFIG_DIR %(props)
+        CTK.cfg.apply_chunk (config)
+
+        # Fixes Drupal bug for multilingual content
+        CTK.cfg['%s!encoder!gzip' %(php_info['rule'])] = '0'
+
+        # Clean up
+        CTK.cfg.normalize ('%s!rule'%(next))
+
+        del (CTK.cfg[PREFIX])
+        return {'ret': 'ok'}
+
+
+    def __call__ (self):
+        if CTK.post.pop('final'):
+            # Apply POST
+            CTK.cfg_apply_post()
+
+            # VServer or Rule?
+            if CTK.cfg.get_val ('%s!vsrv_num'%(PREFIX)):
+                return self.Commit_Rule()
+            return self.Commit_VServer()
+
+        return CTK.cfg_apply_post()
+
+
+class WebDirectory:
+    def __call__ (self):
+        table = CTK.PropsTable()
+        table.Add (_('Web Directory'), CTK.TextCfg ('%s!web_dir'%(PREFIX), False, {'value': '/blog', 'class': 'noauto'}), NOTE_WEBDIR)
+
+        submit = CTK.Submitter (URL_APPLY)
+        submit += CTK.Hidden('final', '1')
+        submit += table
+
+        cont = CTK.Container()
+        cont += CTK.RawHTML ('<h2>%s</h2>' %(NOTE_WEBDIR_H1))
+        cont += submit
+        cont += CTK.DruidButtonsPanel_PrevCreate_Auto()
+        return cont.Render().toStr()
 
 
 class Host:
@@ -135,7 +241,7 @@ class Host:
         table.Add (_('New Host Name'),    CTK.TextCfg ('%s!host'%(PREFIX), False, {'value': 'www.example.com', 'class': 'noauto'}), NOTE_HOST)
         table.Add (_('Use Same Logs as'), Wizard.CloneLogsCfg('%s!logs_as_vsrv'%(PREFIX)), _(Wizard.CloneLogsCfg.NOTE))
 
-        submit = CTK.Submitter (URL_APPLY)
+        submit = CTK.Submitter (URL_APPLY_VSRV)
         submit += CTK.Hidden('final', '1')
         submit += table
 
@@ -170,6 +276,14 @@ class Welcome:
         cont += Wizard.Icon ('drupal', {'class': 'wizard-descr'})
         cont += CTK.RawHTML ('<p>%s</p>' %(NOTE_WELCOME_P1))
         cont += CTK.RawHTML ('<p>%s</p>' %(NOTE_WELCOME_P2))
+
+        # Sent the VServer num if it's a Rule
+        tmp = re.findall (r'^/wizard/vserver/(\d+)/', CTK.request.url)
+        if tmp:
+            submit = CTK.Submitter (URL_APPLY)
+            submit += CTK.Hidden('%s!vsrv_num'%(PREFIX), tmp[0])
+            cont += submit
+
         cont += CTK.DruidButtonsPanel_Next_Auto()
         return cont.Render().toStr()
 
@@ -184,10 +298,18 @@ def is_drupal_dir (path):
 
 VALS = [
     ('%s!local_dir'%(PREFIX), is_drupal_dir),
-    ('%s!host'     %(PREFIX), validations.is_new_vserver_nick)
+    ('%s!host'     %(PREFIX), validations.is_new_vserver_nick),
+    ('%s!web_dir'  %(PREFIX), validations.is_dir_formated)
 ]
 
+# VServer
 CTK.publish ('^/wizard/vserver/drupal$',   Welcome)
 CTK.publish ('^/wizard/vserver/drupal/2$', LocalSource)
 CTK.publish ('^/wizard/vserver/drupal/3$', Host)
-CTK.publish (r'^%s$'%(URL_APPLY), commit, method="POST", validation=VALS)
+CTK.publish (r'^%s$'%(URL_APPLY), Commit, method="POST", validation=VALS)
+
+# Rule
+CTK.publish ('^/wizard/vserver/(\d+)/drupal$',   Welcome)
+CTK.publish ('^/wizard/vserver/(\d+)/drupal/2$', LocalSource)
+CTK.publish ('^/wizard/vserver/(\d+)/drupal/3$', WebDirectory)
+CTK.publish (r'^%s$'%(URL_APPLY_RULE), Commit, method="POST", validation=VALS)
