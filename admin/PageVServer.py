@@ -102,6 +102,21 @@ HELPS = [
     ('cookbook_ssl',           N_("SSL cookbook"))
 ]
 
+BEHAVIOR_TAGS = [
+    (N_('Rule Match'),           N_('Match')),
+    (N_('Assigned Handler'),     N_('Handler')),
+    (N_('Authentication'),       N_('Auth')),
+    (N_('Custom Document root'), N_('Root')),
+    (N_('Only HTTPS'),           N_('Secure')),
+    (N_('Encoders'),             N_('Enc')),
+    (N_('Expiration'),           N_('Exp')),
+    (N_('Connection Timeout'),   N_('Timeout')),
+    (N_('Traffic Shaping'),      N_('Shaping')),
+    (N_('Logging Enabled'),      N_('Log')),
+    (N_('Rule is Final'),        N_('Final')),
+    (N_('Rule is Active'),       N_('Enabled'))
+]
+
 
 def commit_clone():
     num = re.findall(r'^%s/([\d]+)/clone$'%(URL_BASE), CTK.request.url)[0]
@@ -167,43 +182,83 @@ class BehaviorWidget (CTK.Container):
     def __init__ (self, vsrv_num):
         CTK.Container.__init__ (self)
 
-        pre       = "vserver!%s" %(vsrv_num)
-        url_apply = "%s/%s" %(URL_APPLY, vsrv_num)
-
         # List
         table = CTK.Table({'id': 'rules-table'})
         table.set_header(1)
-        table += [CTK.RawHTML(x) for x in (_('Match'), _('Handler'), _('Auth'))]
+        table += [CTK.RawHTML('<span title="%s">%s</span>'%(_(x[0]),_(x[1]))) for x in BEHAVIOR_TAGS]
 
         rules = CTK.cfg.keys('vserver!%s!rule'%(vsrv_num))
         rules.sort (lambda x,y: cmp(int(x), int(y)))
         rules.reverse()
 
         for r in rules:
-            rule = Rule ('vserver!%s!rule!%s!match'%(vsrv_num, r))
-            rule_name = rule.GetName()
-            link = RuleLink (vsrv_num, r, CTK.RawHTML (rule_name))
-
-            handler = None
-            tmp     = CTK.cfg.get_val ('vserver!%s!rule!%s!handler'%(vsrv_num, r), '')
-            if tmp:
-                handler = CTK.RawHTML (filter (lambda x: x[0] == tmp, HANDLERS)[0][1])
-
-            auth = None
-            tmp  = CTK.cfg.get_val ('vserver!%s!rule!%s!auth'%(vsrv_num, r), '')
-            if tmp:
-                auth = CTK.RawHTML (filter (lambda x: x[0] == tmp, VALIDATORS)[0][1])
-
-            table += [link, handler, auth]
-
-        # Submit
-        submit = CTK.Submitter (url_apply)
-        submit += table
+            table += self._get_row (vsrv_num, r)
 
         self += CTK.RawHTML ('<h2>%s</h2>' %(_('Behavior Rules')))
         self += CTK.RawHTML (js=JS_TR_ODD)
-        self += CTK.Indenter (submit)
+        self += CTK.Indenter (table)
 
+
+    def _get_row (self, vsrv_num, r):
+        rule = Rule ('vserver!%s!rule!%s!match'%(vsrv_num, r))
+        rule_name = rule.GetName()
+        link = RuleLink (vsrv_num, r, CTK.RawHTML (rule_name))
+
+        handler, auth, root, secure, enc, exp, timeout, shaping, log, final, active = [None for x in range(11)]
+
+        tmp = CTK.cfg.get_val ('vserver!%s!rule!%s!handler'%(vsrv_num, r), '')
+        if tmp:
+            handler = CTK.RawHTML (filter (lambda x: x[0] == tmp, HANDLERS)[0][1])
+
+        tmp = CTK.cfg.get_val ('vserver!%s!rule!%s!auth'%(vsrv_num, r), '')
+        if tmp:
+            auth = CTK.RawHTML (filter (lambda x: x[0] == tmp, VALIDATORS)[0][1])
+
+        tmp = (CTK.cfg.get_val ('vserver!%s!rule!%s!document_root'%(vsrv_num, r)))
+        if tmp:
+            root = CTK.ImageStock('tick', {'alt': tmp, 'title':tmp})
+
+        tmp = bool (int (CTK.cfg.get_val ('vserver!%s!rule!%s!only_secure'%(vsrv_num, r), "0")))
+        if tmp:
+            tmp = _('Only accept Secure Connections')
+            secure = CTK.ImageStock('tick', {'alt': tmp, 'title': tmp})
+
+        tmp =  CTK.cfg.keys ('vserver!%s!rule!%s!encoder'%(vsrv_num, r))
+        if tmp:
+            tmp = _('Encoding enabled')
+            enc = CTK.ImageStock('tick', {'alt': tmp, 'title':tmp})
+
+        tmp = CTK.cfg.get_val ('vserver!%s!rule!%s!expiration' %(vsrv_num, r))
+        if tmp:
+            tmp = tmp.capitalize()
+            exp = CTK.ImageStock('tick', {'alt': tmp, 'title': tmp})
+
+        tmp = CTK.cfg.get_val ('vserver!%s!rule!%s!timeout' %(vsrv_num, r))
+        if tmp:
+            tmp += _(' seconds')
+            timeout = CTK.ImageStock('tick', {'alt': tmp, 'title': tmp})
+
+        tmp = CTK.cfg.get_val ('vserver!%s!rule!%s!rate' %(vsrv_num, r))
+        if tmp:
+            tmp += _(' bytes per second')
+            shaping = CTK.ImageStock('tick', {'alt': tmp, 'title': tmp})
+
+        tmp = not bool (CTK.cfg.get_val ('vserver!%s!rule!%s!no_log' %(vsrv_num, r)))
+        if tmp:
+            tmp = _('Logging enabled for this rule')
+            log = CTK.ImageStock('tick', {'alt': tmp, 'title': tmp})
+
+        tmp = bool (int (CTK.cfg.get_val('vserver!%s!rule!%s!final'%(vsrv_num,r), "1")))
+        if tmp:
+            tmp   = _('Prevents further rule evaluation')
+            final = CTK.ImageStock('tick', {'alt': tmp, 'title': tmp})
+
+        tmp = not bool (int (CTK.cfg.get_val('vserver!%s!rule!%s!disabled'%(vsrv_num,r), "0")))
+        if tmp:
+            tmp    = _('Rule is active')
+            active = CTK.ImageStock('tick', {'alt': tmp, 'title': tmp})
+
+        return [link, handler, auth, root, secure, enc, exp, timeout, shaping, log, final, active]
 
 
 class BasicsWidget (CTK.Container):
