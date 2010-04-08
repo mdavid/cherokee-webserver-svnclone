@@ -98,7 +98,7 @@ class Render():
             special = lambda klass, txt: CTK.Box ({'class': klass}, CTK.RawHTML (txt))
 
             # Build the panel list
-            panel = SelectionPanel.SelectionPanel (None, right_box.id, URL_BASE, '', container='vservers_panel')
+            panel = SelectionPanel.SelectionPanel (None, right_box.id, URL_BASE, '', container='status_panel')
             self += panel
 
             # Build the Virtual Server list
@@ -118,15 +118,15 @@ class Render():
 
 
     def __call__ (self):
-        title = _('Virtual Servers')
+        title = _('Status')
 
         # Content
         left  = CTK.Box({'class': 'panel'})
         left += CTK.RawHTML('<h2>%s</h2>'%(title))
 
-        right = CTK.Box({'class': 'vserver_content'})
+        right = CTK.Box({'class': 'status_content'})
         left += CTK.Box({'class': 'filterbox'}, CTK.TextField({'class':'filter', 'optional_string': _('Virtual Server Filtering'), 'optional': True}))
-        left += CTK.Box ({'id': 'vservers_panel'}, self.PanelList(right))
+        left += CTK.Box ({'id': 'status_panel'}, self.PanelList(right))
 
         # Build the page
         page = Page.Base(title, body_id='status', helps=HELPS, headers=Submit_HEADER)

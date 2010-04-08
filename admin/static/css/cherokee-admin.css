@@ -168,4 +168,5 @@ img.icon_chooser_selected {
 
 /* Page Status
  */
-.graph_type { float: right; position: relative; right: 25px; top: 60px; }
+#grapharea .submitter { float: right; position: absolute; top: 120px; width: 700px; }
+.graph_type { float: right; }
