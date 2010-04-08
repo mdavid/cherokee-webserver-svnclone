@@ -27,6 +27,7 @@ import Page
 import Cherokee
 import SelectionPanel
 import validations
+import Wizard
 
 from Rule          import Rule
 from CTK.Tab       import HEADER as Tab_HEADER
@@ -42,6 +43,8 @@ from configured import *
 
 URL_BASE         = '/vserver/%s/rule'
 URL_APPLY        = '/vserver/%s/rule/apply'
+URL_NEW_MANUAL   = '/vserver/%s/rule/new/manual'
+URL_NEW_MANUAL_R = r'/vserver/(\d+)/rule/new/manual'
 URL_BASE_R       = r'^/vserver/(\d+)/rule$'
 URL_APPLY_R      = r'^/vserver/(\d+)/rule/apply$'
 URL_PARTICULAR_R = r'^/vserver/(\d+)/rule/\d+$'
@@ -99,6 +102,46 @@ def reorder (arg):
     del (CTK.cfg['vserver!%s!rule'%(vsrv)])
     CTK.cfg.rename ('tmp!vserver!%s!rule'%(vsrv), 'vserver!%s!rule'%(vsrv))
     return {'ret': 'ok'}
+
+
+def NewManual():
+    # Figure Virtual Server number
+    vsrv_num = re.findall (URL_NEW_MANUAL_R, CTK.request.url)[0]
+
+    # Add New Rule: Content
+    rules = [('',_('Choose..'))] + RULES
+
+    table = CTK.PropsTable()
+    modul = CTK.PluginSelector ('tmp', rules, vsrv_num=vsrv_num)
+    table.Add (_('Rule Type'), modul.selector_widget, '')
+
+    box = CTK.Box()
+    box += table
+    box += modul
+    return box.Render().toJSON()
+
+
+class RuleNew (CTK.Container):
+    def __init__ (self, vsrv_num):
+        CTK.Container.__init__ (self)
+
+        # Build the panel list
+        right_box = CTK.Box({'class': 'rule_new_content'})
+        panel = SelectionPanel.SelectionPanel (None, right_box.id, URL_BASE%(vsrv_num), '', cookie_name='new_rule_selected')
+
+        self += panel
+        self += right_box
+
+        # Special 1st: Manual
+        content = [CTK.Box({'class': 'title'},       CTK.RawHTML(_('Manual'))),
+                   CTK.Box({'class': 'description'}, CTK.RawHTML(_('Manual configuration')))]
+        panel.Add ('manual', URL_NEW_MANUAL%(vsrv_num), content, draggable=False)
+
+        # Wizard Categories
+        for cat in Wizard.Categories():
+            content = [CTK.Box({'class': 'title'},       CTK.RawHTML(_(cat['title']))),
+                       CTK.Box({'class': 'description'}, CTK.RawHTML(_(cat['descr'])))]
+            panel.Add (cat['title'], cat['url_pre'], content, draggable=False)
 
 
 class Render():
@@ -209,19 +252,11 @@ class Render():
         def __init__ (self, vsrv_num):
             CTK.Box.__init__ (self, {'class': 'panel-buttons'})
 
-            # Add New: Content
-            rules = [('',_('Choose..'))] + RULES
-
-            table = CTK.PropsTable()
-            modul = CTK.PluginSelector ('tmp', rules, vsrv_num=vsrv_num)
-            table.Add (_('Rule Type'), modul.selector_widget, '')
-
             # Add New
             dialog = CTK.Dialog ({'title': _('Add Behavior Rule'), 'width': 550})
             dialog.AddButton (_('Add'), dialog.JS_to_trigger('submit'))
             dialog.AddButton (_('Cancel'), "close")
-            dialog += table
-            dialog += modul
+            dialog += RuleNew (vsrv_num)
 
             button = CTK.Button(_('New…'), {'id': 'rule-new-button', 'class': 'panel-button', 'title': _('Add Behavior Rule')})
             button.bind ('click', dialog.JS_to_show())
@@ -298,3 +333,4 @@ class RenderParticular:
 CTK.publish (URL_BASE_R,       Render)
 CTK.publish (URL_PARTICULAR_R, RenderParticular)
 CTK.publish (URL_APPLY_R,      Commit, method="POST", validation=VALIDATIONS)
+CTK.publish (URL_NEW_MANUAL_R, NewManual)
