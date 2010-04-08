@@ -149,10 +149,8 @@ class PortsTable (CTK.Submitter):
                 from CTK.Refreshable import REFRESHABLE_UPDATE_JS as update_js
                 delete.bind('click', CTK.JS.Ajax (URL_APPLY,
                                                   data     = {pre: ''},
-                                                  complete = update_js %({'id': refreshable.id,
-                                                                          'url': refreshable.url,
-                                                                          'selector': "$('#%s')"%(refreshable.id),
-                                                                          'on_success':''})))
+                                                  complete = refreshable.JS_to_refresh()))
+
             table[(n,1)] = [port, listen, tls, delete]
             n += 1
 
