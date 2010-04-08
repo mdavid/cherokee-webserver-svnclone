@@ -117,8 +117,9 @@ img.icon_chooser_selected {
 
 /* Index
  */
-#top-box { padding: 8px 0; border-bottom: 1px solid #def; margin: 8px 16px; height: 28px; }
-#top-box h1 { padding: 0; margin: 0; float: left; width: 480px; }
+#top-box { padding: 8px 0; border-bottom: 1px solid #def; margin: 8px 0 0 0; height: 28px; }
+#top-box h1 { padding: 0; margin: 0 0 0 16px; float: left; width: 480px; }
+#home-container { overflow: auto; overflow-x: hidden; }
 .server-status { padding-left: 128px; min-height: 128px; margin-left: 32px; margin-top: 16px; width: 370px; float: left;  }
 #server-running { background: #fff url(/static/images/kid-running.png) no-repeat; }
 #server-stopped { background: #fff url(/static/images/kid-stopped.png) no-repeat; }
@@ -131,7 +132,7 @@ img.icon_chooser_selected {
 #server-info-table th { font-weight: normal; color: #666; }
 #server-info-table td { text-align: right; }
 
-#language-selector { float: right; margin: 0; padding: 0; }
+#language-selector { float: right; margin: 0; padding: 0; height: 28px; }
 #language-list { display: inline; margin: 0; padding: 0;}
 
 #bottom-box { padding: 8px 0; margin: 8px 16px; }
@@ -162,6 +163,8 @@ img.icon_chooser_selected {
 #contact-list { background: #fff url(/static/images/other/contact-list.png) no-repeat; }
 #subscribe-a { cursor: pointer; text-decoration: underline; }
 #contact-bug { background: #fff url(/static/images/other/contact-bug.png) no-repeat; }
+
+
 
 /* Page Status
  */

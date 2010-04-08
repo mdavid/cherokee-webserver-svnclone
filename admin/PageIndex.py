@@ -104,6 +104,19 @@ JS_PROUD = """
 $('#proud-a').click (function(){ %s });
 """
 
+JS_SCROLL = """
+function resize_cherokee_containers() {
+   $('#home-container').height($(window).height() - 106);
+}
+
+$(document).ready(function() {
+   resize_cherokee_containers();
+   $(window).resize(function(){
+       resize_cherokee_containers();
+   });
+});
+"""
+
 
 def Launch():
     if not Cherokee.server.is_alive():
@@ -395,21 +408,25 @@ class Render():
         top += LanguageSelector()
         self.page += top;
 
+        cont = CTK.Box({'id': 'home-container'})
+
         if 'b' in VERSION:
             notice  = CTK.Notice()
             notice += CTK.RawHTML(_(BETA_TESTER_NOTICE))
-            self.page += notice
+            cont += notice
 
-        self.page += ServerStatus()
-        self.page += ServerInfo()
-        #self.page += CTK.RawHTML('<a href="/launch">Launch</a> | <a href="/stop">Stop</a>')
-        self.page += CTK.RawHTML('<div class="ui-helper-clearfix"></div>')
+        cont += ServerStatus()
+        cont += ServerInfo()
+        cont += CTK.RawHTML('<div class="ui-helper-clearfix"></div>')
 
         bottom = CTK.Box({'id': 'bottom-box'})
         bottom += EnterpriseBox()
         bottom += CommunityBox()
-        self.page += bottom
-        self.page += CTK.RawHTML('<div class="ui-helper-clearfix"></div>')
+        cont += bottom
+        cont += CTK.RawHTML('<div class="ui-helper-clearfix"></div>')
+
+        self.page += cont
+        self.page += CTK.RawHTML (js=JS_SCROLL)
 
         return self.page.Render()
 
