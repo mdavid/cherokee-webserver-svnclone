@@ -29,7 +29,7 @@ import validations
 
 URL_APPLY = '/plugin/balancer/apply'
 
-NOTE_BALANCER      = N_('Allow to select how the connections will be dispatched.')
+NOTE_BALANCER      = N_('Specifies the policy used to dispatch the connections.')
 NOTE_ALL_SOURCES   = N_('It is already balancing among all the configured <a href="%s">Information Sources</a>.')
 NO_GENERAL_SOURCES = N_('There are no Information Sources configured. Please proceed to configure an <a href="/source">Information Source</a>.')
 NO_SOURCE_WARNING  = N_('A load balancer must be configured to use at least one information source.')

@@ -102,6 +102,7 @@ LOGGER_WRITERS = [
 ]
 
 BALANCERS = [
+    ('',            N_('None')),
     ('round_robin', N_("Round Robin")),
     ('ip_hash',     N_("IP Hash"))
 ]
