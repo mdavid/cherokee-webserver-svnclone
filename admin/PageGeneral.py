@@ -146,7 +146,6 @@ class PortsTable (CTK.Submitter):
             delete = None
             if len(binds) >= 2:
                 delete = CTK.ImageStock('del')
-                from CTK.Refreshable import REFRESHABLE_UPDATE_JS as update_js
                 delete.bind('click', CTK.JS.Ajax (URL_APPLY,
                                                   data     = {pre: ''},
                                                   complete = refreshable.JS_to_refresh()))
