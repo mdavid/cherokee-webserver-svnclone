@@ -40,8 +40,9 @@ GRAPH_INTERVALS = [('1h', N_('1 Hour')),
                    ('1w', N_('1 Week')),
                    ('1m', N_('1 Month'))]
 
-INIT_JS = """
-setTimeout(function() { %s; }, 60000);
+UPDATE_JS = """
+function  updateGraph () {%s}
+setTimeout(updateGraph, 60000);
 """ #%(JS_to_refresh)
 
 def apply ():
@@ -70,7 +71,7 @@ class Graph (CTK.Box):
 
     def Render (self):
         render     = CTK.Box.Render (self)
-        render.js += INIT_JS % (self.refresh.JS_to_refresh())
+        render.js += UPDATE_JS % (self.refresh.JS_to_refresh())
         return render
 
 
