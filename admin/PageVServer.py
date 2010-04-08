@@ -74,7 +74,9 @@ JS_TR_ODD = """
 $('#rules-table tr:odd').addClass('trodd');
 """
 
-
+JS_TR_INACTIVE = """
+$("#rules-table tr td .inactive-rule").parent().parent().addClass('inactive-rule');
+"""
 
 def validation_ca_list (text):
     "Empty or local_file_exists"
@@ -195,7 +197,7 @@ class BehaviorWidget (CTK.Container):
             table += self._get_row (vsrv_num, r)
 
         self += CTK.RawHTML ('<h2>%s</h2>' %(_('Behavior Rules')))
-        self += CTK.RawHTML (js=JS_TR_ODD)
+        self += CTK.RawHTML (js=JS_TR_ODD+JS_TR_INACTIVE)
         self += CTK.Indenter (table)
 
 
@@ -204,18 +206,11 @@ class BehaviorWidget (CTK.Container):
         rule_name = rule.GetName()
         link = RuleLink (vsrv_num, r, CTK.RawHTML (rule_name))
 
-        active, handler, auth, root, secure, enc, exp, timeout, shaping, log, final = [None for x in range(11)]
-
-        tmp = not bool (int (CTK.cfg.get_val('vserver!%s!rule!%s!disabled'%(vsrv_num,r), "0")))
-        if tmp:
-            tmp    = _('Rule is active')
-            active = CTK.ImageStock('tick', {'alt': tmp, 'title': tmp})
+        handler, auth, root, secure, enc, exp, timeout, shaping, log, final, active = [None for x in range(11)]
 
         tmp = CTK.cfg.get_val ('vserver!%s!rule!%s!handler'%(vsrv_num, r), '')
         if tmp:
             handler = CTK.RawHTML (filter (lambda x: x[0] == tmp, HANDLERS)[0][1])
-            if not active:
-                handler = CTK.Box({'class':'rule-inactive'}, handler)
 
         tmp = CTK.cfg.get_val ('vserver!%s!rule!%s!auth'%(vsrv_num, r), '')
         if tmp:
@@ -266,6 +261,13 @@ class BehaviorWidget (CTK.Container):
         if tmp:
             tmp   = _('Prevents further rule evaluation')
             final = CTK.ImageStock('tick', {'alt': tmp, 'title': tmp})
+
+        tmp = not bool (int (CTK.cfg.get_val('vserver!%s!rule!%s!disabled'%(vsrv_num,r), "0")))
+        if tmp:
+            tmp    = _('Rule is active')
+            active = CTK.ImageStock('tick', {'alt': tmp, 'title': tmp})
+        else:
+            active = CTK.Box({'class': 'inactive-rule'})
 
         return [link, handler, auth, root, secure, enc, exp, timeout, shaping, log, final, active]
 
