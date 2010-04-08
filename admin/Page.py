@@ -29,7 +29,7 @@ import CTK
 import Cherokee
 import configured
 
-SAVED_NOTICE  = N_("The configuration has been saved.")
+SAVED_NOTICE  = N_("The Configuration has been Saved")
 SAVED_RESTART = N_("Would you like to apply the changes to the running server now?")
 
 URL_SAVE          = r'/save'
