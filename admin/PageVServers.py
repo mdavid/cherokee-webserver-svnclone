@@ -73,7 +73,7 @@ JS_CLONE = """
 JS_PARTICULAR = """
   var vserver = window.location.pathname.match (/^\/vserver\/(\d+)\/?$/)[1];
   $.cookie ('%(cookie_name)s', vserver, { path: '/vserver' });
-  window.location.replace ('%(url_base)s');
+  window.location.replace ('%(url_base)s'+window.location.hash);
 """
 
 def Commit():
