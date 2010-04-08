@@ -116,7 +116,7 @@ class MIME_Table (CTK.Container):
         # List
         table = CTK.Table ({'id': "mimetable"})
         table.set_header(1)
-        table += [CTK.RawHTML(x) for x in (_('MIME type'), _('Extensions'), _('MaxAge<br/>(<i>secs</i>)'))]
+        table += [CTK.RawHTML(x) for x in (_('MIME type'), _('Extensions'), _('MaxAge (<em>secs</em>)'), '')]
 
         mimes = CTK.cfg.keys('mime')
         mimes.sort()
@@ -138,7 +138,7 @@ class MIME_Table (CTK.Container):
         button.bind ('submit_success', refreshable.JS_to_refresh ())
 
         self += CTK.RawHTML ('<h2>%s</h2>' %('MIME Types'))
-        self += CTK.Indenter (submit)
+        self += submit
         self += button
 
 

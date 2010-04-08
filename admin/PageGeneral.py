@@ -64,6 +64,25 @@ VALIDATIONS = [
     ("new_port",                 validations.is_new_tcp_port)
 ]
 
+JS_SCROLL = """
+function resize_cherokee_containers() {
+   $('#Network-1').height($(window).height() - 154);
+   $('#Ports_to_listen-2').height($(window).height() - 154);
+   $('#Permissions-3').height($(window).height() - 154);
+   $('#Icons-4').height($(window).height() - 154);
+   $('#mimetable tbody').height($(window).height() - 270);
+}
+
+$(document).ready(function() {
+   resize_cherokee_containers();
+   $(window).resize(function(){
+       resize_cherokee_containers();
+   });
+});
+
+"""
+
+
 
 def commit():
     # Add a new port
@@ -218,6 +237,7 @@ class Render():
         page = Page.Base (_("General"), body_id='general', helps=HELPS)
         page += CTK.RawHTML("<h1>%s</h1>" %(_('General Settings')))
         page += tabs
+        page += CTK.RawHTML (js=JS_SCROLL)
 
         return page.Render()
 
