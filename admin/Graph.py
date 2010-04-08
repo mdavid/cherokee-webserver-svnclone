@@ -41,8 +41,21 @@ GRAPH_INTERVALS = [('1h', N_('1 Hour')),
                    ('1m', N_('1 Month'))]
 
 UPDATE_JS = """
-function  updateGraph () {%s}
-setTimeout(updateGraph, 60000);
+function updateGraph() {
+    var timeout = $(window).data('graph-timeout');
+
+    if ((timeout != null) &&
+        (timeout != undefined))
+    {
+        clearTimeout (timeout);
+        $(window).data('graph-timeout', null);
+    }
+
+    %s
+}
+
+var tmp = setTimeout (updateGraph, 60000);
+$(window).data('graph-timeout', tmp);
 """ #%(JS_to_refresh)
 
 def apply ():
