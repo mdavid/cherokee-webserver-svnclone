@@ -35,6 +35,7 @@ WIZARDS_CMS = [
     {'wizard': 'trac',      'title': 'Trac',      'descr': 'Track is also bla, bla, bla, bla..'},
 ]
 
+USUAL_STATIC_FILES = ['/favicon.ico', '/robots.txt', '/crossdomain.xml']
 
 class Wizard (CTK.Box):
     def __init__ (self, _props={}):
@@ -196,8 +197,17 @@ def CloneLogsCfg_Apply (key_tmp, vserver):
     CTK.cfg.clone ('%s!error_writer'%(logging_as), '%s!error_writer'%(vserver))
 
 
+def AddUsualStaticFiles (rule_pre):
+    CTK.cfg['%s!match'%(rule_pre)]   = 'fullpath'
+    CTK.cfg['%s!handler'%(rule_pre)] = 'file'
+
+    n = 1
+    for file in USUAL_STATIC_FILES:
+        CTK.cfg['%s!match!fullpath!%d'%(rule_pre,n)] = file
+        n += 1
+
 #
-# Init (TEMPORAL)
+# Init (TEMPORARY)
 #
 def init():
     global _is_init
@@ -205,6 +215,7 @@ def init():
 
     CTK.load_module ('drupal',    'wizards')
     CTK.load_module ('wordpress', 'wizards')
+    CTK.load_module ('trac',      'wizards')
 
 _is_init = False
 if not _is_init:

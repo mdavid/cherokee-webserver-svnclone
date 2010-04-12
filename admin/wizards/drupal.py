@@ -24,8 +24,8 @@
 
 #
 # Tested:
-# 2010/04/12: Drupal 5.22
-# 2010/04/12: Drupal 6.16
+# 2010/04/12: Drupal 5.22 Cherokee 0.99.41
+# 2010/04/12: Drupal 6.16 Cherokee 0.99.41
 #
 
 import os
@@ -36,12 +36,12 @@ import validations
 from util import *
 
 NOTE_WELCOME_H1 = N_("Welcome to the Drupal wizard")
-NOTE_WELCOME_P1 = N_("Drupal is " + "bla, "*50)
-NOTE_WELCOME_P2 = N_("It also "   + "bla, "*50)
+NOTE_WELCOME_P1 = N_('<a target="_blank" href="http://drupal.org/">Drupal</a> is a free software package that allows an individual or a community of users to easily publish, manage and organize a wide variety of content on a website.')
+NOTE_WELCOME_P2 = N_('Tens of thousands of people and organizations are using Drupal to power scores of different web sites.')
 NOTE_LOCAL_H1   = N_("Application Source Code")
 NOTE_LOCAL_DIR  = N_("Local directory where the Drupal source code is located. Example: /usr/share/drupal.")
 NOTE_HOST_H1    = N_("New Virtual Server Details")
-NOTE_HOST       = N_("Host name of the virtual host that is about to be created.")
+NOTE_HOST       = N_("Host name of the virtual server that is about to be created.")
 NOTE_WEBDIR     = N_("Web directory where you want Drupal to be accessible. (Example: /blog)")
 NOTE_WEBDIR_H1  = N_("Public Web Direcoty")
 
@@ -50,7 +50,6 @@ ERROR_NO_SRC    = N_("Does not look like a Drupal source directory.")
 PREFIX    = 'tmp!wizard!drupal'
 
 URL_APPLY      = r'/wizard/vserver/drupal/apply'
-URL_APPLY_VSRV = r'/wizard/vserver/drupal/apply'
 URL_APPLY_RULE = r'/wizard/vserver/(\d+)/drupal/apply'
 
 SRC_PATHS = [
@@ -230,7 +229,7 @@ class WebDirectory:
         table = CTK.PropsTable()
         table.Add (_('Web Directory'), CTK.TextCfg ('%s!web_dir'%(PREFIX), False, {'value': '/blog', 'class': 'noauto'}), NOTE_WEBDIR)
 
-        submit = CTK.Submitter (URL_APPLY)
+        submit = CTK.Submitter (URL_APPLY_RULE)
         submit += CTK.Hidden('final', '1')
         submit += table
 
@@ -247,7 +246,7 @@ class Host:
         table.Add (_('New Host Name'),    CTK.TextCfg ('%s!host'%(PREFIX), False, {'value': 'www.example.com', 'class': 'noauto'}), NOTE_HOST)
         table.Add (_('Use Same Logs as'), Wizard.CloneLogsCfg('%s!logs_as_vsrv'%(PREFIX)), _(Wizard.CloneLogsCfg.NOTE))
 
-        submit = CTK.Submitter (URL_APPLY_VSRV)
+        submit = CTK.Submitter (URL_APPLY)
         submit += CTK.Hidden('final', '1')
         submit += table
 
@@ -283,7 +282,7 @@ class Welcome:
         cont += CTK.RawHTML ('<p>%s</p>' %(NOTE_WELCOME_P1))
         cont += CTK.RawHTML ('<p>%s</p>' %(NOTE_WELCOME_P2))
 
-        # Sent the VServer num if it's a Rule
+        # Send the VServer num if it's a Rule
         tmp = re.findall (r'^/wizard/vserver/(\d+)/', CTK.request.url)
         if tmp:
             submit = CTK.Submitter (URL_APPLY)
@@ -302,10 +301,15 @@ def is_drupal_dir (path):
     return path
 
 
+is_drupal_dir.CHECK_ON_NO_VALUE = True
+validations.is_new_vserver_nick.CHECK_ON_NO_VALUE = True
+validations.is_dir_formatted.CHECK_ON_NO_VALUE = True
+
+
 VALS = [
     ('%s!local_dir'%(PREFIX), is_drupal_dir),
     ('%s!host'     %(PREFIX), validations.is_new_vserver_nick),
-    ('%s!web_dir'  %(PREFIX), validations.is_dir_formated)
+    ('%s!web_dir'  %(PREFIX), validations.is_dir_formatted)
 ]
 
 # VServer

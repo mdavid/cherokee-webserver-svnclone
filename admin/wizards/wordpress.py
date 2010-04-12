@@ -25,7 +25,7 @@
 
 #
 # Tested:
-# 2010/04/12: WordPress 2.9.2
+# 2010/04/12: WordPress 2.9.2 Cherokee 0.99.41
 #
 
 import os
@@ -36,23 +36,20 @@ import validations
 from util import *
 
 NOTE_WELCOME_H1 = N_("Welcome to the WordPress wizard")
-NOTE_WELCOME_P1 = N_("WordPress is " + "bla, "*50)
-NOTE_WELCOME_P2 = N_("It also "   + "bla, "*50)
+NOTE_WELCOME_P1 = N_('<a target="_blank" href="http://wordpress.org/">WordPress</a> is a state-of-the-art publishing platform with a focus on aesthetics, web standards, and usability. WordPress is both free and priceless at the same time.')
+NOTE_WELCOME_P2 = N_('More simply, WordPress is what you use when you want to work with your blogging software, not fight it.')
 NOTE_LOCAL_H1   = N_("Application Source Code")
 NOTE_LOCAL_DIR  = N_("Local directory where the WordPress source code is located. Example: /usr/share/wordpress.")
 NOTE_HOST_H1    = N_("New Virtual Server Details")
-NOTE_HOST       = N_("Host name of the virtual host that is about to be created.")
+NOTE_HOST       = N_("Host name of the virtual server that is about to be created.")
 NOTE_WEBDIR     = N_("Web directory where you want WordPress to be accessible. (Example: /blog)")
 NOTE_WEBDIR_H1  = N_("Public Web Direcoty")
 
 ERROR_NO_SRC    = N_("Does not look like a WordPress source directory.")
-ERROR_NO_WEB  = N_("A web directory must be provided.")
-ERROR_NO_HOST = N_("A host name must be provided.")
 
 PREFIX    = 'tmp!wizard!wordpress'
 
 URL_APPLY      = r'/wizard/vserver/wordpress/apply'
-URL_APPLY_VSRV = r'/wizard/vserver/wordpress/apply'
 URL_APPLY_RULE = r'/wizard/vserver/(\d+)/wordpress/apply'
 
 
@@ -136,9 +133,7 @@ class Commit:
 
         config = CONFIG_VSERVER %(props)
         CTK.cfg.apply_chunk (config)
-
-        # Fixes WordPress bug for multilingual content
-        CTK.cfg['%s!encoder!gzip' %(php_info['rule'])] = '0'
+        Wizard.AddUsualStaticFiles(props['pre_rule_minus1'])
 
         # Clean up
         CTK.cfg.normalize ('%s!rule'%(next))
@@ -146,12 +141,6 @@ class Commit:
 
         del (CTK.cfg[PREFIX])
         return {'ret': 'ok'}
-
-        # Missing: self._common_add_usual_static_files
-        # (pre_rule_minus1)
-    
-    
-    
 
 
     def Commit_Rule (self):
@@ -197,7 +186,7 @@ class WebDirectory:
         table = CTK.PropsTable()
         table.Add (_('Web Directory'), CTK.TextCfg ('%s!web_dir'%(PREFIX), False, {'value': '/blog', 'class': 'noauto'}), NOTE_WEBDIR)
 
-        submit = CTK.Submitter (URL_APPLY)
+        submit = CTK.Submitter (URL_APPLY_RULE)
         submit += CTK.Hidden('final', '1')
         submit += table
 
@@ -214,7 +203,7 @@ class Host:
         table.Add (_('New Host Name'),    CTK.TextCfg ('%s!host'%(PREFIX), False, {'value': 'www.example.com', 'class': 'noauto'}), NOTE_HOST)
         table.Add (_('Use Same Logs as'), Wizard.CloneLogsCfg('%s!logs_as_vsrv'%(PREFIX)), _(Wizard.CloneLogsCfg.NOTE))
 
-        submit = CTK.Submitter (URL_APPLY_VSRV)
+        submit = CTK.Submitter (URL_APPLY)
         submit += CTK.Hidden('final', '1')
         submit += table
 
@@ -250,7 +239,7 @@ class Welcome:
         cont += CTK.RawHTML ('<p>%s</p>' %(NOTE_WELCOME_P1))
         cont += CTK.RawHTML ('<p>%s</p>' %(NOTE_WELCOME_P2))
 
-        # Sent the VServer num if it's a Rule
+        # Send the VServer num if it's a Rule
         tmp = re.findall (r'^/wizard/vserver/(\d+)/', CTK.request.url)
         if tmp:
             submit = CTK.Submitter (URL_APPLY)
@@ -269,10 +258,15 @@ def is_wordpress_dir (path):
     return path
 
 
+is_wordpress_dir.CHECK_ON_NO_VALUE = True
+validations.is_new_vserver_nick.CHECK_ON_NO_VALUE = True
+validations.is_dir_formatted.CHECK_ON_NO_VALUE = True
+
+
 VALS = [
     ('%s!local_dir'%(PREFIX), is_wordpress_dir),
     ('%s!host'     %(PREFIX), validations.is_new_vserver_nick),
-    ('%s!web_dir'  %(PREFIX), validations.is_dir_formated)
+    ('%s!web_dir'  %(PREFIX), validations.is_dir_formatted)
 ]
 
 # VServer
