@@ -101,7 +101,11 @@ img.icon_chooser_selected {
 	overflow: scroll;
 }
 
-.help_selected {}
+.help_selected {
+	background: #ffffee;
+	width:100%;
+	font-style: italic;
+}
 
 
 /* Wizard
