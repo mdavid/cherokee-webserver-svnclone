@@ -24,6 +24,12 @@
 #
 
 import CTK
+import Cherokee
+import validations
+
+from consts import *
+from configured import *
+
 
 URL_APPLY       = '/graph/apply'
 
@@ -40,7 +46,9 @@ GRAPH_INTERVALS = [('1h', N_('1 Hour')),
                    ('1w', N_('1 Week')),
                    ('1m', N_('1 Month'))]
 
-NOTE_COLLECTOR = N_('Whether or not it should collect statistics about the traffic of this virtual server.')
+URL_RRD          = '/general#Network-1'
+RRD_NOTICE       = N_('You need to enable the <a href="%s">Information Collector</a> setting in order to render usage graphics.'%URL_RRD)
+NOTE_COLLECTOR   = N_('Whether or not it should collect statistics about the traffic of this virtual server.')
 
 UPDATE_JS = """
 function updateGraph() {
@@ -79,6 +87,12 @@ class Graph (CTK.Box):
         self.refresh = refreshable
 
     def build_graph (self):
+        if CTK.cfg.get_val('server!collector') != 'rrd':
+            notice  = CTK.Notice()
+            notice += CTK.RawHTML(_(RRD_NOTICE))
+            self   += CTK.Indenter(notice)
+            return False
+
         tabs = CTK.Tab ()
         for x in GRAPH_INTERVALS:
             self.graph['interval'] = x[0]
@@ -87,6 +101,7 @@ class Graph (CTK.Box):
             image = CTK.Image(props)
             tabs.Add (_(x[1]), image)
         self += tabs
+        return True
 
     def Render (self):
         render     = CTK.Box.Render (self)
@@ -102,24 +117,25 @@ class GraphVServer_Instancer (CTK.Container):
             self.graph['prefix']  = 'vserver'
             self.graph['vserver'] = CTK.cfg.get_val ("vserver!%s!nick" %(vsrv_num), _("Unknown"))
             self.graph['num']     = vsrv_num
+            self.collector        = bool(int(CTK.cfg.get_val ('vserver!%s!collector!enabled'%(vsrv_num),'0')))
             self.build()
 
         def build (self):
             table = CTK.PropsTable()
-            table.Add (_('Collect Statistics'),  CTK.CheckCfgText('vserver!%s!collector!enabled'%(self.graph['num']), True), _(NOTE_COLLECTOR))
+            table.Add (_('Collect Statistics'),  CTK.CheckCfgText('vserver!%s!collector!enabled'%(self.graph['num']), self.collector), _(NOTE_COLLECTOR))
 
             submit  = CTK.Submitter (URL_APPLY)
             submit += table
             submit.bind('submit_success', self.refresh.JS_to_refresh())
 
-            vserver_collector = bool(int(CTK.cfg.get_val ('vserver!%s!collector!enabled'%(self.graph['num']),'0')))
-            if vserver_collector:
-                props = {'class': 'graph_checkbox_bottom'}
+            if self.collector:
                 self.build_graph ()
+                props = {'class': 'graph_props_bottom'}
             else:
-                props = {'class': 'graph_checkbox_top'}
+                props = {'class': 'graph_props_top'}
 
-            self   += CTK.Indenter (CTK.Box(props, submit))
+            if CTK.cfg.get_val('server!collector') == 'rrd':
+                self += CTK.Indenter (CTK.Box(props, submit))
 
     def __init__ (self, vserver):
         CTK.Container.__init__ (self)
@@ -140,18 +156,19 @@ class GraphServer_Instancer (CTK.Container):
             self.build()
 
         def build (self):
-            props   = {'class': 'graph_type', 'name': 'graph_type', 'selected': self.graph['type']}
-            combo   = CTK.Combobox (props, GRAPH_TYPES)
-            submit  = CTK.Submitter (URL_APPLY)
-            submit += combo
-            submit.bind('submit_success', self.refresh.JS_to_refresh())
+            rrd = self.build_graph ()
+            if rrd:
+                props   = {'class': 'graph_type', 'name': 'graph_type', 'selected': self.graph['type']}
+                combo   = CTK.Combobox (props, GRAPH_TYPES)
+                submit  = CTK.Submitter (URL_APPLY)
+                submit += combo
+                submit.bind('submit_success', self.refresh.JS_to_refresh())
 
-            for x in GRAPH_TYPES:
-                if x[0] == self.graph['type']:
-                    self.graph['type_txt'] = x[1]
+                for x in GRAPH_TYPES:
+                    if x[0] == self.graph['type']:
+                        self.graph['type_txt'] = x[1]
 
-            self   += submit
-            self.build_graph ()
+                self   += submit
 
     def __init__ (self):
         CTK.Container.__init__ (self)
