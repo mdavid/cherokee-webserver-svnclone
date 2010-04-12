@@ -203,7 +203,8 @@ def init():
     global _is_init
     _is_init = True
 
-    CTK.load_module ('drupal', 'wizards')
+    CTK.load_module ('drupal',    'wizards')
+    CTK.load_module ('wordpress', 'wizards')
 
 _is_init = False
 if not _is_init:

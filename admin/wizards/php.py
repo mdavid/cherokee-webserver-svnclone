@@ -4,6 +4,7 @@
 #
 # Authors:
 #      Alvaro Lopez Ortega <alvaro@alobbs.com>
+#      Taher Shihadeh <taher@unixwars.com>
 #
 # Copyright (C) 2010 Alvaro Lopez Ortega
 #
@@ -72,26 +73,28 @@ def wizard_php_add (key):
     if not source:
         php_path = path_find_binary (DEFAULT_BINS,
                                      extra_dirs  = DEFAULT_PATHS,
-                                     custom_test = test_php_fcgi)
+                                     custom_test = __test_php_fcgi)
         if not php_path:
             return _('Could not find a suitable PHP interpreter.')
 
         # Check PHP type
         php_bin = php_path.split('/')[-1]
         if php_bin not in FPM_BINS:
-            ret = __add_std_source (php_path)
+            ret = __source_add_std (php_path)
         else:
             settings = __figure_fpm_settings()
             if not settings:
                 return _('Could not determine PHP-fpm settings.')
-            ret = __add_fpm_source (php_path)
+            ret = __source_add_fpm (php_path)
 
         if not ret:
             return _('Could not determine correct interpreter settings.')
 
+        source = __find_source()
+
     # Figure the timeout limit
     interpreter = CTK.cfg['%s!interpreter' %(source)]
-    if 'fpm' in interpreter:
+    if interpreter and 'fpm' in interpreter:
         settings = __figure_fpm_settings()
         timeout  = settings['fpm_terminate_timeout']
     else:
