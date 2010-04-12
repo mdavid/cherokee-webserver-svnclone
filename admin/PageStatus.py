@@ -37,7 +37,7 @@ from configured import *
 URL_BASE  = '/status'
 URL_RRD   = '/general#Network-1'
 
-RRD_NOTICE= N_('You need to enable the <a href="%s">Information Collector</a> setting in order to render usage graphics.'%URL_RRD)
+RRD_NOTICE     = N_('You need to enable the <a href="%s">Information Collector</a> setting in order to render usage graphics.'%URL_RRD)
 
 # Help entries
 HELPS = [('config_status', N_("Status"))]
@@ -76,7 +76,7 @@ class Render_Content (CTK.Container):
 
         if CTK.cfg.get_val('server!collector') == 'rrd':
             if vsrv_nam:
-                cont += Graph.GraphVServer_Instancer(vsrv_nam)
+                cont += Graph.GraphVServer_Instancer(vsrv_num)
             else:
                 cont += Graph.GraphServer_Instancer()
         else:

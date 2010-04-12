@@ -170,3 +170,5 @@ img.icon_chooser_selected {
  */
 #grapharea .submitter { float: right; position: absolute; top: 120px; width: 700px; }
 .graph_type { float: right; }
+.graph_checkbox_bottom {position: absolute; top: 450px;}
+.graph_checkbox_top {position: absolute; top: -35px;}
