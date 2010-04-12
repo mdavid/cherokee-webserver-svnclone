@@ -40,6 +40,8 @@ GRAPH_INTERVALS = [('1h', N_('1 Hour')),
                    ('1w', N_('1 Week')),
                    ('1m', N_('1 Month'))]
 
+NOTE_COLLECTOR = N_('Whether or not it should collect statistics about the traffic of this virtual server.')
+
 UPDATE_JS = """
 function updateGraph() {
     var timeout = $(window).data('graph-timeout');
@@ -63,7 +65,11 @@ def apply ():
     if graph_type:
         CTK.cfg['tmp!graph_type'] = graph_type
 
-    return {'ret':'ok'}
+        return {'ret':'ok'}
+
+    # Modifications
+    return CTK.cfg_apply_post()
+
 
 class Graph (CTK.Box):
     def __init__ (self, refreshable, **kwargs):
@@ -90,12 +96,30 @@ class Graph (CTK.Box):
 
 class GraphVServer_Instancer (CTK.Container):
     class GraphVServer (Graph):
-        def __init__ (self, refreshable, vserver, **kwargs):
+        def __init__ (self, refreshable, vsrv_num, **kwargs):
             Graph.__init__ (self, refreshable, **kwargs)
             self.template         = GRAPH_VSERVER
             self.graph['prefix']  = 'vserver'
-            self.graph['vserver'] = vserver
-            self.build_graph ()
+            self.graph['vserver'] = CTK.cfg.get_val ("vserver!%s!nick" %(vsrv_num), _("Unknown"))
+            self.graph['num']     = vsrv_num
+            self.build()
+
+        def build (self):
+            table = CTK.PropsTable()
+            table.Add (_('Collect Statistics'),  CTK.CheckCfgText('vserver!%s!collector!enabled'%(self.graph['num']), True), _(NOTE_COLLECTOR))
+
+            submit  = CTK.Submitter (URL_APPLY)
+            submit += table
+            submit.bind('submit_success', self.refresh.JS_to_refresh())
+
+            vserver_collector = bool(int(CTK.cfg.get_val ('vserver!%s!collector!enabled'%(self.graph['num']),'0')))
+            if vserver_collector:
+                props = {'class': 'graph_checkbox_bottom'}
+                self.build_graph ()
+            else:
+                props = {'class': 'graph_checkbox_top'}
+
+            self   += CTK.Indenter (CTK.Box(props, submit))
 
     def __init__ (self, vserver):
         CTK.Container.__init__ (self)
