@@ -137,15 +137,15 @@ class IndexBox (CTK.Box):
         props = {}
         if entry['link'] == self.link:
             props['class'] = 'help_selected'
-        block  = CTK.Table (props)
-        block += [CTK.RawHTML (LINK_HREF %(entry['link'],entry['text']))]
+        block  = CTK.Box (props)
+        block += CTK.RawHTML (LINK_HREF %(entry['link'],entry['text']))
 
         spawn = entry.get('children')
         if spawn:
             children = CTK.Container()
             for child in spawn:
                 children += self._process_entry (child)
-            block += [CTK.Indenter (children)]
+            block += CTK.Indenter (children)
 
         return block
 
