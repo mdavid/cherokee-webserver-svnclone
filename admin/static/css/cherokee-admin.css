@@ -92,21 +92,9 @@ img.icon_chooser_selected {
 
 /* PageHelp
  */
-.help_toc {
-	float: left;
-	width: 220px;
-}
-
-.help_content {
-	overflow: scroll;
-}
-
-.help_selected {
-	background: #ffffee;
-	width:100%;
-	font-style: italic;
-}
-
+.help_toc { float: left; width: 220px; }
+.help_content { overflow: scroll; }
+.help_selected { background: #eef3ff; font-weight: bold; }
 
 /* Wizard
  */
