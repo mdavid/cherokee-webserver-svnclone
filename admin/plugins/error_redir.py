@@ -32,6 +32,10 @@ REDIRECTION_TYPE = [
     ('1', _('External'))
 ]
 
+NOTE_ERROR = N_('HTTP Error to match.')
+NOTE_REDIR = N_('Target to access whenever the HTTP Error occurs.')
+NOTE_TYPE  = N_('Whether the redirection should be Internal or External.')
+
 def apply():
     # New entry
     key       = CTK.post.pop('key')
@@ -80,9 +84,9 @@ class Content (CTK.Container):
         redir_codes = filter (lambda x: not x[0] in entries, ERROR_CODES)
 
         table = CTK.PropsTable()
-        table.Add (_('Error'),       CTK.ComboCfg('new_error', redir_codes, {'class':'noauto'}), _('TODO'))
-        table.Add (_('Redirection'), CTK.TextCfg ('new_redir', False, {'class':'noauto'}), _('TODO'))
-        table.Add (_('Type'),        CTK.ComboCfg('new_type', REDIRECTION_TYPE, {'class':'noauto'}), _('TODO'))
+        table.Add (_('Error'),       CTK.ComboCfg('new_error', redir_codes, {'class':'noauto'}), _(NOTE_ERROR))
+        table.Add (_('Redirection'), CTK.TextCfg ('new_redir', False, {'class':'noauto'}), _(NOTE_REDIR))
+        table.Add (_('Type'),        CTK.ComboCfg('new_type', REDIRECTION_TYPE, {'class':'noauto'}), _(NOTE_TYPE))
 
         dialog = CTK.Dialog({'title': _('Add New Custom Error'), 'width': 540})
 
