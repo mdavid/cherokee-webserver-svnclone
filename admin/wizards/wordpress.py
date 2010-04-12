@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 #
-# CTK: Cherokee Toolkit
+# Cherokee-admin's WordPress wizard
 #
 # Authors:
 #      Alvaro Lopez Ortega <alvaro@alobbs.com>
+#      Taher Shihadeh <taher@unixwars.com>
 #
 # Copyright (C) 2010 Alvaro Lopez Ortega
 #
@@ -24,8 +25,7 @@
 
 #
 # Tested:
-# 2010/04/12: Drupal 5.22
-# 2010/04/12: Drupal 6.16
+# 2010/04/12: WordPress 2.9.2
 #
 
 import os
@@ -35,121 +35,85 @@ import Wizard
 import validations
 from util import *
 
-NOTE_WELCOME_H1 = N_("Welcome to the Drupal wizard")
-NOTE_WELCOME_P1 = N_("Drupal is " + "bla, "*50)
+NOTE_WELCOME_H1 = N_("Welcome to the WordPress wizard")
+NOTE_WELCOME_P1 = N_("WordPress is " + "bla, "*50)
 NOTE_WELCOME_P2 = N_("It also "   + "bla, "*50)
 NOTE_LOCAL_H1   = N_("Application Source Code")
-NOTE_LOCAL_DIR  = N_("Local directory where the Drupal source code is located. Example: /usr/share/drupal.")
+NOTE_LOCAL_DIR  = N_("Local directory where the WordPress source code is located. Example: /usr/share/wordpress.")
 NOTE_HOST_H1    = N_("New Virtual Server Details")
 NOTE_HOST       = N_("Host name of the virtual host that is about to be created.")
-NOTE_WEBDIR     = N_("Web directory where you want Drupal to be accessible. (Example: /blog)")
+NOTE_WEBDIR     = N_("Web directory where you want WordPress to be accessible. (Example: /blog)")
 NOTE_WEBDIR_H1  = N_("Public Web Direcoty")
 
-ERROR_NO_SRC    = N_("Does not look like a Drupal source directory.")
+ERROR_NO_SRC    = N_("Does not look like a WordPress source directory.")
+ERROR_NO_WEB  = N_("A web directory must be provided.")
+ERROR_NO_HOST = N_("A host name must be provided.")
 
-PREFIX    = 'tmp!wizard!drupal'
+PREFIX    = 'tmp!wizard!wordpress'
 
-URL_APPLY      = r'/wizard/vserver/drupal/apply'
-URL_APPLY_VSRV = r'/wizard/vserver/drupal/apply'
-URL_APPLY_RULE = r'/wizard/vserver/(\d+)/drupal/apply'
+URL_APPLY      = r'/wizard/vserver/wordpress/apply'
+URL_APPLY_VSRV = r'/wizard/vserver/wordpress/apply'
+URL_APPLY_RULE = r'/wizard/vserver/(\d+)/wordpress/apply'
 
-SRC_PATHS = [
-    "/usr/share/drupal7",         # Debian, Fedora
-    "/usr/share/drupal",
-    "/usr/share/drupal6",
-    "/usr/share/drupal5",
-    "/var/www/*/htdocs/drupal",   # Gentoo
-    "/srv/www/htdocs/drupal",     # SuSE
-    "/usr/local/www/data/drupal*" # BSD
-]
-
-CONFIG_VSERVER = """
-%(pre_vsrv)s!nick = %(host)s
-%(pre_vsrv)s!document_root = %(local_dir)s
-%(pre_vsrv)s!directory_index = index.php,index.html
-
-%(pre_rule_plus3)s!match = request
-%(pre_rule_plus3)s!match!request = ^/([0-9]+)$
-%(pre_rule_plus3)s!handler = redir
-%(pre_rule_plus3)s!handler!rewrite!1!regex = ^/([0-9]+)$
-%(pre_rule_plus3)s!handler!rewrite!1!show = 0
-%(pre_rule_plus3)s!handler!rewrite!1!substring = /index.php?q=/node/$1
-
-%(pre_rule_plus2)s!match = request
-%(pre_rule_plus2)s!match!request = \.(engine|inc|info|install|module|profile|test|po|sh|.*sql|theme|tpl(\.php)?|xtmpl|svn-base)$|^(code-style\.pl|Entries.*|Repository|Root|Tag|Template|all-wcprops|entries|format)$
-%(pre_rule_plus2)s!handler = custom_error
-%(pre_rule_plus2)s!handler!error = 403
-
-%(pre_rule_plus1)s!match = fullpath
-%(pre_rule_plus1)s!match!fullpath!1 = /
-%(pre_rule_plus1)s!handler = redir
-%(pre_rule_plus1)s!handler!rewrite!1!show = 0
-%(pre_rule_plus1)s!handler!rewrite!1!substring = /index.php
-
-# IMPORTANT: The PHP rule comes here
-
-%(pre_rule_minus1)s!match = exists
-%(pre_rule_minus1)s!match!iocache = 1
-%(pre_rule_minus1)s!match!match_any = 1
-%(pre_rule_minus1)s!handler = file
-
-%(pre_rule_minus2)s!match = default
-%(pre_rule_minus2)s!handler = redir
-%(pre_rule_minus2)s!handler!rewrite!1!show = 0
-%(pre_rule_minus2)s!handler!rewrite!1!regex = ^/(.*)\?(.*)$
-%(pre_rule_minus2)s!handler!rewrite!1!substring = /index.php?q=$1&$2
-%(pre_rule_minus2)s!handler!rewrite!2!show = 0
-%(pre_rule_minus2)s!handler!rewrite!2!regex = ^/(.*)$
-%(pre_rule_minus2)s!handler!rewrite!2!substring = /index.php?q=$1
-"""
 
 CONFIG_DIR = """
-%(pre_rule_plus4)s!match = request
-%(pre_rule_plus4)s!match!request = ^%(web_dir)s/([0-9]+)$
-%(pre_rule_plus4)s!handler = redir
-%(pre_rule_plus4)s!handler!rewrite!1!regex = ^%(web_dir)s/([0-9]+)$
-%(pre_rule_plus4)s!handler!rewrite!1!show = 0
-%(pre_rule_plus4)s!handler!rewrite!1!substring = %(web_dir)s/index.php?q=/node/$1
+%(pre_rule_minus1)s!document_root = %(local_dir)s
+%(pre_rule_minus1)s!match = directory
+%(pre_rule_minus1)s!match!directory = %(web_dir)s
+%(pre_rule_minus1)s!match!final = 0
 
-%(pre_rule_plus3)s!match = request
-%(pre_rule_plus3)s!match!request = ^%(web_dir)s/$
-%(pre_rule_plus3)s!handler = redir
-%(pre_rule_plus3)s!handler!rewrite!1!show = 0
-%(pre_rule_plus3)s!handler!rewrite!1!substring = %(web_dir)s/index.php
+%(pre_rule_minus2)s!match = and
+%(pre_rule_minus2)s!match!final = 1
+%(pre_rule_minus2)s!match!left = directory
+%(pre_rule_minus2)s!match!left!directory = %(web_dir)s
+%(pre_rule_minus2)s!match!right = exists
+%(pre_rule_minus2)s!match!right!iocache = 1
+%(pre_rule_minus2)s!match!right!match_any = 1
+%(pre_rule_minus2)s!handler = file
+%(pre_rule_minus2)s!handler!iocache = 1
 
-%(pre_rule_plus2)s!match = directory
-%(pre_rule_plus2)s!match!directory = %(web_dir)s
-%(pre_rule_plus2)s!match!final = 0
-%(pre_rule_plus2)s!document_root = %(local_dir)s
+%(pre_rule_minus3)s!match = request
+%(pre_rule_minus3)s!match!request = %(web_dir)s/(.+)
+%(pre_rule_minus3)s!handler = redir
+%(pre_rule_minus3)s!handler!rewrite!1!show = 0
+%(pre_rule_minus3)s!handler!rewrite!1!substring = %(web_dir)s/index.php?/$1
+"""
 
-%(pre_rule_plus1)s!match = and
-%(pre_rule_plus1)s!match!left = directory
-%(pre_rule_plus1)s!match!left!directory = %(web_dir)s
-%(pre_rule_plus1)s!match!right = request
-%(pre_rule_plus1)s!match!right!request = \.(engine|inc|info|install|module|profile|test|po|sh|.*sql|theme|tpl(\.php)?|xtmpl|svn-base)$|^(code-style\.pl|Entries.*|Repository|Root|Tag|Template|all-wcprops|entries|format)$
-%(pre_rule_plus1)s!handler = custom_error
-%(pre_rule_plus1)s!handler!error = 403
+CONFIG_VSERVER = """
+%(pre_vsrv)s!document_root = %(local_dir)s
+%(pre_vsrv)s!nick = %(host)s
+%(pre_vsrv)s!directory_index = index.php,index.html
 
-# IMPORTANT: The PHP rule comes here
+# The PHP rule comes here
 
-%(pre_rule_minus1)s!match = and
-%(pre_rule_minus1)s!match!left = directory
-%(pre_rule_minus1)s!match!left!directory = %(web_dir)s
-%(pre_rule_minus1)s!match!right = exists
-%(pre_rule_minus1)s!match!right!iocache = 1
-%(pre_rule_minus1)s!match!right!match_any = 1
-%(pre_rule_minus1)s!handler = file
-
-%(pre_rule_minus2)s!match = directory
-%(pre_rule_minus2)s!match!directory = %(web_dir)s
+%(pre_rule_minus2)s!match = fullpath
+%(pre_rule_minus2)s!match!fullpath!1 = /
+%(pre_rule_minus2)s!match!fullpath!2 = /wp-admin/
 %(pre_rule_minus2)s!handler = redir
 %(pre_rule_minus2)s!handler!rewrite!1!show = 0
-%(pre_rule_minus2)s!handler!rewrite!1!regex = ^/(.*)\?(.*)$
-%(pre_rule_minus2)s!handler!rewrite!1!substring = %(web_dir)s/index.php?q=$1&$2
-%(pre_rule_minus2)s!handler!rewrite!2!show = 0
-%(pre_rule_minus2)s!handler!rewrite!2!regex = ^/(.*)$
-%(pre_rule_minus2)s!handler!rewrite!2!substring = %(web_dir)s/index.php?q=$1
+%(pre_rule_minus2)s!handler!rewrite!1!regex = (.*)/
+%(pre_rule_minus2)s!handler!rewrite!1!substring = $1/index.php
+
+%(pre_rule_minus3)s!match = exists
+%(pre_rule_minus3)s!match!iocache = 1
+%(pre_rule_minus3)s!match!match_any = 1
+%(pre_rule_minus3)s!match!match_only_files = 1
+%(pre_rule_minus3)s!handler = file
+%(pre_rule_minus3)s!handler!iocache = 1
+
+%(pre_vsrv)s!rule!1!match = default
+%(pre_vsrv)s!rule!1!handler = redir
+%(pre_vsrv)s!rule!1!handler!rewrite!1!show = 0
+%(pre_vsrv)s!rule!1!handler!rewrite!1!regex = /(.+)
+%(pre_vsrv)s!rule!1!handler!rewrite!1!substring = /index.php?/$1
 """
+
+SRC_PATHS = [
+    "/usr/share/wordpress",         # Debian, Fedora
+    "/var/www/*/htdocs/wordpress",  # Gentoo
+    "/srv/www/htdocs/wordpress",    # SuSE
+    "/usr/local/www/data/wordpress" # BSD
+]
 
 
 class Commit:
@@ -164,7 +128,7 @@ class Commit:
         error = php.wizard_php_add (next)
         php_info = php.get_info (next)
 
-        # Drupal
+        # WordPress
         props = cfg_get_surrounding_repls ('pre_rule', php_info['rule'])
         props['pre_vsrv']  = next
         props['host']      = CTK.cfg.get_val('%s!host'      %(PREFIX))
@@ -173,7 +137,7 @@ class Commit:
         config = CONFIG_VSERVER %(props)
         CTK.cfg.apply_chunk (config)
 
-        # Fixes Drupal bug for multilingual content
+        # Fixes WordPress bug for multilingual content
         CTK.cfg['%s!encoder!gzip' %(php_info['rule'])] = '0'
 
         # Clean up
@@ -182,6 +146,12 @@ class Commit:
 
         del (CTK.cfg[PREFIX])
         return {'ret': 'ok'}
+
+        # Missing: self._common_add_usual_static_files
+        # (pre_rule_minus1)
+    
+    
+    
 
 
     def Commit_Rule (self):
@@ -193,7 +163,7 @@ class Commit:
         error = php.wizard_php_add (next)
         php_info = php.get_info (next)
 
-        # Drupal
+        # WordPress
         props = cfg_get_surrounding_repls ('pre_rule', php_info['rule'])
         props['pre_vsrv']  = next
         props['web_dir']   = CTK.cfg.get_val('%s!web_dir'   %(PREFIX))
@@ -201,9 +171,6 @@ class Commit:
 
         config = CONFIG_DIR %(props)
         CTK.cfg.apply_chunk (config)
-
-        # Fixes Drupal bug for multilingual content
-        CTK.cfg['%s!encoder!gzip' %(php_info['rule'])] = '0'
 
         # Clean up
         CTK.cfg.normalize ('%s!rule'%(next))
@@ -263,7 +230,7 @@ class LocalSource:
         guessed_src = path_find_w_default (SRC_PATHS)
 
         table = CTK.PropsTable()
-        table.Add (_('Drupal Local Directory'), CTK.TextCfg ('%s!local_dir'%(PREFIX), False, {'value': guessed_src}), NOTE_LOCAL_DIR)
+        table.Add (_('WordPress Local Directory'), CTK.TextCfg ('%s!local_dir'%(PREFIX), False, {'value': guessed_src}), NOTE_LOCAL_DIR)
 
         submit = CTK.Submitter (URL_APPLY)
         submit += table
@@ -279,7 +246,7 @@ class Welcome:
     def __call__ (self):
         cont = CTK.Container()
         cont += CTK.RawHTML ('<h2>%s</h2>' %(NOTE_WELCOME_H1))
-        cont += Wizard.Icon ('drupal', {'class': 'wizard-descr'})
+        cont += Wizard.Icon ('wordpress', {'class': 'wizard-descr'})
         cont += CTK.RawHTML ('<p>%s</p>' %(NOTE_WELCOME_P1))
         cont += CTK.RawHTML ('<p>%s</p>' %(NOTE_WELCOME_P2))
 
@@ -294,28 +261,28 @@ class Welcome:
         return cont.Render().toStr()
 
 
-def is_drupal_dir (path):
+def is_wordpress_dir (path):
     path = validations.is_local_dir_exists (path)
-    module_inc = os.path.join (path, 'includes/module.inc')
+    module_inc = os.path.join (path, 'wp-login.php')
     if not os.path.exists (module_inc):
         raise ValueError, _(ERROR_NO_SRC)
     return path
 
 
 VALS = [
-    ('%s!local_dir'%(PREFIX), is_drupal_dir),
+    ('%s!local_dir'%(PREFIX), is_wordpress_dir),
     ('%s!host'     %(PREFIX), validations.is_new_vserver_nick),
     ('%s!web_dir'  %(PREFIX), validations.is_dir_formated)
 ]
 
 # VServer
-CTK.publish ('^/wizard/vserver/drupal$',   Welcome)
-CTK.publish ('^/wizard/vserver/drupal/2$', LocalSource)
-CTK.publish ('^/wizard/vserver/drupal/3$', Host)
+CTK.publish ('^/wizard/vserver/wordpress$',   Welcome)
+CTK.publish ('^/wizard/vserver/wordpress/2$', LocalSource)
+CTK.publish ('^/wizard/vserver/wordpress/3$', Host)
 CTK.publish (r'^%s$'%(URL_APPLY), Commit, method="POST", validation=VALS)
 
 # Rule
-CTK.publish ('^/wizard/vserver/(\d+)/drupal$',   Welcome)
-CTK.publish ('^/wizard/vserver/(\d+)/drupal/2$', LocalSource)
-CTK.publish ('^/wizard/vserver/(\d+)/drupal/3$', WebDirectory)
+CTK.publish ('^/wizard/vserver/(\d+)/wordpress$',   Welcome)
+CTK.publish ('^/wizard/vserver/(\d+)/wordpress/2$', LocalSource)
+CTK.publish ('^/wizard/vserver/(\d+)/wordpress/3$', WebDirectory)
 CTK.publish (r'^%s$'%(URL_APPLY_RULE), Commit, method="POST", validation=VALS)
