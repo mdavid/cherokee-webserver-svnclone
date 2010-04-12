@@ -35,9 +35,6 @@ from CTK.Submitter import HEADER as Submit_HEADER
 from configured import *
 
 URL_BASE  = '/status'
-URL_RRD   = '/general#Network-1'
-
-RRD_NOTICE     = N_('You need to enable the <a href="%s">Information Collector</a> setting in order to render usage graphics.'%URL_RRD)
 
 # Help entries
 HELPS = [('config_status', N_("Status"))]
@@ -62,27 +59,21 @@ class LiveLogs_Instancer (CTK.Container):
 
 class Render_Content (CTK.Container):
     def __call__ (self, vsrv = None):
-        cont = CTK.Container()
 
+        # Render graphs
         if CTK.request.url.endswith('/general'):
             vsrv_nam = None
             title = _('Server Wide Monitoring')
+            graph = Graph.GraphServer_Instancer()
         else:
             vsrv_num = CTK.request.url.split('/')[-1]
             vsrv_nam = CTK.cfg.get_val ("vserver!%s!nick" %(vsrv_num), _("Unknown"))
             title    ='%s: %s' %(_('Virtual Server Monitoring'), vsrv_nam)
+            graph    = Graph.GraphVServer_Instancer(vsrv_num)
 
+        cont  = CTK.Container()
         cont += CTK.RawHTML ('<h2>%s</h2>' %(title))
-
-        if CTK.cfg.get_val('server!collector') == 'rrd':
-            if vsrv_nam:
-                cont += Graph.GraphVServer_Instancer(vsrv_num)
-            else:
-                cont += Graph.GraphServer_Instancer()
-        else:
-            notice  = CTK.Notice()
-            notice += CTK.RawHTML(_(RRD_NOTICE))
-            cont   += CTK.Indenter(notice)
+        cont += graph
 
         render = cont.Render()
         return render.toJSON()
