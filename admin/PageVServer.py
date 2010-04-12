@@ -257,7 +257,7 @@ class BehaviorWidget (CTK.Container):
             tmp = _('Logging enabled for this rule')
             log = CTK.ImageStock('tick', {'alt': tmp, 'title': tmp})
 
-        tmp = bool (int (CTK.cfg.get_val('vserver!%s!rule!%s!final'%(vsrv_num,r), "1")))
+        tmp = bool (int (CTK.cfg.get_val('vserver!%s!rule!%s!match!final'%(vsrv_num,r), "1")))
         if tmp:
             tmp   = _('Prevents further rule evaluation')
             final = CTK.ImageStock('tick', {'alt': tmp, 'title': tmp})
