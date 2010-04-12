@@ -70,7 +70,7 @@ def is_list (value):
         return ''
     return ','.join(tmp)
 
-def is_dir_formated (value):
+def is_dir_formatted (value):
     is_path (value)
 
     try:
@@ -338,6 +338,7 @@ def is_time (value):
     return value
 
 def is_new_vserver_nick (value):
+    value = is_not_empty(value)
     for h in CTK.cfg.keys('vserver'):
         if value == CTK.cfg.get_val('vserver!%s!nick'%(h)):
             raise ValueError, _('Virtual Server nick name is already being used.')
