@@ -53,8 +53,6 @@ ERROR_NO_DATA   = N_("It does not look like a Trac installation.")
 PREFIX    = 'tmp!wizard!trac'
 
 URL_APPLY      = r'/wizard/vserver/trac/apply'
-URL_APPLY_VSRV = r'/wizard/vserver/trac/apply'
-URL_APPLY_RULE = r'/wizard/vserver/(\d+)/trac/apply'
 
 # TCP port value is automatically asigned to one currently not in use
 
@@ -124,12 +122,7 @@ class Commit:
 
     def __call__ (self):
         if CTK.post.pop('final'):
-            # Apply POST
             CTK.cfg_apply_post()
-
-            # VServer or Rule?
-            if CTK.cfg.get_val ('%s!vsrv_num'%(PREFIX)):
-                return self.Commit_Rule()
             return self.Commit_VServer()
 
         return CTK.cfg_apply_post()
@@ -141,7 +134,7 @@ class Host:
         table.Add (_('New Host Name'),    CTK.TextCfg ('%s!new_host'%(PREFIX), False, {'value': 'www.example.com', 'class': 'noauto'}), NOTE_HOST)
         table.Add (_('Use Same Logs as'), Wizard.CloneLogsCfg('%s!logs_as_vsrv'%(PREFIX)), _(Wizard.CloneLogsCfg.NOTE))
 
-        submit = CTK.Submitter (URL_APPLY_VSRV)
+        submit = CTK.Submitter (URL_APPLY)
         submit += CTK.Hidden('final', '1')
         submit += table
 
