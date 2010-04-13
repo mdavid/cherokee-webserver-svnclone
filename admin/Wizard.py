@@ -35,6 +35,7 @@ WIZARDS_CMS = [
     {'wizard': 'trac',      'title': 'Trac',      'descr': 'Track is also bla, bla, bla, bla..'},
     {'wizard': 'common_static', 'title': 'Static Files',    'descr': 'This is bla, bla, bla, bla..'},
     {'wizard': 'django',    'title': 'Django',    'descr': 'This is bla, bla, bla, bla..'},
+    {'wizard': 'icons',    'title': 'Icons',    'descr': 'This is bla, bla, bla, bla..'},
 ]
 
 USUAL_STATIC_FILES = ['/favicon.ico', '/robots.txt', '/crossdomain.xml']
@@ -230,6 +231,7 @@ def init():
     CTK.load_module ('trac',      'wizards')
     CTK.load_module ('common_static', 'wizards')
     CTK.load_module ('django', 'wizards')
+    CTK.load_module ('icons', 'wizards')
 
 _is_init = False
 if not _is_init:

@@ -28,11 +28,9 @@
 # 2010/04/13: Cherokee 0.99.41
 #
 
-import os
 import re
 import CTK
 import Wizard
-import validations
 from util import *
 from configured import *
 
@@ -114,7 +112,6 @@ class Create:
             cont += CTK.DruidButtonsPanel_PrevCreate_Auto()
         else:
             druid  = CTK.DruidButtonsPanel()
-            print dir(CTK)
             druid += CTK.DruidButton_Close(_('Cancel'))
             cont  += CTK.RawHTML ('<p>%s</p>'   %(NOTE_CREATE_ERR))
             cont  += druid
