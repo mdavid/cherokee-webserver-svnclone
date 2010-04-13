@@ -33,7 +33,8 @@ WIZARDS_CMS = [
     {'wizard': 'drupal',    'title': 'Drupal',    'descr': 'Drupal is bla, bla, bla, bla..'},
     {'wizard': 'wordpress', 'title': 'WordPress', 'descr': 'WordPress is bla, bla, bla, bla..'},
     {'wizard': 'trac',      'title': 'Trac',      'descr': 'Track is also bla, bla, bla, bla..'},
-    {'wizard': 'common_static', 'title': 'Static Files',    'descr': 'Drupal is bla, bla, bla, bla..'},
+    {'wizard': 'common_static', 'title': 'Static Files',    'descr': 'This is bla, bla, bla, bla..'},
+    {'wizard': 'django',    'title': 'Django',    'descr': 'This is bla, bla, bla, bla..'},
 ]
 
 USUAL_STATIC_FILES = ['/favicon.ico', '/robots.txt', '/crossdomain.xml']
@@ -131,7 +132,7 @@ class CategoryList_Widget (CTK.Box):
         CTK.Box.__init__ (self)
         self.category = category
 
-        # Build the list (*TEMPORALLY* HARDCODED!)
+        # Build the list (*TEMPORARILLY* HARDCODED!)
         #
         wlist = CTK.List({'class': 'wizard-list'})
 
@@ -187,6 +188,7 @@ class CloneLogsCfg (CTK.ComboCfg):
         # Init
         CTK.ComboCfg.__init__ (self, cfg, options, {'class': 'noauto'})
 
+
 def CloneLogsCfg_Apply (key_tmp, vserver):
     # Check the source
     logging_as = CTK.cfg.get_val (key_tmp)
@@ -207,6 +209,15 @@ def AddUsualStaticFiles (rule_pre):
         CTK.cfg['%s!match!fullpath!%d'%(rule_pre,n)] = file
         n += 1
 
+
+def CheckOnNoValue (vals):
+    """Append special property to validation functions so they can be
+    called on empty values"""
+    assert type(vals) == list
+    for x, func in vals:
+        func.CHECK_ON_NO_VALUE = True
+
+
 #
 # Init (TEMPORARY)
 #
@@ -218,7 +229,7 @@ def init():
     CTK.load_module ('wordpress', 'wizards')
     CTK.load_module ('trac',      'wizards')
     CTK.load_module ('common_static', 'wizards')
-    #CTK.load_module ('django', 'wizards')
+    CTK.load_module ('django', 'wizards')
 
 _is_init = False
 if not _is_init:
