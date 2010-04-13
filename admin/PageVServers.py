@@ -225,6 +225,7 @@ class Render():
 
             # Add New
             dialog = CTK.Dialog ({'title': _('Add New Virtual Server'), 'width': 720})
+            dialog.id = 'dialog-new-vserver'
             dialog.AddButton (_('Add'), dialog.JS_to_trigger('submit'))
             dialog.AddButton (_('Cancel'), "close")
             dialog += VirtualServerNew()
