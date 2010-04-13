@@ -254,6 +254,7 @@ class Render():
 
             # Add New
             dialog = CTK.Dialog ({'title': _('Add Behavior Rule'), 'width': 720})
+            dialog.id = 'dialog-new-rule'
             dialog.AddButton (_('Add'), dialog.JS_to_trigger('submit'))
             dialog.AddButton (_('Cancel'), "close")
             dialog += RuleNew (vsrv_num)
