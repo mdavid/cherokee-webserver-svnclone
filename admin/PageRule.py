@@ -253,7 +253,7 @@ class Render():
             CTK.Box.__init__ (self, {'class': 'panel-buttons'})
 
             # Add New
-            dialog = CTK.Dialog ({'title': _('Add Behavior Rule'), 'width': 700})
+            dialog = CTK.Dialog ({'title': _('Add Behavior Rule'), 'width': 720})
             dialog.AddButton (_('Add'), dialog.JS_to_trigger('submit'))
             dialog.AddButton (_('Cancel'), "close")
             dialog += RuleNew (vsrv_num)
