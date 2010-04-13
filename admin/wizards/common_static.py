@@ -124,7 +124,9 @@ class Welcome:
         cont = CTK.Container()
         cont += CTK.RawHTML ('<h2>%s</h2>' %(NOTE_WELCOME_H1))
         cont += Wizard.Icon ('common_static', {'class': 'wizard-descr'})
-        cont += CTK.RawHTML ('<p>%s</p>' %(NOTE_WELCOME_P1))
+        box = CTK.Box ({'class': 'wizard-welcome'})
+        box += CTK.RawHTML ('<p>%s</p>' %(NOTE_WELCOME_P1))
+        cont += box
 
         # Send the VServer num
         tmp = re.findall (r'^/wizard/vserver/(\d+)/', CTK.request.url)
