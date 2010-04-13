@@ -33,6 +33,7 @@ WIZARDS_CMS = [
     {'wizard': 'drupal',    'title': 'Drupal',    'descr': 'Drupal is bla, bla, bla, bla..'},
     {'wizard': 'wordpress', 'title': 'WordPress', 'descr': 'WordPress is bla, bla, bla, bla..'},
     {'wizard': 'trac',      'title': 'Trac',      'descr': 'Track is also bla, bla, bla, bla..'},
+    {'wizard': 'common_static', 'title': 'Static Files',    'descr': 'Drupal is bla, bla, bla, bla..'},
 ]
 
 USUAL_STATIC_FILES = ['/favicon.ico', '/robots.txt', '/crossdomain.xml']
@@ -216,6 +217,8 @@ def init():
     CTK.load_module ('drupal',    'wizards')
     CTK.load_module ('wordpress', 'wizards')
     CTK.load_module ('trac',      'wizards')
+    CTK.load_module ('common_static', 'wizards')
+    #CTK.load_module ('django', 'wizards')
 
 _is_init = False
 if not _is_init:

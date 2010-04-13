@@ -50,8 +50,6 @@ ERROR_NO_SRC    = N_("Does not look like a WordPress source directory.")
 PREFIX    = 'tmp!wizard!wordpress'
 
 URL_APPLY      = r'/wizard/vserver/wordpress/apply'
-URL_APPLY_RULE = r'/wizard/vserver/(\d+)/wordpress/apply'
-
 
 CONFIG_DIR = """
 %(pre_rule_minus1)s!document_root = %(local_dir)s
@@ -186,7 +184,7 @@ class WebDirectory:
         table = CTK.PropsTable()
         table.Add (_('Web Directory'), CTK.TextCfg ('%s!web_dir'%(PREFIX), False, {'value': '/blog', 'class': 'noauto'}), NOTE_WEBDIR)
 
-        submit = CTK.Submitter (URL_APPLY_RULE)
+        submit = CTK.Submitter (URL_APPLY)
         submit += CTK.Hidden('final', '1')
         submit += table
 
@@ -273,10 +271,11 @@ VALS = [
 CTK.publish ('^/wizard/vserver/wordpress$',   Welcome)
 CTK.publish ('^/wizard/vserver/wordpress/2$', LocalSource)
 CTK.publish ('^/wizard/vserver/wordpress/3$', Host)
-CTK.publish (r'^%s$'%(URL_APPLY), Commit, method="POST", validation=VALS)
 
 # Rule
 CTK.publish ('^/wizard/vserver/(\d+)/wordpress$',   Welcome)
 CTK.publish ('^/wizard/vserver/(\d+)/wordpress/2$', LocalSource)
 CTK.publish ('^/wizard/vserver/(\d+)/wordpress/3$', WebDirectory)
-CTK.publish (r'^%s$'%(URL_APPLY_RULE), Commit, method="POST", validation=VALS)
+
+# Common
+CTK.publish (r'^%s$'%(URL_APPLY), Commit, method="POST", validation=VALS)
