@@ -197,17 +197,14 @@ def is_trac_project (path, nochroot=False):
         raise ValueError, _(ERROR_NO_PROJECT)
     return path
 
-is_trac_data.CHECK_ON_NO_VALUE = True
-is_trac_project.CHECK_ON_NO_VALUE = True
-validations.is_new_vserver_nick.CHECK_ON_NO_VALUE = True
-validations.is_dir_formatted.CHECK_ON_NO_VALUE = True
-
 VALS = [
     ("%s!trac_data"   %(PREFIX), is_trac_data),
     ("%s!trac_project"%(PREFIX), is_trac_project),
     ("%s!new_host"    %(PREFIX), validations.is_new_vserver_nick),
     ("%s!new_webdir"  %(PREFIX), validations.is_dir_formatted)
 ]
+
+Wizard.CheckOnNoValue (VALS)
 
 # VServer
 CTK.publish ('^/wizard/vserver/trac$',   Welcome)
