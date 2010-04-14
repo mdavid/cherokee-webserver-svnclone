@@ -30,14 +30,15 @@ URL_CAT_LIST_R = r'^/wizard/category/(.*)$'
 URL_CAT_APPLY  = '/wizard/new/apply'
 
 WIZARDS_CMS = [
-    {'wizard': 'drupal',    'title': 'Drupal',    'descr': 'Drupal is bla, bla, bla, bla..'},
-    {'wizard': 'wordpress', 'title': 'WordPress', 'descr': 'WordPress is bla, bla, bla, bla..'},
-    {'wizard': 'trac',      'title': 'Trac',      'descr': 'Track is also bla, bla, bla, bla..'},
-    {'wizard': 'common_static', 'title': 'Static Files',    'descr': 'This is bla, bla, bla, bla..'},
-    {'wizard': 'django',    'title': 'Django',    'descr': 'This is bla, bla, bla, bla..'},
-    {'wizard': 'icons',    'title': 'Icons',    'descr': 'This is bla, bla, bla, bla..'},
-    {'wizard': 'hotlinking',    'title': 'Hot Linking',    'descr': 'This is bla, bla, bla, bla..'},
-    {'wizard': 'redirect',    'title': 'Redirect',    'descr': 'This is bla, bla, bla, bla..'},
+    {'wizard': 'drupal',    'title': 'Drupal',       'descr': 'Drupal is bla, bla, bla, bla..'},
+    {'wizard': 'wordpress', 'title': 'WordPress',    'descr': 'WordPress is bla, bla, bla, bla..'},
+    {'wizard': 'trac',      'title': 'Trac',         'descr': 'Track is also bla, bla, bla, bla..'},
+    {'wizard': 'static',    'title': 'Static Files', 'descr': 'This is bla, bla, bla, bla..'},
+    {'wizard': 'django',    'title': 'Django',       'descr': 'This is bla, bla, bla, bla..'},
+    {'wizard': 'icons',     'title': 'Icons',        'descr': 'This is bla, bla, bla, bla..'},
+    {'wizard': 'hotlinking','title': 'Hot Linking',  'descr': 'This is bla, bla, bla, bla..'},
+    {'wizard': 'redirect',  'title': 'Redirect',     'descr': 'This is bla, bla, bla, bla..'},
+    {'wizard': 'streaming', 'title': 'Streaming',    'descr': 'This is bla, bla, bla, bla..'},
 ]
 
 USUAL_STATIC_FILES = ['/favicon.ico', '/robots.txt', '/crossdomain.xml']
@@ -231,11 +232,12 @@ def init():
     CTK.load_module ('drupal',        'wizards')
     CTK.load_module ('wordpress',     'wizards')
     CTK.load_module ('trac',          'wizards')
-    CTK.load_module ('common_static', 'wizards')
+    CTK.load_module ('static',        'wizards')
     CTK.load_module ('django',        'wizards')
     CTK.load_module ('icons',         'wizards')
     CTK.load_module ('hotlinking',    'wizards')
     CTK.load_module ('redirect',      'wizards')
+    CTK.load_module ('streaming',     'wizards')
 
 _is_init = False
 if not _is_init:
