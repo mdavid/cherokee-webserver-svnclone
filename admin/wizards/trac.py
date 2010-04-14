@@ -46,7 +46,6 @@ NOTE_WEBDIR_H1  = N_("Public Web Direcoty")
 NOTE_TRAC_PROJECT = N_("Local path to the Trac project.")
 NOTE_TRAC_DATA  = N_("Local path to the Trac installation. (Example: /usr/share/trac)")
 
-ERROR_NO_SRC    = N_("Does not look like a Trac source directory.")
 ERROR_NO_PROJECT= N_("It does not look like a Trac based project directory.")
 ERROR_NO_DATA   = N_("It does not look like a Trac installation.")
 
@@ -131,7 +130,7 @@ class Commit:
 class Host:
     def __call__ (self):
         table = CTK.PropsTable()
-        table.Add (_('New Host Name'),    CTK.TextCfg ('%s!new_host'%(PREFIX), False, {'value': 'www.example.com', 'class': 'noauto'}), NOTE_HOST)
+        table.Add (_('New Host Name'),    CTK.TextCfg ('%s!new_host'%(PREFIX), False, {'value': 'www.example.com', 'class': 'noauto'}), _(NOTE_HOST))
         table.Add (_('Use Same Logs as'), Wizard.CloneLogsCfg('%s!logs_as_vsrv'%(PREFIX)), _(Wizard.CloneLogsCfg.NOTE))
 
         submit = CTK.Submitter (URL_APPLY)
@@ -139,7 +138,7 @@ class Host:
         submit += table
 
         cont = CTK.Container()
-        cont += CTK.RawHTML ('<h2>%s</h2>' %(NOTE_HOST_H1))
+        cont += CTK.RawHTML ('<h2>%s</h2>' %(_(NOTE_HOST_H1)))
         cont += submit
         cont += CTK.DruidButtonsPanel_PrevCreate_Auto()
         return cont.Render().toStr()
@@ -150,13 +149,13 @@ class LocalSource:
         guessed_src = path_find_w_default (SRC_PATHS)
 
         table = CTK.PropsTable()
-        table.Add (_('Trac Local Directory'), CTK.TextCfg ('%s!trac_data'%(PREFIX), False, {'value': guessed_src}), NOTE_TRAC_DATA)
+        table.Add (_('Trac Local Directory'), CTK.TextCfg ('%s!trac_data'%(PREFIX), False, {'value': guessed_src}), _(NOTE_TRAC_DATA))
         table.Add (_('Project Directory'),    CTK.TextCfg ('%s!trac_project'%(PREFIX), False, {'value': os_get_document_root()}), _(NOTE_TRAC_PROJECT))
         submit = CTK.Submitter (URL_APPLY)
         submit += table
 
         cont = CTK.Container()
-        cont += CTK.RawHTML ('<h2>%s</h2>' %(NOTE_LOCAL_H1))
+        cont += CTK.RawHTML ('<h2>%s</h2>' %(_(NOTE_LOCAL_H1)))
         cont += submit
         cont += CTK.DruidButtonsPanel_PrevNext_Auto()
         return cont.Render().toStr()
@@ -165,11 +164,11 @@ class LocalSource:
 class Welcome:
     def __call__ (self):
         cont = CTK.Container()
-        cont += CTK.RawHTML ('<h2>%s</h2>' %(NOTE_WELCOME_H1))
+        cont += CTK.RawHTML ('<h2>%s</h2>' %(_(NOTE_WELCOME_H1)))
         cont += Wizard.Icon ('trac', {'class': 'wizard-descr'})
         box = CTK.Box ({'class': 'wizard-welcome'})
-        box += CTK.RawHTML ('<p>%s</p>' %(NOTE_WELCOME_P1))
-        box += CTK.RawHTML ('<p>%s</p>' %(NOTE_WELCOME_P2))
+        box += CTK.RawHTML ('<p>%s</p>' %(_(NOTE_WELCOME_P1)))
+        box += CTK.RawHTML ('<p>%s</p>' %(_(NOTE_WELCOME_P2)))
         cont += box
 
         # Sent the VServer num if it's a Rule
