@@ -39,6 +39,7 @@ WIZARDS_CMS = [
     {'wizard': 'hotlinking','title': 'Hot Linking',  'descr': 'This is bla, bla, bla, bla..'},
     {'wizard': 'redirect',  'title': 'Redirect',     'descr': 'This is bla, bla, bla, bla..'},
     {'wizard': 'streaming', 'title': 'Streaming',    'descr': 'This is bla, bla, bla, bla..'},
+    {'wizard': 'rails',     'title': 'Rails',        'descr': 'This is bla, bla, bla, bla..'},
 ]
 
 USUAL_STATIC_FILES = ['/favicon.ico', '/robots.txt', '/crossdomain.xml']
@@ -238,6 +239,7 @@ def init():
     CTK.load_module ('hotlinking',    'wizards')
     CTK.load_module ('redirect',      'wizards')
     CTK.load_module ('streaming',     'wizards')
+    CTK.load_module ('rails',         'wizards')
 
 _is_init = False
 if not _is_init:

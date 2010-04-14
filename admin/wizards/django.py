@@ -170,14 +170,14 @@ class Commit:
 class WebDirectory:
     def __call__ (self):
         table = CTK.PropsTable()
-        table.Add (_('Web Directory'), CTK.TextCfg ('%s!webdir'%(PREFIX), False, {'value': '/project', 'class': 'noauto'}), NOTE_WEBDIR)
+        table.Add (_('Web Directory'), CTK.TextCfg ('%s!webdir'%(PREFIX), False, {'value': '/project', 'class': 'noauto'}), _(NOTE_WEBDIR))
 
         submit = CTK.Submitter (URL_APPLY)
         submit += CTK.Hidden('final', '1')
         submit += table
 
         cont = CTK.Container()
-        cont += CTK.RawHTML ('<h2>%s</h2>' %(NOTE_WEBDIR_H1))
+        cont += CTK.RawHTML ('<h2>%s</h2>' %(_(NOTE_WEBDIR_H1)))
         cont += submit
         cont += CTK.DruidButtonsPanel_PrevCreate_Auto()
         return cont.Render().toStr()
@@ -186,8 +186,8 @@ class WebDirectory:
 class Host:
     def __call__ (self):
         table = CTK.PropsTable()
-        table.Add (_('New Host Name'),    CTK.TextCfg ('%s!new_host'%(PREFIX), False, {'value': 'www.example.com', 'class': 'noauto'}), NOTE_HOST)
-        table.Add (_('Document Root'),    CTK.TextCfg ('%s!document_root'%(PREFIX), False, {'value': os_get_document_root(), 'class': 'noauto'}), NOTE_DROOT)
+        table.Add (_('New Host Name'),    CTK.TextCfg ('%s!new_host'%(PREFIX), False, {'value': 'www.example.com', 'class': 'noauto'}), _(NOTE_HOST))
+        table.Add (_('Document Root'),    CTK.TextCfg ('%s!document_root'%(PREFIX), False, {'value': os_get_document_root(), 'class': 'noauto'}), _(NOTE_DROOT))
         table.Add (_('Use Same Logs as'), Wizard.CloneLogsCfg('%s!logs_as_vsrv'%(PREFIX)), _(Wizard.CloneLogsCfg.NOTE))
 
         submit = CTK.Submitter (URL_APPLY)
@@ -195,7 +195,7 @@ class Host:
         submit += table
 
         cont = CTK.Container()
-        cont += CTK.RawHTML ('<h2>%s</h2>' %(NOTE_HOST_H1))
+        cont += CTK.RawHTML ('<h2>%s</h2>' %(_(NOTE_HOST_H1)))
         cont += submit
         cont += CTK.DruidButtonsPanel_PrevCreate_Auto()
         return cont.Render().toStr()
@@ -206,13 +206,13 @@ class LocalSource:
         guessed_src = path_find_w_default (SRC_PATHS)
 
         table = CTK.PropsTable()
-        table.Add (_('Django Local Directory'), CTK.TextCfg ('%s!django_dir'%(PREFIX), False, {'value': guessed_src}), NOTE_LOCAL_DIR)
+        table.Add (_('Django Local Directory'), CTK.TextCfg ('%s!django_dir'%(PREFIX), False, {'value': guessed_src}), _(NOTE_LOCAL_DIR))
 
         submit = CTK.Submitter (URL_APPLY)
         submit += table
 
         cont = CTK.Container()
-        cont += CTK.RawHTML ('<h2>%s</h2>' %(NOTE_LOCAL_H1))
+        cont += CTK.RawHTML ('<h2>%s</h2>' %(_(NOTE_LOCAL_H1)))
         cont += submit
         cont += CTK.DruidButtonsPanel_PrevNext_Auto()
         return cont.Render().toStr()
@@ -221,11 +221,11 @@ class LocalSource:
 class Welcome:
     def __call__ (self):
         cont = CTK.Container()
-        cont += CTK.RawHTML ('<h2>%s</h2>' %(NOTE_WELCOME_H1))
+        cont += CTK.RawHTML ('<h2>%s</h2>' %(_(NOTE_WELCOME_H1)))
         cont += Wizard.Icon ('django', {'class': 'wizard-descr'})
         box = CTK.Box ({'class': 'wizard-welcome'})
-        box += CTK.RawHTML ('<p>%s</p>' %(NOTE_WELCOME_P1))
-        box += CTK.RawHTML ('<p>%s</p>' %(NOTE_WELCOME_P2))
+        box += CTK.RawHTML ('<p>%s</p>' %(_(NOTE_WELCOME_P1)))
+        box += CTK.RawHTML ('<p>%s</p>' %(_(NOTE_WELCOME_P2)))
         cont += box
 
         # Send the VServer num if it's a Rule
