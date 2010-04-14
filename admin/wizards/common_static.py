@@ -104,17 +104,15 @@ class Create:
         submit += CTK.Hidden('final', '1')
 
         cont = CTK.Container()
-        cont += CTK.RawHTML ('<h2>%s</h2>' %(NOTE_CREATE_H1))
+        cont += CTK.RawHTML ('<h2>%s</h2>'%(_(NOTE_CREATE_H1)))
         cont += submit
 
         if self._check_if_valid ():
-            cont += CTK.RawHTML ('<p>%s</p>'   %(NOTE_CREATE_OK))
+            cont += CTK.RawHTML ('<p>%s</p>'%(_(NOTE_CREATE_OK)))
             cont += CTK.DruidButtonsPanel_PrevCreate_Auto()
         else:
-            druid  = CTK.DruidButtonsPanel()
-            druid += CTK.DruidButton_Close(_('Cancel'))
-            cont  += CTK.RawHTML ('<p>%s</p>'   %(NOTE_CREATE_ERR))
-            cont  += druid
+            cont += CTK.RawHTML ('<p>%s</p>'%(_(NOTE_CREATE_ERR)))
+            cont += CTK.DruidButtonsPanel_Cancel()
 
         return cont.Render().toStr()
 
@@ -122,10 +120,10 @@ class Create:
 class Welcome:
     def __call__ (self):
         cont = CTK.Container()
-        cont += CTK.RawHTML ('<h2>%s</h2>' %(NOTE_WELCOME_H1))
+        cont += CTK.RawHTML ('<h2>%s</h2>' %(_(NOTE_WELCOME_H1)))
         cont += Wizard.Icon ('common_static', {'class': 'wizard-descr'})
         box = CTK.Box ({'class': 'wizard-welcome'})
-        box += CTK.RawHTML ('<p>%s</p>' %(NOTE_WELCOME_P1))
+        box += CTK.RawHTML ('<p>%s</p>' %(_(NOTE_WELCOME_P1)))
         cont += box
 
         # Send the VServer num

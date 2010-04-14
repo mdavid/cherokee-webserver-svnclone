@@ -115,9 +115,11 @@ class Welcome:
 
     def __call__ (self):
         cont = CTK.Container()
-        cont += CTK.RawHTML ('<h2>%s</h2>' %(NOTE_WELCOME_H1))
+        cont += CTK.RawHTML ('<h2>%s</h2>' %(_(NOTE_WELCOME_H1)))
         cont += Wizard.Icon ('icons', {'class': 'wizard-descr'})
-        cont += CTK.RawHTML ('<p>%s</p>' %(NOTE_WELCOME_P1))
+        box = CTK.Box ({'class': 'wizard-welcome'})
+        box += CTK.RawHTML ('<p>%s</p>' %(_(NOTE_WELCOME_P1)))
+        cont += box
 
         icons, themes = self._check_config()
         if False in [icons, themes]:
@@ -131,7 +133,7 @@ class Welcome:
             cont += submit
             cont += CTK.DruidButtonsPanel_Create()
         else:
-            cont += CTK.RawHTML ('<p>%s</p>'   %(NOTE_WELCOME_ERR))
+            cont += CTK.RawHTML ('<p>%s</p>'   %(_(NOTE_WELCOME_ERR)))
             cont += CTK.DruidButtonsPanel_Cancel()
 
         return cont.Render().toStr()
