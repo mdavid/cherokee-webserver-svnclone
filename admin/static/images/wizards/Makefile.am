@@ -5,7 +5,6 @@ wizards_DATA = \
 alfresco.png \
 aspnet.png \
 coldfusion.png \
-common_static.png \
 concrete5.png \
 dbslayer.png \
 django.png \
@@ -25,8 +24,9 @@ phpbb.png \
 php.png \
 phpmyadmin.png \
 redirect.png \
-ror.png \
+rails.png \
 rtorrent.png \
+static.png \
 streaming.png \
 sugarcrm.png \
 symfony.png \
