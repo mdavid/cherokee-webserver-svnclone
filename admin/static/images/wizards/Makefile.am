@@ -22,9 +22,9 @@ mono.png \
 moodle.png \
 nagios.png \
 phpbb.png \
-php.jpg \
+php.png \
 phpmyadmin.png \
-redirect.jpg \
+redirect.png \
 ror.png \
 rtorrent.png \
 streaming.png \
