@@ -24,14 +24,40 @@
 /* Rules
  */
 .rule {
-	border: 1px solid navy;
+	border: 1px solid #cde;
 	padding: 5px;
 	margin: 5px;
+        -moz-border-radius: 4px; -webkit-border-radius: 4px;
 }
 
 .inactive-rule {
 	opacity: 0.3;
 }
+
+.rulebuttons { height: 52px; }
+
+.rulebuttons .submitter  {
+  width: 64px;
+  height: 48px;
+  margin: 0;
+  float: right;
+}
+
+.rule-label-and { 
+  font-weight: bold; 
+  color: #0b0;
+}
+
+.rule-label-or {
+  font-weight: bold;
+  color: #27c;
+}
+
+.rule-label-not {
+  font-weight: bold;
+  color: #c00;
+}
+
 
 /* Flag list
  */

@@ -123,7 +123,7 @@ class Rule (CTK.Box):
         elif value == "and":
             self.props['class'] += ' rule-and'
             self += Rule ('%s!left' %(self.key), self.depth+1)
-            self += CTK.Box({'id':'rule-label-and'}, CTK.RawHTML(_("And")))
+            self += CTK.Box({'class':'rule-label-and'}, CTK.RawHTML(_("And")))
             self += Rule ('%s!right'%(self.key), self.depth+1)
             self += RuleButtons (self.key, self.depth)
             return CTK.Box.Render (self)
@@ -131,14 +131,14 @@ class Rule (CTK.Box):
         elif value == "or":
             self.props['class'] += ' rule-or'
             self += Rule ('%s!left' %(self.key), self.depth+1)
-            self += CTK.Box({'id':'rule-label-or'}, CTK.RawHTML(_("Or")))
+            self += CTK.Box({'class':'rule-label-or'}, CTK.RawHTML(_("Or")))
             self += Rule ('%s!right'%(self.key), self.depth+1)
             self += RuleButtons (self.key, self.depth)
             return CTK.Box.Render (self)
 
         elif value == "not":
             self.props['class'] += ' rule-not'
-            self += CTK.Box({'id':'rule-label-not'}, CTK.RawHTML(_("Not")))
+            self += CTK.Box({'class':'rule-label-not'}, CTK.RawHTML(_("Not")))
             self += Rule ('%s!right'%(self.key), self.depth+1)
             self += RuleButtons (self.key, self.depth)
             return CTK.Box.Render (self)
