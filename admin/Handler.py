@@ -30,22 +30,17 @@ URL_APPLY = '/plugin/handler/apply'
 
 NOTE_DOCUMENT_ROOT = N_('Allows to specify an alternative Document Root path.')
 
-def commit():
-    for k in CTK.post:
-        CTK.cfg[k] = CTK.post[k]
-    return {'ret':'ok'}
-
 
 class PluginHandler (CTK.Plugin):
     def __init__ (self, key, **kwargs):
         CTK.Plugin.__init__ (self, key)
         self.show_document_root = kwargs.pop('show_document_root', True)
+        self.key_rule = '!'.join(self.key.split('!')[:-1])
 
     def AddCommon (self):
         if self.show_document_root:
-            key    = '!'.join(self.key.split('!')[:-1])
             table = CTK.PropsTable()
-            table.Add (_('Document Root'), CTK.TextCfg('%s!document_root'%(key), True), _(NOTE_DOCUMENT_ROOT))
+            table.Add (_('Document Root'), CTK.TextCfg('%s!document_root'%(self.key_rule), True), _(NOTE_DOCUMENT_ROOT))
 
             submit = CTK.Submitter (URL_APPLY)
             submit += CTK.Indenter (table)
@@ -53,4 +48,4 @@ class PluginHandler (CTK.Plugin):
 
             # Publish
             VALS = [("%s!document_root"%(self.key), validations.is_dev_null_or_local_dir_exists)]
-            CTK.publish ('^%s'%(URL_APPLY), commit, validation=VALS, method="POST")
+            CTK.publish ('^%s'%(URL_APPLY), CTK.cfg_apply_post, validation=VALS, method="POST")
