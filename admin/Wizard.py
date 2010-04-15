@@ -40,6 +40,7 @@ WIZARDS_CMS = [
     {'wizard': 'redirect',  'title': 'Redirect',     'descr': 'This is bla, bla, bla, bla..'},
     {'wizard': 'streaming', 'title': 'Streaming',    'descr': 'This is bla, bla, bla, bla..'},
     {'wizard': 'rails',     'title': 'Rails',        'descr': 'This is bla, bla, bla, bla..'},
+    {'wizard': 'uwsgi',     'title': 'uWSGI',        'descr': 'This is bla, bla, bla, bla..'},
 ]
 
 USUAL_STATIC_FILES = ['/favicon.ico', '/robots.txt', '/crossdomain.xml']
