@@ -62,7 +62,7 @@ def apply():
 
     CTK.cfg[key]                  = 'geoip'
     CTK.cfg["%s!countries"%(key)] = ','.join(selected)
-    return {'ret': 'ok'}
+    return CTK.cfg_reply_ajax_ok()
 
 
 CHECKBOX_JS = """

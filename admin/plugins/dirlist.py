@@ -39,12 +39,6 @@ NOTE_HIDDEN_FILES = N_("List of files that should not be listed.")
 HELPS = [('modules_handlers_dirlist', N_("Only listing"))]
 
 
-def commit():
-    for k in CTK.post:
-        CTK.cfg[k] = CTK.post[k]
-    return {'ret':'ok'}
-
-
 class Plugin_dirlist (Handler.PluginHandler):
     def __init__ (self, key, **kwargs):
         Handler.PluginHandler.__init__ (self, key, **kwargs)

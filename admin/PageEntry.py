@@ -77,7 +77,7 @@ def Clone():
     next = CTK.cfg.get_next_entry_prefix ('vserver!%s!rule'%(vsrv))
 
     CTK.cfg.clone ('vserver!%s!rule!%s'%(vsrv,rule), next)
-    return {'ret': 'ok'}
+    return CTK.cfg_reply_ajax_ok()
 
 
 class TrafficWidget (CTK.Container):

@@ -26,7 +26,7 @@ import CTK
 import Handler
 from consts import *
 
-URL_APPLY = '/plugin/file/apply'
+URL_APPLY = '/plugin/redir/apply'
 
 NOTE_SHOW         = N_("Defines whether the redirection will be seen by the client.")
 NOTE_REGEX        = N_('Regular expression. Check out the <a target="_blank" href="http://perldoc.perl.org/perlre.html">Reference</a>.')
@@ -51,12 +51,10 @@ def commit():
             CTK.cfg['%s!regex'%(next)] = new_regex
         if new_subst:
             CTK.cfg['%s!substring'%(next)] = new_subst
-        return {'ret':'ok'}
+        return CTK.cfg_reply_ajax_ok()
 
     # Modification
-    for k in CTK.post:
-        CTK.cfg[k] = CTK.post[k]
-    return {'ret':'ok'}
+    return CTK.cfg_apply_post()
 
 
 class Plugin_redir (Handler.PluginHandler):

@@ -105,13 +105,6 @@ $(document).ready(function() {
 """
 
 
-def apply():
-    # Modifications
-    for k in CTK.post:
-        CTK.cfg[k] = CTK.post[k]
-    return {'ret': 'ok'}
-
-
 class ConnectionsWidget (CTK.Container):
     def __init__ (self):
         CTK.Container.__init__ (self)
@@ -204,4 +197,4 @@ class Render():
 
 
 CTK.publish ('^%s'%(URL_BASE), Render)
-CTK.publish ('^%s'%(URL_APPLY), apply, validation=VALIDATIONS, method="POST")
+CTK.publish ('^%s'%(URL_APPLY), CTK.cfg_apply_post, validation=VALIDATIONS, method="POST")

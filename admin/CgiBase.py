@@ -50,12 +50,10 @@ def commit():
     # New
     if new_name:
         CTK.cfg['%s!%s'%(key, new_name)] = new_value
-        return {'ret':'ok'}
+        return CTK.cfg_reply_ajax_ok()
 
     # Modification
-    for k in CTK.post:
-        CTK.cfg[k] = CTK.post[k]
-    return {'ret':'ok'}
+    return CTK.cfg_apply_post()
 
 
 class PluginHandlerCGI (Handler.PluginHandler):

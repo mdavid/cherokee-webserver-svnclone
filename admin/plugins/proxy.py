@@ -48,7 +48,7 @@ def commit():
             next = CTK.cfg.get_next_entry_prefix ('%s!%s'%(key, e))
             CTK.cfg['%s!regex'%(next)]     = regex
             CTK.cfg['%s!substring'%(next)] = subst
-            return {'ret': 'ok'}
+            return CTK.cfg_reply_ajax_ok()
 
     # New Header
     for e in ('in_header_add', 'out_header_add'):
@@ -58,7 +58,7 @@ def commit():
 
         if header and value:
             CTK.cfg['%s!%s!%s'%(key, e, header)] = value
-            return {'ret': 'ok'}
+            return CTK.cfg_reply_ajax_ok()
 
     # New Hide
     for e in ('in_header_hide', 'out_header_hide'):
@@ -68,12 +68,10 @@ def commit():
         if hide:
             next = CTK.cfg.get_next_entry_prefix ('%s!%s'%(key, e))
             CTK.cfg[next] = hide
-            return {'ret': 'ok'}
+            return CTK.cfg_reply_ajax_ok()
 
     # Modification
-    for k in CTK.post:
-        CTK.cfg[k] = CTK.post[k]
-    return {'ret': 'ok'}
+    return CTK.cfg_apply_post()
 
 
 class URL_Rewrite (CTK.Container):

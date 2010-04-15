@@ -36,12 +36,6 @@ NOTE_REALM   = N_('Name associated with the protected resource.')
 NOTE_USERS   = N_('User filter. List of allowed users.')
 
 
-def commit():
-    for k in CTK.post:
-        del (CTK.cfg[k])
-    return {'ret':'ok'}
-
-
 class PluginAuth (CTK.Plugin):
     def __init__ (self, key, **kwargs):
         CTK.Plugin.__init__ (self, key)
@@ -68,4 +62,4 @@ class PluginAuth (CTK.Plugin):
 
         # Publish
         VALS = [("%s!users"%(self.key), validations.is_safe_id_list)]
-        CTK.publish ('^%s'%(URL_APPLY), commit, validation=VALS, method="POST")
+        CTK.publish ('^%s'%(URL_APPLY), CTK.cfg_apply_post, validation=VALS, method="POST")

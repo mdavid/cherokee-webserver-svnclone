@@ -130,7 +130,7 @@ def commit_clone():
 
     CTK.cfg.clone ('vserver!%s'%(num), next)
     CTK.cfg['%s!nick' %(next)] = new_nick
-    return {'ret': 'ok'}
+    return CTK.cfg_reply_ajax_ok()
 
 
 class HostMatchWidget (CTK.Container):

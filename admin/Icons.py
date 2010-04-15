@@ -66,32 +66,32 @@ def modify():
         return {'ret': 'unsatisfactory', 'updates': updates}
 
 
-def apply():
+def commit():
     # New extension
     new_exts = CTK.post.pop('new_exts')
     if new_exts:
         icon = CTK.post.get_val('new_exts_icon')
         if not icon:
-            return {'ret': 'ok'}
+            return CTK.cfg_reply_ajax_ok()
 
         CTK.cfg['icons!suffix!%s'%(icon)] = new_exts
-        return {'ret': 'ok'}
+        return CTK.cfg_reply_ajax_ok()
 
     # New file
     new_file = CTK.post.pop('new_file')
     if new_file:
         icon = CTK.post.get_val('new_file_icon')
         if not icon:
-            return {'ret': 'ok'}
+            return CTK.cfg_reply_ajax_ok()
 
         CTK.cfg['icons!file!%s'%(icon)] = new_file
-        return {'ret': 'ok'}
+        return CTK.cfg_reply_ajax_ok()
 
     # Modifications
     updates = modify()
     if updates:
         return updates
-    return {'ret': 'ok'}
+    return CTK.cfg_reply_ajax_ok()
 
 
 def prettyfier (filen):
@@ -364,4 +364,4 @@ class Icons_Widget (CTK.Container):
         self += FilesWidget_Instancer()
         self += ExtensionsWidget_Instancer()
 
-CTK.publish ('^%s'%(URL_APPLY), apply, validation=VALIDATIONS, method="POST")
+CTK.publish ('^%s'%(URL_APPLY), commit, validation=VALIDATIONS, method="POST")
