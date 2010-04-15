@@ -43,8 +43,9 @@ class PluginHandler (CTK.Plugin):
 
     def AddCommon (self):
         if self.show_document_root:
+            key    = '!'.join(self.key.split('!')[:-1])
             table = CTK.PropsTable()
-            table.Add (_('Document Root'), CTK.TextCfg('%s!document_root'%(self.key), True), _(NOTE_DOCUMENT_ROOT))
+            table.Add (_('Document Root'), CTK.TextCfg('%s!document_root'%(key), True), _(NOTE_DOCUMENT_ROOT))
 
             submit = CTK.Submitter (URL_APPLY)
             submit += CTK.Indenter (table)
