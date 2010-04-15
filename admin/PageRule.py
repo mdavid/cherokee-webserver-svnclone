@@ -101,7 +101,7 @@ def reorder (arg):
     # Set the new list in place
     del (CTK.cfg['vserver!%s!rule'%(vsrv)])
     CTK.cfg.rename ('tmp!vserver!%s!rule'%(vsrv), 'vserver!%s!rule'%(vsrv))
-    return {'ret': 'ok'}
+    return CTK.cfg_reply_ajax_ok()
 
 
 def NewManual():

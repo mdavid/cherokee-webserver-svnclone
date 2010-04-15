@@ -44,7 +44,7 @@ VALIDATIONS = [
     ('new_exts',            validations.is_safe_mime_exts),
 ]
 
-def apply():
+def commit():
     # New entry
     mime = CTK.post.pop('new_mime')
     exts = CTK.post.pop('new_exts')
@@ -56,7 +56,7 @@ def apply():
         if exts:
             CTK.cfg['mime!%s!extensions'%(mime)] = exts
 
-        return {'ret': 'ok'}
+        return CTK.cfg_reply_ajax_ok()
 
     # Modifications
     updates = {}
@@ -73,7 +73,8 @@ def apply():
 
     if updates:
         return {'ret': 'unsatisfactory', 'updates': updates}
-    return {'ret': 'ok'}
+
+    return CTK.cfg_reply_ajax_ok()
 
 
 class AddMime (CTK.Container):
@@ -158,4 +159,4 @@ class MIME_Widget (CTK.Container):
         self += MIME_Table_Instancer()
 
 
-CTK.publish ('^%s'%(URL_APPLY), apply, validation=VALIDATIONS, method="POST")
+CTK.publish ('^%s'%(URL_APPLY), commit, validation=VALIDATIONS, method="POST")

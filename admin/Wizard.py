@@ -180,7 +180,8 @@ def CategoryList():
 
 def CategoryList_Apply():
     print CTK.post
-    return {'ret': 'ok'}
+    return CTK.cfg_reply_ajax_ok()
+
 
 #
 # Widgets

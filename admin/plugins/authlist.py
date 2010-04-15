@@ -42,12 +42,10 @@ def commit():
         next = CTK.cfg.get_next_entry_prefix (key)
         CTK.cfg['%s!user'%(next)]     = new_user
         CTK.cfg['%s!password'%(next)] = new_pass
-        return {'ret':'ok'}
+        return CTK.cfg_reply_ajax_ok()
 
     # Modification
-    for k in CTK.post:
-        CTK.cfg[k] = CTK.post[k]
-    return {'ret':'ok'}
+    return CTK.cfg_apply_post()
 
 
 class Plugin_authlist (Auth.PluginAuth):

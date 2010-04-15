@@ -96,7 +96,7 @@ def commit_clone():
 
     CTK.cfg.clone ('source!%s'%(num), next)
     CTK.cfg['%s!nick' %(next)] = new_nick
-    return {'ret': 'ok'}
+    return CTK.cfg_reply_ajax_ok()
 
 
 def commit():
@@ -109,7 +109,7 @@ def commit():
         CTK.cfg['%s!nick'%(next)] = new_nick
         CTK.cfg['%s!host'%(next)] = new_host
         CTK.cfg['%s!type'%(next)] = 'host'
-        return {'ret': 'ok'}
+        return CTK.cfg_reply_ajax_ok()
 
     # Modification
     return CTK.cfg_apply_post()

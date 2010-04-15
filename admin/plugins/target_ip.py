@@ -34,7 +34,9 @@ WARNING_EMPTY = N_("At least one IP or Subnet entry must be defined.")
 def apply_del():
     for k in CTK.post:
         del (CTK.cfg[k])
-    return {'ret':'ok'}
+
+    return CTK.cfg_reply_ajax_ok()
+
 
 class AddressesTable (CTK.Container):
     def __init__ (self, refreshable, key, url_apply, **kwargs):

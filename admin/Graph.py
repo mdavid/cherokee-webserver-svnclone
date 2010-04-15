@@ -72,8 +72,7 @@ def apply ():
     graph_type = CTK.post.get_val('graph_type')
     if graph_type:
         CTK.cfg['tmp!graph_type'] = graph_type
-
-        return {'ret':'ok'}
+        return CTK.cfg_reply_ajax_ok()
 
     # Modifications
     return CTK.cfg_apply_post()

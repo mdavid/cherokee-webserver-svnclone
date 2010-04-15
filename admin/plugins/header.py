@@ -25,7 +25,7 @@ import CTK
 from Rule import RulePlugin
 from util import *
 
-URL_APPLY = '/plugin/extensions/apply'
+URL_APPLY = '/plugin/header/apply'
 
 NOTE_HEADER = N_("Header against which the regular expression will be evaluated.")
 NOTE_MATCH  = N_("Regular expression.")
@@ -59,9 +59,7 @@ def apply():
         return {'ret': 'ok', 'redirect': '/vserver/%s/rule/%s' %(vsrv_num, next_rule)}
 
     # Modifications
-    for k in CTK.post:
-        CTK.cfg[k] = CTK.post[k]
-    return {'ret': 'ok'}
+    return CTK.cfg_apply_post()
 
 
 class Plugin_header (RulePlugin):

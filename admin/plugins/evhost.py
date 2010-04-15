@@ -24,7 +24,7 @@
 
 import CTK
 
-URL_APPLY = '/plugin/rrd/apply'
+URL_APPLY = '/plugin/evhost/apply'
 
 NOTE_CHECK_DROOT = N_("Check the dynamically generated Document Root, and use the general Document Root if it doesn't exist.")
 NOTE_REHOST      = N_("The Document Root directory will be built dynamically. The following variables are accepted:<br/>") +\

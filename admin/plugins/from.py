@@ -46,9 +46,7 @@ def apply():
         return {'ret': 'ok', 'redirect': '/vserver/%s/rule/%s' %(vsrv_num, next_rule)}
 
     # Modifications
-    for k in CTK.post:
-        CTK.cfg[k] = CTK.post[k]
-    return {'ret': 'ok'}
+    return CTK.cfg_apply_post()
 
 
 class Plugin_from (RulePlugin):

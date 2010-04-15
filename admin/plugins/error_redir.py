@@ -46,12 +46,10 @@ def apply():
     if key and new_error and new_redir and new_type:
         CTK.cfg['%s!%s!url' %(key, new_error)] = new_redir
         CTK.cfg['%s!%s!show'%(key, new_error)] = new_type
-        return {'ret':'ok'}
+        return CTK.cfg_reply_ajax_ok()
 
-    # Apply
-    for k in CTK.post:
-        CTK.cfg[k] = CTK.post[k]
-    return {'ret':'ok'}
+    # Modification
+    return CTK.cfg_apply_post()
 
 
 class Content (CTK.Container):

@@ -82,7 +82,7 @@ def RuleButtons_apply():
         else:
             del(CTK.cfg[key])
 
-    return {'ret': 'ok'}
+    return CTK.cfg_reply_ajax_ok()
 
 
 class RuleButtons (CTK.Box):

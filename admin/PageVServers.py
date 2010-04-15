@@ -97,7 +97,7 @@ def Commit():
         CTK.cfg['%s!rule!3!handler'         %(next)] = 'file'
         CTK.cfg['%s!rule!3!document_root'   %(next)] = CHEROKEE_THEMEDIR
 
-        return {'ret': 'ok'}
+        return CTK.cfg_reply_ajax_ok()
 
     # Modifications
     return CTK.cfg_apply_post()
@@ -118,7 +118,7 @@ def reorder (arg):
     # Set the new list in place
     del (CTK.cfg['vserver'])
     CTK.cfg.rename ('tmp!vserver', 'vserver')
-    return {'ret': 'ok'}
+    return CTK.cfg_reply_ajax_ok()
 
 
 def NewManual():

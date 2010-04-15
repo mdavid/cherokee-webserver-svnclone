@@ -45,9 +45,7 @@ def commit():
         CTK.cfg[next] = new_bal
 
     # Modification
-    for k in CTK.post:
-        CTK.cfg[k] = CTK.post[k]
-    return {'ret':'ok'}
+    return CTK.cfg_apply_post()
 
 
 class PluginBalancer (CTK.Plugin):
