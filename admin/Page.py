@@ -37,6 +37,11 @@ URL_SAVE_GRACEFUL = r'/save/apply/graceful'
 URL_SAVE_HARD     = r'/save/apply/hard'
 URL_SAVE_NONE     = r'/save/apply/none'
 
+SAVE_BUTTON = """
+$('#save-button').bind ('click', function(){
+  %s
+})"""
+
 
 def Restart (mode):
     if mode == 'graceful':
@@ -105,8 +110,14 @@ class Base (CTK.Page):
         CTK.Page.__init__ (self, template, heads, **kwargs)
 
         # Add the 'Save' dialog
+        js = SAVE_BUTTON %(dialog.JS_to_show())
+        if not CTK.cfg.has_changed():
+            js += ".hide();"
+        else:
+            js += ";"
+
         self += dialog
-        self += CTK.RawHTML (js="$('#save-button').bind ('click', function(){ %s });" %(dialog.JS_to_show()))
+        self += CTK.RawHTML (js=js)
 
 
 CTK.publish (URL_SAVE_GRACEFUL, Restart, mode='graceful')
