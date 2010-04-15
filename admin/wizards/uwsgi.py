@@ -25,7 +25,7 @@
 #
 # Tested:
 # 2009/10/xx: uWSGI Version 0.9.3 / Cherokee 0.99.36b
-# 2010/04/13: uWSGI Version 0.9.3 / Cherokee 0.99.41
+# 2010/04/15: uWSGI Version 0.9.3 / Cherokee 0.99.41
 #
 
 import re

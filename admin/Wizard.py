@@ -41,6 +41,7 @@ WIZARDS_CMS = [
     {'wizard': 'streaming', 'title': 'Streaming',    'descr': 'This is bla, bla, bla, bla..'},
     {'wizard': 'rails',     'title': 'Rails',        'descr': 'This is bla, bla, bla, bla..'},
     {'wizard': 'uwsgi',     'title': 'uWSGI',        'descr': 'This is bla, bla, bla, bla..'},
+    {'wizard': 'mono',      'title': 'Mono',         'descr': 'This is bla, bla, bla, bla..'},
 ]
 
 USUAL_STATIC_FILES = ['/favicon.ico', '/robots.txt', '/crossdomain.xml']
@@ -242,6 +243,7 @@ def init():
     CTK.load_module ('streaming',     'wizards')
     CTK.load_module ('rails',         'wizards')
     CTK.load_module ('uwsgi',         'wizards')
+    CTK.load_module ('mono',          'wizards')
 
 _is_init = False
 if not _is_init:
