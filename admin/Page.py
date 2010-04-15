@@ -39,6 +39,11 @@ URL_SAVE_NONE     = r'/save/apply/none'
 
 SAVE_BUTTON = """
 $('#save-button').bind ('click', function(){
+  /* Do nothing if it hasn't changed */
+  if ($(this).hasClass('saved')) {
+     return;
+  }
+
   %s
 })"""
 
@@ -112,9 +117,9 @@ class Base (CTK.Page):
         # Add the 'Save' dialog
         js = SAVE_BUTTON %(dialog.JS_to_show())
         if not CTK.cfg.has_changed():
-            js += ".hide();"
+            js += ".addClass('saved');"
         else:
-            js += ";"
+            js += ';'
 
         self += dialog
         self += CTK.RawHTML (js=js)
