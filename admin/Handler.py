@@ -47,5 +47,5 @@ class PluginHandler (CTK.Plugin):
             self += submit
 
             # Publish
-            VALS = [("%s!document_root"%(self.key), validations.is_dev_null_or_local_dir_exists)]
+            VALS = [("%s!document_root"%(self.key_rule), validations.is_dev_null_or_local_dir_exists)]
             CTK.publish ('^%s'%(URL_APPLY), CTK.cfg_apply_post, validation=VALS, method="POST")
