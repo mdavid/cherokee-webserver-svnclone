@@ -241,6 +241,7 @@ def init():
     CTK.load_module ('redirect',      'wizards')
     CTK.load_module ('streaming',     'wizards')
     CTK.load_module ('rails',         'wizards')
+    CTK.load_module ('uwsgi',         'wizards')
 
 _is_init = False
 if not _is_init:

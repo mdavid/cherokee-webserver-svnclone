@@ -68,7 +68,7 @@ SOURCE_XML   = """ -x %s"""
 SOURCE_WSGI  = """ -w %s"""
 SOURCE_VE    = """ -H %s"""
 
-CONFIG_VSRV = SOURCE + """
+CONFIG_VSERVER = SOURCE + """
 %(vsrv_pre)s!nick = %(new_host)s
 %(vsrv_pre)s!document_root = %(document_root)s
 
@@ -87,7 +87,7 @@ CONFIG_VSRV = SOURCE + """
 %(vsrv_pre)s!rule!1!handler!iocache = 0
 """
 
-CONFIG_RULES = SOURCE + """
+CONFIG_DIR = SOURCE + """
 %(rule_pre)s!match = directory
 %(rule_pre)s!match!directory = %(webdir)s
 %(rule_pre)s!encoder!gzip = 1
@@ -111,15 +111,16 @@ RE_MOUNTPOINT_WSGI  = """applications.*=.*{.*'(.*?)':"""
 
 class Commit:
     def Commit_VServer (self):
-        # Create the new Virtual Server
-        vsrv_pre = CTK.cfg.get_next_entry_prefix('vserver')
-        CTK.cfg['%s!nick'%(vsrv_pre)] = CTK.cfg.get_val('%s!new_host'%(PREFIX))
-        Wizard.CloneLogsCfg_Apply ('%s!logs_as_vsrv'%(PREFIX), vsrv_pre)
-
         # Incoming info
         document_root = CTK.cfg.get_val('%s!document_root'%(PREFIX))
         uwsgi_cfg     = CTK.cfg.get_val('%s!uwsgi_cfg'%(PREFIX))
+        new_host      = CTK.cfg.get_val('%s!new_host'%(PREFIX))
         webdir        = find_mountpoint_xml(uwsgi_cfg)
+
+        # Create the new Virtual Server
+        vsrv_pre = CTK.cfg.get_next_entry_prefix('vserver')
+        CTK.cfg['%s!nick'%(vsrv_pre)] = new_host
+        Wizard.CloneLogsCfg_Apply ('%s!logs_as_vsrv'%(PREFIX), vsrv_pre)
 
         # Choose between XML config+launcher, or Python only config
         if webdir:
@@ -226,7 +227,7 @@ class WebDirectory:
         cont = CTK.Container()
         cont += CTK.RawHTML ('<h2>%s</h2>' %(_(NOTE_WEBDIR_H1)))
         cont += submit
-        cont += CTK.Notice('warning', CTK.RawHTML(_(NOTE_WEBDIR_P1))
+        cont += CTK.Notice('warning', CTK.RawHTML(_(NOTE_WEBDIR_P1)))
         cont += CTK.DruidButtonsPanel_PrevCreate_Auto()
         return cont.Render().toStr()
 
@@ -238,11 +239,11 @@ class Host:
         table.Add (_('Document Root'),    CTK.TextCfg ('%s!document_root'%(PREFIX), False, {'value': os_get_document_root(), 'class': 'noauto'}), _(NOTE_DROOT))
         table.Add (_('Use Same Logs as'), Wizard.CloneLogsCfg('%s!logs_as_vsrv'%(PREFIX)), _(Wizard.CloneLogsCfg.NOTE))
 
-        submit = CTK.Submitter (URL_APPLY)
+        submit  = CTK.Submitter (URL_APPLY)
         submit += CTK.Hidden('final', '1')
         submit += table
 
-        cont = CTK.Container()
+        cont  = CTK.Container()
         cont += CTK.RawHTML ('<h2>%s</h2>' %(_(NOTE_HOST_H1)))
         cont += submit
         cont += CTK.DruidButtonsPanel_PrevCreate_Auto()
@@ -289,8 +290,8 @@ class Welcome:
         return cont.Render().toStr()
 
 
-def is_uwsgi_cfg (filename, cfg, nochroot):
-    filename = validations.is_local_file_exists (filename, cfg, nochroot)
+def is_uwsgi_cfg (filename, nochroot=False):
+    filename = validations.is_local_file_exists (filename, nochroot)
     mountpoint = find_mountpoint_xml(filename)
     if not mountpoint:
         mountpoint = find_mountpoint_wsgi(filename)
@@ -326,8 +327,8 @@ VALS = [
     ("%s!uwsgi_binary" %(PREFIX), validations.is_local_file_exists),
     ("%s!uwsgi_cfg"    %(PREFIX), is_uwsgi_cfg),
     ("%s!new_host"     %(PREFIX), validations.is_new_vserver_nick),
-    ("%s!document_root"%(PREFIX), validations.is_local_dir_exists)
-    ("%s!new_webdir"   %(PREFIX), validations.is_dir_formatted,
+    ("%s!document_root"%(PREFIX), validations.is_local_dir_exists),
+    ("%s!new_webdir"   %(PREFIX), validations.is_dir_formatted),
 ]
 
 Wizard.CheckOnNoValue (VALS)
