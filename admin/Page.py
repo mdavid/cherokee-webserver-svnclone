@@ -116,8 +116,8 @@ class Base (CTK.Page):
 
         # Add the 'Save' dialog
         js = SAVE_BUTTON %(dialog.JS_to_show())
-        if not CTK.cfg.has_changed():
-            js += ".addClass('saved');"
+        if CTK.cfg.has_changed():
+            js += ".removeClass('saved');"
         else:
             js += ';'
 
