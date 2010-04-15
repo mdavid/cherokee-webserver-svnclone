@@ -50,7 +50,7 @@ def Restart (mode):
     elif mode == 'hard':
         Cherokee.server.restart (graceful=False)
 
-    return {'ret': 'ok'}
+    return {'ret': 'ok', 'not-modified': '#save-button'}
 
 
 class Save:
