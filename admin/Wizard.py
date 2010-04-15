@@ -23,6 +23,7 @@
 #
 
 import re
+import os
 import CTK
 
 URL_CAT_LIST   = '/wizard/category'
@@ -149,6 +150,13 @@ class CategoryList_Widget (CTK.Box):
                             CTK.Box({'class': 'title'}, CTK.RawHTML(w['title'])),
                             CTK.Box({'class': 'descr'}, CTK.RawHTML(w['descr']))],
                            {'wizard': w['wizard']})
+        elif category == 'other':
+            wizards = [x[:-3] for x in os.listdir('wizards') if x.endswith('.py')]
+            for w in wizards:
+                wlist.Add ([CTK.Box({'class': 'logo'},  Icon(w)),
+                            CTK.Box({'class': 'title'}, CTK.RawHTML(w.capitalize())),
+                            CTK.Box({'class': 'descr'}, CTK.RawHTML('Temporary description'))],
+                           {'wizard': w})
 
         hidden = CTK.Hidden ('wizard')
 
@@ -232,18 +240,9 @@ def init():
     global _is_init
     _is_init = True
 
-    CTK.load_module ('drupal',        'wizards')
-    CTK.load_module ('wordpress',     'wizards')
-    CTK.load_module ('trac',          'wizards')
-    CTK.load_module ('static',        'wizards')
-    CTK.load_module ('django',        'wizards')
-    CTK.load_module ('icons',         'wizards')
-    CTK.load_module ('hotlinking',    'wizards')
-    CTK.load_module ('redirect',      'wizards')
-    CTK.load_module ('streaming',     'wizards')
-    CTK.load_module ('rails',         'wizards')
-    CTK.load_module ('uwsgi',         'wizards')
-    CTK.load_module ('mono',          'wizards')
+    wizards = [x[:-3] for x in os.listdir('wizards') if x.endswith('.py')]
+    for w in wizards:
+        CTK.load_module (w, 'wizards')
 
 _is_init = False
 if not _is_init:
