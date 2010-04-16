@@ -28,7 +28,7 @@ rails.png \
 rtorrent.png \
 static.png \
 streaming.png \
-sugarcrm.png \
+sugar.png \
 symfony.png \
 trac.png \
 uwsgi.png \
