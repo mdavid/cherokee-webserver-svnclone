@@ -107,7 +107,7 @@ class Commit:
         CTK.cfg.normalize ('vserver')
 
         del (CTK.cfg[PREFIX])
-        return {'ret': 'ok'}
+        return CTK.cfg_reply_ajax_ok()
 
 
     def Commit_Rule (self):
@@ -131,7 +131,7 @@ class Commit:
         CTK.cfg.normalize ('%s!rule'%(vsrv_pre))
 
         del (CTK.cfg[PREFIX])
-        return {'ret': 'ok'}
+        return CTK.cfg_reply_ajax_ok()
 
 
     def __call__ (self):
