@@ -66,9 +66,7 @@ CONFIG_THEMES = """
 """
 
 class Commit:
-    def __call__ (self):
-        CTK.cfg_apply_post()
-
+    def Commit_Rule (self):
         vsrv_num = CTK.cfg.get_val ('%s!vsrv_num'%(PREFIX))
         icons    = bool(int(CTK.cfg.get_val ('%s!icons'%(PREFIX))))
         themes   = bool(int(CTK.cfg.get_val ('%s!themes'%(PREFIX))))
@@ -95,6 +93,10 @@ class Commit:
 
         del (CTK.cfg[PREFIX])
         return {'ret': 'ok'}
+
+    def __call__ (self):
+        CTK.cfg_apply_post()
+        return self.Commit_Rule()
 
 
 class Welcome:
