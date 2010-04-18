@@ -1,6 +1,6 @@
 ## Cherokee: Makefile.am  -*- makefile -*-
 
-SUBDIRS =
+SUBDIRS = plugins wizards
 
 if INSTALL_ADMIN
 SUBDIRS += static
@@ -33,32 +33,50 @@ adminpy_SCRIPTS = $(admin_scripts)
 
 if INSTALL_ADMIN
 admin_data = \
-static/css/cherokee-admin.css \
-theme.html \
-server.py \
-consts.py \
-util.py \
-validations.py \
-config_version.py \
+Auth.py \
+Balancer.py \
+CgiBase.py \
 Cherokee.py \
+Flags.py \
+Graph.py \
+Handler.py \
+Icons.py \
+Mime.py \
 Page.py \
-PageIndex.py \
-PageGeneral.py \
-PageVServer.py \
 PageAdvanced.py \
-PageNewConfig.py \
+PageEntry.py \
+PageError.py \
+PageException.py \
+PageGeneral.py \
 PageHelp.py \
-plugins/rrd.py \
-plugins/post_track.py \
-plugins/evhost.py \
-plugins/rehost.py \
-plugins/target_ip.py \
-plugins/wildcard.py \
-plugins/error_nn.py \
-plugins/error_redir.py
+PageIndex.py \
+PageNewConfig.py \
+PageRule.py \
+PageSource.py \
+PageSources.py \
+PageStatus.py \
+PageVServer.py \
+PageVServers.py \
+Rule.py \
+RuleSimple.py \
+SelectionPanel.py \
+Wizard.py \
+XMLServerDigest.py \
+config_version.py \
+consts.py \
+server.py \
+upgrade_config.py \
+util.py \
+validations.py
+
+html_data = \
+exception.html \
+help.html \
+theme.html
+
 endif
 
-adminpy_DATA = $(admin_data)
+adminpy_DATA = $(admin_data) $(html_data)
 
 if INSTALL_ADMIN
 template_data =
