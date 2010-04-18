@@ -90,7 +90,7 @@ LIST = [
              'title': 'Django',
              'descr': 'Django is bla, bla, bla..',
              'type':  TYPE_VSERVER | TYPE_RULE},
-            {'name':  'ror',
+            {'name':  'rails',
              'title': 'Ruby on Rails',
              'descr': 'Ruby on Rails is bla, bla, bla..',
              'type':  TYPE_VSERVER | TYPE_RULE},
@@ -111,7 +111,7 @@ LIST = [
 
     {'name':  'langs',
      'title': _('Languages'),
-     'descr': _('Development languages and platforms'),
+     'descr': _('Development Languages and Platforms'),
      'list':  [
             {'name':  'php',
              'title': 'PHP',
@@ -126,7 +126,7 @@ LIST = [
 
     {'name':  'webapps',
      'title': _('Web Applications'),
-     'descr': _('Other General Purpose Web Applications'),
+     'descr': _('General Purpose Applications'),
      'list':  [
             {'name':  'mailman',
              'title': 'GNU MailMan',
@@ -149,7 +149,7 @@ LIST = [
 
     {'name':  'tasks',
      'title': _('Tasks'),
-     'descr': _('Common maintenance tasks'),
+     'descr': _('Common Maintenance Tasks'),
      'list':  [
             {'name':  'redirect',
              'title': 'Virtual Server redirection',

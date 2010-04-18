@@ -142,7 +142,7 @@ class RuleNew (CTK.Container):
             url_pre = '%s/%s' %(Wizard.URL_CAT_LIST, cat['name'])
             content = [CTK.Box({'class': 'title'},       CTK.RawHTML(_(cat['title']))),
                        CTK.Box({'class': 'description'}, CTK.RawHTML(_(cat['descr'])))]
-            panel.Add (cat['title'], url_pre, content, draggable=False)
+            panel.Add (cat['name'], url_pre, content, draggable=False)
 
 
 class Render():
