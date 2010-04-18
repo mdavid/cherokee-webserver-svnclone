@@ -154,7 +154,7 @@ class VirtualServerNew (CTK.Container):
 
         # Wizard Categories
         for cat in Wizard.Categories (Wizard.TYPE_VSERVER):
-            url_pre = '%s/%s' %(Wizard.URL_CAT_LIST, cat['name'])
+            url_pre = '%s/%s' %(Wizard.URL_CAT_LIST_VSRV, cat['name'])
             content = [CTK.Box({'class': 'title'},       CTK.RawHTML(_(cat['title']))),
                        CTK.Box({'class': 'description'}, CTK.RawHTML(_(cat['descr'])))]
             panel.Add (cat['name'], url_pre, content, draggable=False)

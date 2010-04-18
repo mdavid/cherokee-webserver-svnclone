@@ -22,8 +22,6 @@
 # 02110-1301, USA.
 #
 
-import copy
-
 TYPE_VSERVER = 1
 TYPE_RULE    = 1 << 2
 
@@ -158,21 +156,3 @@ LIST = [
              ]
     },
 ]
-
-
-def get_filtered (filter):
-    ret_list = copy.deepcopy(LIST)
-
-    # Remove wizards
-    for group in ret_list:
-        wizards = group['list']
-        for wizard in wizards:
-            if not wizard['type'] & filter:
-                del (wizards[wizards.index(wizard)])
-
-    # Remove empty groups
-    for group in ret_list:
-        if not group['list']:
-            del (ret_list[ret_list.index(group)])
-
-    return ret_list
