@@ -20,11 +20,11 @@ moinmoin.png \
 mono.png \
 moodle.png \
 nagios.png \
-phpbb.png \
 php.png \
+phpbb.png \
 phpmyadmin.png \
-redirect.png \
 rails.png \
+redirect.png \
 rtorrent.png \
 static.png \
 streaming.png \
