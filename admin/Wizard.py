@@ -25,9 +25,13 @@
 import re
 import os
 import CTK
+import copy
 
-URL_CAT_LIST   = '/wizard/category'
-URL_CAT_LIST_R = r'^/wizard/category/(.*)$'
+URL_CAT_LIST_VSRV   =  '/wizard/category/vsrv'
+URL_CAT_LIST_VSRV_R = r'^/wizard/category/vsrv/(.*)$'
+URL_CAT_LIST_RULE   =  '/wizard/category/rule'
+URL_CAT_LIST_RULE_R = r'^/wizard/category/rule/(.*)$'
+
 URL_CAT_APPLY  = '/wizard/new/apply'
 
 TYPE_VSERVER = 1
@@ -61,10 +65,28 @@ class WizardList (CTK.Box):
         CTK.Box.__init__ (self, {'class': 'wizard-list'})
 
 
+def filter_wizard_list (w_list, filter):
+    ret_list = copy.deepcopy(w_list)
+
+    # Remove wizards
+    for group in ret_list:
+        wizards = group['list']
+        for wizard in wizards:
+            if not wizard['type'] & filter:
+                del (wizards[wizards.index(wizard)])
+
+    # Remove empty groups
+    for group in ret_list:
+        if not group['list']:
+            del (ret_list[ret_list.index(group)])
+
+    return ret_list
+
+
 class Categories:
     def __init__ (self, wizards_type):
         wizards = CTK.load_module ('List', 'wizards')
-        self.list = wizards.get_filtered (wizards_type)
+        self.list = filter_wizard_list (wizards.LIST, wizards_type)
 
     def __iter__ (self):
         return iter(self.list)
@@ -114,13 +136,13 @@ return false;
 """
 
 class CategoryList_Widget (CTK.Box):
-    def __init__ (self, category):
+    def __init__ (self, category, wizards_type):
         CTK.Box.__init__ (self)
         self.category = category
 
         # Retrieve the list
         wizards = CTK.load_module ('List', 'wizards')
-        wizard_list = wizards.get_filtered (TYPE_VSERVER)
+        wizard_list = filter_wizard_list (wizards.LIST, wizards_type)
 
         # Build the widgets list
         wlist = CTK.List({'class': 'wizard-list'})
@@ -145,12 +167,20 @@ class CategoryList_Widget (CTK.Box):
         self += submit
 
 
-def CategoryList():
+def CategoryList_Vsrv():
     # Figure the category
-    category = re.findall (URL_CAT_LIST_R, CTK.request.url)[0]
+    category = re.findall (URL_CAT_LIST_VSRV_R, CTK.request.url)[0]
 
     # Instance and Render
-    content = CategoryList_Widget (category)
+    content = CategoryList_Widget (category, TYPE_VSERVER)
+    return content.Render().toJSON()
+
+def CategoryList_Rule():
+    # Figure the category
+    category = re.findall (URL_CAT_LIST_Rule_R, CTK.request.url)[0]
+
+    # Instance and Render
+    content = CategoryList_Widget (category, TYPE_RULE)
     return content.Render().toJSON()
 
 
@@ -225,5 +255,6 @@ if not _is_init:
     init()
 
 
-CTK.publish (URL_CAT_LIST_R, CategoryList)
-CTK.publish (URL_CAT_APPLY,  CategoryList_Apply, method="POST")
+CTK.publish (URL_CAT_LIST_VSRV_R, CategoryList_Vsrv)
+CTK.publish (URL_CAT_LIST_RULE_R, CategoryList_Rule)
+CTK.publish (URL_CAT_APPLY, CategoryList_Apply, method="POST")
