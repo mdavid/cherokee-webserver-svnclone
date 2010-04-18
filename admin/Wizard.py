@@ -30,20 +30,8 @@ URL_CAT_LIST   = '/wizard/category'
 URL_CAT_LIST_R = r'^/wizard/category/(.*)$'
 URL_CAT_APPLY  = '/wizard/new/apply'
 
-WIZARDS_CMS = [
-    {'wizard': 'drupal',    'title': 'Drupal',       'descr': 'Drupal is bla, bla, bla, bla..'},
-    {'wizard': 'wordpress', 'title': 'WordPress',    'descr': 'WordPress is bla, bla, bla, bla..'},
-    {'wizard': 'trac',      'title': 'Trac',         'descr': 'Track is also bla, bla, bla, bla..'},
-    {'wizard': 'static',    'title': 'Static Files', 'descr': 'This is bla, bla, bla, bla..'},
-    {'wizard': 'django',    'title': 'Django',       'descr': 'This is bla, bla, bla, bla..'},
-    {'wizard': 'icons',     'title': 'Icons',        'descr': 'This is bla, bla, bla, bla..'},
-    {'wizard': 'hotlinking','title': 'Hot Linking',  'descr': 'This is bla, bla, bla, bla..'},
-    {'wizard': 'redirect',  'title': 'Redirect',     'descr': 'This is bla, bla, bla, bla..'},
-    {'wizard': 'streaming', 'title': 'Streaming',    'descr': 'This is bla, bla, bla, bla..'},
-    {'wizard': 'rails',     'title': 'Rails',        'descr': 'This is bla, bla, bla, bla..'},
-    {'wizard': 'uwsgi',     'title': 'uWSGI',        'descr': 'This is bla, bla, bla, bla..'},
-    {'wizard': 'mono',      'title': 'Mono',         'descr': 'This is bla, bla, bla, bla..'},
-]
+TYPE_VSERVER = 1
+TYPE_RULE    = 1 << 2
 
 USUAL_STATIC_FILES = ['/favicon.ico', '/robots.txt', '/crossdomain.xml']
 
@@ -74,19 +62,9 @@ class WizardList (CTK.Box):
 
 
 class Categories:
-    def __init__ (self):
-        self.list = [
-            {'title':   N_('CMS'),
-             'descr':   N_('Content Management Systems'),
-             'url_pre': '%s/cms' %(URL_CAT_LIST)},
-
-            {'title':   N_('Wiki'),
-             'descr':   N_('Wiki wika wiki wika wika wiki wika..'),
-             'url_pre': '%s/wiki' %(URL_CAT_LIST)},
-
-            {'title':   N_('Other'),
-             'descr':   N_('Whatever, whatever, whatever, whatever..'),
-             'url_pre': '%s/other' %(URL_CAT_LIST)}]
+    def __init__ (self, wizards_type):
+        wizards = CTK.load_module ('List', 'wizards')
+        self.list = wizards.get_filtered (wizards_type)
 
     def __iter__ (self):
         return iter(self.list)
@@ -140,23 +118,21 @@ class CategoryList_Widget (CTK.Box):
         CTK.Box.__init__ (self)
         self.category = category
 
-        # Build the list (*TEMPORARILLY* HARDCODED!)
-        #
+        # Retrieve the list
+        wizards = CTK.load_module ('List', 'wizards')
+        wizard_list = wizards.get_filtered (TYPE_VSERVER)
+
+        # Build the widgets list
         wlist = CTK.List({'class': 'wizard-list'})
 
-        if category == 'cms':
-            for w in WIZARDS_CMS:
-                wlist.Add ([CTK.Box({'class': 'logo'},  Icon(w['wizard'])),
+        # Find the right group
+        tmp = filter (lambda g: g['name'] == category, wizard_list)
+        if tmp:
+            for w in tmp[0]['list']:
+                wlist.Add ([CTK.Box({'class': 'logo'},  Icon(w['name'])),
                             CTK.Box({'class': 'title'}, CTK.RawHTML(w['title'])),
                             CTK.Box({'class': 'descr'}, CTK.RawHTML(w['descr']))],
-                           {'wizard': w['wizard']})
-        elif category == 'other':
-            wizards = [x[:-3] for x in os.listdir('wizards') if x.endswith('.py')]
-            for w in wizards:
-                wlist.Add ([CTK.Box({'class': 'logo'},  Icon(w)),
-                            CTK.Box({'class': 'title'}, CTK.RawHTML(w.capitalize())),
-                            CTK.Box({'class': 'descr'}, CTK.RawHTML('Temporary description'))],
-                           {'wizard': w})
+                           {'wizard': w['name']})
 
         hidden = CTK.Hidden ('wizard')
 
